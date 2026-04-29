@@ -1,4 +1,4 @@
-import { initTwurple } from '../utils/twurple';
+import { initTwurple, startBot } from '../utils/twurple';
 
 export default defineNitroPlugin(async (nitroApp) => {
   console.log('[Bot Plugin] Initializing...');
@@ -8,11 +8,13 @@ export default defineNitroPlugin(async (nitroApp) => {
     await initTwurple();
 
     // 2. Try to start the bot
-    const success = await startBot();
-    if (success) {
+    const result = await startBot();
+    if (result === 'started') {
       console.log('[Bot Plugin] Bot started successfully.');
+    } else if (result === 'already_running') {
+      console.log('[Bot Plugin] Bot is already running.');
     } else {
-      console.log('[Bot Plugin] Tokens missing or bot already running, waiting for onboarding...');
+      console.log('[Bot Plugin] Tokens missing, waiting for onboarding...');
     }
   } catch (err) {
     console.error('[Bot Plugin] Initialization failed:', err);

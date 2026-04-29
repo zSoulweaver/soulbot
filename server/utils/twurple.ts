@@ -38,6 +38,7 @@ export const getAuthProvider = () => {
 export const initTwurple = async () => {
   const provider = getAuthProvider();
   const tokens = await db.select().from(twitchTokens);
+  const apiClient = getApiClient();
 
   for (const token of tokens) {
     const tokenData = {
@@ -68,11 +69,11 @@ export const getChatClient = async () => {
   if (chatClientInstance) return chatClientInstance;
 
   const config = useRuntimeConfig();
-  const botToken = await db.query.twitchTokens.findFirst({
-    where: eq(twitchTokens.accountType, 'bot')
-  });
+  const tokens = await db.select().from(twitchTokens);
+  const botToken = tokens.find(t => t.accountType === 'bot');
+  const streamerToken = tokens.find(t => t.accountType === 'streamer');
 
-  if (!botToken) return null;
+  if (!botToken || !streamerToken) return null;
 
   chatClientInstance = new ChatClient({
     authProvider: getAuthProvider(),
@@ -85,9 +86,9 @@ export const getChatClient = async () => {
 
 export const startBot = async () => {
   const chat = await getChatClient();
-  if (!chat) return false;
+  if (!chat) return 'no_tokens';
   
-  if (chat.isConnected) return true;
+  if (chat.isConnected) return 'already_running';
 
   chat.onConnect(() => console.log('[Bot] Connected to Twitch Chat'));
   chat.onMessage((channel, user, message) => {
@@ -98,5 +99,5 @@ export const startBot = async () => {
   });
 
   await chat.connect();
-  return true;
+  return 'started';
 };

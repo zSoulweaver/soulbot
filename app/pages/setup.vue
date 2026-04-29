@@ -2,18 +2,34 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle2, Circle } from 'lucide-vue-next'
+import { CheckCircle2, Circle, Loader2 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
 const { data: status, refresh } = await useFetch('/api/auth/status')
 
 const isComplete = computed(() => status.value?.bot && status.value?.streamer)
+const isLoading = ref(false)
 
-const startBot = async () => {
-  try {
-    await $fetch('/api/bot/start', { method: 'POST' })
+const handleBotAction = async () => {
+  if (status.value?.isBotRunning) {
     navigateTo('/')
-  } catch (err) {
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const response = await $fetch('/api/bot/start', { method: 'POST' })
+    toast.success('Bot started successfully!')
+    await refresh()
+    // Delay navigation slightly so user sees the success state/toast
+    setTimeout(() => {
+      navigateTo('/')
+    }, 1500)
+  } catch (err: any) {
     console.error('Failed to start bot', err)
+    const errorMessage = err.data?.statusMessage || 'Failed to start bot. Please try again.'
+    toast.error(errorMessage)
+    isLoading.value = false
   }
 }
 </script>
@@ -36,7 +52,7 @@ const startBot = async () => {
             <div>
               <p class="font-medium">Streamer Account</p>
               <p class="text-sm text-muted-foreground" v-if="status?.streamer">
-                Connected (ID: {{ status.streamer.userId }})
+                Connected as {{ status.streamer.displayName || status.streamer.userName }}
               </p>
               <p class="text-sm text-muted-foreground" v-else>
                 Not connected
@@ -62,7 +78,7 @@ const startBot = async () => {
             <div>
               <p class="font-medium">Bot Account</p>
               <p class="text-sm text-muted-foreground" v-if="status?.bot">
-                Connected (ID: {{ status.bot.userId }})
+                Connected as {{ status.bot.displayName || status.bot.userName }}
               </p>
               <p class="text-sm text-muted-foreground" v-else>
                 Not connected
@@ -80,21 +96,32 @@ const startBot = async () => {
           </Button>
         </div>
 
-        <Alert v-if="isComplete" variant="default" class="bg-green-50 border-green-200">
-          <CheckCircle2 class="h-4 w-4 text-green-600" />
-          <AlertTitle class="text-green-800">Ready to go!</AlertTitle>
-          <AlertDescription class="text-green-700">
-            Both accounts are authenticated. You can now start the bot.
+        <Alert v-if="isComplete" variant="default" :class="status?.isBotRunning ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'">
+          <CheckCircle2 class="h-4 w-4" :class="status?.isBotRunning ? 'text-blue-600' : 'text-green-600'" />
+          <AlertTitle :class="status?.isBotRunning ? 'text-blue-800' : 'text-green-800'">
+            {{ status?.isBotRunning ? 'Bot is running' : 'Ready to go!' }}
+          </AlertTitle>
+          <AlertDescription :class="status?.isBotRunning ? 'text-blue-700' : 'text-green-700'">
+            {{ status?.isBotRunning ? 'Your bot is online and active.' : 'Both accounts are authenticated. You can now start the bot.' }}
           </AlertDescription>
         </Alert>
       </CardContent>
       <CardFooter>
         <Button 
           class="w-full" 
-          :disabled="!isComplete"
-          @click="startBot"
+          :disabled="!isComplete || isLoading"
+          @click="handleBotAction"
         >
-          {{ isComplete ? 'Initialize Bot' : 'Complete Setup' }}
+          <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
+          <template v-if="status?.isBotRunning">
+            Open Dashboard
+          </template>
+          <template v-else-if="isLoading">
+            Starting Bot...
+          </template>
+          <template v-else>
+            {{ isComplete ? 'Initialize Bot' : 'Complete Setup' }}
+          </template>
         </Button>
       </CardFooter>
     </Card>

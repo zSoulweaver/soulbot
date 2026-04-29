@@ -1,22 +1,22 @@
-import { initTwurple, startBot } from '../../utils/twurple';
+import { initTwurple, startBot } from '../../utils/twurple'
 
-export default defineEventHandler(async (event) => {
-  await initTwurple();
-  const result = await startBot();
-  
-  if (result === 'already_running') {
-    throw createError({
-      statusCode: 409,
-      statusMessage: 'Bot is already running.',
-    });
-  }
+export default defineEventHandler(async () => {
+	await initTwurple()
+	const result = await startBot()
 
-  if (result === 'no_tokens') {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Failed to start bot. Ensure both accounts are authenticated.',
-    });
-  }
+	if (result === 'already_running') {
+		throw createError({
+			statusCode: 409,
+			statusMessage: 'Bot is already running.',
+		})
+	}
 
-  return { status: 'ok', message: 'Bot started successfully' };
-});
+	if (result === 'no_tokens') {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'Failed to start bot. Ensure both accounts are authenticated.',
+		})
+	}
+
+	return { status: 'ok', message: 'Bot started successfully' }
+})

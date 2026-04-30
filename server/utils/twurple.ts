@@ -2,8 +2,9 @@ import { ApiClient } from '@twurple/api'
 import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
 import { eq } from 'drizzle-orm'
+import { handleMessage, initBot, registry } from '../bot'
 import { db } from '../database'
-import { twitchTokens } from '../database/schema'
+import { twitchTokens, users } from '../database/schema'
 
 let authProviderInstance: RefreshingAuthProvider | null = null
 let apiClientInstance: ApiClient | null = null
@@ -57,6 +58,10 @@ export async function initTwurple() {
 		}
 		console.log(`[Twurple] Loaded tokens for ${token.accountType} (User ID: ${token.userId})`)
 	}
+
+	// Initialize Bot Registry
+	initBot()
+	await registry.syncWithDb()
 }
 
 export function getApiClient() {
@@ -96,11 +101,27 @@ export async function startBot() {
 		return 'already_running'
 
 	chat.onConnect(() => console.log('[Bot] Connected to Twitch Chat'))
-	chat.onMessage((channel, user, message) => {
-		console.log(`[Bot] ${channel} <${user}>: ${message}`)
-		if (message === '!ping') {
-			chat.say(channel, 'Pong!')
-		}
+	chat.onMessage(async (channel, user, message, raw) => {
+		// Track user in DB
+		await db.insert(users)
+			.values({
+				id: raw.userInfo.userId,
+				username: raw.userInfo.userName,
+				displayName: raw.userInfo.displayName,
+				points: 0,
+				firstSeen: Date.now(),
+				lastSeen: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: users.id,
+				set: {
+					username: raw.userInfo.userName,
+					displayName: raw.userInfo.displayName,
+					lastSeen: Date.now(),
+				},
+			})
+
+		await handleMessage(channel, user, message, raw)
 	})
 
 	await chat.connect()

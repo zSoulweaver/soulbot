@@ -9,8 +9,20 @@ export const handlePointsRoot: CommandHandler<typeof PointsArgs> = async (ctx, [
 	const [dbUser] = await db.select().from(users).where(eq(users.username, username.toLowerCase()))
 
 	if (!dbUser) {
-		return ctx.reply(`${username} hasn't earned any points yet.`)
+		if (target) {
+			return ctx.reply('points.user-no-points', { target: username })
+		}
+		return ctx.reply('points.user-no-points-self')
 	}
 
-	ctx.reply(`${username} has ${dbUser.points} points.`)
+	if (target) {
+		return ctx.reply('points.show', {
+			target: username,
+			amount: dbUser.points,
+		})
+	}
+
+	ctx.reply('points.show-self', {
+		amount: dbUser.points,
+	})
 }

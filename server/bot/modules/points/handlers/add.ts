@@ -9,14 +9,16 @@ export const handlePointsAdd: CommandHandler<typeof PointsAddArgs> = async (ctx,
 	const [dbUser] = await db.select().from(users).where(eq(users.username, target.toLowerCase()))
 
 	if (!dbUser) {
-		// If they don't exist in the DB yet, we can't add points unless we have their Twitch ID.
-		// For a production bot, we would usually resolve the ID via Twurple API or wait until they chat.
-		return ctx.reply(`User ${target} hasn't been seen by the bot yet.`)
+		return ctx.reply('points.user-not-found', { target })
 	}
 
 	await db.update(users)
 		.set({ points: sql`${users.points} + ${amount}` })
 		.where(eq(users.id, dbUser.id))
 
-	ctx.reply(`Added ${amount} points to ${target}. They now have ${dbUser.points + amount} points.`)
+	ctx.reply('points.add', {
+		amount,
+		target,
+		newAmount: dbUser.points + amount,
+	})
 }

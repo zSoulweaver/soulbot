@@ -35,3 +35,9 @@ export const users = sqliteTable('users', {
 	firstSeen: integer('first_seen').notNull(),
 	lastSeen: integer('last_seen').notNull(),
 })
+
+export const commandTemplates = sqliteTable('command_templates', {
+	id: text('id').primaryKey(), // e.g. 'points.add'
+	template: text('template').notNull(), // The user-defined override string
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})

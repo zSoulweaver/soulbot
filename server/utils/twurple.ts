@@ -2,7 +2,7 @@ import { ApiClient } from '@twurple/api'
 import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
 import { eq } from 'drizzle-orm'
-import { handleMessage, initBot, registry } from '../bot'
+import { handleMessage, initBot, registry, templateRegistry } from '../bot'
 import { db } from '../database'
 import { twitchTokens, users } from '../database/schema'
 
@@ -61,7 +61,10 @@ export async function initTwurple() {
 
 	// Initialize Bot Registry
 	initBot()
-	await registry.syncWithDb()
+	await Promise.all([
+		registry.syncWithDb(),
+		templateRegistry.syncWithDb(),
+	])
 }
 
 export function getApiClient() {

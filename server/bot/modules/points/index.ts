@@ -2,6 +2,9 @@ import { defineCommand } from '../../core/define-command'
 import { handlePointsAdd } from './handlers/add'
 import { handlePointsRoot } from './handlers/root'
 import { PointsAddArgs, PointsArgs } from './schema'
+import { registerPointsTemplates } from './templates'
+
+registerPointsTemplates()
 
 export const pointsCommand = defineCommand({
 	id: 'points',

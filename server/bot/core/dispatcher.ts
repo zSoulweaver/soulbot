@@ -6,6 +6,7 @@ import { db } from '../../database'
 import { commands, users } from '../../database/schema'
 import { getChatClient } from '../../utils/twurple'
 import { registry } from './registry'
+import { templateRegistry } from './templates'
 
 export async function handleMessage(channel: string, user: string, message: string, raw: ChatMessage) {
 	if (!message.startsWith('!'))
@@ -40,8 +41,18 @@ export async function handleMessage(channel: string, user: string, message: stri
 			displayName: raw.userInfo.displayName,
 		},
 		channel,
-		reply: async (text) => { await chatClient.say(channel, `@${raw.userInfo.displayName}, ${text}`) },
-		say: async (text) => { await chatClient.say(channel, text) },
+		reply: async (textOrTemplate: string, data?: any) => {
+			const text = data
+				? templateRegistry.render(textOrTemplate, data)
+				: textOrTemplate
+			await chatClient.say(channel, `@${raw.userInfo.displayName}, ${text}`)
+		},
+		say: async (textOrTemplate: string, data?: any) => {
+			const text = data
+				? templateRegistry.render(textOrTemplate, data)
+				: textOrTemplate
+			await chatClient.say(channel, text)
+		},
 		raw,
 	}
 

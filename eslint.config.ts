@@ -10,6 +10,7 @@ export default antfu(
 		},
 		rules: {
 			'no-console': 'off',
+			'no-template-curly-in-string': 'off',
 		},
 	},
 	{

@@ -28,8 +28,8 @@ export function registerPointsTemplates() {
 	})
 
 	templateRegistry.register({
-		id: 'points.user-no-points',
-		default: '${target} hasn\'t earned any points yet.',
+		id: 'points.user-does-not-exist',
+		default: '${target} does not have an account on Twitch.',
 		params: ['target'] as const,
 	})
 
@@ -39,13 +39,12 @@ export function registerPointsTemplates() {
 	})
 }
 
-// 2. Augment the global CommandTemplates interface for type safety
 declare module '../../core/templates' {
 	interface CommandTemplates {
 		'points.add': { amount: number, target: string, newAmount: number }
 		'points.show': { target: string, amount: number }
 		'points.show-self': { amount: number }
-		'points.user-not-found': { target: string }
+		'points.user-does-not-exist': { target: string }
 		'points.user-no-points': { target: string }
 		'points.user-no-points-self': undefined
 	}

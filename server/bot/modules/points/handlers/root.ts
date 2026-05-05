@@ -5,8 +5,8 @@ import { db } from '../../../../database'
 import { users } from '../../../../database/schema'
 
 export const handlePointsRoot: CommandHandler<typeof PointsArgs> = async (ctx, [target]) => {
-	const username = target || ctx.user.name
-	const [dbUser] = await db.select().from(users).where(eq(users.username, username.toLowerCase()))
+	const username = (target || ctx.user.name).toLowerCase().replace('@', '')
+	const [dbUser] = await db.select().from(users).where(eq(users.username, username))
 
 	if (!dbUser) {
 		if (target) {

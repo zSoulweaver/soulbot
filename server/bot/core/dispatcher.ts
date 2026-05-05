@@ -41,13 +41,15 @@ export async function handleMessage(channel: string, user: string, message: stri
 			displayName: raw.userInfo.displayName,
 		},
 		channel,
-		reply: async (textOrTemplate: string, data?: any) => {
+		reply: async (textOrTemplate: string, ...args: any[]) => {
+			const data = args[0]
 			const text = data
 				? templateRegistry.render(textOrTemplate, data)
 				: textOrTemplate
 			await chatClient.say(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
-		say: async (textOrTemplate: string, data?: any) => {
+		say: async (textOrTemplate: string, ...args: any[]) => {
+			const data = args[0]
 			const text = data
 				? templateRegistry.render(textOrTemplate, data)
 				: textOrTemplate

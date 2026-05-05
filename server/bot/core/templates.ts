@@ -2,13 +2,24 @@ import { db } from '../../database'
 import { commandTemplates } from '../../database/schema'
 
 /**
+ * Helper type to extract parameters from template definitions
+ */
+export type MapTemplates<T extends Record<string, any>> = {
+	[K in keyof T]: T[K]['params']
+}
+
+export interface TemplateSource {
+	default: string
+	params?: Record<string, any> | undefined
+}
+
+export type TemplateSourceMap = Record<string, TemplateSource>
+
+/**
  * This interface is intended to be augmented by modules to provide
  * type-safe templates and their parameters.
  */
 export interface CommandTemplates {}
-
-export type TemplateName = keyof CommandTemplates
-export type TemplateData<T extends TemplateName> = CommandTemplates[T]
 
 export interface TemplateDefinition {
 	id: string

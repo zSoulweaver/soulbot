@@ -1,5 +1,8 @@
 import type { ChatMessage } from '@twurple/chat'
-import type { TemplateData, TemplateName } from './templates'
+import type { CommandTemplates } from './templates'
+
+export type TemplateName = keyof CommandTemplates
+export type TemplateData<T extends TemplateName> = CommandTemplates[T]
 
 export type CommandPermission
 	= | 'broadcaster'
@@ -15,8 +18,14 @@ export interface CommandContext {
 		displayName: string
 	}
 	channel: string
-	reply: ((text: string) => Promise<void>) & (<T extends TemplateName>(template: T, data: TemplateData<T>) => Promise<void>)
-	say: ((text: string) => Promise<void>) & (<T extends TemplateName>(template: T, data: TemplateData<T>) => Promise<void>)
+	reply: ((text: string) => Promise<void>) & (<T extends TemplateName>(
+		template: T,
+		...args: TemplateData<T> extends undefined | Record<string, never> ? [] : [TemplateData<T>]
+	) => Promise<void>)
+	say: ((text: string) => Promise<void>) & (<T extends TemplateName>(
+		template: T,
+		...args: TemplateData<T> extends undefined | Record<string, never> ? [] : [TemplateData<T>]
+	) => Promise<void>)
 	raw: ChatMessage
 }
 

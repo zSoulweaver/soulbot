@@ -1,5 +1,3 @@
-import { initTwurple, startBot } from '../utils/twurple'
-
 export default defineNitroPlugin(async () => {
 	console.log('[Bot Plugin] Initializing...')
 

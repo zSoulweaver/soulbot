@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../../../database'
-import { users } from '../../../database/schema'
-import { getApiClient } from '../../../utils/twurple'
+import { db } from '~~/server/database'
+import { users } from '~~/server/database/schema'
 
 export async function getUserRecord(username: string) {
 	username = username.toLowerCase().replace('@', '')
@@ -49,6 +48,6 @@ export async function updateUserPoints(username: string, amount: number, mode: '
 
 	return {
 		...dbUser,
-		points: newAmount
+		points: newAmount,
 	}
 }

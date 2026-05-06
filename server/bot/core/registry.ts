@@ -1,6 +1,6 @@
 import type { CommandDefinition } from './types'
-import { db } from '../../database'
-import { commandAliases, commands } from '../../database/schema'
+import { db } from '~~/server/database'
+import { commandAliases, commands } from '~~/server/database/schema'
 
 class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()

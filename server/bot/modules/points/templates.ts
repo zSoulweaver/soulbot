@@ -1,4 +1,4 @@
-import type { MapTemplates, TemplateSourceMap } from '../../core/templates'
+import type { TemplateSourceMap } from '../../core/templates'
 import { templateRegistry } from '../../core/templates'
 
 export const definitions = {

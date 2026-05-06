@@ -1,5 +1,5 @@
-import { db } from '../../database'
-import { commandTemplates } from '../../database/schema'
+import { db } from '~~/server/database'
+import { commandTemplates } from '~~/server/database/schema'
 
 /**
  * Helper type to extract parameters from template definitions

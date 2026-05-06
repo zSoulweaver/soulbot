@@ -1,6 +1,6 @@
-import type { CommandHandler } from '../../../core/types'
+import type { CommandHandler } from '~~/server/bot/core/types'
 import type { PointsAddArgs } from '../schema'
-import { updateUserPoints } from '@bot/modules/points/service'
+import { updateUserPoints } from '../service'
 
 export const handlePointsAdd: CommandHandler<typeof PointsAddArgs> = async (ctx, [target, amount]) => {
 	const username = target.toLowerCase().replace('@', '')

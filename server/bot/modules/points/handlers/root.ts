@@ -1,12 +1,10 @@
 import type { CommandHandler } from '../../../core/types'
 import type { PointsArgs } from '../schema'
-import { eq } from 'drizzle-orm'
-import { db } from '../../../../database'
-import { users } from '../../../../database/schema'
+import { getUserRecord } from '@bot/modules/points/service'
 
 export const handlePointsRoot: CommandHandler<typeof PointsArgs> = async (ctx, [target]) => {
 	const username = (target || ctx.user.name).toLowerCase().replace('@', '')
-	const [dbUser] = await db.select().from(users).where(eq(users.username, username))
+	const dbUser = await getUserRecord(username)
 
 	if (!dbUser) {
 		if (target) {

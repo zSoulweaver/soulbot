@@ -58,8 +58,17 @@ export async function handleMessage(channel: string, user: string, message: stri
 	}
 
 	// 2. Permission Check
-	if (!hasPermission(raw, command.permission))
+	if (!hasPermission(raw, command.permission)) {
+		botLogger.warn({
+			command: trigger,
+			user: raw.userInfo.userName,
+			userId: raw.userInfo.userId,
+			channel,
+			requiredPermission: command.permission,
+			originalMessage: message,
+		}, 'Command permission denied')
 		return
+	}
 
 	// 3. Subcommand Resolution
 	let finalHandler = command.handler
@@ -82,8 +91,18 @@ export async function handleMessage(channel: string, user: string, message: stri
 		finalZodSchema = sub.args as z.ZodTypeAny | undefined
 		finalUsage = sub.usage
 
-		if (!hasPermission(raw, finalPermission))
+		if (!hasPermission(raw, finalPermission)) {
+			botLogger.warn({
+				command: trigger,
+				subcommand: potentialSubcommand,
+				user: raw.userInfo.userName,
+				userId: raw.userInfo.userId,
+				channel,
+				requiredPermission: finalPermission,
+				originalMessage: message,
+			}, 'Command permission denied')
 			return
+		}
 	}
 
 	// 4. Argument Parsing (Zod)
@@ -128,6 +147,15 @@ export async function handleMessage(channel: string, user: string, message: stri
 			}
 
 			const usageText = finalUsage ? ` | Usage: \`${finalUsage}\`` : ''
+			botLogger.warn({
+				command: trigger,
+				subcommand: potentialSubcommand,
+				user: raw.userInfo.userName,
+				userId: raw.userInfo.userId,
+				channel,
+				error: message,
+				originalMessage: message,
+			}, 'Command validation error')
 			return ctx.reply(`Incorrect usage, ${message}.${usageText}`)
 		}
 		parsedArgs = result.data
@@ -137,13 +165,34 @@ export async function handleMessage(channel: string, user: string, message: stri
 	if (dbCmd && dbCmd.cost > 0) {
 		const [dbUser] = await db.select().from(users).where(eq(users.id, ctx.user.id))
 		if (!dbUser || dbUser.points < dbCmd.cost) {
+			botLogger.info({
+				command: trigger,
+				user: raw.userInfo.userName,
+				userId: raw.userInfo.userId,
+				channel,
+				cost: dbCmd.cost,
+				currentPoints: dbUser?.points || 0,
+			}, 'Command rejected due to insufficient points')
 			return ctx.reply(`You need ${dbCmd.cost} points to use this command.`)
 		}
 	}
 
 	// 6. Execute
 	try {
+		const start = Date.now()
 		await finalHandler(ctx, parsedArgs)
+		const duration = Date.now() - start
+
+		botLogger.info({
+			command: trigger,
+			subcommand: potentialSubcommand,
+			user: raw.userInfo.userName,
+			userId: raw.userInfo.userId,
+			channel,
+			args: parsedArgs,
+			durationMs: duration,
+			originalMessage: message,
+		}, `Command executed successfully: ${command.id}`)
 
 		// 7. Post-success: Deduct cost
 		if (dbCmd && dbCmd.cost > 0) {
@@ -153,7 +202,16 @@ export async function handleMessage(channel: string, user: string, message: stri
 		}
 	}
 	catch (err) {
-		console.error(`[Bot] Error executing command ${command.id}:`, err)
+		botLogger.error({
+			err,
+			command: trigger,
+			subcommand: potentialSubcommand,
+			user: raw.userInfo.userName,
+			userId: raw.userInfo.userId,
+			channel,
+			args: parsedArgs,
+			originalMessage: message,
+		}, `Error executing command ${command.id}`)
 	}
 }
 

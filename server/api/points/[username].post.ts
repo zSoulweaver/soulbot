@@ -1,5 +1,5 @@
-import { updateUserPoints } from '@bot/modules/points/service'
 import { z } from 'zod'
+import { updateUserPoints } from '../../bot/modules/points/service'
 
 const bodySchema = z.object({
 	amount: z.number(),

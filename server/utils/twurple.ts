@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { handleMessage, initBot, registry, templateRegistry } from '../bot'
 import { db } from '../database'
 import { twitchTokens, users } from '../database/schema'
+import { botLogger } from './logger'
 
 let authProviderInstance: RefreshingAuthProvider | null = null
 let apiClientInstance: ApiClient | null = null
@@ -31,7 +32,7 @@ export function getAuthProvider() {
 				scope: JSON.stringify(newTokenData.scope),
 			})
 			.where(eq(twitchTokens.userId, userId))
-		console.log(`[Twurple] Tokens refreshed for user ${userId}`)
+		botLogger.info({ userId }, 'Tokens refreshed')
 	})
 
 	return authProviderInstance
@@ -56,7 +57,7 @@ export async function initTwurple() {
 		else {
 			await provider.addUserForToken(tokenData)
 		}
-		console.log(`[Twurple] Loaded tokens for ${token.accountType} (User ID: ${token.userId})`)
+		botLogger.info({ accountType: token.accountType, userId: token.userId }, 'Loaded tokens')
 	}
 
 	// Initialize Bot Registry
@@ -103,7 +104,11 @@ export async function startBot() {
 	if (chat.isConnected)
 		return 'already_running'
 
-	chat.onConnect(() => console.log('[Bot] Connected to Twitch Chat'))
+	chat.onConnect(() => botLogger.info('Connected to Twitch Chat'))
+	chat.onDisconnect((manually, reason) => botLogger.warn({ manually, reason: reason?.message }, 'Disconnected from Twitch Chat'))
+	chat.onAuthenticationSuccess(() => botLogger.info('Authenticated with Twitch Chat'))
+	chat.onAuthenticationFailure((text, retryCount) => botLogger.error({ text, retryCount }, 'Failed to authenticate with Twitch Chat'))
+	
 	chat.onMessage(async (channel, user, message, raw) => {
 		// Track user in DB
 		await db.insert(users)

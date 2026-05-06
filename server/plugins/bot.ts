@@ -1,5 +1,5 @@
 export default defineNitroPlugin(async () => {
-	console.log('[Bot Plugin] Initializing...')
+	botLogger.info('Initializing bot plugin...')
 
 	try {
 		// 1. Load tokens from DB into AuthProvider
@@ -8,16 +8,16 @@ export default defineNitroPlugin(async () => {
 		// 2. Try to start the bot
 		const result = await startBot()
 		if (result === 'started') {
-			console.log('[Bot Plugin] Bot started successfully.')
+			botLogger.info('Bot started successfully.')
 		}
 		else if (result === 'already_running') {
-			console.log('[Bot Plugin] Bot is already running.')
+			botLogger.info('Bot is already running.')
 		}
 		else {
-			console.log('[Bot Plugin] Tokens missing, waiting for onboarding...')
+			botLogger.info('Tokens missing, waiting for onboarding...')
 		}
 	}
 	catch (err) {
-		console.error('[Bot Plugin] Initialization failed:', err)
+		botLogger.error({ err }, 'Initialization failed')
 	}
 })

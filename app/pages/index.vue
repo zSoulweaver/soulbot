@@ -20,7 +20,7 @@ async function getPoints() {
 	loading.value = true
 	error.value = ''
 	try {
-		const res = await $fetch(`/api/points/${username.value}`)
+		const res = await $fetch<{ points: number }>(`/api/points/${username.value}`)
 		currentPoints.value = res.points
 	} catch (err: any) {
 		error.value = err.data?.statusMessage || 'User not found'
@@ -35,7 +35,7 @@ async function updatePoints(mode: 'add' | 'set') {
 	loading.value = true
 	error.value = ''
 	try {
-		const res = await $fetch(`/api/points/${username.value}`, {
+		const res = await $fetch<{ points: number }>(`/api/points/${username.value}`, {
 			method: 'POST',
 			body: {
 				amount: amount.value,

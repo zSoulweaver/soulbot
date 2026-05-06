@@ -1,4 +1,4 @@
-import { getUserPoints } from '@bot/modules/points/service'
+import { getUserPoints } from '../../bot/modules/points/service'
 
 export default defineEventHandler(async (event) => {
 	const username = getRouterParam(event, 'username')

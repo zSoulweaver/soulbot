@@ -1,5 +1,8 @@
-import { type } from 'arktype'
+import { z } from 'zod'
 import { NumberParsed, TwitchUser } from '../../core/schemas'
 
-export const PointsArgs = type([TwitchUser.optional()])
-export const PointsAddArgs = type([TwitchUser, NumberParsed])
+export const PointsArgs = z.tuple([TwitchUser.optional()])
+export const PointsAddArgs = z.tuple([
+	TwitchUser.describe('user'),
+	NumberParsed.describe('amount'),
+])

@@ -29,7 +29,7 @@ export interface CommandContext {
 	raw: ChatMessage
 }
 
-export type InferArgs<T> = T extends { infer: infer Out } ? Out : T
+export type InferArgs<T> = T extends { _output: infer Out } ? Out : T
 
 export type CommandHandler<T = any> = (
 	ctx: CommandContext,
@@ -39,6 +39,7 @@ export type CommandHandler<T = any> = (
 export interface CommandDefinition<T = any> {
 	id: string
 	description: string
+	usage?: string
 	permission: CommandPermission
 	cost?: number
 	cooldown?: number
@@ -49,6 +50,7 @@ export interface CommandDefinition<T = any> {
 
 export interface SubcommandDefinition<T = any> {
 	description: string
+	usage?: string
 	permission: CommandPermission
 	args?: T
 	handler: CommandHandler<T>

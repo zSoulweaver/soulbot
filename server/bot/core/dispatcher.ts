@@ -1,6 +1,6 @@
 import type { ChatMessage } from '@twurple/chat'
+import type { z } from 'zod'
 import type { CommandContext, CommandPermission } from './types'
-import { type } from 'arktype'
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../../database'
 import { commands, users } from '../../database/schema'
@@ -66,7 +66,8 @@ export async function handleMessage(channel: string, user: string, message: stri
 	let finalHandler = command.handler
 	let finalArgs = parts.slice(1)
 	let finalPermission = command.permission
-	let finalArktypeSchema = command.args
+	let finalZodSchema = command.args as z.ZodTypeAny | undefined
+	let finalUsage = command.usage
 
 	// If it's an alias pointing to a subcommand, or if the first arg is a subcommand
 	const potentialSubcommand = resolved?.subcommand || finalArgs[0]?.toLowerCase() || null
@@ -79,20 +80,58 @@ export async function handleMessage(channel: string, user: string, message: stri
 			finalArgs = finalArgs.slice(1)
 		}
 		finalPermission = sub.permission
-		finalArktypeSchema = sub.args
+		finalZodSchema = sub.args as z.ZodTypeAny | undefined
+		finalUsage = sub.usage
 
 		if (!hasPermission(raw, finalPermission))
 			return
 	}
 
-	// 4. Argument Parsing (Arktype)
+	// 4. Argument Parsing (Zod)
 	let parsedArgs: any = finalArgs
-	if (finalArktypeSchema) {
-		const out = finalArktypeSchema(finalArgs)
-		if (out instanceof type.errors) {
-			return ctx.reply(`Usage error: ${out.summary}`)
+	if (finalZodSchema) {
+		const result = finalZodSchema.safeParse(finalArgs)
+		if (!result.success) {
+			const issue = result.error.issues[0]
+			if (!issue) {
+				return ctx.reply('Incorrect usage, Invalid arguments.')
+			}
+
+			let message = issue.message
+
+			// Improve tuple error messages
+			if (issue.code === 'too_small' && ((issue as any).origin === 'array' || (issue as any).type === 'array')) {
+				// Try to find which index is missing
+				const def = (finalZodSchema as any)._def
+				const items = def?.items || []
+				const expectedCount = items.length
+				const receivedCount = finalArgs.length
+
+				if (receivedCount < expectedCount) {
+					const missingItem = items[receivedCount]
+					const description = missingItem?.description || missingItem?._def?.description
+					message = description ? `missing ${description}` : 'missing required arguments'
+				}
+				else {
+					message = 'missing required arguments'
+				}
+			}
+			else if (issue.path.length === 1 && typeof issue.path[0] === 'number') {
+				// Validation error at a specific tuple index
+				const index = issue.path[0]
+				const def = (finalZodSchema as any)._def
+				const items = def?.items || []
+				const item = items[index]
+				const description = item?.description || item?._def?.description
+				if (description) {
+					message = `${description} ${message}`
+				}
+			}
+
+			const usageText = finalUsage ? ` | Usage: \`${finalUsage}\`` : ''
+			return ctx.reply(`Incorrect usage, ${message}.${usageText}`)
 		}
-		parsedArgs = out
+		parsedArgs = result.data
 	}
 
 	// 5. Cost Check (Simplistic for now)

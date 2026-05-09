@@ -73,6 +73,9 @@ export async function handleMessage(channel: string, user: string, message: stri
 	// 3. Subcommand Resolution
 	let finalHandler = command.handler
 	let finalArgs = parts.slice(1)
+	if (resolved.overrideArgs) {
+		finalArgs = [...resolved.overrideArgs, ...finalArgs]
+	}
 	let finalPermission = command.permission
 	let finalZodSchema = command.args as z.ZodTypeAny | undefined
 	let finalUsage = command.usage

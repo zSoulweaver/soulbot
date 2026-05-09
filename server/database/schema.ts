@@ -25,6 +25,7 @@ export const commandAliases = sqliteTable('command_aliases', {
 	trigger: text('trigger').notNull().unique(),
 	commandId: text('command_id').notNull().references(() => commands.id),
 	subcommand: text('subcommand'),
+	overrideArgs: text('override_args', { mode: 'json' }).$type<string[]>(),
 })
 
 export const users = sqliteTable('users', {

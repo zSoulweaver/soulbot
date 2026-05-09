@@ -4,10 +4,11 @@ import { commandAliases, commands } from '~~/server/database/schema'
 
 class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()
-	private triggerMap = new Map<string, { commandId: string, subcommand?: string }>()
+	private triggerMap = new Map<string, { commandId: string, subcommand?: string, overrideArgs?: string[] }>()
 
 	register(def: CommandDefinition) {
 		this.commands.set(def.id, def)
+		console.log('[Bot] Registering', def.id, 'module')
 	}
 
 	async syncWithDb() {
@@ -40,6 +41,7 @@ class CommandRegistry {
 			this.triggerMap.set(alias.trigger, {
 				commandId: alias.commandId,
 				subcommand: alias.subcommand ?? undefined,
+				overrideArgs: alias.overrideArgs ?? undefined,
 			})
 		}
 	}

@@ -22,5 +22,14 @@ export default antfu(
 				entryPoint: 'app/assets/css/main.css',
 			},
 		},
+		rules: {
+			'better-tailwindcss/enforce-consistent-line-wrapping': [
+				'warn',
+				{
+					printWidth: 1000,
+					indent: 'tab',
+				},
+			],
+		},
 	},
 )

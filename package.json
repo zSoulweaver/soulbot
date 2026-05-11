@@ -33,6 +33,7 @@
 		"vue": "^3.5.33",
 		"vue-router": "^5.0.6",
 		"vue-sonner": "^2.0.9",
+		"vue3-simple-icons": "^16.10.0",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {

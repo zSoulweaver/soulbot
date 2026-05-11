@@ -21,6 +21,7 @@ export default defineNuxtConfig({
 			],
 		},
 	},
+	ssr: false,
 	css: ['./app/assets/css/main.css'],
 	components: [
 		{

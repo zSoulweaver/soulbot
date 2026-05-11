@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { CheckCircle2, Circle, Loader2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 const { data: status, refresh } = await useFetch('/api/auth/status')
 
@@ -102,14 +99,10 @@ async function handleBotAction() {
 				</div>
 
 				<Alert
-					v-if="isComplete" variant="default" :class="status?.isBotRunning ? `
-       border-blue-200 bg-blue-50
-     ` : `border-green-200 bg-green-50`"
+					v-if="isComplete" variant="default" :class="status?.isBotRunning ? `border-blue-200 bg-blue-50` : `border-green-200 bg-green-50`"
 				>
 					<CheckCircle2
-						class="size-4" :class="status?.isBotRunning ? `text-blue-600` : `
-        text-green-600
-      `"
+						class="size-4" :class="status?.isBotRunning ? `text-blue-600` : `text-green-600`"
 					/>
 					<AlertTitle
 						:class="status?.isBotRunning ? 'text-blue-800' : `text-green-800`"

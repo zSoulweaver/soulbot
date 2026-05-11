@@ -4,7 +4,9 @@ import 'vue-sonner/style.css'
 
 <template>
 	<div class="min-h-screen bg-background font-sans antialiased">
-		<NuxtPage />
+		<NuxtLayout>
+			<NuxtPage />
+		</NuxtLayout>
 		<Sonner />
 	</div>
 </template>

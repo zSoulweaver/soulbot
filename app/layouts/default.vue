@@ -8,9 +8,9 @@
 				<div class="flex w-full items-center gap-2">
 					<SidebarTrigger class="-ml-1" />
 					<Separator orientation="vertical" class="mr-2 h-8!" />
-					<div class="font-semibold text-muted-foreground">
-						Soulbot
-					</div>
+
+					<AppBreadcrumbs />
+
 					<div class="ml-auto flex items-center gap-4">
 						<AppBotStatus />
 						<AppThemeSwitcherButton />

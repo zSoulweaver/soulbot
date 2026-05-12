@@ -2,7 +2,7 @@
 import type { UserRole } from '~/config/navigation'
 import { Bot, ChevronUp } from 'lucide-vue-next'
 import { TwitchIcon } from 'vue3-simple-icons'
-import { adminGroups, publicNav } from '~/config/navigation'
+import { navigation } from '~/config/navigation'
 
 const currentUser = ref({
 	isLoggedIn: true,
@@ -11,8 +11,8 @@ const currentUser = ref({
 	role: 'caster' as UserRole,
 })
 
-const filteredAdminGroups = computed(() => {
-	return adminGroups.map(group => ({
+const filteredNavigation = computed(() => {
+	return navigation.map(group => ({
 		...group,
 		items: group.items.filter(item => !item.roles || item.roles.includes(currentUser.value.role)),
 	})).filter(group => group.items.length > 0)
@@ -38,38 +38,7 @@ const filteredAdminGroups = computed(() => {
 			</div>
 		</SidebarHeader>
 		<SidebarContent>
-			<!-- Public Nav (Ungrouped) -->
-			<SidebarGroup>
-				<SidebarGroupContent>
-					<SidebarMenu>
-						<SidebarMenuItem v-for="item in publicNav" :key="item.title">
-							<SidebarMenuButton as-child :tooltip="item.title">
-								<NuxtLink :to="item.url">
-									<component :is="item.icon" />
-									<span>{{ item.title }}</span>
-								</NuxtLink>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroupContent>
-			</SidebarGroup>
-
-			<!-- Admin Nav (Grouped) -->
-			<SidebarGroup v-for="group in filteredAdminGroups" :key="group.label">
-				<SidebarGroupLabel>{{ group.label }}</SidebarGroupLabel>
-				<SidebarGroupContent>
-					<SidebarMenu>
-						<SidebarMenuItem v-for="item in group.items" :key="item.title">
-							<SidebarMenuButton as-child :tooltip="item.title">
-								<NuxtLink :to="item.url">
-									<component :is="item.icon" />
-									<span>{{ item.title }}</span>
-								</NuxtLink>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroupContent>
-			</SidebarGroup>
+			<AppSidebarNavGroup v-for="group in filteredNavigation" :key="group.label" :group="group" />
 		</SidebarContent>
 
 		<SidebarFooter>

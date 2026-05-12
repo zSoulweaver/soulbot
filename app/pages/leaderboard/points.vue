@@ -1,6 +1,89 @@
+<script setup lang="ts">
+import { MedalIcon, TrophyIcon } from 'lucide-vue-next'
+
+const { data: leaderboard, pending } = await useFetch<any[]>('/api/points/leaderboard')
+
+function getRankIcon(index: number) {
+	if (index === 0)
+		return { icon: TrophyIcon, class: 'text-yellow-500' }
+	if (index === 1)
+		return { icon: MedalIcon, class: 'text-slate-300' }
+	if (index === 2)
+		return { icon: MedalIcon, class: 'text-amber-600' }
+	return null
+}
+</script>
+
 <template>
-	<div class="flex flex-col gap-4">
-		<h1 class="text-3xl font-bold tracking-tight">Points Leaderboard</h1>
-		<p class="text-muted-foreground">View the top point earners in the community.</p>
+	<div class="mx-auto flex max-w-4xl flex-col gap-6 py-8">
+		<div class="space-y-2 text-center">
+			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight uppercase italic">
+				Points Leaderboard
+			</h1>
+			<p class="text-lg text-muted-foreground">
+				The elite point earners in our community.
+			</p>
+		</div>
+
+		<Table class="overflow-hidden rounded-lg">
+			<TableHeader class="bg-muted/50">
+				<TableRow>
+					<TableHead class="w-20 text-center font-bold">
+						Rank
+					</TableHead>
+					<TableHead class="font-bold">
+						Member
+					</TableHead>
+					<TableHead class="pr-8 text-right font-bold">
+						Points
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				<template v-if="pending">
+					<TableRow v-for="i in 10" :key="i">
+						<TableCell><Skeleton class="mx-auto h-6 w-8" /></TableCell>
+						<TableCell><Skeleton class="h-6 w-32" /></TableCell>
+						<TableCell><Skeleton class="mr-4 ml-auto h-6 w-20" /></TableCell>
+					</TableRow>
+				</template>
+				<template v-else-if="leaderboard?.length">
+					<TableRow
+						v-for="(user, index) in leaderboard"
+						:key="user.id"
+						:class="index < 3 ? 'bg-primary/5 font-semibold' : ''"
+					>
+						<TableCell class="text-center">
+							<div class="flex items-center justify-center">
+								<component
+									:is="getRankIcon(index)!.icon"
+									v-if="getRankIcon(index)"
+									class="mr-1 size-5" :class="[getRankIcon(index)!.class]"
+								/>
+								<span v-else class="font-mono text-muted-foreground">#{{ index + 1 }}</span>
+							</div>
+						</TableCell>
+						<TableCell>
+							<div class="flex items-center gap-3">
+								<Avatar class="size-8">
+									<AvatarFallback>{{ user.displayName[0] }}</AvatarFallback>
+								</Avatar>
+								<span class="text-lg">{{ user.displayName }}</span>
+							</div>
+						</TableCell>
+						<TableCell class="pr-8 text-right text-xl font-bold tabular-nums">
+							{{ user.points.toLocaleString() }}
+						</TableCell>
+					</TableRow>
+				</template>
+				<template v-else>
+					<TableRow>
+						<TableCell colspan="3" class="h-32 text-center text-muted-foreground">
+							No point data available yet.
+						</TableCell>
+					</TableRow>
+				</template>
+			</TableBody>
+		</Table>
 	</div>
 </template>

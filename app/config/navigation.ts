@@ -1,6 +1,7 @@
 import {
 	Clock,
 	LayoutDashboard,
+	PiggyBank,
 	Terminal,
 	Timer,
 	Trophy,
@@ -32,6 +33,7 @@ export const adminGroups: NavGroup[] = [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
 			{ title: 'Commands', url: '/admin/commands', icon: Terminal, roles: ['moderator', 'caster'] },
 			{ title: 'Timers', url: '/admin/timers', icon: Timer, roles: ['caster'] },
+			{ title: 'Points', url: '/admin/points', icon: PiggyBank, roles: ['caster', 'moderator'] },
 		],
 	},
 ]

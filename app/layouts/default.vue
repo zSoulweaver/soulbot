@@ -11,7 +11,10 @@
 					<div class="font-semibold text-muted-foreground">
 						Soulbot
 					</div>
-					<AppThemeSwitcherButton class="ml-auto" />
+					<div class="ml-auto flex items-center gap-4">
+						<AppBotStatus />
+						<AppThemeSwitcherButton />
+					</div>
 				</div>
 			</header>
 			<main class="flex flex-1 flex-col gap-4 p-4">

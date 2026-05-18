@@ -96,6 +96,11 @@ export async function getChatClient() {
 	return chatClientInstance
 }
 
+// Memory cache to throttle user DB writes (tracks last seen timestamp)
+const lastSeenCache = new Map<string, number>()
+// Throttle updates to at most once every 5 minutes
+const USER_TRACKING_THROTTLE_MS = 5 * 60 * 1000
+
 export async function startBot() {
 	const chat = await getChatClient()
 	if (!chat)
@@ -110,28 +115,45 @@ export async function startBot() {
 	chat.onAuthenticationFailure((text, retryCount) => botLogger.error({ text, retryCount }, 'Failed to authenticate with Twitch Chat'))
 
 	chat.onMessage(async (channel, userName, message, raw) => {
-		const now = new Date()
-		// Track user in DB
-		await db.insert(users)
-			.values({
-				id: raw.userInfo.userId,
-				username: raw.userInfo.userName,
-				displayName: raw.userInfo.displayName,
-				points: 0,
-				firstSeen: Date.now(),
-				lastSeen: Date.now(),
-				createdAt: now,
-				updatedAt: now,
-			})
-			.onConflictDoUpdate({
-				target: users.id,
-				set: {
-					username: raw.userInfo.userName,
-					displayName: raw.userInfo.displayName,
-					lastSeen: Date.now(),
-					updatedAt: now,
-				},
-			})
+		const userId = raw.userInfo.userId
+		const nowTime = Date.now()
+		const lastUpdated = lastSeenCache.get(userId)
+
+		// Only write to the DB if the user hasn't been seen recently
+		if (!lastUpdated || (nowTime - lastUpdated) > USER_TRACKING_THROTTLE_MS) {
+			const now = new Date()
+			try {
+				await db.insert(users)
+					.values({
+						id: userId,
+						username: raw.userInfo.userName,
+						displayName: raw.userInfo.displayName,
+						points: 0,
+						firstSeen: nowTime,
+						lastSeen: nowTime,
+						createdAt: now,
+						updatedAt: now,
+					})
+					.onConflictDoUpdate({
+						target: users.id,
+						set: {
+							username: raw.userInfo.userName,
+							displayName: raw.userInfo.displayName,
+							lastSeen: nowTime,
+							updatedAt: now,
+						},
+					})
+
+				// Keep cache bounded to prevent potential unbounded growth
+				if (lastSeenCache.size > 5000) {
+					lastSeenCache.clear()
+				}
+				lastSeenCache.set(userId, nowTime)
+			}
+			catch (err) {
+				botLogger.error({ err, userId }, 'Failed to track user in database')
+			}
+		}
 
 		await handleMessage(channel, userName, message, raw)
 	})

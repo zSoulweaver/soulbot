@@ -1,6 +1,6 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import type { PointsArgs } from '../schema'
-import { getUserRecord } from '../service'
+import { getUserRecord } from '~~/server/bot/services/user'
 
 export const handlePointsRoot: CommandHandler<typeof PointsArgs> = async (ctx, [target]) => {
 	const username = (target || ctx.user.name).toLowerCase().replace('@', '')

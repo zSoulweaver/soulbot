@@ -18,7 +18,9 @@ export const commands = sqliteTable('commands', {
 	trigger: text('trigger').notNull().unique(), // current trigger word
 	enabled: integer('enabled', { mode: 'boolean' }).default(true).notNull(),
 	cost: integer('cost').default(0).notNull(),
-	cooldown: integer('cooldown').default(0).notNull(), // in seconds
+	cooldown: integer('cooldown').default(0).notNull(), // in seconds (legacy fallback)
+	globalCooldown: integer('global_cooldown').default(0).notNull(), // global command cooldown in seconds
+	userCooldown: integer('user_cooldown').default(0).notNull(), // user command cooldown in seconds
 })
 
 export const commandAliases = sqliteTable('command_aliases', {
@@ -48,4 +50,10 @@ export const commandTemplates = sqliteTable('command_templates', {
 	id: text('id').primaryKey(), // e.g. 'points.add'
 	template: text('template').notNull(), // The user-defined override string
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})
+
+export const settings = sqliteTable('settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull(),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })

@@ -6,13 +6,19 @@ import { registerPointsTemplates } from './templates'
 
 registerPointsTemplates()
 
-export const pointsCommand = defineCommand({
+export const pointsModule = defineCommand({
 	id: 'points',
 	description: 'Manage and check points',
 	usage: '!points [user]',
 	permission: 'everyone',
 	args: PointsArgs,
 	handler: handlePointsRoot,
+	templates: [
+		'points.show',
+		'points.show-self',
+		'points.user-no-points',
+		'points.user-no-points-self',
+	],
 	subcommands: {
 		add: {
 			description: 'Add points to a user',
@@ -20,6 +26,10 @@ export const pointsCommand = defineCommand({
 			permission: 'moderator',
 			args: PointsAddArgs,
 			handler: handlePointsAdd,
+			templates: [
+				'points.add',
+				'points.user-does-not-exist',
+			],
 		},
 	},
 })

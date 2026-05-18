@@ -27,6 +27,9 @@ export interface CommandContext {
 		...args: TemplateData<T> extends undefined | Record<string, never> ? [] : [TemplateData<T>]
 	) => Promise<void>)
 	raw: ChatMessage
+	args?: any // Validated/transformed argument results from Zod parser
+	rawArgs: string[] // Raw string arguments
+	state: Record<string, any> // Stateful context passed between middlewares
 }
 
 export type InferArgs<T> = T extends { _output: infer Out } ? Out : T
@@ -43,9 +46,12 @@ export interface CommandDefinition<T = any> {
 	permission: CommandPermission
 	cost?: number
 	cooldown?: number
+	globalCooldown?: number
+	userCooldown?: number
 	args?: T
 	handler: CommandHandler<T>
 	subcommands?: Record<string, SubcommandDefinition<any>>
+	templates?: TemplateName[]
 }
 
 export interface SubcommandDefinition<T = any> {
@@ -54,4 +60,25 @@ export interface SubcommandDefinition<T = any> {
 	permission: CommandPermission
 	args?: T
 	handler: CommandHandler<T>
+	templates?: TemplateName[]
 }
+
+// Chat event payload
+export interface ChatMessageEvent {
+	channel: string
+	user: string
+	message: string
+	raw: ChatMessage
+}
+
+// General Chat Middleware Pipeline type
+export type ChatMiddleware = (
+	event: ChatMessageEvent,
+	next: () => Promise<void>,
+) => Promise<void> | void
+
+// Command Onion Middleware Pipeline type
+export type CommandMiddleware = (
+	ctx: CommandContext,
+	next: () => Promise<void>,
+) => Promise<void> | void

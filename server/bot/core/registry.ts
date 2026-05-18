@@ -5,6 +5,7 @@ import { commandAliases, commands } from '~~/server/database/schema'
 class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()
 	private triggerMap = new Map<string, { commandId: string, subcommand?: string, overrideArgs?: string[] }>()
+	private dbConfigs = new Map<string, typeof commands.$inferSelect>()
 
 	register(def: CommandDefinition) {
 		this.commands.set(def.id, def)
@@ -15,39 +16,55 @@ class CommandRegistry {
 		const dbCommands = await db.select().from(commands)
 		const dbAliases = await db.select().from(commandAliases)
 
-		// Map triggers from DB
+		// Clear existing memory caches
 		this.triggerMap.clear()
+		this.dbConfigs.clear()
 
-		// 1. Core commands
+		// 1. Core commands & database config synchronization
 		for (const def of this.commands.values()) {
-			const dbCmd = dbCommands.find(c => c.id === def.id)
-			if (dbCmd) {
-				this.triggerMap.set(dbCmd.trigger, { commandId: def.id })
-			}
-			else {
-				// Initial sync: Add to DB if missing
-				await db.insert(commands).values({
+			let dbCmd = dbCommands.find(c => c.id === def.id)
+			if (!dbCmd) {
+				const newRow = {
 					id: def.id,
 					trigger: def.id,
+					enabled: true,
 					cost: def.cost ?? 0,
 					cooldown: def.cooldown ?? 0,
-				})
-				this.triggerMap.set(def.id, { commandId: def.id })
+					globalCooldown: def.globalCooldown ?? 0,
+					userCooldown: def.userCooldown ?? 0,
+				}
+				await db.insert(commands).values(newRow)
+				dbCmd = { ...newRow } as any
+			}
+
+			this.dbConfigs.set(def.id, dbCmd!)
+
+			// Only map the trigger if the command itself is active/enabled in the DB
+			if (dbCmd!.enabled) {
+				this.triggerMap.set(dbCmd!.trigger, { commandId: def.id })
 			}
 		}
 
-		// 2. Aliases
+		// 2. Dynamic trigger aliases
 		for (const alias of dbAliases) {
-			this.triggerMap.set(alias.trigger, {
-				commandId: alias.commandId,
-				subcommand: alias.subcommand ?? undefined,
-				overrideArgs: alias.overrideArgs ?? undefined,
-			})
+			const targetDbCmd = this.dbConfigs.get(alias.commandId)
+			// Only register alias if the target command exists and is enabled
+			if (targetDbCmd && targetDbCmd.enabled) {
+				this.triggerMap.set(alias.trigger, {
+					commandId: alias.commandId,
+					subcommand: alias.subcommand ?? undefined,
+					overrideArgs: alias.overrideArgs ?? undefined,
+				})
+			}
 		}
 	}
 
 	getCommand(id: string) {
 		return this.commands.get(id)
+	}
+
+	getCommandConfig(id: string) {
+		return this.dbConfigs.get(id)
 	}
 
 	resolveTrigger(trigger: string) {

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
 
-const { data: status, refresh } = await useFetch('/api/auth/status')
+interface BotStatus {
+	bot: { displayName: string } | null
+	streamer: { displayName: string } | null
+	isBotRunning: boolean
+}
+
+const { data: status, refresh } = await useFetch<BotStatus>('/api/bot/status')
 
 // Refresh status every 30 seconds
 useIntervalFn(() => {

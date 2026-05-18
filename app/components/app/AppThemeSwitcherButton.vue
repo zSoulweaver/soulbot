@@ -27,27 +27,29 @@ function toggleTheme() {
 </script>
 
 <template>
-	<Button
-		size="icon"
-		variant="outline"
-		class="transition-transform"
-		@click="toggleTheme"
-	>
-		<div
-			class="relative flex size-5 items-center justify-center overflow-hidden"
+	<ClientOnly>
+		<Button
+			size="icon"
+			variant="outline"
+			class="transition-transform"
+			@click="toggleTheme"
 		>
-			<transition name="theme-slide">
-				<SunIcon
-					v-if="displayedMode === 'light'"
-					class="absolute size-4 text-amber-500"
-				/>
-				<MoonIcon
-					v-else
-					class="absolute size-4 text-blue-400"
-				/>
-			</transition>
-		</div>
-	</Button>
+			<div
+				class="relative flex size-5 items-center justify-center overflow-hidden"
+			>
+				<transition name="theme-slide">
+					<SunIcon
+						v-if="displayedMode === 'light'"
+						class="absolute size-4 text-amber-500"
+					/>
+					<MoonIcon
+						v-else
+						class="absolute size-4 text-blue-400"
+					/>
+				</transition>
+			</div>
+		</Button>
+	</ClientOnly>
 </template>
 
 <style scoped>

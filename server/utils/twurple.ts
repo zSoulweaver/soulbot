@@ -108,8 +108,9 @@ export async function startBot() {
 	chat.onDisconnect((manually, reason) => botLogger.warn({ manually, reason: reason?.message }, 'Disconnected from Twitch Chat'))
 	chat.onAuthenticationSuccess(() => botLogger.info('Authenticated with Twitch Chat'))
 	chat.onAuthenticationFailure((text, retryCount) => botLogger.error({ text, retryCount }, 'Failed to authenticate with Twitch Chat'))
-	
-	chat.onMessage(async (channel, user, message, raw) => {
+
+	chat.onMessage(async (channel, userName, message, raw) => {
+		const now = new Date()
 		// Track user in DB
 		await db.insert(users)
 			.values({
@@ -119,6 +120,8 @@ export async function startBot() {
 				points: 0,
 				firstSeen: Date.now(),
 				lastSeen: Date.now(),
+				createdAt: now,
+				updatedAt: now,
 			})
 			.onConflictDoUpdate({
 				target: users.id,
@@ -126,12 +129,65 @@ export async function startBot() {
 					username: raw.userInfo.userName,
 					displayName: raw.userInfo.displayName,
 					lastSeen: Date.now(),
+					updatedAt: now,
 				},
 			})
 
-		await handleMessage(channel, user, message, raw)
+		await handleMessage(channel, userName, message, raw)
 	})
 
 	await chat.connect()
 	return 'started'
+}
+
+export interface UserRoleInfo {
+	role: 'viewer' | 'moderator' | 'caster'
+	isVip: boolean
+	isSubscriber: boolean
+}
+
+export async function getTwitchUserRole(userId: string): Promise<UserRoleInfo> {
+	const api = getApiClient()
+	const streamerToken = await db.select().from(twitchTokens).where(eq(twitchTokens.accountType, 'streamer')).then(res => res[0])
+
+	const info: UserRoleInfo = {
+		role: 'viewer',
+		isVip: false,
+		isSubscriber: false,
+	}
+
+	if (!streamerToken || !streamerToken.userId)
+		return info
+
+	if (userId === streamerToken.userId) {
+		info.role = 'caster'
+		return info
+	}
+
+	try {
+		const isMod = await api.moderation.checkUserMod(streamerToken.userId, userId)
+		if (isMod)
+			info.role = 'moderator'
+	}
+	catch {}
+
+	try {
+		const vips = await api.channels.getVips(streamerToken.userId as string)
+		if (vips.data.some(v => v.id === userId))
+			info.isVip = true
+	}
+	catch {}
+
+	try {
+		const sub = await api.subscriptions.checkUserSubscription(userId, streamerToken.userId as string)
+		if (sub)
+			info.isSubscriber = true
+	}
+	catch {}
+
+	return info
+}
+
+export function isBotRunning() {
+	return chatClientInstance?.isConnected ?? false
 }

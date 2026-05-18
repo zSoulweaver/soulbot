@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const twitchTokens = sqliteTable('twitch_tokens', {
@@ -32,9 +33,15 @@ export const users = sqliteTable('users', {
 	id: text('id').primaryKey(), // twitch user id
 	username: text('username').notNull(),
 	displayName: text('display_name').notNull(),
+	image: text('image'),
+	role: text('role').$type<'viewer' | 'moderator' | 'caster'>().default('viewer').notNull(),
+	isVip: integer('is_vip', { mode: 'boolean' }).default(false).notNull(),
+	isSubscriber: integer('is_subscriber', { mode: 'boolean' }).default(false).notNull(),
 	points: integer('points').default(0).notNull(),
-	firstSeen: integer('first_seen').notNull(),
-	lastSeen: integer('last_seen').notNull(),
+	firstSeen: integer('first_seen'), // Null if never seen in chat
+	lastSeen: integer('last_seen'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
 export const commandTemplates = sqliteTable('command_templates', {

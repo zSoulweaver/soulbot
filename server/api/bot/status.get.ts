@@ -1,11 +1,9 @@
-import { db } from '../../database'
-import { twitchTokens } from '../../database/schema'
-import { getChatClient } from '../../utils/twurple'
+import { db } from '~~/server/database'
+import { twitchTokens } from '~~/server/database/schema'
+import { isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async () => {
 	const tokens = await db.select().from(twitchTokens)
-	const chatClient = await getChatClient()
-	const isBotRunning = chatClient?.isConnected || false
 
 	const botToken = tokens.find(t => t.accountType === 'bot')
 	const streamerToken = tokens.find(t => t.accountType === 'streamer')
@@ -25,6 +23,6 @@ export default defineEventHandler(async () => {
 					displayName: streamerToken.displayName,
 				}
 			: null,
-		isBotRunning,
+		isBotRunning: isBotRunning(),
 	}
 })

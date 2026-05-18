@@ -2,7 +2,11 @@
 import { CheckCircle2, Circle, Loader2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 
-const { data: status, refresh } = await useFetch('/api/auth/status')
+definePageMeta({
+	layout: 'blank',
+})
+
+const { data: status, refresh } = await useFetch('/api/bot/status')
 
 const isComplete = computed(() => status.value?.bot && status.value?.streamer)
 const isLoading = ref(false)
@@ -19,9 +23,7 @@ async function handleBotAction() {
 		toast.success('Bot started successfully!')
 		await refresh()
 		// Delay navigation slightly so user sees the success state/toast
-		setTimeout(() => {
-			navigateTo('/')
-		}, 1500)
+		navigateTo('/')
 	}
 	catch (err: any) {
 		console.error('Failed to start bot', err)
@@ -64,7 +66,7 @@ async function handleBotAction() {
 						variant="outline"
 						size="sm"
 						as="a"
-						href="/api/auth/twitch/login?type=streamer"
+						href="/api/bot/auth/twitch?type=streamer"
 					>
 						Connect
 					</Button>
@@ -92,7 +94,7 @@ async function handleBotAction() {
 						variant="outline"
 						size="sm"
 						as="a"
-						href="/api/auth/twitch/login?type=bot"
+						href="/api/bot/auth/twitch?type=bot"
 					>
 						Connect
 					</Button>

@@ -49,7 +49,8 @@ export const navigation: NavGroup[] = [
 				icon: PiggyBank,
 				roles: ['caster', 'moderator'],
 				items: [
-					{ title: 'Settings', url: '/admin/points' },
+					{ title: 'Payout Settings', url: '/admin/points' },
+					{ title: 'Balances', url: '/admin/points/users' },
 					{ title: 'Gambling', url: '/admin/points/gambling' },
 				],
 			},

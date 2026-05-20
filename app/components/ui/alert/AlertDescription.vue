@@ -11,9 +11,9 @@ const props = defineProps<{
 	<div
 		data-slot="alert-description"
 		:class="cn(`
-    col-start-2 text-sm text-muted-foreground
-    [&_p]:leading-relaxed
-  `, props.class)"
+			col-start-2 text-sm text-muted-foreground
+			[&_p]:leading-relaxed
+		`, props.class)"
 	>
 		<slot />
 	</div>

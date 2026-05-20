@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import type { CommandMiddleware } from '../types'
 import { botLogger } from '~~/server/utils/logger'
+import { registry } from '../registry'
 
 /**
  * Resolves potential subcommands, overrides raw arguments, and validates arguments against Zod schemas.
@@ -17,26 +18,68 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 		finalArgs = [...resolved.overrideArgs, ...finalArgs]
 	}
 
-	let finalPermission = command.permission
+	const rootDbConfig = registry.getCommandConfig(command.id)
+	let finalPermission = rootDbConfig?.permission || command.permission
 	let finalZodSchema = command.args as z.ZodTypeAny | undefined
 	let finalUsage = command.usage
 
-	// Resolve potential subcommand from trigger overrides or first argument
-	const potentialSubcommand = resolved?.subcommand || finalArgs[0]?.toLowerCase() || null
+	// Resolve potential subcommand path recursively
+	let currentScope: any = command
+	let currentArgs = finalArgs
+	const subPath: string[] = []
 
-	if (potentialSubcommand && command.subcommands?.[potentialSubcommand]) {
-		const sub = command.subcommands[potentialSubcommand]
-		finalHandler = sub.handler
+	// Resolve alias-based direct subcommand jumps (if present)
+	if (resolved?.subcommand) {
+		const parts = resolved.subcommand.split('.')
+		for (const part of parts) {
+			if (currentScope.subcommands?.[part]) {
+				currentScope = currentScope.subcommands[part]
+				subPath.push(part)
+			}
+			else {
+				break
+			}
+		}
+	}
+	else {
+		// Traverse nested subcommands based on chat arguments
+		while (currentArgs[0]) {
+			const nextWord = currentArgs[0].toLowerCase()
+			const parentPrefix = subPath.length > 0 ? `${command.id}.${subPath.join('.')}` : command.id
+			const resolvedKey = registry.resolveSubcommandKey(parentPrefix, nextWord) || nextWord
 
-		// If it's a natural subcommand (e.g. !points add), shift the arguments
-		if (!resolved?.subcommand) {
-			finalArgs = finalArgs.slice(1)
+			if (currentScope.subcommands?.[resolvedKey]) {
+				currentScope = currentScope.subcommands[resolvedKey]
+				subPath.push(resolvedKey)
+				currentArgs = currentArgs.slice(1) // Shift argument
+			}
+			else {
+				break
+			}
+		}
+	}
+
+	if (subPath.length > 0) {
+		const subId = `${command.id}.${subPath.join('.')}`
+		const subDbConfig = registry.getCommandConfig(subId)
+
+		// Check if subcommand is active in DB
+		if (subDbConfig && !subDbConfig.enabled) {
+			return
 		}
 
-		finalPermission = sub.permission
-		finalZodSchema = sub.args as z.ZodTypeAny | undefined
-		finalUsage = sub.usage
-		ctx.state.subcommand = potentialSubcommand
+		if (currentScope.handler) {
+			finalHandler = currentScope.handler
+		}
+		finalArgs = currentArgs
+		finalPermission = subDbConfig?.permission || currentScope.permission
+		finalZodSchema = currentScope.args as z.ZodTypeAny | undefined
+		finalUsage = currentScope.usage
+		ctx.state.subcommand = subPath.join('.')
+
+		if (subDbConfig) {
+			ctx.state.dbCmd = subDbConfig
+		}
 	}
 
 	// Store permission level downstream

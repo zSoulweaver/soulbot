@@ -1,9 +1,9 @@
-import { eq } from 'drizzle-orm'
-import { db } from '~~/server/database'
-import { commands, commandAliases } from '~~/server/database/schema'
 import type { CommandHandler } from '~~/server/bot/core/types'
-import { registry } from '~~/server/bot/core/registry'
 import type { RenameArgs } from '../schema'
+import { eq } from 'drizzle-orm'
+import { registry } from '~~/server/bot/core/registry'
+import { db } from '~~/server/database'
+import { commandAliases, commands } from '~~/server/database/schema'
 
 export const handleRename: CommandHandler<typeof RenameArgs> = async (ctx, [oldTrigger, newTrigger]) => {
 	const resolved = registry.resolveTrigger(oldTrigger)

@@ -58,9 +58,14 @@ export interface SubcommandDefinition<T = any> {
 	description: string
 	usage?: string
 	permission: CommandPermission
+	cost?: number
+	cooldown?: number
+	globalCooldown?: number
+	userCooldown?: number
 	args?: T
-	handler: CommandHandler<T>
+	handler?: CommandHandler<T>
 	templates?: TemplateName[]
+	subcommands?: Record<string, SubcommandDefinition<any>>
 }
 
 // Chat event payload

@@ -15,12 +15,13 @@ export const twitchTokens = sqliteTable('twitch_tokens', {
 
 export const commands = sqliteTable('commands', {
 	id: text('id').primaryKey(), // internal code handler ID
-	trigger: text('trigger').notNull().unique(), // current trigger word
+	trigger: text('trigger').unique(), // current trigger word
 	enabled: integer('enabled', { mode: 'boolean' }).default(true).notNull(),
 	cost: integer('cost').default(0).notNull(),
 	cooldown: integer('cooldown').default(0).notNull(), // in seconds (legacy fallback)
 	globalCooldown: integer('global_cooldown').default(0).notNull(), // global command cooldown in seconds
 	userCooldown: integer('user_cooldown').default(0).notNull(), // user command cooldown in seconds
+	permission: text('permission'), // custom permission override
 })
 
 export const commandAliases = sqliteTable('command_aliases', {

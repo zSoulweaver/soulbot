@@ -2,7 +2,7 @@ import { desc } from 'drizzle-orm'
 import { db } from '../../database'
 import { users } from '../../database/schema'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
 	const leaderboard = await db
 		.select({
 			id: users.id,

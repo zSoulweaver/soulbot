@@ -1,185 +1,174 @@
 <script setup lang="ts">
-import { createColumnHelper } from '@tanstack/vue-table'
-import { HashIcon, PlusIcon, SearchIcon } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
-import DataTable from '@/components/ui/data-table/DataTable.vue'
+import { AlertCircle, Clock, Coins, HelpCircle, Save } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { toast } from 'vue-sonner'
 
-interface User {
-	id: string
-	username: string
-	displayName: string
-	points: number
+interface PointsSettings {
+	interval: number
+	amount: number
 }
 
-const searchQuery = ref('')
-const { data: users, refresh: refreshUsers, pending: loadingTable } = await useFetch<User[]>('/api/users', {
-	query: computed(() => ({ q: searchQuery.value })),
-	watch: [searchQuery],
-})
+// Fetch active settings
+const { data: settingsData, refresh: refreshSettings, pending: loading } = await useFetch<PointsSettings>('/api/points/settings')
 
-// Manual Adjust State
-const targetUsername = ref('')
-const amount = ref<number>(0)
-const lookupResult = ref<User | null>(null)
-const loadingLookup = ref(false)
-const adjustError = ref('')
-const adjustLoading = ref(false)
+const intervalVal = ref(5)
+const amountVal = ref(5)
+const isSaving = ref(false)
 
-async function lookupUser() {
-	if (!targetUsername.value)
+// Synchronize values once loaded
+watch(settingsData, (newData) => {
+	if (newData) {
+		intervalVal.value = newData.interval
+		amountVal.value = newData.amount
+	}
+}, { immediate: true })
+
+async function saveSettings() {
+	if (intervalVal.value < 1) {
+		toast.error('Payout interval must be at least 1 minute')
 		return
-	loadingLookup.value = true
-	adjustError.value = ''
-	try {
-		const res = await $fetch<{ points: number }>(`/api/points/${targetUsername.value}`)
-		// Find in current users list or just show points
-		lookupResult.value = {
-			id: '',
-			username: targetUsername.value,
-			displayName: targetUsername.value,
-			points: res.points,
-		}
 	}
-	catch (err: any) {
-		adjustError.value = err.data?.statusMessage || 'User not found'
-		lookupResult.value = null
-	}
-	finally {
-		loadingLookup.value = false
-	}
-}
-
-async function updatePoints(mode: 'add' | 'set') {
-	if (!targetUsername.value)
+	if (amountVal.value < 0) {
+		toast.error('Payout amount cannot be negative')
 		return
-	adjustLoading.value = true
-	adjustError.value = ''
+	}
+
+	isSaving.value = true
 	try {
-		await $fetch(`/api/points/${targetUsername.value}`, {
-			method: 'POST' as any,
+		await $fetch('/api/points/settings', {
+			method: 'PUT',
 			body: {
-				amount: amount.value,
-				mode,
+				interval: intervalVal.value,
+				amount: amountVal.value,
 			},
 		})
-		amount.value = 0
-		await lookupUser() // Refresh lookup display
-		await refreshUsers() // Refresh table
+		toast.success('Points payout settings saved successfully!')
+		await refreshSettings()
 	}
 	catch (err: any) {
-		adjustError.value = err.data?.statusMessage || 'Failed to update points'
+		toast.error(err.data?.statusMessage || 'Failed to save settings')
 	}
 	finally {
-		adjustLoading.value = false
+		isSaving.value = false
 	}
 }
-
-// Table Columns
-const columnHelper = createColumnHelper<User>()
-const columns: any[] = [
-	columnHelper.accessor('username', {
-		header: 'User',
-		cell: info => info.getValue(),
-	}),
-	columnHelper.accessor('displayName', {
-		header: 'Display Name',
-		cell: info => info.getValue(),
-	}),
-	columnHelper.accessor('points', {
-		header: 'Points',
-		cell: info => info.getValue().toLocaleString(),
-	}),
-]
 </script>
 
 <template>
 	<div class="flex flex-col gap-6">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold tracking-tight">
-				Points Administration
-			</h1>
-			<p class="text-muted-foreground">
-				Manage user points and view the points database.
-			</p>
+		<div class="flex items-center justify-between">
+			<div class="flex flex-col gap-1">
+				<h1 class="font-sans text-3xl font-bold tracking-tight">
+					Points Settings
+				</h1>
+				<p class="text-sm text-muted-foreground">
+					Configure payout frequency and rewarding metrics for active chat users.
+				</p>
+			</div>
+			<Button variant="outline" size="sm" :disabled="loading" @click="refreshSettings">
+				Refresh
+			</Button>
 		</div>
 
-		<!-- Adjustment Form -->
-		<Card>
-			<CardHeader>
-				<CardTitle>Manual Adjustment</CardTitle>
-				<CardDescription>Search for a user and adjust their points manually.</CardDescription>
-			</CardHeader>
-			<CardContent class="space-y-4">
-				<div class="flex gap-2">
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="targetUser">Username</Label>
-						<div class="relative">
-							<SearchIcon class="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+		<div
+			class="
+				grid grid-cols-1 gap-6
+				lg:grid-cols-3
+			"
+		>
+			<!-- Settings Editor Panel -->
+			<Card
+				class="
+					border-border bg-card/50 backdrop-blur-sm
+					lg:col-span-2
+				"
+			>
+				<CardHeader>
+					<CardTitle>Payout Metrics</CardTitle>
+					<CardDescription>Adjust the frequency and points payout allocations for Twitch chatters.</CardDescription>
+				</CardHeader>
+				<CardContent class="space-y-6">
+					<div v-if="loading" class="py-10 text-center text-sm text-muted-foreground">
+						Loading active configurations...
+					</div>
+					<div v-else class="space-y-6">
+						<!-- Payout Interval -->
+						<div class="grid w-full items-center gap-2">
+							<Label for="payoutInterval" class="flex items-center gap-1.5 text-sm font-semibold">
+								<Clock class="size-4 text-primary" />
+								Payout Frequency (Minutes)
+							</Label>
 							<Input
-								id="targetUser"
-								v-model="targetUsername"
-								placeholder="Search username..."
-								class="pl-9"
-								@keyup.enter="lookupUser"
+								id="payoutInterval"
+								v-model="intervalVal"
+								type="number"
+								min="1"
+								class="
+									border-border font-medium
+									focus-visible:ring-primary
+								"
 							/>
+							<p class="text-xs text-muted-foreground">
+								The dynamic cycle time for points distribution. Chatters must send a message within this window to count as active.
+							</p>
+						</div>
+
+						<!-- Payout Amount -->
+						<div class="grid w-full items-center gap-2">
+							<Label for="payoutAmount" class="flex items-center gap-1.5 text-sm font-semibold">
+								<Coins class="size-4 text-amber-500" />
+								Award Amount (Points)
+							</Label>
+							<Input
+								id="payoutAmount"
+								v-model="amountVal"
+								type="number"
+								min="0"
+								class="
+									border-border font-medium
+									focus-visible:ring-primary
+								"
+							/>
+							<p class="text-xs text-muted-foreground">
+								The points amount added to each active chatter's account upon completion of a frequency cycle.
+							</p>
 						</div>
 					</div>
-					<div class="flex items-end">
-						<Button :disabled="loadingLookup || !targetUsername" @click="lookupUser">
-							Lookup
-						</Button>
-					</div>
-				</div>
+				</CardContent>
+				<CardFooter class="justify-end border-t border-border bg-muted/20 pt-4">
+					<Button :disabled="isSaving || loading" @click="saveSettings">
+						<Save class="mr-1.5 size-4" />
+						{{ isSaving ? 'Saving...' : 'Save Settings' }}
+					</Button>
+				</CardFooter>
+			</Card>
 
-				<div v-if="lookupResult" class="space-y-3 rounded-lg bg-muted p-4">
-					<div class="flex items-center justify-between">
-						<span class="font-semibold">{{ lookupResult.displayName }}</span>
-						<Badge variant="secondary" class="text-lg">
-							{{ lookupResult.points.toLocaleString() }} pts
-						</Badge>
-					</div>
-
-					<div class="grid grid-cols-1 gap-2 pt-2">
-						<div class="grid w-full items-center gap-1.5">
-							<Label for="adjustAmount">Amount</Label>
-							<Input id="adjustAmount" v-model="amount" type="number" />
+			<!-- Help / Mechanics Panel -->
+			<div class="space-y-6">
+				<Card class="border-border bg-card/30">
+					<CardHeader class="pb-3">
+						<CardTitle class="flex items-center gap-2 text-sm font-bold">
+							<HelpCircle class="size-4 text-muted-foreground" />
+							How Payouts Work
+						</CardTitle>
+					</CardHeader>
+					<CardContent class="space-y-3 text-xs/relaxed text-muted-foreground">
+						<p>
+							The bot runs a background watch-time payout engine in the thread pool that checks for chat active metrics.
+						</p>
+						<p>
+							Any chatter who posts a message is categorized in our in-memory active chatter registry.
+						</p>
+						<p>
+							When a payout cycle fires, the engine awards the configured point amount in a **single, highly-performant SQLite update batch query** to prevent write conflicts or lag spikes.
+						</p>
+						<div class="mt-2 flex gap-2 rounded-sm border border-yellow-500/20 bg-yellow-500/10 p-2.5 text-yellow-400">
+							<AlertCircle class="mt-0.5 size-4 shrink-0" />
+							<span>Updates made on this page take effect immediately starting from the next payout check.</span>
 						</div>
-						<div class="flex gap-2">
-							<Button class="flex-1" variant="outline" :disabled="adjustLoading" @click="updatePoints('add')">
-								<PlusIcon class="mr-2 size-4" /> Add
-							</Button>
-							<Button class="flex-1" :disabled="adjustLoading" @click="updatePoints('set')">
-								<HashIcon class="mr-2 size-4" /> Set
-							</Button>
-						</div>
-					</div>
-				</div>
-
-				<div v-if="adjustError" class="text-sm font-medium text-destructive">
-					{{ adjustError }}
-				</div>
-			</CardContent>
-		</Card>
-
-		<!-- Users Table -->
-		<Card>
-			<CardHeader>
-				<div class="flex items-center justify-between">
-					<div>
-						<CardTitle>User Database</CardTitle>
-						<CardDescription>Browse all users and their point balances.</CardDescription>
-					</div>
-					<div class="w-64">
-						<Input v-model="searchQuery" placeholder="Filter users..." />
-					</div>
-				</div>
-			</CardHeader>
-			<CardContent>
-				<DataTable :columns="columns" :data="users || []" />
-				<div v-if="loadingTable" class="py-4 text-center text-sm text-muted-foreground">
-					Loading users...
-				</div>
-			</CardContent>
-		</Card>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
 	</div>
 </template>

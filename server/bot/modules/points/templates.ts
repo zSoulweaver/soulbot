@@ -30,6 +30,14 @@ export const definitions = {
 		default: 'you haven\'t earned any points yet.',
 		params: undefined,
 	},
+	'points.get-top': {
+		default: 'Top ${count} Leaders: ${list}',
+		params: { count: 0, list: '' } as { count: number, list: string },
+	},
+	'points.get-top-empty': {
+		default: 'The leaderboard is currently empty.',
+		params: undefined,
+	},
 } as const satisfies TemplateSourceMap
 
 export function registerPointsTemplates() {

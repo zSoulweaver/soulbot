@@ -1,5 +1,22 @@
+import { initRegistry, registry, templateRegistry } from '~~/server/bot'
+
 export default defineNitroPlugin(() => {
 	const config = useRuntimeConfig()
+
+	// Always initialize registry in memory and sync with SQLite so the Web UI always has command definitions loaded
+	initRegistry()
+	Promise.resolve().then(async () => {
+		try {
+			await Promise.all([
+				registry.syncWithDb(),
+				templateRegistry.syncWithDb(),
+			])
+			botLogger.info('Registry and templates synchronized with DB on startup.')
+		}
+		catch (err) {
+			botLogger.error({ err }, 'Failed to synchronize registry with DB on startup')
+		}
+	})
 
 	if (!config.enableBot) {
 		botLogger.info('Bot plugin is disabled (ENABLE_BOT=false).')

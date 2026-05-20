@@ -6,6 +6,7 @@ class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()
 	private triggerMap = new Map<string, { commandId: string, subcommand?: string, overrideArgs?: string[] }>()
 	private dbConfigs = new Map<string, typeof commands.$inferSelect>()
+	private subcommandTriggers = new Map<string, string>()
 
 	register(def: CommandDefinition) {
 		this.commands.set(def.id, def)
@@ -19,6 +20,7 @@ class CommandRegistry {
 		// Clear existing memory caches
 		this.triggerMap.clear()
 		this.dbConfigs.clear()
+		this.subcommandTriggers.clear()
 
 		// 1. Core commands & database config synchronization
 		for (const def of this.commands.values()) {
@@ -32,6 +34,7 @@ class CommandRegistry {
 					cooldown: def.cooldown ?? 0,
 					globalCooldown: def.globalCooldown ?? 0,
 					userCooldown: def.userCooldown ?? 0,
+					permission: null,
 				}
 				await db.insert(commands).values(newRow)
 				dbCmd = { ...newRow } as any
@@ -40,8 +43,44 @@ class CommandRegistry {
 			this.dbConfigs.set(def.id, dbCmd!)
 
 			// Only map the trigger if the command itself is active/enabled in the DB
-			if (dbCmd!.enabled) {
+			if (dbCmd!.enabled && dbCmd!.trigger) {
 				this.triggerMap.set(dbCmd!.trigger, { commandId: def.id })
+			}
+
+			// Synchronize all nested subcommands recursively in Drizzle SQLite
+			const syncSubcommandsRecursive = async (subcommandsMap: Record<string, any>, prefix: string) => {
+				for (const [subKey, subValue] of Object.entries(subcommandsMap)) {
+					const subId = `${prefix}.${subKey}`
+					let dbSubCmd = dbCommands.find(c => c.id === subId)
+					if (!dbSubCmd) {
+						const newSubRow = {
+							id: subId,
+							trigger: null, // Subcommands do not have unique root triggers
+							enabled: true,
+							cost: 0,
+							cooldown: 0,
+							globalCooldown: 0,
+							userCooldown: 0,
+							permission: null,
+						}
+						await db.insert(commands).values(newSubRow)
+						dbSubCmd = { ...newSubRow } as any
+					}
+					this.dbConfigs.set(subId, dbSubCmd!)
+
+					// Map custom trigger word if defined in the database
+					if (dbSubCmd!.enabled && dbSubCmd!.trigger) {
+						this.subcommandTriggers.set(`${prefix}:${dbSubCmd!.trigger.toLowerCase()}`, subKey)
+					}
+
+					if (subValue.subcommands) {
+						await syncSubcommandsRecursive(subValue.subcommands, subId)
+					}
+				}
+			}
+
+			if (def.subcommands) {
+				await syncSubcommandsRecursive(def.subcommands, def.id)
 			}
 		}
 
@@ -69,6 +108,10 @@ class CommandRegistry {
 
 	resolveTrigger(trigger: string) {
 		return this.triggerMap.get(trigger)
+	}
+
+	resolveSubcommandKey(parentPrefix: string, triggerWord: string): string | null {
+		return this.subcommandTriggers.get(`${parentPrefix}:${triggerWord.toLowerCase()}`) || null
 	}
 
 	getAllCommands() {

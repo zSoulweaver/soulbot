@@ -9,7 +9,9 @@ defineProps<{
 
 <template>
 	<SidebarGroup>
-		<SidebarGroupLabel v-if="group.label">{{ group.label }}</SidebarGroupLabel>
+		<SidebarGroupLabel v-if="group.label">
+			{{ group.label }}
+		</SidebarGroupLabel>
 		<SidebarGroupContent>
 			<SidebarMenu>
 				<SidebarMenuItem v-for="item in group.items" :key="item.title">

@@ -28,20 +28,23 @@ const breadcrumbs = computed(() => {
 			crumbs.push({ title: item.title, url: item.url })
 
 			// Check sub-items
+			let resolvedSub = false
 			if (item.items) {
 				const subItem = item.items.find((si: any) => path === si.url)
 				if (subItem) {
 					crumbs.push({ title: subItem.title, url: subItem.url })
+					resolvedSub = true
 				}
-				else if (path !== item.url) {
-					const subPath = path.replace(item.url, '').split('/').filter(Boolean)
-					if (subPath.length > 0) {
-						const lastSegment = subPath[subPath.length - 1] || ''
-						crumbs.push({
-							title: lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ') : 'Unknown',
-							url: path,
-						})
-					}
+			}
+
+			if (!resolvedSub && path !== item.url) {
+				const subPath = path.replace(item.url, '').split('/').filter(Boolean)
+				if (subPath.length > 0) {
+					const lastSegment = subPath[subPath.length - 1] || ''
+					crumbs.push({
+						title: lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ') : 'Unknown',
+						url: path,
+					})
 				}
 			}
 			return crumbs

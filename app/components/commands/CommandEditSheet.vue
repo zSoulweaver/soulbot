@@ -205,7 +205,14 @@ function navigateToTemplateEditor() {
 	if (!props.command)
 		return
 	emit('update:open', false)
-	navigateTo(`/admin/commands/${props.command.id}`)
+	
+	const rootId = props.command.id.split('.')[0]
+	if (isSubCommand.value && rootId) {
+		const subPath = props.command.id.slice(rootId.length + 1).replace(/\./g, ' ')
+		navigateTo(`/admin/commands/${rootId}?path=${subPath}`)
+	} else {
+		navigateTo(`/admin/commands/${rootId}`)
+	}
 }
 </script>
 

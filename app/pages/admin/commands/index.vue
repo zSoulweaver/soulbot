@@ -429,7 +429,7 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 																:disabled="subItem.detail.hasHandler === false"
 																as-child
 															>
-																<NuxtLink v-if="subItem.detail.hasHandler !== false" :to="`/admin/commands/${command.id}`">
+																<NuxtLink v-if="subItem.detail.hasHandler !== false" :to="`/admin/commands/${command.id}?path=${subItem.name}`">
 																	<MessageSquare class="mr-1 size-3" />
 																	Edit Templates
 																</NuxtLink>

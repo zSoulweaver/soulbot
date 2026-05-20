@@ -31,10 +31,14 @@ interface Command {
 	userCooldown: number
 	templates: Template[]
 	subcommands?: Record<string, {
+		id: string
+		trigger: string | null
 		description: string
 		usage?: string
 		permission: string
 		templates: Template[]
+		hasHandler?: boolean
+		subcommands?: any
 	}>
 }
 
@@ -54,6 +58,45 @@ const activePathFilter = ref('root')
 const editableTemplates = ref<Record<string, string>>({})
 const isSaving = ref(false)
 
+// Flattened subcommands computed property
+const flatSubcommands = computed(() => {
+	if (!command.value || !command.value.subcommands)
+		return []
+
+	const list: Array<{
+		key: string
+		triggerPath: string
+		description: string
+		templates: Template[]
+		hasHandler: boolean
+	}> = []
+
+	function traverse(obj: any, pathPrefix: string, triggerPrefix: string) {
+		for (const [name, val] of Object.entries(obj)) {
+			if (!val || typeof val !== 'object')
+				continue
+			const detail = val as any
+			const currentKey = pathPrefix ? `${pathPrefix} ${name}` : name
+			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.trigger || name}` : (detail.trigger || name)
+
+			list.push({
+				key: currentKey,
+				triggerPath: currentTriggerPath,
+				description: detail.description,
+				templates: detail.templates || [],
+				hasHandler: detail.hasHandler !== false,
+			})
+
+			if (detail.subcommands) {
+				traverse(detail.subcommands, currentKey, currentTriggerPath)
+			}
+		}
+	}
+
+	traverse(command.value.subcommands, '', '')
+	return list
+})
+
 // Populate templates map on load or command change
 watch(command, (newCmd) => {
 	if (newCmd) {
@@ -64,14 +107,20 @@ watch(command, (newCmd) => {
 			temp[t.id] = t.custom !== null ? t.custom : t.default
 		}
 
-		// Map subcommand templates
-		if (newCmd.subcommands) {
-			for (const sub of Object.values(newCmd.subcommands)) {
+		// Map subcommand templates recursively
+		function mapSubTemplates(subMap: any) {
+			if (!subMap)
+				return
+			for (const sub of Object.values(subMap) as any[]) {
 				for (const t of sub.templates || []) {
 					temp[t.id] = t.custom !== null ? t.custom : t.default
 				}
+				if (sub.subcommands) {
+					mapSubTemplates(sub.subcommands)
+				}
 			}
 		}
+		mapSubTemplates(newCmd.subcommands)
 
 		editableTemplates.value = temp
 	}
@@ -100,8 +149,14 @@ const activeTemplatesToDisplay = computed(() => {
 		return command.value.templates || []
 	}
 
-	const sub = command.value.subcommands?.[activePathFilter.value]
+	const sub = flatSubcommands.value.find(s => s.key === activePathFilter.value)
 	return sub ? sub.templates || [] : []
+})
+
+const activeSubcommandDetail = computed(() => {
+	if (!command.value || activePathFilter.value === 'root')
+		return null
+	return flatSubcommands.value.find(s => s.key === activePathFilter.value) || null
 })
 
 // Collapsible templates UI state
@@ -129,6 +184,13 @@ watch(activeTemplatesToDisplay, (newTpls) => {
 	}
 }, { immediate: true })
 
+// Watch query param path to select the correct subcommand initially
+watch(() => route.query.path, (newPath) => {
+	if (newPath && typeof newPath === 'string') {
+		activePathFilter.value = newPath
+	}
+}, { immediate: true })
+
 // Check if any template in the active set is modified
 const isAnyTemplateModified = computed(() => {
 	if (!command.value)
@@ -142,13 +204,11 @@ const isAnyTemplateModified = computed(() => {
 	}
 
 	// Check subcommands
-	if (command.value.subcommands) {
-		for (const sub of Object.values(command.value.subcommands)) {
-			for (const t of sub.templates || []) {
-				const original = t.custom !== null ? t.custom : t.default
-				if (editableTemplates.value[t.id] !== original)
-					return true
-			}
+	for (const sub of flatSubcommands.value) {
+		for (const t of sub.templates || []) {
+			const original = t.custom !== null ? t.custom : t.default
+			if (editableTemplates.value[t.id] !== original)
+				return true
 		}
 	}
 
@@ -173,14 +233,12 @@ async function saveTemplates() {
 		}
 
 		// Gather modified subcommand templates
-		if (command.value.subcommands) {
-			for (const sub of Object.values(command.value.subcommands)) {
-				for (const t of sub.templates || []) {
-					const current = editableTemplates.value[t.id] ?? t.default
-					const original = t.custom !== null ? t.custom : t.default
-					if (current !== original) {
-						payload.push({ id: t.id, template: current })
-					}
+		for (const sub of flatSubcommands.value) {
+			for (const t of sub.templates || []) {
+				const current = editableTemplates.value[t.id] ?? t.default
+				const original = t.custom !== null ? t.custom : t.default
+				if (current !== original) {
+					payload.push({ id: t.id, template: current })
 				}
 			}
 		}
@@ -255,7 +313,7 @@ async function saveTemplates() {
 					"
 				>
 					<h2 class="px-2 text-xs font-bold tracking-wider text-muted-foreground uppercase select-none">
-						Execution Paths
+						Command Execeution Pathways
 					</h2>
 					<div
 						class="
@@ -266,7 +324,7 @@ async function saveTemplates() {
 						<!-- Root Option -->
 						<button
 							type="button"
-							class="flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
+							class="flex shrink-0 items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
 							:class="activePathFilter === 'root'
 								? 'border-primary/20 bg-primary/10 text-primary'
 								: `
@@ -275,27 +333,49 @@ async function saveTemplates() {
 								`"
 							@click="activePathFilter = 'root'"
 						>
-							<Terminal class="size-4 shrink-0" />
-							<span>Root Trigger (!{{ command.trigger }})</span>
+							<div class="flex items-center gap-2">
+								<Terminal class="size-4 shrink-0" />
+								<span>Root Trigger (!{{ command.trigger }})</span>
+							</div>
+							<Badge
+								variant="outline"
+								class="ml-2 border-border bg-muted/50 px-1.5 py-0 text-[10px] select-none"
+								:class="activePathFilter === 'root'
+									? 'border-primary/20 bg-primary/5 text-primary'
+									: 'bg-muted/50 text-muted-foreground'"
+							>
+								{{ command.templates?.length || 0 }}
+							</Badge>
 						</button>
 
 						<!-- Subcommands options -->
-						<template v-if="command.subcommands">
+						<template v-if="flatSubcommands.length > 0">
 							<button
-								v-for="(sub, key) in command.subcommands"
-								:key="key"
+								v-for="sub in flatSubcommands"
+								:key="sub.key"
 								type="button"
-								class="flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
-								:class="activePathFilter === key
+								class="flex shrink-0 items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
+								:class="activePathFilter === sub.key
 									? 'border-primary/20 bg-primary/10 text-primary'
 									: `
 										border-border bg-card/50 text-muted-foreground
 										hover:bg-muted/50 hover:text-foreground
 									`"
-								@click="activePathFilter = String(key)"
+								@click="activePathFilter = sub.key"
 							>
-								<Settings class="size-4 shrink-0" />
-								<span class="capitalize">Subcommand: {{ key }}</span>
+								<div class="flex items-center gap-2">
+									<Settings class="size-4 shrink-0" />
+									<span>Subcommand: {{ sub.triggerPath }}</span>
+								</div>
+								<Badge
+									variant="outline"
+									class="ml-2 border-border bg-muted/50 px-1.5 py-0 text-[10px] select-none"
+									:class="activePathFilter === sub.key
+										? 'border-primary/20 bg-primary/5 text-primary'
+										: 'bg-muted/50 text-muted-foreground'"
+								>
+									{{ sub.templates?.length || 0 }}
+								</Badge>
 							</button>
 						</template>
 					</div>
@@ -311,10 +391,10 @@ async function saveTemplates() {
 					<!-- Path Header details -->
 					<div class="flex flex-col gap-1 rounded-lg border border-border bg-muted/20 p-4 select-none">
 						<span class="text-xs font-bold tracking-wider text-primary uppercase">
-							Active Path: {{ activePathFilter === 'root' ? `!${command.trigger}` : `!${command.trigger} ${activePathFilter}` }}
+							Active Path: {{ activePathFilter === 'root' ? `!${command.trigger}` : `!${command.trigger} ${activeSubcommandDetail?.triggerPath}` }}
 						</span>
 						<span class="text-[11px] text-muted-foreground">
-							{{ activePathFilter === 'root' ? command.description : command.subcommands?.[activePathFilter]?.description }}
+							{{ activePathFilter === 'root' ? command.description : activeSubcommandDetail?.description }}
 						</span>
 					</div>
 

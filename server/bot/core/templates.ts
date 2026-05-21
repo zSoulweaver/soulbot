@@ -4,8 +4,8 @@ import { commandTemplates } from '~~/server/database/schema'
 /**
  * Helper type to extract parameters from template definitions
  */
-export type MapTemplates<T extends Record<string, any>> = {
-	[K in keyof T]: T[K]['params']
+export type MapTemplates<TemplatesMap extends Record<string, any>> = {
+	[TemplateKey in keyof TemplatesMap]: TemplatesMap[TemplateKey]['params']
 }
 
 export interface TemplateSource {
@@ -25,7 +25,6 @@ export interface TemplateDefinition {
 	id: string
 	default: string
 	params?: readonly string[]
-	description?: string
 }
 
 class TemplateRegistry {
@@ -38,10 +37,10 @@ class TemplateRegistry {
 	}
 
 	async syncWithDb() {
-		const dbTemplates = await db.select().from(commandTemplates)
+		const databaseTemplates = await db.select().from(commandTemplates)
 		this.overrides.clear()
-		for (const row of dbTemplates) {
-			this.overrides.set(row.id, row.template)
+		for (const templateRow of databaseTemplates) {
+			this.overrides.set(templateRow.id, templateRow.template)
 		}
 	}
 
@@ -50,10 +49,10 @@ class TemplateRegistry {
 	}
 
 	all() {
-		return Array.from(this.templates.values()).map(def => ({
-			...def,
-			current: this.overrides.get(def.id) || def.default,
-			isOverridden: this.overrides.has(def.id),
+		return Array.from(this.templates.values()).map(definition => ({
+			...definition,
+			current: this.overrides.get(definition.id) || definition.default,
+			isOverridden: this.overrides.has(definition.id),
 		}))
 	}
 

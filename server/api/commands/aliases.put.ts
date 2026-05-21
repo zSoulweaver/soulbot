@@ -30,19 +30,23 @@ export default defineEventHandler(async (event) => {
 	const { commandId, aliases } = parsed.data
 
 	// 1. Verify target command exists
-	const coreCmd = registry.getCommand(commandId)
-	if (!coreCmd) {
+	const coreCommand = registry.getCommand(commandId)
+	if (!coreCommand) {
 		throw createError({
 			statusCode: 404,
 			statusMessage: `Command "${commandId}" not found in registry.`,
 		})
 	}
 
-	const dbCmdTriggers = await db.select().from(commands).then(res => res.map(c => c.trigger ? c.trigger.toLowerCase() : '').filter(Boolean))
-	const cleanAliases = aliases.map(a => ({
-		trigger: a.trigger.toLowerCase(),
-		subcommand: a.subcommand || null,
-		overrideArgs: a.overrideArgs || null,
+	const databaseCommandTriggers = await db
+		.select()
+		.from(commands)
+		.then(results => results.map(cmd => cmd.trigger ? cmd.trigger.toLowerCase() : '').filter(Boolean))
+
+	const cleanAliases = aliases.map(alias => ({
+		trigger: alias.trigger.toLowerCase(),
+		subcommand: alias.subcommand || null,
+		overrideArgs: alias.overrideArgs || null,
 	}))
 
 	// 2. Validate collisions against root command triggers & request duplicates
@@ -57,7 +61,7 @@ export default defineEventHandler(async (event) => {
 		}
 		seenTriggers.add(alias.trigger)
 
-		if (dbCmdTriggers.includes(alias.trigger)) {
+		if (databaseCommandTriggers.includes(alias.trigger)) {
 			throw createError({
 				statusCode: 409,
 				statusMessage: `Alias "!${alias.trigger}" conflicts with an existing root command trigger.`,
@@ -72,11 +76,11 @@ export default defineEventHandler(async (event) => {
 	// Insert new aliases
 	if (cleanAliases.length > 0) {
 		await db.insert(commandAliases).values(
-			cleanAliases.map(a => ({
+			cleanAliases.map(alias => ({
 				commandId,
-				trigger: a.trigger,
-				subcommand: a.subcommand,
-				overrideArgs: a.overrideArgs,
+				trigger: alias.trigger,
+				subcommand: alias.subcommand,
+				overrideArgs: alias.overrideArgs,
 			})),
 		)
 	}

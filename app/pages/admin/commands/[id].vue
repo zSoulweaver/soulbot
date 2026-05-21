@@ -1,47 +1,14 @@
 <script setup lang="ts">
+import type { Command, Template } from '~/types/commands'
 import {
-	ChevronRight,
 	CornerDownRight,
-	HelpCircle,
-	RefreshCw,
 	Save,
 	Terminal,
 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
-
-interface Template {
-	id: string
-	default: string
-	custom: string | null
-	params: string[]
-	description: string
-}
-
-interface Command {
-	id: string
-	description: string
-	permission: string
-	trigger: string
-	activeTrigger: string
-	enabled: boolean
-	cost: number
-	globalCooldown: number
-	userCooldown: number
-	templates: Template[]
-	subcommands?: Record<string, {
-		id: string
-		trigger: string | null
-		activeTrigger: string
-		description: string
-		usage?: string
-		permission: string
-		templates: Template[]
-		hasHandler?: boolean
-		subcommands?: any
-	}>
-}
+import TemplateEditorCard from '~/components/commands/TemplateEditorCard.vue'
 
 const route = useRoute()
 const { data: commands, refresh: refreshCommands, pending: loading } = await useFetch<Command[]>('/api/commands')
@@ -49,7 +16,7 @@ const { data: commands, refresh: refreshCommands, pending: loading } = await use
 const command = computed(() => {
 	if (!commands.value)
 		return null
-	return commands.value.find(c => c.id === route.params.id) || null
+	return commands.value.find(cmd => cmd.id === route.params.id) || null
 })
 
 // Sub-navigation filter selection ('root' or subcommand name)
@@ -72,11 +39,11 @@ const flatSubcommands = computed(() => {
 		hasHandler: boolean
 	}> = []
 
-	function traverse(obj: any, pathPrefix: string, triggerPrefix: string) {
-		for (const [name, val] of Object.entries(obj)) {
-			if (!val || typeof val !== 'object')
+	function traverse(subcommandsMap: any, pathPrefix: string, triggerPrefix: string) {
+		for (const [name, subcommandRecord] of Object.entries(subcommandsMap)) {
+			if (!subcommandRecord || typeof subcommandRecord !== 'object')
 				continue
-			const detail = val as any
+			const detail = subcommandRecord as any
 			const currentKey = pathPrefix ? `${pathPrefix} ${name}` : name
 			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.activeTrigger}` : detail.activeTrigger
 
@@ -99,46 +66,38 @@ const flatSubcommands = computed(() => {
 })
 
 // Populate templates map on load or command change
-watch(command, (newCmd) => {
-	if (newCmd) {
-		const temp: Record<string, string> = {}
+watch(command, (newCommand) => {
+	if (newCommand) {
+		const initialTemplates: Record<string, string> = {}
 
 		// Map root templates
-		for (const t of newCmd.templates || []) {
-			temp[t.id] = t.custom !== null ? t.custom : t.default
+		for (const template of newCommand.templates || []) {
+			initialTemplates[template.id] = template.custom !== null ? template.custom : template.default
 		}
 
 		// Map subcommand templates recursively
-		function mapSubTemplates(subMap: any) {
-			if (!subMap)
+		function mapSubcommandTemplates(subcommandsMap: any) {
+			if (!subcommandsMap)
 				return
-			for (const sub of Object.values(subMap) as any[]) {
-				for (const t of sub.templates || []) {
-					temp[t.id] = t.custom !== null ? t.custom : t.default
+			for (const subcommand of Object.values(subcommandsMap) as any[]) {
+				for (const template of subcommand.templates || []) {
+					initialTemplates[template.id] = template.custom !== null ? template.custom : template.default
 				}
-				if (sub.subcommands) {
-					mapSubTemplates(sub.subcommands)
+				if (subcommand.subcommands) {
+					mapSubcommandTemplates(subcommand.subcommands)
 				}
 			}
 		}
-		mapSubTemplates(newCmd.subcommands)
+		mapSubcommandTemplates(newCommand.subcommands)
 
-		editableTemplates.value = temp
+		editableTemplates.value = initialTemplates
 	}
 }, { immediate: true })
 
 // Reset a template to its default value
-function resetTemplateToDefault(tpl: Template) {
-	editableTemplates.value[tpl.id] = tpl.default
-	toast.info(`Reset template "${tpl.id}" to default value locally. Save to apply changes.`)
-}
-
-// Copy template parameter helper
-function copyToClipboard(param: string) {
-	if (process.client) {
-		navigator.clipboard.writeText(`\${${param}}`)
-		toast.success(`Copied '\${${param}}' to clipboard!`)
-	}
+function resetTemplateToDefault(template: Template) {
+	editableTemplates.value[template.id] = template.default
+	toast.info(`Reset template "${template.id}" to default value locally. Save to apply changes.`)
 }
 
 // Compute active templates to display based on selected path filter
@@ -150,37 +109,26 @@ const activeTemplatesToDisplay = computed(() => {
 		return command.value.templates || []
 	}
 
-	const sub = flatSubcommands.value.find(s => s.key === activePathFilter.value)
-	return sub ? sub.templates || [] : []
+	const subcommand = flatSubcommands.value.find(sub => sub.key === activePathFilter.value)
+	return subcommand ? subcommand.templates || [] : []
 })
 
 const activeSubcommandDetail = computed(() => {
 	if (!command.value || activePathFilter.value === 'root')
 		return null
-	return flatSubcommands.value.find(s => s.key === activePathFilter.value) || null
+	return flatSubcommands.value.find(sub => sub.key === activePathFilter.value) || null
 })
 
 // Collapsible templates UI state
 const expandedTemplates = ref<Record<string, boolean>>({})
 
-function toggleTemplateExpanded(tplId: string) {
-	expandedTemplates.value[tplId] = !expandedTemplates.value[tplId]
-}
-
-function getTemplateSummary(tpl: Template) {
-	const text = editableTemplates.value[tpl.id] ?? tpl.default
-	if (!text)
-		return 'Empty template'
-	return text.length > 55 ? `${text.substring(0, 55)}...` : text
-}
-
 // Watch active path changes to pre-expand the first template automatically
-watch(activeTemplatesToDisplay, (newTpls) => {
-	if (newTpls && newTpls.length > 0 && newTpls[0]) {
-		const firstId = newTpls[0].id
+watch(activeTemplatesToDisplay, (newTemplates) => {
+	if (newTemplates && newTemplates.length > 0 && newTemplates[0]) {
+		const firstTemplateId = newTemplates[0].id
 		// Clear other expansions and only expand the first one by default if none are explicitly expanded
 		if (Object.keys(expandedTemplates.value).length === 0) {
-			expandedTemplates.value[firstId] = true
+			expandedTemplates.value[firstTemplateId] = true
 		}
 	}
 }, { immediate: true })
@@ -198,17 +146,17 @@ const isAnyTemplateModified = computed(() => {
 		return false
 
 	// Check root
-	for (const t of command.value.templates || []) {
-		const original = t.custom !== null ? t.custom : t.default
-		if (editableTemplates.value[t.id] !== original)
+	for (const template of command.value.templates || []) {
+		const originalContent = template.custom !== null ? template.custom : template.default
+		if (editableTemplates.value[template.id] !== originalContent)
 			return true
 	}
 
 	// Check subcommands
-	for (const sub of flatSubcommands.value) {
-		for (const t of sub.templates || []) {
-			const original = t.custom !== null ? t.custom : t.default
-			if (editableTemplates.value[t.id] !== original)
+	for (const subcommand of flatSubcommands.value) {
+		for (const template of subcommand.templates || []) {
+			const originalContent = template.custom !== null ? template.custom : template.default
+			if (editableTemplates.value[template.id] !== originalContent)
 				return true
 		}
 	}
@@ -225,21 +173,21 @@ async function saveTemplates() {
 		const payload: Array<{ id: string, template: string }> = []
 
 		// Gather modified root templates
-		for (const t of command.value.templates || []) {
-			const current = editableTemplates.value[t.id] ?? t.default
-			const original = t.custom !== null ? t.custom : t.default
-			if (current !== original) {
-				payload.push({ id: t.id, template: current })
+		for (const template of command.value.templates || []) {
+			const currentContent = editableTemplates.value[template.id] ?? template.default
+			const originalContent = template.custom !== null ? template.custom : template.default
+			if (currentContent !== originalContent) {
+				payload.push({ id: template.id, template: currentContent })
 			}
 		}
 
 		// Gather modified subcommand templates
-		for (const sub of flatSubcommands.value) {
-			for (const t of sub.templates || []) {
-				const current = editableTemplates.value[t.id] ?? t.default
-				const original = t.custom !== null ? t.custom : t.default
-				if (current !== original) {
-					payload.push({ id: t.id, template: current })
+		for (const subcommand of flatSubcommands.value) {
+			for (const template of subcommand.templates || []) {
+				const currentContent = editableTemplates.value[template.id] ?? template.default
+				const originalContent = template.custom !== null ? template.custom : template.default
+				if (currentContent !== originalContent) {
+					payload.push({ id: template.id, template: currentContent })
 				}
 			}
 		}
@@ -256,8 +204,8 @@ async function saveTemplates() {
 			toast.info('No changes detected in templates.')
 		}
 	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save response templates')
+	catch (error: any) {
+		toast.error(error.data?.statusMessage || 'Failed to save response templates')
 	}
 	finally {
 		isSaving.value = false
@@ -364,135 +312,15 @@ async function saveTemplates() {
 					</div>
 
 					<div class="space-y-4">
-						<!-- Individual Template Card Accordion using Card & Collapsible -->
-						<Collapsible
+						<!-- Individual Template Card Editors -->
+						<TemplateEditorCard
 							v-for="template in activeTemplatesToDisplay"
 							:key="template.id"
-							:open="expandedTemplates[template.id]"
-							@update:open="toggleTemplateExpanded(template.id)"
-						>
-							<Card class="gap-0 overflow-hidden p-0">
-								<CollapsibleTrigger as-child>
-									<div
-										class="
-											flex cursor-pointer items-center justify-between p-4 transition-colors
-											hover:bg-accent
-											dark:hover:bg-accent/50
-										"
-									>
-										<div class="flex items-center gap-3">
-											<!-- Chevron Icon -->
-											<ChevronRight class="size-4 text-primary transition-transform" :class="{ 'rotate-90': expandedTemplates[template.id] }" />
-
-											<div class="flex flex-col gap-0.5">
-												<span class="font-mono text-xs font-bold">
-													{{ template.id }}
-												</span>
-												<!-- Inline summary preview of template message -->
-												<span
-													v-if="!expandedTemplates[template.id]" class="
-														max-w-70 truncate text-xs text-muted-foreground
-														sm:max-w-112.5
-													"
-												>
-													"{{ getTemplateSummary(template) }}"
-												</span>
-											</div>
-										</div>
-
-										<div class="flex items-center gap-2">
-											<!-- Modified/Saved Badges -->
-											<Badge
-												v-if="editableTemplates[template.id] !== (template.custom !== null ? template.custom : template.default)"
-												variant="outline"
-												class="border-amber-500/20 bg-amber-500/10 text-amber-500"
-											>
-												Modified
-											</Badge>
-											<Badge
-												v-else-if="template.custom !== null"
-												variant="outline"
-												class="border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
-											>
-												Custom
-											</Badge>
-											<Badge
-												v-else
-												variant="secondary"
-											>
-												Default
-											</Badge>
-
-											<!-- Revert to Default Action (when collapsed) -->
-											<Button
-												v-if="!expandedTemplates[template.id] && editableTemplates[template.id] !== template.default"
-												variant="destructive"
-												size="sm"
-												@click.stop="resetTemplateToDefault(template)"
-											>
-												<RefreshCw class="size-2.5" />
-												Reset
-											</Button>
-										</div>
-									</div>
-								</CollapsibleTrigger>
-
-								<CollapsibleContent>
-									<CardContent
-										class="flex flex-col gap-4 border-t border-border/60 p-4"
-									>
-										<!-- Textarea Input Editor -->
-										<Textarea
-											v-model="editableTemplates[template.id]"
-											rows="3"
-										/>
-
-										<!-- Action and Helper variables grid -->
-										<div
-											class="
-												flex flex-col gap-4
-												sm:flex-row sm:items-center sm:justify-between
-											"
-										>
-											<!-- Variables Helper Badges -->
-											<div class="flex flex-1 flex-col gap-1.5 rounded-lg bg-muted p-3">
-												<div class="flex items-center gap-1 text-xs font-semibold text-muted-foreground select-none">
-													<HelpCircle class="size-3.5" />
-													Available Parameters (Click to Copy):
-												</div>
-												<div class="mt-0.5 flex flex-wrap gap-1.5">
-													<span v-if="template.params.length === 0" class="text-xs text-muted-foreground italic select-none">None defined (Static text output)</span>
-													<Badge
-														v-for="param in template.params"
-														:key="param"
-														class="
-															cursor-pointer transition-colors
-															hover:bg-primary/85
-														"
-														title="Click to copy variable trigger format"
-														@click="copyToClipboard(param)"
-													>
-														{{ `\${${param}\}` }}
-													</Badge>
-												</div>
-											</div>
-
-											<!-- Pinned Revert Action inside Card -->
-											<div class="flex items-center justify-end">
-												<Button
-													variant="destructive"
-													:disabled="editableTemplates[template.id] === template.default"
-													@click="resetTemplateToDefault(template)"
-												>
-													<RefreshCw />
-													Reset to Default Value
-												</Button>
-											</div>
-										</div>
-									</CardContent>
-								</CollapsibleContent>
-							</Card>
-						</Collapsible>
+							v-model="editableTemplates[template.id]"
+							v-model:is-expanded="expandedTemplates[template.id]"
+							:template="template"
+							@reset="resetTemplateToDefault(template)"
+						/>
 					</div>
 				</div>
 			</div>

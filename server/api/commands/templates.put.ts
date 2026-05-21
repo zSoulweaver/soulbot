@@ -28,46 +28,46 @@ export default defineEventHandler(async (event) => {
 	const { templates } = parsed.data
 
 	// 1. Verify all template IDs exist in the template registry
-	for (const tpl of templates) {
-		const exists = templateRegistry.get(tpl.id)
-		if (!exists) {
+	for (const templateItem of templates) {
+		const existingDefinition = templateRegistry.get(templateItem.id)
+		if (!existingDefinition) {
 			throw createError({
 				statusCode: 404,
-				statusMessage: `Template ID "${tpl.id}" is not defined by any command module.`,
+				statusMessage: `Template ID "${templateItem.id}" is not defined by any command module.`,
 			})
 		}
 	}
 
 	// 2. Perform sequential upserts or deletes for the template overrides
-	for (const tpl of templates) {
-		const definition = templateRegistry.get(tpl.id)!
-		const isDefault = tpl.template === definition.default
+	for (const templateItem of templates) {
+		const definition = templateRegistry.get(templateItem.id)!
+		const isDefault = templateItem.template === definition.default
 
 		if (isDefault) {
 			await db
 				.delete(commandTemplates)
-				.where(eq(commandTemplates.id, tpl.id))
+				.where(eq(commandTemplates.id, templateItem.id))
 		}
 		else {
-			const existing = await db
+			const existingRecord = await db
 				.select()
 				.from(commandTemplates)
-				.where(eq(commandTemplates.id, tpl.id))
-				.then(res => res[0])
+				.where(eq(commandTemplates.id, templateItem.id))
+				.then(results => results[0])
 
-			if (existing) {
+			if (existingRecord) {
 				await db
 					.update(commandTemplates)
 					.set({
-						template: tpl.template,
+						template: templateItem.template,
 						updatedAt: new Date(),
 					})
-					.where(eq(commandTemplates.id, tpl.id))
+					.where(eq(commandTemplates.id, templateItem.id))
 			}
 			else {
 				await db.insert(commandTemplates).values({
-					id: tpl.id,
-					template: tpl.template,
+					id: templateItem.id,
+					template: templateItem.template,
 					updatedAt: new Date(),
 				})
 			}

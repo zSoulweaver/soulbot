@@ -1,41 +1,9 @@
 <script setup lang="ts">
-import { BadgeDollarSign,	ChevronRight,	Clock,	MessageSquare,	Settings,	Shield,	User } from 'lucide-vue-next'
+import type { Command } from '~/types/commands'
+import { BadgeDollarSign, ChevronRight, Clock, MessageSquare, Settings, Shield, User } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
-
-interface Alias {
-	id?: number
-	trigger: string
-	subcommand: string | null
-	overrideArgs: string[] | null
-}
-
-interface Template {
-	id: string
-	default: string
-	custom: string | null
-	params: string[]
-	description: string
-}
-
-interface Command {
-	id: string
-	description: string
-	usage?: string
-	permission: string
-	trigger: string
-	activeTrigger: string
-	parentTriggerPath?: string
-	enabled: boolean
-	cost: number
-	globalCooldown: number
-	userCooldown: number
-	aliases: Alias[]
-	templates: Template[]
-	subcommands?: Record<string, any>
-	hasHandler?: boolean
-}
 
 const { data: commandsList, refresh: refreshCommands, pending: loading } = await useFetch<Command[]>('/api/commands')
 
@@ -80,23 +48,23 @@ async function toggleCommandActive(command: Command) {
 		toast.success(`Command '!${command.activeTrigger}' has been ${nextState ? 'enabled' : 'disabled'}!`)
 		await refreshCommands()
 	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to toggle command state')
+	catch (error: any) {
+		toast.error(error.data?.statusMessage || 'Failed to toggle command state')
 	}
 }
 
-function getFlatSubcommands(subcommandsObj: any): Array<{ name: string, triggerPath: string, detail: any }> {
-	if (!subcommandsObj || typeof subcommandsObj !== 'object' || Array.isArray(subcommandsObj))
+function getFlatSubcommands(subcommandsObject: any): Array<{ name: string, triggerPath: string, detail: any }> {
+	if (!subcommandsObject || typeof subcommandsObject !== 'object' || Array.isArray(subcommandsObject))
 		return []
 	const flatList: Array<{ name: string, triggerPath: string, detail: any }> = []
 
-	function traverse(obj: any, pathPrefix: string, triggerPrefix: string) {
-		if (!obj || typeof obj !== 'object' || Array.isArray(obj))
+	function traverse(objectRecord: any, pathPrefix: string, triggerPrefix: string) {
+		if (!objectRecord || typeof objectRecord !== 'object' || Array.isArray(objectRecord))
 			return
-		for (const [name, val] of Object.entries(obj)) {
-			if (!val || typeof val !== 'object')
+		for (const [name, value] of Object.entries(objectRecord)) {
+			if (!value || typeof value !== 'object')
 				continue
-			const detail = val as any
+			const detail = value as any
 			const currentPath = pathPrefix ? `${pathPrefix} ${name}` : name
 			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.activeTrigger}` : detail.activeTrigger
 			flatList.push({
@@ -110,7 +78,7 @@ function getFlatSubcommands(subcommandsObj: any): Array<{ name: string, triggerP
 		}
 	}
 
-	traverse(subcommandsObj, '', '')
+	traverse(subcommandsObject, '', '')
 	return flatList
 }
 
@@ -121,28 +89,28 @@ function openQuickEdit(command: Command) {
 }
 
 // Open Sub-command Quick Edit Sheet
-function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
-	const sub = subItem.detail
-	const triggerParts = subItem.triggerPath.split(' ')
+function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
+	const subcommand = subcommandItem.detail
+	const triggerParts = subcommandItem.triggerPath.split(' ')
 	const activeTriggerWord = triggerParts[triggerParts.length - 1]
 	const parentParts = triggerParts.slice(0, -1)
 	const parentTriggerPath = [`!${parentCommand.activeTrigger}`, ...parentParts].join(' ')
 
 	selectedCommand.value = {
-		id: sub.id,
+		id: subcommand.id,
 		trigger: activeTriggerWord,
 		activeTrigger: activeTriggerWord,
 		parentTriggerPath,
-		description: sub.description,
-		usage: sub.usage,
-		permission: sub.permission,
-		enabled: sub.enabled,
-		cost: sub.cost,
-		globalCooldown: sub.globalCooldown,
-		userCooldown: sub.userCooldown,
+		description: subcommand.description,
+		usage: subcommand.usage,
+		permission: subcommand.permission,
+		enabled: subcommand.enabled,
+		cost: subcommand.cost,
+		globalCooldown: subcommand.globalCooldown,
+		userCooldown: subcommand.userCooldown,
 		aliases: [],
-		templates: sub.templates || [],
-		hasHandler: sub.hasHandler,
+		templates: subcommand.templates || [],
+		hasHandler: subcommand.hasHandler,
 	}
 	isSheetOpen.value = true
 }
@@ -311,45 +279,45 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 											</div>
 											<div class="grid gap-2">
 												<div
-													v-for="subItem in getFlatSubcommands(command.subcommands)"
-													:key="subItem.detail.id"
+													v-for="subcommandItem in getFlatSubcommands(command.subcommands)"
+													:key="subcommandItem.detail.id"
 													class="
 														flex items-center justify-between rounded-lg border border-secondary bg-secondary/20 p-3 transition-colors
 														hover:border-border
 													"
-													:class="{ 'opacity-65': !subItem.detail.enabled }"
+													:class="{ 'opacity-65': !subcommandItem.detail.enabled }"
 												>
 													<div class="flex flex-col gap-1">
 														<div class="flex items-center gap-2">
 															<Badge class="font-mono text-xs font-bold">
-																!{{ command.activeTrigger }} {{ subItem.triggerPath }}
+																!{{ command.activeTrigger }} {{ subcommandItem.triggerPath }}
 															</Badge>
-															<span v-if="subItem.detail.usage" class="font-mono text-xs text-muted-foreground">{{ subItem.detail.usage }}</span>
-															<Badge v-if="subItem.detail.hasHandler === false" variant="secondary" class="text-xs">
+															<span v-if="subcommandItem.detail.usage" class="font-mono text-xs text-muted-foreground">{{ subcommandItem.detail.usage }}</span>
+															<Badge v-if="subcommandItem.detail.hasHandler === false" variant="secondary" class="text-xs">
 																Command Group
 															</Badge>
-															<Badge v-if="!subItem.detail.enabled" variant="destructive" class="text-xs">
+															<Badge v-if="!subcommandItem.detail.enabled" variant="destructive" class="text-xs">
 																Disabled
 															</Badge>
 														</div>
-														<span class="text-xs text-muted-foreground">{{ subItem.detail.description }}</span>
+														<span class="text-xs text-muted-foreground">{{ subcommandItem.detail.description }}</span>
 													</div>
 
 													<div class="flex items-center gap-4">
 														<!-- Custom Costs/Cooldowns badges -->
 														<div class="flex items-center gap-2">
 															<Badge
-																v-if="subItem.detail.cost > 0"
+																v-if="subcommandItem.detail.cost > 0"
 																class="border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-500"
 															>
 																<BadgeDollarSign />
-																{{ subItem.detail.cost }} pts
+																{{ subcommandItem.detail.cost }} pts
 															</Badge>
 															<Badge
-																v-if="subItem.detail.globalCooldown > 0 || subItem.detail.userCooldown > 0"
+																v-if="subcommandItem.detail.globalCooldown > 0 || subcommandItem.detail.userCooldown > 0"
 																variant="outline"
 																class="text-xs"
-																:title="`Global Cooldown: ${subItem.detail.globalCooldown}s | User Cooldown: ${subItem.detail.userCooldown}s`"
+																:title="`Global Cooldown: ${subcommandItem.detail.globalCooldown}s | User Cooldown: ${subcommandItem.detail.userCooldown}s`"
 															>
 																<Clock />
 																CD
@@ -358,14 +326,14 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 
 														<div class="flex items-center gap-2">
 															<!-- Subcommand Permission Badge -->
-															<Badge :class="getPermissionBadgeClass(subItem.detail.permission)" class="capitalize">
+															<Badge :class="getPermissionBadgeClass(subcommandItem.detail.permission)" class="capitalize">
 																<Shield />
-																{{ subItem.detail.permission }}
+																{{ subcommandItem.detail.permission }}
 															</Badge>
 
 															<!-- Subcommand Config Action -->
 															<Button
-																size="sm" variant="outline" @click="openSubCommandQuickEdit(subItem, command)"
+																size="sm" variant="outline" @click="openSubCommandQuickEdit(subcommandItem, command)"
 															>
 																<Settings />
 															</Button>
@@ -374,16 +342,15 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 															<Button
 																size="sm"
 																variant="outline"
-																:class="subItem.detail.hasHandler === false ? 'cursor-not-allowed' : ''"
-																:disabled="subItem.detail.hasHandler === false"
+																:class="subcommandItem.detail.hasHandler === false ? 'cursor-not-allowed' : ''"
+																:disabled="subcommandItem.detail.hasHandler === false"
 																as-child
 															>
-																<NuxtLink v-if="subItem.detail.hasHandler !== false" :to="`/admin/commands/${command.id}?path=${subItem.name}`">
+																<NuxtLink v-if="subcommandItem.detail.hasHandler !== false" :to="`/admin/commands/${command.id}?path=${subcommandItem.name}`">
 																	<MessageSquare />
 																</NuxtLink>
 																<span v-else class="flex items-center text-muted-foreground">
 																	<MessageSquare />
-
 																</span>
 															</Button>
 														</div>

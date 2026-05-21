@@ -4,8 +4,8 @@ import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
 
 export default defineEventHandler(async () => {
-	// Ensure DB data is fetched in parallel
-	const [dbCmds, dbAliases, dbTpls] = await Promise.all([
+	// Ensure DB data is fetched in parallel using descriptive names
+	const [databaseCommands, databaseAliases, databaseTemplates] = await Promise.all([
 		db.select().from(commands),
 		db.select().from(commandAliases),
 		db.select().from(commandTemplates),
@@ -14,7 +14,7 @@ export default defineEventHandler(async () => {
 	const allCoreCommands = registry.getAllCommands()
 
 	const result = allCoreCommands.map((command) => {
-		const dbConfig = dbCmds.find(c => c.id === command.id) || {
+		const databaseConfig = databaseCommands.find(cmd => cmd.id === command.id) || {
 			id: command.id,
 			trigger: command.id,
 			enabled: true,
@@ -24,48 +24,46 @@ export default defineEventHandler(async () => {
 		}
 
 		// Find all registered aliases for this specific command
-		const aliases = dbAliases
-			.filter(a => a.commandId === command.id)
-			.map(a => ({
-				id: a.id,
-				trigger: a.trigger,
-				subcommand: a.subcommand,
-				overrideArgs: a.overrideArgs,
+		const aliases = databaseAliases
+			.filter(alias => alias.commandId === command.id)
+			.map(alias => ({
+				id: alias.id,
+				trigger: alias.trigger,
+				subcommand: alias.subcommand,
+				overrideArgs: alias.overrideArgs,
 			}))
 
 		// Gather template declarations from the root command
 		const rootTemplateIds = command.templates ?? []
-		const rootTemplates = rootTemplateIds.map((tplId) => {
-			const def = templateRegistry.get(tplId)
-			const custom = dbTpls.find(t => t.id === tplId)?.template || null
+		const rootTemplates = rootTemplateIds.map((templateId) => {
+			const definition = templateRegistry.get(templateId)
+			const custom = databaseTemplates.find(tpl => tpl.id === templateId)?.template || null
 			return {
-				id: tplId,
-				default: def?.default ?? '',
+				id: templateId,
+				default: definition?.default ?? '',
 				custom,
-				params: def?.params ?? [],
-				description: def?.description ?? '',
+				params: definition?.params ?? [],
 			}
 		})
 
 		// Recursive helper to gather subcommands and all nested child subcommands
 		const buildSubcommandsTree = (subcommandsMap: Record<string, any>, prefix: string): Record<string, any> => {
-			const res: Record<string, any> = {}
-			for (const [subName, sub] of Object.entries(subcommandsMap)) {
-				const subTemplateIds = sub.templates ?? []
-				const subTemplates = subTemplateIds.map((tplId: string) => {
-					const def = templateRegistry.get(tplId)
-					const custom = dbTpls.find(t => t.id === tplId)?.template || null
+			const subcommandsTree: Record<string, any> = {}
+			for (const [subcommandName, subcommand] of Object.entries(subcommandsMap)) {
+				const subcommandTemplateIds = subcommand.templates ?? []
+				const subcommandTemplates = subcommandTemplateIds.map((templateId: string) => {
+					const definition = templateRegistry.get(templateId)
+					const custom = databaseTemplates.find(tpl => tpl.id === templateId)?.template || null
 					return {
-						id: tplId,
-						default: def?.default ?? '',
+						id: templateId,
+						default: definition?.default ?? '',
 						custom,
-						params: def?.params ?? [],
-						description: def?.description ?? '',
+						params: definition?.params ?? [],
 					}
 				})
 
-				const subId = `${prefix}.${subName}`
-				const subDbConfig = dbCmds.find(c => c.id === subId) || {
+				const subcommandId = `${prefix}.${subcommandName}`
+				const subcommandDbConfig = databaseCommands.find(cmd => cmd.id === subcommandId) || {
 					enabled: true,
 					cost: 0,
 					globalCooldown: 0,
@@ -73,23 +71,23 @@ export default defineEventHandler(async () => {
 					trigger: null,
 				}
 
-				res[subName] = {
-					id: subId,
-					trigger: subDbConfig.trigger,
-					activeTrigger: subDbConfig.trigger || subName,
-					description: sub.description,
-					usage: sub.usage,
-					permission: sub.permission,
-					enabled: Boolean(subDbConfig.enabled),
-					cost: subDbConfig.cost,
-					globalCooldown: subDbConfig.globalCooldown,
-					userCooldown: subDbConfig.userCooldown,
-					templates: subTemplates,
-					hasHandler: Boolean(sub.handler),
-					subcommands: sub.subcommands ? buildSubcommandsTree(sub.subcommands, subId) : undefined,
+				subcommandsTree[subcommandName] = {
+					id: subcommandId,
+					trigger: subcommandDbConfig.trigger,
+					activeTrigger: subcommandDbConfig.trigger || subcommandName,
+					description: subcommand.description,
+					usage: subcommand.usage,
+					permission: subcommand.permission,
+					enabled: Boolean(subcommandDbConfig.enabled),
+					cost: subcommandDbConfig.cost,
+					globalCooldown: subcommandDbConfig.globalCooldown,
+					userCooldown: subcommandDbConfig.userCooldown,
+					templates: subcommandTemplates,
+					hasHandler: Boolean(subcommand.handler),
+					subcommands: subcommand.subcommands ? buildSubcommandsTree(subcommand.subcommands, subcommandId) : undefined,
 				}
 			}
-			return res
+			return subcommandsTree
 		}
 
 		const subcommandsData = command.subcommands ? buildSubcommandsTree(command.subcommands, command.id) : {}
@@ -100,12 +98,12 @@ export default defineEventHandler(async () => {
 			usage: command.usage,
 			permission: command.permission,
 			// Dynamic database parameters
-			trigger: dbConfig.trigger,
-			activeTrigger: dbConfig.trigger || command.id,
-			enabled: Boolean(dbConfig.enabled),
-			cost: dbConfig.cost,
-			globalCooldown: dbConfig.globalCooldown,
-			userCooldown: dbConfig.userCooldown,
+			trigger: databaseConfig.trigger,
+			activeTrigger: databaseConfig.trigger || command.id,
+			enabled: Boolean(databaseConfig.enabled),
+			cost: databaseConfig.cost,
+			globalCooldown: databaseConfig.globalCooldown,
+			userCooldown: databaseConfig.userCooldown,
 			// Mapped sub-structures
 			aliases,
 			templates: rootTemplates,

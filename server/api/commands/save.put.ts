@@ -8,9 +8,9 @@ const saveCommandSchema = z.object({
 	id: z.string().min(1),
 	trigger: z.string().min(1).regex(/^[\w-]+$/, 'Trigger must be alphanumeric and cannot contain spaces or prefix characters').optional().nullable(),
 	enabled: z.boolean(),
-	cost: z.preprocess(val => (val === null || val === undefined || val === '' || Number.isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
-	globalCooldown: z.preprocess(val => (val === null || val === undefined || val === '' || Number.isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
-	userCooldown: z.preprocess(val => (val === null || val === undefined || val === '' || Number.isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
+	cost: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
+	globalCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
+	userCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	permission: z.string().optional().nullable(),
 })
 
@@ -34,30 +34,30 @@ export default defineEventHandler(async (event) => {
 	if (cleanTrigger) {
 		if (!isSubCommand) {
 			// 1. Prevent collision with another root command's trigger
-			const collisionCmd = await db
+			const collidingCommand = await db
 				.select()
 				.from(commands)
 				.where(and(eq(commands.trigger, cleanTrigger), ne(commands.id, id)))
-				.then(res => res[0])
+				.then(results => results[0])
 
-			if (collisionCmd && !collisionCmd.id.includes('.')) {
+			if (collidingCommand && !collidingCommand.id.includes('.')) {
 				throw createError({
 					statusCode: 409,
-					statusMessage: `Trigger "!${cleanTrigger}" is already in use by root command "${collisionCmd.id}".`,
+					statusMessage: `Trigger "!${cleanTrigger}" is already in use by root command "${collidingCommand.id}".`,
 				})
 			}
 
 			// 2. Prevent collision with any existing command alias
-			const collisionAlias = await db
+			const collidingAlias = await db
 				.select()
 				.from(commandAliases)
 				.where(eq(commandAliases.trigger, cleanTrigger))
-				.then(res => res[0])
+				.then(results => results[0])
 
-			if (collisionAlias) {
+			if (collidingAlias) {
 				throw createError({
 					statusCode: 409,
-					statusMessage: `Trigger "!${cleanTrigger}" is already in use as an alias for command "${collisionAlias.commandId}".`,
+					statusMessage: `Trigger "!${cleanTrigger}" is already in use as an alias for command "${collidingAlias.commandId}".`,
 				})
 			}
 		}
@@ -90,26 +90,26 @@ export default defineEventHandler(async (event) => {
 			}
 
 			// B. Prevent collision with other custom triggers of siblings in database
-			const siblingCmds = await db
+			const siblingCommands = await db
 				.select()
 				.from(commands)
 				.where(ne(commands.id, id))
-				.then(res => res.filter(c => c.id.startsWith(`${parentPrefix}.`) && c.id.substring(parentPrefix.length + 1).split('.').length === 1))
+				.then(results => results.filter(cmd => cmd.id.startsWith(`${parentPrefix}.`) && cmd.id.substring(parentPrefix.length + 1).split('.').length === 1))
 
-			const collisionSibling = siblingCmds.find(c => c.trigger === cleanTrigger)
-			if (collisionSibling) {
+			const collidingSibling = siblingCommands.find(cmd => cmd.trigger === cleanTrigger)
+			if (collidingSibling) {
 				throw createError({
 					statusCode: 409,
-					statusMessage: `Trigger word "${cleanTrigger}" is already in use by sibling subcommand "${collisionSibling.id}".`,
+					statusMessage: `Trigger word "${cleanTrigger}" is already in use by sibling subcommand "${collidingSibling.id}".`,
 				})
 			}
 		}
 	}
 
 	// 3. Update command config in database
-	const existing = await db.select().from(commands).where(eq(commands.id, id)).then(res => res[0])
+	const existingRecord = await db.select().from(commands).where(eq(commands.id, id)).then(results => results[0])
 
-	if (existing) {
+	if (existingRecord) {
 		await db
 			.update(commands)
 			.set({

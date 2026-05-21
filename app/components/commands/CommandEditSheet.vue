@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Alias, Command } from '~/types/commands'
 import { ArrowRight, BadgeDollarSign, Clock, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -7,28 +8,6 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/in
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
-
-interface Alias {
-	id?: number
-	trigger: string
-	subcommand: string | null
-	overrideArgs: string[] | null
-}
-
-interface Command {
-	id: string
-	description: string
-	permission: string
-	trigger: string
-	parentTriggerPath?: string
-	enabled: boolean
-	cost: number
-	globalCooldown: number
-	userCooldown: number
-	aliases: Alias[]
-	subcommands?: Record<string, any>
-	hasHandler?: boolean
-}
 
 const props = defineProps<{
 	command: Command | null
@@ -39,11 +18,11 @@ const emit = defineEmits(['update:open', 'saved'])
 
 // Local state fields
 const triggerName = ref('')
-const costVal = ref(0)
-const globalCooldownVal = ref(0)
-const userCooldownVal = ref(0)
+const costValue = ref(0)
+const globalCooldownValue = ref(0)
+const userCooldownValue = ref(0)
 const isEnabled = ref(true)
-const permissionVal = ref('everyone')
+const permissionValue = ref('everyone')
 
 // Aliases edit states
 const aliasesList = ref<Alias[]>([])
@@ -57,16 +36,16 @@ const isSaving = ref(false)
 watch(() => props.open, (isOpen) => {
 	if (isOpen && props.command) {
 		triggerName.value = props.command.trigger || ''
-		costVal.value = props.command.cost
-		globalCooldownVal.value = props.command.globalCooldown
-		userCooldownVal.value = props.command.userCooldown
+		costValue.value = props.command.cost
+		globalCooldownValue.value = props.command.globalCooldown
+		userCooldownValue.value = props.command.userCooldown
 		isEnabled.value = props.command.enabled
-		permissionVal.value = props.command.permission || 'everyone'
+		permissionValue.value = props.command.permission || 'everyone'
 
 		// Clone aliases and normalize null target subcommands to '__root__'
-		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || [])).map((a: any) => ({
-			...a,
-			subcommand: a.subcommand || '__root__',
+		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || [])).map((alias: any) => ({
+			...alias,
+			subcommand: alias.subcommand || '__root__',
 		}))
 
 		// Clear inputs
@@ -91,11 +70,11 @@ const executableSubcommandPaths = computed(() => {
 		return []
 	const paths: string[] = []
 
-	function traverse(obj: any, currentPath: string) {
-		for (const [name, val] of Object.entries(obj)) {
-			if (!val || typeof val !== 'object')
+	function traverse(subcommandsMap: any, currentPath: string) {
+		for (const [name, subcommandRecord] of Object.entries(subcommandsMap)) {
+			if (!subcommandRecord || typeof subcommandRecord !== 'object')
 				continue
-			const detail = val as any
+			const detail = subcommandRecord as any
 			const path = currentPath ? `${currentPath}.${name}` : name
 			if (detail.hasHandler !== false) {
 				paths.push(path)
@@ -117,14 +96,14 @@ function addAliasLocally() {
 		return
 	}
 
-	if (aliasesList.value.some(a => a.trigger === trigger)) {
+	if (aliasesList.value.some(alias => alias.trigger === trigger)) {
 		toast.error(`Alias '!${trigger}' already exists in this list`)
 		return
 	}
 
 	const overrides = newAliasOverrides.value
 		.split(',')
-		.map(s => s.trim())
+		.map(segment => segment.trim())
 		.filter(Boolean)
 
 	aliasesList.value.push({
@@ -143,12 +122,12 @@ function removeAliasLocally(index: number) {
 }
 
 function normalizeNumericFields() {
-	if (costVal.value === undefined || costVal.value === null || Number.isNaN(costVal.value))
-		costVal.value = 0
-	if (globalCooldownVal.value === undefined || globalCooldownVal.value === null || Number.isNaN(globalCooldownVal.value))
-		globalCooldownVal.value = 0
-	if (userCooldownVal.value === undefined || userCooldownVal.value === null || Number.isNaN(userCooldownVal.value))
-		userCooldownVal.value = 0
+	if (costValue.value === undefined || costValue.value === null || Number.isNaN(costValue.value))
+		costValue.value = 0
+	if (globalCooldownValue.value === undefined || globalCooldownValue.value === null || Number.isNaN(globalCooldownValue.value))
+		globalCooldownValue.value = 0
+	if (userCooldownValue.value === undefined || userCooldownValue.value === null || Number.isNaN(userCooldownValue.value))
+		userCooldownValue.value = 0
 }
 
 async function saveAllConfig() {
@@ -167,10 +146,10 @@ async function saveAllConfig() {
 				id: props.command.id,
 				trigger: cleanTrigger,
 				enabled: isEnabled.value,
-				cost: typeof costVal.value === 'number' && !Number.isNaN(costVal.value) ? costVal.value : 0,
-				globalCooldown: typeof globalCooldownVal.value === 'number' && !Number.isNaN(globalCooldownVal.value) ? globalCooldownVal.value : 0,
-				userCooldown: typeof userCooldownVal.value === 'number' && !Number.isNaN(userCooldownVal.value) ? userCooldownVal.value : 0,
-				permission: permissionVal.value,
+				cost: typeof costValue.value === 'number' && !Number.isNaN(costValue.value) ? costValue.value : 0,
+				globalCooldown: typeof globalCooldownValue.value === 'number' && !Number.isNaN(globalCooldownValue.value) ? globalCooldownValue.value : 0,
+				userCooldown: typeof userCooldownValue.value === 'number' && !Number.isNaN(userCooldownValue.value) ? userCooldownValue.value : 0,
+				permission: permissionValue.value,
 			},
 		})
 
@@ -180,10 +159,10 @@ async function saveAllConfig() {
 				method: 'PUT',
 				body: {
 					commandId: props.command.id,
-					aliases: aliasesList.value.map(a => ({
-						trigger: a.trigger,
-						subcommand: a.subcommand === '__root__' ? null : a.subcommand,
-						overrideArgs: a.overrideArgs,
+					aliases: aliasesList.value.map(alias => ({
+						trigger: alias.trigger,
+						subcommand: alias.subcommand === '__root__' ? null : alias.subcommand,
+						overrideArgs: alias.overrideArgs,
 					})),
 				},
 			})
@@ -196,8 +175,8 @@ async function saveAllConfig() {
 		emit('saved')
 		emit('update:open', false)
 	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save configuration')
+	catch (error: any) {
+		toast.error(error.data?.statusMessage || 'Failed to save configuration')
 	}
 	finally {
 		isSaving.value = false
@@ -302,7 +281,7 @@ function navigateToTemplateEditor() {
 						<FieldLabel for="permission-level">
 							Required Permission Level
 						</FieldLabel>
-						<Select v-model="permissionVal">
+						<Select v-model="permissionValue">
 							<SelectTrigger id="permission-level" class="w-full">
 								<SelectValue placeholder="Select Permission Level" />
 							</SelectTrigger>
@@ -336,7 +315,7 @@ function navigateToTemplateEditor() {
 								<BadgeDollarSign class="size-4" />
 								Point Cost
 							</FieldLabel>
-							<NumberField id="editCost" v-model="costVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editCost" v-model="costValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
 									<NumberFieldInput @blur="normalizeNumericFields" />
@@ -350,7 +329,7 @@ function navigateToTemplateEditor() {
 								<Clock class="size-4" />
 								Global CD (Sec)
 							</FieldLabel>
-							<NumberField id="editGlobalCooldown" v-model="globalCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editGlobalCooldown" v-model="globalCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
 									<NumberFieldInput @blur="normalizeNumericFields" />
@@ -364,7 +343,7 @@ function navigateToTemplateEditor() {
 								<Clock class="size-4" />
 								User CD (Sec)
 							</FieldLabel>
-							<NumberField id="editUserCooldown" v-model="userCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editUserCooldown" v-model="userCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
 									<NumberFieldInput @blur="normalizeNumericFields" />

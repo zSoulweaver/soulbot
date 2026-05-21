@@ -7,6 +7,8 @@ import 'vue-sonner/style.css'
 		<NuxtLayout>
 			<NuxtPage />
 		</NuxtLayout>
-		<Sonner />
+		<ClientOnly>
+			<Sonner />
+		</ClientOnly>
 	</div>
 </template>

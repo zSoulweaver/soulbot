@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-	ChevronDown,
-	ChevronRight,
-	Clock,
-	Coins,
-	MessageSquare,
-	Settings,
-	Shield,
-	Sliders,
-} from 'lucide-vue-next'
+import { BadgeDollarSign,	ChevronRight,	Clock,	MessageSquare,	Settings,	Shield,	User } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
@@ -73,7 +64,7 @@ function getPermissionBadgeClass(permission: string) {
 // Inline toggle switch active state instantly
 async function toggleCommandActive(command: Command) {
 	try {
-		const nextState = !command.enabled
+		const nextState = command.enabled
 		await $fetch('/api/commands/save', {
 			method: 'PUT',
 			body: {
@@ -158,30 +149,25 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 </script>
 
 <template>
-	<div class="flex flex-col gap-6">
-		<div class="flex items-center justify-between">
-			<div class="flex flex-col gap-1">
-				<h1 class="text-3xl font-bold tracking-tight">
-					Commands Management
-				</h1>
-				<p class="text-sm text-muted-foreground">
-					Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates.
-				</p>
-			</div>
-			<Button variant="outline" size="sm" :disabled="loading" @click="refreshCommands">
+	<div class="space-y-6">
+		<AppPageHeader
+			heading="Command Management"
+			subheading="Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates."
+		>
+			<Button variant="outline" :disabled="loading" @click="refreshCommands">
 				Refresh Commands
 			</Button>
-		</div>
+		</AppPageHeader>
 
 		<!-- Commands Table Card -->
-		<Card class="border-border bg-card/50 backdrop-blur-sm">
-			<CardHeader class="pb-2 select-none">
+		<Card>
+			<CardHeader>
 				<CardTitle>Active Commands</CardTitle>
-				<CardDescription>Core modules registered by the bot and synced via Drizzle SQLite.</CardDescription>
+				<CardDescription>Core modules registered by the bot and synced via the database.</CardDescription>
 			</CardHeader>
 			<CardContent class="p-0">
 				<div class="relative overflow-x-auto">
-					<table class="w-full text-left text-sm">
+					<table class="w-full text-left">
 						<thead class="border-b border-border bg-muted/50 text-xs text-muted-foreground uppercase select-none">
 							<tr>
 								<th class="px-6 py-4">
@@ -206,12 +192,12 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 						</thead>
 						<tbody class="divide-y divide-border">
 							<tr v-if="loading" class="text-center">
-								<td colspan="6" class="py-10 text-xs text-muted-foreground">
+								<td colspan="6" class="py-10 text-muted-foreground">
 									Loading bot commands...
 								</td>
 							</tr>
 							<tr v-else-if="!commandsList || commandsList.length === 0" class="text-center">
-								<td colspan="6" class="py-10 text-xs text-muted-foreground">
+								<td colspan="6" class="py-10 text-muted-foreground">
 									No commands registered.
 								</td>
 							</tr>
@@ -221,64 +207,49 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 										transition-colors
 										hover:bg-muted/30
 									"
-									:class="{ 'opacity-65': !command.enabled }"
+									:class="{ 'opacity-40': !command.enabled }"
 								>
 									<!-- Trigger Name & Aliases -->
-									<td class="px-6 py-4">
+									<td class="px-6 py-3">
 										<div class="flex flex-col gap-1.5">
-											<div class="flex items-center gap-2">
+											<div class="flex items-center gap-1">
 												<!-- Collapsible Subcommands Trigger Chevron -->
 												<button
 													v-if="command.subcommands && Object.keys(command.subcommands).length > 0"
 													class="
-														cursor-pointer rounded-sm p-0.5 text-muted-foreground transition-colors
+														rounded-sm p-1 text-muted-foreground transition-colors
 														hover:bg-muted hover:text-foreground
 													"
 													title="Toggle nested subcommands"
 													@click="toggleCommandExpanded(command.id)"
 												>
-													<ChevronDown v-if="expandedCommands[command.id]" class="size-4 text-primary" />
-													<ChevronRight v-else class="size-4" />
+													<ChevronRight class="size-4 text-primary transition-transform" :class="{ 'rotate-90': expandedCommands[command.id] }" />
 												</button>
 
 												<!-- Command Name & ID - Clickable accordion triggers -->
 												<div
-													class="flex items-center gap-2"
-													:class="{ 'cursor-pointer transition-colors select-none hover:text-primary': command.subcommands && Object.keys(command.subcommands).length > 0 }"
+													class="flex items-baseline gap-2"
+													:class="{ 'cursor-pointer': command.subcommands && Object.keys(command.subcommands).length > 0 }"
 													@click="command.subcommands && Object.keys(command.subcommands).length > 0 ? toggleCommandExpanded(command.id) : null"
 												>
-													<span class="text-base font-bold text-foreground">
+													<span class="font-bold whitespace-nowrap">
 														!{{ command.activeTrigger }}
 													</span>
-													<span class="font-mono text-xs text-muted-foreground">
-														({{ command.id }})
+													<span v-if="command.activeTrigger !== command.id" class="font-mono text-xs text-muted-foreground">
+														{{ command.id }}
 													</span>
 												</div>
 											</div>
-											<span class="line-clamp-1 max-w-[280px] text-xs text-muted-foreground">
+											<span class="line-clamp-1 max-w-70 text-xs text-muted-foreground">
 												{{ command.description }}
 											</span>
-											<!-- Aliases Render -->
-											<div v-if="command.aliases && command.aliases.length > 0" class="mt-1 flex flex-wrap gap-1">
-												<Badge
-													v-for="alias in command.aliases"
-													:key="alias.trigger"
-													variant="outline"
-													class="border-border bg-muted/10 px-1.5 py-0 text-[9px] font-semibold text-muted-foreground"
-												>
-													!{{ alias.trigger }}
-													<span v-if="alias.subcommand" class="pl-0.5 text-[8px] text-primary/70">
-														-> {{ alias.subcommand }}
-													</span>
-												</Badge>
-											</div>
 										</div>
 									</td>
 
 									<!-- Permission Badge -->
 									<td class="px-6 py-4">
-										<Badge :class="getPermissionBadgeClass(command.permission)" class="text-[10px] font-medium capitalize">
-											<Shield class="mr-1 size-3" />
+										<Badge :class="getPermissionBadgeClass(command.permission)" class="font-medium capitalize">
+											<Shield />
 											{{ command.permission }}
 										</Badge>
 									</td>
@@ -287,12 +258,12 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 									<td class="px-6 py-4">
 										<Badge
 											v-if="command.cost > 0"
-											class="gap-1 border border-amber-500/20 bg-amber-500/10 text-[10px] font-semibold text-amber-500"
+											class="border-amber-500/20 bg-amber-500/10 text-amber-500"
 										>
-											<Coins class="size-3" />
+											<BadgeDollarSign />
 											{{ command.cost }} pts
 										</Badge>
-										<span v-else class="text-xs text-muted-foreground italic">Free</span>
+										<span v-else class="text-muted-foreground">-</span>
 									</td>
 
 									<!-- Cooldowns -->
@@ -302,48 +273,28 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 												<Clock class="size-3" /> Global: {{ command.globalCooldown > 0 ? `${command.globalCooldown}s` : 'None' }}
 											</span>
 											<span class="flex items-center gap-1">
-												<Sliders class="size-3" /> User: {{ command.userCooldown > 0 ? `${command.userCooldown}s` : 'None' }}
+												<User class="size-3" /> User: {{ command.userCooldown > 0 ? `${command.userCooldown}s` : 'None' }}
 											</span>
 										</div>
 									</td>
 
 									<!-- Active Status Toggle -->
 									<td class="px-6 py-4 text-center">
-										<div class="flex items-center justify-center">
-											<label class="relative inline-flex cursor-pointer items-center">
-												<input
-													type="checkbox"
-													:checked="command.enabled"
-													class="peer sr-only"
-													@change="toggleCommandActive(command)"
-												>
-												<div
-													class="
-														peer h-5 w-9 rounded-full border border-border bg-muted transition-all
-														peer-checked:bg-primary
-														after:absolute after:top-[2px] after:left-[2px] after:size-4 after:rounded-full after:bg-muted-foreground after:transition-all
-														peer-checked:after:translate-x-full peer-checked:after:bg-background
-													"
-												/>
-											</label>
-										</div>
+										<Switch v-model:model-value="command.enabled" @update:model-value="toggleCommandActive(command)" />
 									</td>
 
 									<!-- Configure Actions -->
 									<td class="px-6 py-4 text-right">
 										<div class="flex items-center justify-end gap-1.5">
-											<Button size="sm" variant="secondary" class="h-8 text-xs" @click="openQuickEdit(command)">
-												<Settings class="mr-1 size-3.5" />
-												Quick Config
+											<Button size="sm" variant="outline" @click="openQuickEdit(command)">
+												<Settings />
+												Config
 											</Button>
 											<Button
-												size="sm" variant="outline" class="
-													h-8 border-border text-xs
-													hover:border-primary/20 hover:bg-primary/10 hover:text-primary
-												" as-child
+												variant="outline" size="sm" as-child
 											>
 												<NuxtLink :to="`/admin/commands/${command.id}`">
-													<MessageSquare class="mr-1 size-3.5" />
+													<MessageSquare />
 													Templates
 												</NuxtLink>
 											</Button>
@@ -351,33 +302,33 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 									</td>
 								</tr>
 
-								<!-- Premium Nested Collapsible Subcommands Container Row -->
-								<tr v-if="command.subcommands && Object.keys(command.subcommands).length > 0 && expandedCommands[command.id]" class="border-b border-border/50 bg-muted/15">
-									<td colspan="6" class="px-8 py-4">
-										<div class="space-y-3 border-l-2 border-primary/50 py-2 pl-4">
-											<div class="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase select-none">
-												Registered Subcommands for !{{ command.activeTrigger }}
+								<!-- Nested Collapsible Subcommands Container Row -->
+								<tr v-if="command.subcommands && Object.keys(command.subcommands).length > 0 && expandedCommands[command.id]" class="bg-background">
+									<td colspan="6" class="px-6 py-4">
+										<div class="space-y-2 border-l-2 py-2 pl-4">
+											<div class="text-xs font-semibold tracking-wider text-muted-foreground uppercase select-none">
+												Registered subcommands for !{{ command.activeTrigger }}
 											</div>
 											<div class="grid gap-2">
 												<div
 													v-for="subItem in getFlatSubcommands(command.subcommands)"
 													:key="subItem.detail.id"
 													class="
-														flex items-center justify-between rounded-lg border border-border/40 bg-card/45 p-3 transition-all
+														flex items-center justify-between rounded-lg border border-secondary bg-secondary/20 p-3 transition-colors
 														hover:border-border
 													"
 													:class="{ 'opacity-65': !subItem.detail.enabled }"
 												>
 													<div class="flex flex-col gap-1">
 														<div class="flex items-center gap-2">
-															<Badge variant="secondary" class="px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
+															<Badge class="font-mono text-xs font-bold">
 																!{{ command.activeTrigger }} {{ subItem.triggerPath }}
 															</Badge>
-															<span v-if="subItem.detail.usage" class="font-mono text-[9px] text-muted-foreground">({{ subItem.detail.usage }})</span>
-															<Badge v-if="subItem.detail.hasHandler === false" variant="outline" class="h-4 border-border/80 bg-secondary/30 px-1.5 py-0 text-[9px] leading-none text-muted-foreground select-none">
+															<span v-if="subItem.detail.usage" class="font-mono text-xs text-muted-foreground">{{ subItem.detail.usage }}</span>
+															<Badge v-if="subItem.detail.hasHandler === false" variant="secondary" class="text-xs">
 																Command Group
 															</Badge>
-															<Badge v-if="!subItem.detail.enabled" variant="outline" class="h-4 border-destructive/20 bg-destructive/10 px-1.5 py-0 text-[9px] leading-none text-destructive select-none">
+															<Badge v-if="!subItem.detail.enabled" variant="destructive" class="text-xs">
 																Disabled
 															</Badge>
 														</div>
@@ -389,55 +340,50 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 														<div class="flex items-center gap-2">
 															<Badge
 																v-if="subItem.detail.cost > 0"
-																class="h-5 gap-1 border border-amber-500/20 bg-amber-500/10 text-[9px] font-semibold text-amber-500"
+																class="border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-500"
 															>
-																<Coins class="size-2.5" />
+																<BadgeDollarSign />
 																{{ subItem.detail.cost }} pts
 															</Badge>
 															<Badge
 																v-if="subItem.detail.globalCooldown > 0 || subItem.detail.userCooldown > 0"
-																class="flex h-5 items-center gap-1 border border-border/80 bg-muted px-1.5 font-mono text-[9px] text-muted-foreground select-none"
-																:title="`Global CD: ${subItem.detail.globalCooldown}s | User CD: ${subItem.detail.userCooldown}s`"
+																variant="outline"
+																class="text-xs"
+																:title="`Global Cooldown: ${subItem.detail.globalCooldown}s | User Cooldown: ${subItem.detail.userCooldown}s`"
 															>
-																<Clock class="size-2.5" />
+																<Clock />
 																CD
 															</Badge>
 														</div>
 
 														<div class="flex items-center gap-2">
 															<!-- Subcommand Permission Badge -->
-															<Badge :class="getPermissionBadgeClass(subItem.detail.permission)" class="h-5 text-[9px] font-medium capitalize">
-																<Shield class="mr-1 size-2.5" />
+															<Badge :class="getPermissionBadgeClass(subItem.detail.permission)" class="capitalize">
+																<Shield />
 																{{ subItem.detail.permission }}
 															</Badge>
 
 															<!-- Subcommand Config Action -->
 															<Button
-																size="sm" variant="secondary" class="
-																	h-7 text-[11px]
-																	hover:bg-secondary/80
-																" @click="openSubCommandQuickEdit(subItem, command)"
+																size="sm" variant="outline" @click="openSubCommandQuickEdit(subItem, command)"
 															>
-																<Settings class="mr-1 size-3" />
-																Quick Config
+																<Settings />
 															</Button>
 
 															<!-- Templates Quick Link (Disabled for command groups) -->
 															<Button
 																size="sm"
-																variant="ghost"
-																class="h-7 border border-border/50 text-[11px] select-none"
-																:class="subItem.detail.hasHandler === false ? 'pointer-events-none cursor-not-allowed opacity-40' : 'hover:bg-primary/10 hover:text-primary'"
+																variant="outline"
+																:class="subItem.detail.hasHandler === false ? 'cursor-not-allowed' : ''"
 																:disabled="subItem.detail.hasHandler === false"
 																as-child
 															>
 																<NuxtLink v-if="subItem.detail.hasHandler !== false" :to="`/admin/commands/${command.id}?path=${subItem.name}`">
-																	<MessageSquare class="mr-1 size-3" />
-																	Edit Templates
+																	<MessageSquare />
 																</NuxtLink>
 																<span v-else class="flex items-center text-muted-foreground">
-																	<MessageSquare class="mr-1 size-3" />
-																	Edit Templates
+																	<MessageSquare />
+
 																</span>
 															</Button>
 														</div>

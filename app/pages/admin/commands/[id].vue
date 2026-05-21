@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import {
-	ChevronDown,
 	ChevronRight,
+	CornerDownRight,
 	HelpCircle,
 	RefreshCw,
 	Save,
-	Settings,
 	Terminal,
 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -267,118 +266,82 @@ async function saveTemplates() {
 </script>
 
 <template>
-	<div class="flex flex-col gap-6">
+	<div class="flex flex-1 flex-col gap-6">
 		<!-- Main Workspace Loader -->
-		<div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">
+		<div v-if="loading" class="py-12 text-center text-muted-foreground">
 			Loading command customizer...
 		</div>
 
-		<div v-else-if="!command" class="py-12 text-center text-sm text-muted-foreground">
+		<div v-else-if="!command" class="py-12 text-center text-muted-foreground">
 			Command not found in registry.
 		</div>
 
-		<div v-else class="space-y-6">
+		<div v-else class="flex flex-1 flex-col gap-6">
 			<!-- Header Block -->
-			<div
-				class="
-					flex flex-col gap-4 border-b border-border pb-6
-					md:flex-row md:items-center md:justify-between
-				"
+			<AppPageHeader
+				:heading="`Response Customizer - !${command.activeTrigger}`"
+				subheading="Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly."
 			>
-				<div class="flex flex-col gap-1.5">
-					<h1 class="flex items-center gap-2 text-3xl font-bold tracking-tight">
-						Response Customizer: <span class="font-mono font-bold text-primary">!{{ command.activeTrigger }}</span>
-					</h1>
-					<p class="max-w-2xl text-sm text-muted-foreground">
-						Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly.
-					</p>
-				</div>
-				<div class="flex items-center gap-2">
-					<Button variant="outline" size="sm" :disabled="loading" @click="refreshCommands">
-						Refresh Details
-					</Button>
-				</div>
-			</div>
+				<Button variant="outline" size="sm" :disabled="loading" @click="refreshCommands">
+					Refresh Details
+				</Button>
+			</AppPageHeader>
 
 			<!-- Dynamic Left-Right Sidebar Workspace -->
 			<div
 				class="
-					grid grid-cols-1 items-start gap-6
-					lg:grid-cols-4
+					grid flex-1 grid-cols-1 items-start gap-6
+					xl:grid-cols-4
 				"
 			>
 				<!-- Sidebar: Execution Path Selectors -->
 				<div
 					class="
 						space-y-3
-						lg:col-span-1
+						xl:col-span-1
 					"
 				>
-					<h2 class="px-2 text-xs font-bold tracking-wider text-muted-foreground uppercase select-none">
-						Command Execeution Pathways
+					<h2 class="px-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+						Command Execution Pathways
 					</h2>
 					<div
 						class="
-							flex flex-row gap-1 overflow-x-auto pb-2
-							lg:flex-col lg:overflow-x-visible lg:pb-0
+							flex flex-col gap-1 overflow-x-auto
+							xl:overflow-x-visible
 						"
 					>
 						<!-- Root Option -->
-						<button
-							type="button"
-							class="flex shrink-0 items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
-							:class="activePathFilter === 'root'
-								? 'border-primary/20 bg-primary/10 text-primary'
-								: `
-									border-border bg-card/50 text-muted-foreground
-									hover:bg-muted/50 hover:text-foreground
-								`"
+						<Button
+							class="w-full justify-between gap-2"
+							:variant="activePathFilter === 'root' ? 'secondary' : 'ghost'"
 							@click="activePathFilter = 'root'"
 						>
-							<div class="flex items-center gap-2">
+							<div class="flex min-w-0 items-center gap-2">
 								<Terminal class="size-4 shrink-0" />
-								<span>Root Trigger (!{{ command.activeTrigger }})</span>
+								<span class="truncate text-left">Root Command (!{{ command.activeTrigger }})</span>
 							</div>
-							<Badge
-								variant="outline"
-								class="ml-2 border-border bg-muted/50 px-1.5 py-0 text-[10px] select-none"
-								:class="activePathFilter === 'root'
-									? 'border-primary/20 bg-primary/5 text-primary'
-									: 'bg-muted/50 text-muted-foreground'"
-							>
+							<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="shrink-0">
 								{{ command.templates?.length || 0 }}
 							</Badge>
-						</button>
+						</Button>
 
 						<!-- Subcommands options -->
 						<template v-if="flatSubcommands.length > 0">
-							<button
+							<Button
 								v-for="sub in flatSubcommands"
 								:key="sub.key"
-								type="button"
-								class="flex shrink-0 items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-semibold transition-all"
-								:class="activePathFilter === sub.key
-									? 'border-primary/20 bg-primary/10 text-primary'
-									: `
-										border-border bg-card/50 text-muted-foreground
-										hover:bg-muted/50 hover:text-foreground
-									`"
+								class="w-full justify-between gap-2"
+								:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
 								@click="activePathFilter = sub.key"
 							>
-								<div class="flex items-center gap-2">
-									<Settings class="size-4 shrink-0" />
-									<span>Subcommand: {{ sub.triggerPath }}</span>
+								<div class="flex min-w-0 items-center gap-2">
+									<CornerDownRight class="size-4 shrink-0" />
+									<span class="truncate text-left">Subcommand: {{ sub.triggerPath }}</span>
 								</div>
-								<Badge
-									variant="outline"
-									class="ml-2 border-border bg-muted/50 px-1.5 py-0 text-[10px] select-none"
-									:class="activePathFilter === sub.key
-										? 'border-primary/20 bg-primary/5 text-primary'
-										: 'bg-muted/50 text-muted-foreground'"
-								>
+								<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="shrink-0">
 									{{ sub.templates?.length || 0 }}
 								</Badge>
-							</button>
+							</Button>
 						</template>
 					</div>
 				</div>
@@ -387,193 +350,177 @@ async function saveTemplates() {
 				<div
 					class="
 						space-y-4
-						lg:col-span-3
+						xl:col-span-3
 					"
 				>
 					<!-- Path Header details -->
-					<div class="flex flex-col gap-1 rounded-lg border border-border bg-muted/20 p-4 select-none">
-						<span class="text-xs font-bold tracking-wider text-primary uppercase">
-							Active Path: {{ activePathFilter === 'root' ? `!${command.activeTrigger}` : `!${command.activeTrigger} ${activeSubcommandDetail?.triggerPath}` }}
-						</span>
-						<span class="text-[11px] text-muted-foreground">
+					<div>
+						<p class="text-sm font-bold tracking-wider uppercase">
+							Active Path - {{ activePathFilter === 'root' ? `!${command.activeTrigger}` : `!${command.activeTrigger} ${activeSubcommandDetail?.triggerPath}` }}
+						</p>
+						<p class="text-xs text-muted-foreground">
 							{{ activePathFilter === 'root' ? command.description : activeSubcommandDetail?.description }}
-						</span>
+						</p>
 					</div>
 
 					<div class="space-y-4">
-						<!-- Individual Template Card Accordion -->
-						<div
-							v-for="tpl in activeTemplatesToDisplay"
-							:key="tpl.id"
-							class="overflow-hidden rounded-lg border border-border bg-card/45 backdrop-blur-sm transition-all"
+						<!-- Individual Template Card Accordion using Card & Collapsible -->
+						<Collapsible
+							v-for="template in activeTemplatesToDisplay"
+							:key="template.id"
+							:open="expandedTemplates[template.id]"
+							@update:open="toggleTemplateExpanded(template.id)"
 						>
-							<!-- Clickable Accordion Header -->
-							<div
-								class="
-									flex cursor-pointer items-center justify-between bg-muted/20 p-4 transition-colors select-none
-									hover:bg-muted/40
-								"
-								@click="toggleTemplateExpanded(tpl.id)"
-							>
-								<div class="flex min-w-0 items-center gap-3">
-									<!-- Chevron Icon -->
-									<ChevronDown v-if="expandedTemplates[tpl.id]" class="size-4 shrink-0 text-primary" />
-									<ChevronRight v-else class="size-4 shrink-0 text-muted-foreground" />
-
-									<div class="flex min-w-0 flex-col gap-0.5">
-										<span class="font-mono text-xs font-bold text-foreground">
-											{{ tpl.id }}
-										</span>
-										<!-- Inline summary preview of template message -->
-										<span
-											v-if="!expandedTemplates[tpl.id]" class="
-												max-w-[280px] truncate text-[10px] text-muted-foreground
-												sm:max-w-[450px]
-											"
-										>
-											"{{ getTemplateSummary(tpl) }}"
-										</span>
-									</div>
-								</div>
-
-								<div class="flex shrink-0 items-center gap-2">
-									<!-- Revert to Default Action (when collapsed) -->
-									<Button
-										v-if="!expandedTemplates[tpl.id] && editableTemplates[tpl.id] !== tpl.default"
-										variant="outline"
-										size="sm"
+							<Card class="gap-0 overflow-hidden p-0">
+								<CollapsibleTrigger as-child>
+									<div
 										class="
-											h-6 shrink-0 gap-1 text-[9px]
-											hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive
+											flex cursor-pointer items-center justify-between p-4 transition-colors
+											hover:bg-accent
+											dark:hover:bg-accent/50
 										"
-										@click.stop="resetTemplateToDefault(tpl)"
 									>
-										<RefreshCw class="size-2.5" />
-										Reset
-									</Button>
+										<div class="flex items-center gap-3">
+											<!-- Chevron Icon -->
+											<ChevronRight class="size-4 text-primary transition-transform" :class="{ 'rotate-90': expandedTemplates[template.id] }" />
 
-									<!-- Modified/Saved Badges -->
-									<Badge
-										v-if="editableTemplates[tpl.id] !== (tpl.custom !== null ? tpl.custom : tpl.default)"
-										variant="outline"
-										class="border-amber-500/20 bg-amber-500/10 px-1.5 py-0 text-[9px] text-amber-500"
-									>
-										Modified
-									</Badge>
-									<Badge
-										v-else-if="tpl.custom !== null"
-										variant="outline"
-										class="border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0 text-[9px] text-emerald-500"
-									>
-										Custom
-									</Badge>
-									<Badge
-										v-else
-										variant="outline"
-										class="border-border/40 bg-muted px-1.5 py-0 text-[9px] text-muted-foreground"
-									>
-										Default
-									</Badge>
-								</div>
-							</div>
-
-							<!-- Collapsible Card Content Body -->
-							<div
-								v-if="expandedTemplates[tpl.id]"
-								class="flex animate-in flex-col gap-4 border-t border-border/60 bg-card/25 p-5 duration-150 fade-in slide-in-from-top-1"
-							>
-								<!-- Description if exists -->
-								<div v-if="tpl.description" class="rounded-md border border-border/30 bg-muted/10 p-2.5 text-[11px] text-muted-foreground">
-									<span class="mr-1 font-bold text-foreground">Description:</span>
-									{{ tpl.description }}
-								</div>
-
-								<!-- Textarea Input Editor -->
-								<div class="grid w-full gap-2">
-									<textarea
-										v-model="editableTemplates[tpl.id]"
-										rows="3"
-										class="
-											flex w-full rounded-md border border-input bg-card/60 px-3 py-2 font-sans text-xs/relaxed font-medium shadow-sm
-											placeholder:text-muted-foreground
-											focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
-										"
-									/>
-								</div>
-
-								<!-- Action and Helper variables grid -->
-								<div
-									class="
-										flex flex-col gap-4
-										sm:flex-row sm:items-center sm:justify-between
-									"
-								>
-									<!-- Variables Helper Badges -->
-									<div class="flex flex-1 flex-col gap-1.5 rounded-lg border border-border/30 bg-muted/65 p-3">
-										<div class="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground select-none">
-											<HelpCircle class="size-3.5 text-primary/70" />
-											Available Parameters (Click to Copy):
+											<div class="flex flex-col gap-0.5">
+												<span class="font-mono text-xs font-bold">
+													{{ template.id }}
+												</span>
+												<!-- Inline summary preview of template message -->
+												<span
+													v-if="!expandedTemplates[template.id]" class="
+														max-w-70 truncate text-xs text-muted-foreground
+														sm:max-w-112.5
+													"
+												>
+													"{{ getTemplateSummary(template) }}"
+												</span>
+											</div>
 										</div>
-										<div class="mt-0.5 flex flex-wrap gap-1.5">
-											<span v-if="tpl.params.length === 0" class="text-[10px] text-muted-foreground italic select-none">None defined (Static text output)</span>
+
+										<div class="flex items-center gap-2">
+											<!-- Modified/Saved Badges -->
 											<Badge
-												v-for="param in tpl.params"
-												:key="param"
+												v-if="editableTemplates[template.id] !== (template.custom !== null ? template.custom : template.default)"
 												variant="outline"
-												class="
-													cursor-pointer border-border bg-muted px-2 py-0.5 font-mono text-[9px] font-bold text-muted-foreground select-all
-													hover:bg-muted
-												"
-												title="Click to copy variable trigger format"
-												@click="copyToClipboard(param)"
+												class="border-amber-500/20 bg-amber-500/10 text-amber-500"
 											>
-												{{ `\${${param}\}` }}
+												Modified
 											</Badge>
+											<Badge
+												v-else-if="template.custom !== null"
+												variant="outline"
+												class="border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
+											>
+												Custom
+											</Badge>
+											<Badge
+												v-else
+												variant="secondary"
+											>
+												Default
+											</Badge>
+
+											<!-- Revert to Default Action (when collapsed) -->
+											<Button
+												v-if="!expandedTemplates[template.id] && editableTemplates[template.id] !== template.default"
+												variant="destructive"
+												size="sm"
+												@click.stop="resetTemplateToDefault(template)"
+											>
+												<RefreshCw class="size-2.5" />
+												Reset
+											</Button>
 										</div>
 									</div>
+								</CollapsibleTrigger>
 
-									<!-- Pinned Revert Action inside Card -->
-									<div class="flex shrink-0 items-center justify-end">
-										<Button
-											variant="outline"
-											size="sm"
+								<CollapsibleContent>
+									<CardContent
+										class="flex flex-col gap-4 border-t border-border/60 p-4"
+									>
+										<!-- Textarea Input Editor -->
+										<Textarea
+											v-model="editableTemplates[template.id]"
+											rows="3"
+										/>
+
+										<!-- Action and Helper variables grid -->
+										<div
 											class="
-												h-9 gap-1.5 text-xs
-												hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive
+												flex flex-col gap-4
+												sm:flex-row sm:items-center sm:justify-between
 											"
-											:disabled="editableTemplates[tpl.id] === tpl.default"
-											@click="resetTemplateToDefault(tpl)"
 										>
-											<RefreshCw class="size-3.5" />
-											Reset to Default Value
-										</Button>
-									</div>
-								</div>
-							</div>
-						</div>
+											<!-- Variables Helper Badges -->
+											<div class="flex flex-1 flex-col gap-1.5 rounded-lg bg-muted p-3">
+												<div class="flex items-center gap-1 text-xs font-semibold text-muted-foreground select-none">
+													<HelpCircle class="size-3.5" />
+													Available Parameters (Click to Copy):
+												</div>
+												<div class="mt-0.5 flex flex-wrap gap-1.5">
+													<span v-if="template.params.length === 0" class="text-xs text-muted-foreground italic select-none">None defined (Static text output)</span>
+													<Badge
+														v-for="param in template.params"
+														:key="param"
+														class="
+															cursor-pointer transition-colors
+															hover:bg-primary/85
+														"
+														title="Click to copy variable trigger format"
+														@click="copyToClipboard(param)"
+													>
+														{{ `\${${param}\}` }}
+													</Badge>
+												</div>
+											</div>
+
+											<!-- Pinned Revert Action inside Card -->
+											<div class="flex items-center justify-end">
+												<Button
+													variant="destructive"
+													:disabled="editableTemplates[template.id] === template.default"
+													@click="resetTemplateToDefault(template)"
+												>
+													<RefreshCw />
+													Reset to Default Value
+												</Button>
+											</div>
+										</div>
+									</CardContent>
+								</CollapsibleContent>
+							</Card>
+						</Collapsible>
 					</div>
 				</div>
 			</div>
 
-			<!-- Workspace Floating Action save card at bottom of screen (shown conditionally) -->
-			<div
+			<!-- Workspace Floating Action save card using shadcn Item (shown conditionally) -->
+			<Item
 				v-if="isAnyTemplateModified"
-				class="sticky bottom-4 z-40 flex translate-y-0 scale-100 animate-in items-center justify-between rounded-lg border border-border bg-card/90 px-6 py-4 opacity-100 shadow-lg backdrop-blur-md transition-all duration-200 fade-in slide-in-from-bottom-2"
+				variant="outline"
+				class="sticky bottom-4 z-40 mt-auto w-full animate-in bg-card/70 shadow-lg backdrop-blur-md transition-all duration-200 fade-in slide-in-from-bottom-2"
 			>
-				<div class="flex flex-col gap-0.5 select-none">
-					<span class="text-xs font-bold text-foreground">Unsaved Template Overrides</span>
-					<span class="text-[11px] text-muted-foreground">You have modified message templates. Save to instantly update Twitch chat triggers.</span>
-				</div>
-				<div class="flex items-center gap-2">
-					<Button variant="outline" size="sm" :disabled="isSaving" @click="refreshCommands">
+				<ItemContent>
+					<ItemTitle>
+						Unsaved Template Overrides
+					</ItemTitle>
+					<ItemDescription>
+						You have modified message templates. Save to instantly update Twitch chat triggers.
+					</ItemDescription>
+				</ItemContent>
+				<ItemActions>
+					<Button variant="outline" :disabled="isSaving" @click="refreshCommands">
 						Discard Changes
 					</Button>
-					<Button size="sm" :disabled="isSaving" @click="saveTemplates">
-						<Save class="mr-1.5 size-4" />
+					<Button :disabled="isSaving" @click="saveTemplates">
+						<Save />
 						{{ isSaving ? 'Saving Overrides...' : 'Save Templates' }}
 					</Button>
-				</div>
-			</div>
+				</ItemActions>
+			</Item>
 		</div>
 	</div>
 </template>

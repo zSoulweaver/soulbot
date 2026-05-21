@@ -38,29 +38,39 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 2. Perform sequential upserts for the template overrides
+	// 2. Perform sequential upserts or deletes for the template overrides
 	for (const tpl of templates) {
-		const existing = await db
-			.select()
-			.from(commandTemplates)
-			.where(eq(commandTemplates.id, tpl.id))
-			.then(res => res[0])
+		const definition = templateRegistry.get(tpl.id)!
+		const isDefault = tpl.template === definition.default
 
-		if (existing) {
+		if (isDefault) {
 			await db
-				.update(commandTemplates)
-				.set({
-					template: tpl.template,
-					updatedAt: new Date(),
-				})
+				.delete(commandTemplates)
 				.where(eq(commandTemplates.id, tpl.id))
 		}
 		else {
-			await db.insert(commandTemplates).values({
-				id: tpl.id,
-				template: tpl.template,
-				updatedAt: new Date(),
-			})
+			const existing = await db
+				.select()
+				.from(commandTemplates)
+				.where(eq(commandTemplates.id, tpl.id))
+				.then(res => res[0])
+
+			if (existing) {
+				await db
+					.update(commandTemplates)
+					.set({
+						template: tpl.template,
+						updatedAt: new Date(),
+					})
+					.where(eq(commandTemplates.id, tpl.id))
+			}
+			else {
+				await db.insert(commandTemplates).values({
+					id: tpl.id,
+					template: tpl.template,
+					updatedAt: new Date(),
+				})
+			}
 		}
 	}
 

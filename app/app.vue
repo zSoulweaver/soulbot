@@ -8,7 +8,7 @@ import 'vue-sonner/style.css'
 			<NuxtPage />
 		</NuxtLayout>
 		<ClientOnly>
-			<Sonner />
+			<Sonner position="top-center" />
 		</ClientOnly>
 	</div>
 </template>

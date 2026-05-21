@@ -142,9 +142,19 @@ function removeAliasLocally(index: number) {
 	aliasesList.value.splice(index, 1)
 }
 
+function normalizeNumericFields() {
+	if (costVal.value === undefined || costVal.value === null || isNaN(costVal.value))
+		costVal.value = 0
+	if (globalCooldownVal.value === undefined || globalCooldownVal.value === null || isNaN(globalCooldownVal.value))
+		globalCooldownVal.value = 0
+	if (userCooldownVal.value === undefined || userCooldownVal.value === null || isNaN(userCooldownVal.value))
+		userCooldownVal.value = 0
+}
+
 async function saveAllConfig() {
 	if (!props.command)
 		return
+	normalizeNumericFields()
 	isSaving.value = true
 
 	try {
@@ -157,9 +167,9 @@ async function saveAllConfig() {
 				id: props.command.id,
 				trigger: cleanTrigger,
 				enabled: isEnabled.value,
-				cost: costVal.value,
-				globalCooldown: globalCooldownVal.value,
-				userCooldown: userCooldownVal.value,
+				cost: typeof costVal.value === 'number' && !isNaN(costVal.value) ? costVal.value : 0,
+				globalCooldown: typeof globalCooldownVal.value === 'number' && !isNaN(globalCooldownVal.value) ? globalCooldownVal.value : 0,
+				userCooldown: typeof userCooldownVal.value === 'number' && !isNaN(userCooldownVal.value) ? userCooldownVal.value : 0,
 				permission: permissionVal.value,
 			},
 		})
@@ -329,7 +339,7 @@ function navigateToTemplateEditor() {
 							<NumberField id="editCost" v-model="costVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput />
+									<NumberFieldInput @blur="normalizeNumericFields" />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>
@@ -343,7 +353,7 @@ function navigateToTemplateEditor() {
 							<NumberField id="editGlobalCooldown" v-model="globalCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput />
+									<NumberFieldInput @blur="normalizeNumericFields" />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>
@@ -357,7 +367,7 @@ function navigateToTemplateEditor() {
 							<NumberField id="editUserCooldown" v-model="userCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput />
+									<NumberFieldInput @blur="normalizeNumericFields" />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>

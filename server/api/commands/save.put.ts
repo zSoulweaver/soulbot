@@ -8,9 +8,9 @@ const saveCommandSchema = z.object({
 	id: z.string().min(1),
 	trigger: z.string().min(1).regex(/^[\w-]+$/, 'Trigger must be alphanumeric and cannot contain spaces or prefix characters').optional().nullable(),
 	enabled: z.boolean(),
-	cost: z.number().int().nonnegative(),
-	globalCooldown: z.number().int().nonnegative(),
-	userCooldown: z.number().int().nonnegative(),
+	cost: z.preprocess((val) => (val === null || val === undefined || val === '' || isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
+	globalCooldown: z.preprocess((val) => (val === null || val === undefined || val === '' || isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
+	userCooldown: z.preprocess((val) => (val === null || val === undefined || val === '' || isNaN(Number(val)) ? 0 : Number(val)), z.number().int().nonnegative()),
 	permission: z.string().optional().nullable(),
 })
 

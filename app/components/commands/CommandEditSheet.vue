@@ -143,11 +143,11 @@ function removeAliasLocally(index: number) {
 }
 
 function normalizeNumericFields() {
-	if (costVal.value === undefined || costVal.value === null || isNaN(costVal.value))
+	if (costVal.value === undefined || costVal.value === null || Number.isNaN(costVal.value))
 		costVal.value = 0
-	if (globalCooldownVal.value === undefined || globalCooldownVal.value === null || isNaN(globalCooldownVal.value))
+	if (globalCooldownVal.value === undefined || globalCooldownVal.value === null || Number.isNaN(globalCooldownVal.value))
 		globalCooldownVal.value = 0
-	if (userCooldownVal.value === undefined || userCooldownVal.value === null || isNaN(userCooldownVal.value))
+	if (userCooldownVal.value === undefined || userCooldownVal.value === null || Number.isNaN(userCooldownVal.value))
 		userCooldownVal.value = 0
 }
 
@@ -167,9 +167,9 @@ async function saveAllConfig() {
 				id: props.command.id,
 				trigger: cleanTrigger,
 				enabled: isEnabled.value,
-				cost: typeof costVal.value === 'number' && !isNaN(costVal.value) ? costVal.value : 0,
-				globalCooldown: typeof globalCooldownVal.value === 'number' && !isNaN(globalCooldownVal.value) ? globalCooldownVal.value : 0,
-				userCooldown: typeof userCooldownVal.value === 'number' && !isNaN(userCooldownVal.value) ? userCooldownVal.value : 0,
+				cost: typeof costVal.value === 'number' && !Number.isNaN(costVal.value) ? costVal.value : 0,
+				globalCooldown: typeof globalCooldownVal.value === 'number' && !Number.isNaN(globalCooldownVal.value) ? globalCooldownVal.value : 0,
+				userCooldown: typeof userCooldownVal.value === 'number' && !Number.isNaN(userCooldownVal.value) ? userCooldownVal.value : 0,
 				permission: permissionVal.value,
 			},
 		})

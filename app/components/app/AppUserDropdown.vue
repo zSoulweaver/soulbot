@@ -5,12 +5,12 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '~~/app/components/ui/dropdown-menu'
+import { useSidebar } from '../ui/sidebar'
 
 const { user, clear } = useUserSession()
+const { isMobile } = useSidebar()
 
 const initials = computed(() => {
 	const name = user.value?.displayName || user.value?.username
@@ -29,31 +29,30 @@ async function handleSignOut() {
 	<div v-if="user" class="flex items-center gap-3">
 		<DropdownMenu>
 			<DropdownMenuTrigger as-child>
-				<button
-					class="
-						flex w-full items-center gap-3 rounded-md p-1 text-left transition-colors outline-none
-						hover:bg-sidebar-accent
-					"
+				<SidebarMenuButton
+					size="lg"
+					class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
-					<Avatar class="size-8 border">
-						<AvatarImage :src="user.image || ''" :alt="user.displayName || user.username || ''" />
+					<Avatar class="size-8">
+						<AvatarImage :src="user.image || ''" :alt="user.displayName || user.username" />
 						<AvatarFallback>{{ initials }}</AvatarFallback>
 					</Avatar>
-					<div class="flex flex-1 flex-col text-sm/tight">
-						<span class="truncate font-semibold">{{ user.displayName || user.username }}</span>
+					<div class="grid flex-1 text-left text-sm/tight">
+						<span class="truncate font-medium">{{ user.displayName || user.username }}</span>
 						<span class="truncate text-xs text-muted-foreground capitalize">{{ user.role }}</span>
 					</div>
 					<MoreVertical class="size-4 text-muted-foreground" />
-				</button>
+				</SidebarMenuButton>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" class="w-56">
-				<DropdownMenuLabel>My Account</DropdownMenuLabel>
-				<DropdownMenuSeparator />
+			<DropdownMenuContent
+				class="w-(--reka-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+				:side="isMobile ? 'bottom' : 'right'"
+				align="end"
+				:side-offset="4"
+			>
 				<DropdownMenuItem
-					class="
-						cursor-pointer text-destructive
-						focus:text-destructive
-					" @click="handleSignOut"
+					variant="destructive"
+					@click="handleSignOut"
 				>
 					<LogOut class="mr-2 size-4" />
 					<span>Log out</span>

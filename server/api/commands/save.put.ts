@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
 		await db
 			.update(commands)
 			.set({
-				trigger: isSubCommand ? cleanTrigger : (cleanTrigger ?? existing.trigger),
+				trigger: cleanTrigger,
 				enabled,
 				cost,
 				globalCooldown,

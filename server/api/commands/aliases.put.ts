@@ -65,23 +65,21 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 3. Batch override the database records inside a transaction
-	await db.transaction(async (tx) => {
-		// Clear existing aliases for this command
-		await tx.delete(commandAliases).where(eq(commandAliases.commandId, commandId))
+	// 3. Batch override the database records
+	// Clear existing aliases for this command
+	await db.delete(commandAliases).where(eq(commandAliases.commandId, commandId))
 
-		// Insert new aliases
-		if (cleanAliases.length > 0) {
-			await tx.insert(commandAliases).values(
-				cleanAliases.map(a => ({
-					commandId,
-					trigger: a.trigger,
-					subcommand: a.subcommand,
-					overrideArgs: a.overrideArgs,
-				})),
-			)
-		}
-	})
+	// Insert new aliases
+	if (cleanAliases.length > 0) {
+		await db.insert(commandAliases).values(
+			cleanAliases.map(a => ({
+				commandId,
+				trigger: a.trigger,
+				subcommand: a.subcommand,
+				overrideArgs: a.overrideArgs,
+			})),
+		)
+	}
 
 	// 4. Reload registry dynamic maps in-memory
 	await registry.syncWithDb()

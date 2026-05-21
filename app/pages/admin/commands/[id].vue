@@ -25,6 +25,7 @@ interface Command {
 	description: string
 	permission: string
 	trigger: string
+	activeTrigger: string
 	enabled: boolean
 	cost: number
 	globalCooldown: number
@@ -33,6 +34,7 @@ interface Command {
 	subcommands?: Record<string, {
 		id: string
 		trigger: string | null
+		activeTrigger: string
 		description: string
 		usage?: string
 		permission: string
@@ -77,7 +79,7 @@ const flatSubcommands = computed(() => {
 				continue
 			const detail = val as any
 			const currentKey = pathPrefix ? `${pathPrefix} ${name}` : name
-			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.trigger || name}` : (detail.trigger || name)
+			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.activeTrigger}` : detail.activeTrigger
 
 			list.push({
 				key: currentKey,
@@ -248,7 +250,7 @@ async function saveTemplates() {
 				method: 'PUT',
 				body: { templates: payload },
 			})
-			toast.success(`Successfully saved response templates for !${command.value.trigger}!`)
+			toast.success(`Successfully saved response templates for !${command.value.activeTrigger}!`)
 			await refreshCommands()
 		}
 		else {
@@ -285,7 +287,7 @@ async function saveTemplates() {
 			>
 				<div class="flex flex-col gap-1.5">
 					<h1 class="flex items-center gap-2 text-3xl font-bold tracking-tight">
-						Response Customizer: <span class="font-mono font-bold text-primary">!{{ command.trigger }}</span>
+						Response Customizer: <span class="font-mono font-bold text-primary">!{{ command.activeTrigger }}</span>
 					</h1>
 					<p class="max-w-2xl text-sm text-muted-foreground">
 						Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly.
@@ -335,7 +337,7 @@ async function saveTemplates() {
 						>
 							<div class="flex items-center gap-2">
 								<Terminal class="size-4 shrink-0" />
-								<span>Root Trigger (!{{ command.trigger }})</span>
+								<span>Root Trigger (!{{ command.activeTrigger }})</span>
 							</div>
 							<Badge
 								variant="outline"
@@ -391,7 +393,7 @@ async function saveTemplates() {
 					<!-- Path Header details -->
 					<div class="flex flex-col gap-1 rounded-lg border border-border bg-muted/20 p-4 select-none">
 						<span class="text-xs font-bold tracking-wider text-primary uppercase">
-							Active Path: {{ activePathFilter === 'root' ? `!${command.trigger}` : `!${command.trigger} ${activeSubcommandDetail?.triggerPath}` }}
+							Active Path: {{ activePathFilter === 'root' ? `!${command.activeTrigger}` : `!${command.activeTrigger} ${activeSubcommandDetail?.triggerPath}` }}
 						</span>
 						<span class="text-[11px] text-muted-foreground">
 							{{ activePathFilter === 'root' ? command.description : activeSubcommandDetail?.description }}

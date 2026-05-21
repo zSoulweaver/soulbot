@@ -43,8 +43,9 @@ class CommandRegistry {
 			this.dbConfigs.set(def.id, dbCmd!)
 
 			// Only map the trigger if the command itself is active/enabled in the DB
-			if (dbCmd!.enabled && dbCmd!.trigger) {
-				this.triggerMap.set(dbCmd!.trigger, { commandId: def.id })
+			if (dbCmd!.enabled) {
+				const triggerWord = dbCmd!.trigger || def.id
+				this.triggerMap.set(triggerWord, { commandId: def.id })
 			}
 
 			// Synchronize all nested subcommands recursively in Drizzle SQLite

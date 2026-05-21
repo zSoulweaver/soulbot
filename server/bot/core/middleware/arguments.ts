@@ -49,6 +49,14 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 			const resolvedKey = registry.resolveSubcommandKey(parentPrefix, nextWord) || nextWord
 
 			if (currentScope.subcommands?.[resolvedKey]) {
+				const potentialSubId = `${parentPrefix}.${resolvedKey}`
+				const subDbConfig = registry.getCommandConfig(potentialSubId)
+				// If this subcommand has been explicitly renamed in the database to a different trigger,
+				// the original default code key should no longer trigger it.
+				if (subDbConfig && subDbConfig.trigger && subDbConfig.trigger.toLowerCase() !== nextWord) {
+					break
+				}
+
 				currentScope = currentScope.subcommands[resolvedKey]
 				subPath.push(resolvedKey)
 				currentArgs = currentArgs.slice(1) // Shift argument

@@ -76,6 +76,7 @@ export default defineEventHandler(async () => {
 				res[subName] = {
 					id: subId,
 					trigger: subDbConfig.trigger,
+					activeTrigger: subDbConfig.trigger || subName,
 					description: sub.description,
 					usage: sub.usage,
 					permission: sub.permission,
@@ -100,6 +101,7 @@ export default defineEventHandler(async () => {
 			permission: command.permission,
 			// Dynamic database parameters
 			trigger: dbConfig.trigger,
+			activeTrigger: dbConfig.trigger || command.id,
 			enabled: Boolean(dbConfig.enabled),
 			cost: dbConfig.cost,
 			globalCooldown: dbConfig.globalCooldown,

@@ -34,6 +34,7 @@ interface Command {
 	usage?: string
 	permission: string
 	trigger: string
+	activeTrigger: string
 	parentTriggerPath?: string
 	enabled: boolean
 	cost: number
@@ -85,7 +86,7 @@ async function toggleCommandActive(command: Command) {
 				permission: command.permission,
 			},
 		})
-		toast.success(`Command '!${command.trigger}' has been ${nextState ? 'enabled' : 'disabled'}!`)
+		toast.success(`Command '!${command.activeTrigger}' has been ${nextState ? 'enabled' : 'disabled'}!`)
 		await refreshCommands()
 	}
 	catch (err: any) {
@@ -106,7 +107,7 @@ function getFlatSubcommands(subcommandsObj: any): Array<{ name: string, triggerP
 				continue
 			const detail = val as any
 			const currentPath = pathPrefix ? `${pathPrefix} ${name}` : name
-			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.trigger || name}` : (detail.trigger || name)
+			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.activeTrigger}` : detail.activeTrigger
 			flatList.push({
 				name: currentPath,
 				triggerPath: currentTriggerPath,
@@ -134,11 +135,12 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 	const triggerParts = subItem.triggerPath.split(' ')
 	const activeTriggerWord = triggerParts[triggerParts.length - 1]
 	const parentParts = triggerParts.slice(0, -1)
-	const parentTriggerPath = [`!${parentCommand.trigger}`, ...parentParts].join(' ')
+	const parentTriggerPath = [`!${parentCommand.activeTrigger}`, ...parentParts].join(' ')
 
 	selectedCommand.value = {
 		id: sub.id,
 		trigger: activeTriggerWord,
+		activeTrigger: activeTriggerWord,
 		parentTriggerPath,
 		description: sub.description,
 		usage: sub.usage,
@@ -246,7 +248,7 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 													@click="command.subcommands && Object.keys(command.subcommands).length > 0 ? toggleCommandExpanded(command.id) : null"
 												>
 													<span class="text-base font-bold text-foreground">
-														!{{ command.trigger }}
+														!{{ command.activeTrigger }}
 													</span>
 													<span class="font-mono text-xs text-muted-foreground">
 														({{ command.id }})
@@ -354,7 +356,7 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 									<td colspan="6" class="px-8 py-4">
 										<div class="space-y-3 border-l-2 border-primary/50 py-2 pl-4">
 											<div class="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase select-none">
-												Registered Subcommands for !{{ command.trigger }}
+												Registered Subcommands for !{{ command.activeTrigger }}
 											</div>
 											<div class="grid gap-2">
 												<div
@@ -369,7 +371,7 @@ function openSubCommandQuickEdit(subItem: any, parentCommand: Command) {
 													<div class="flex flex-col gap-1">
 														<div class="flex items-center gap-2">
 															<Badge variant="secondary" class="px-2 py-0.5 font-mono text-[10px] font-bold text-primary">
-																!{{ command.trigger }} {{ subItem.triggerPath }}
+																!{{ command.activeTrigger }} {{ subItem.triggerPath }}
 															</Badge>
 															<span v-if="subItem.detail.usage" class="font-mono text-[9px] text-muted-foreground">({{ subItem.detail.usage }})</span>
 															<Badge v-if="subItem.detail.hasHandler === false" variant="outline" class="h-4 border-border/80 bg-secondary/30 px-1.5 py-0 text-[9px] leading-none text-muted-foreground select-none">

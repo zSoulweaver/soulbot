@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-	ArrowRight,
-	Clock,
-	Coins,
-	HelpCircle,
-	Plus,
-	Save,
-	Sliders,
-	X,
-} from 'lucide-vue-next'
+import { ArrowRight, BadgeDollarSign, Clock, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
@@ -65,7 +56,7 @@ const isSaving = ref(false)
 // Populate values on edit open
 watch(() => props.open, (isOpen) => {
 	if (isOpen && props.command) {
-		triggerName.value = props.command.trigger
+		triggerName.value = props.command.trigger || ''
 		costVal.value = props.command.cost
 		globalCooldownVal.value = props.command.globalCooldown
 		userCooldownVal.value = props.command.userCooldown
@@ -87,6 +78,12 @@ watch(() => props.open, (isOpen) => {
 
 const isSubCommand = computed(() => {
 	return props.command?.id.includes('.') ?? false
+})
+
+const baseCommandTrigger = computed(() => {
+	if (!props.command)
+		return ''
+	return triggerName.value.trim().toLowerCase().replace(/^!/, '') || props.command.id
 })
 
 const executableSubcommandPaths = computed(() => {
@@ -152,11 +149,6 @@ async function saveAllConfig() {
 
 	try {
 		const cleanTrigger = triggerName.value.trim().toLowerCase().replace(/^!/, '') || null
-		if (!isSubCommand.value && !cleanTrigger) {
-			toast.error('Trigger word is required')
-			isSaving.value = false
-			return
-		}
 
 		// 1. Update primary command DB config
 		await $fetch('/api/commands/save', {
@@ -187,7 +179,9 @@ async function saveAllConfig() {
 			})
 		}
 
-		const displayName = isSubCommand.value ? props.command.trigger : `!${cleanTrigger}`
+		const displayName = isSubCommand.value
+			? (props.command.trigger || props.command.id.split('.').pop())
+			: `!${cleanTrigger || props.command.id}`
 		toast.success(`Saved Quick Config for "${displayName}"!`)
 		emit('saved')
 		emit('update:open', false)
@@ -205,12 +199,13 @@ function navigateToTemplateEditor() {
 	if (!props.command)
 		return
 	emit('update:open', false)
-	
+
 	const rootId = props.command.id.split('.')[0]
 	if (isSubCommand.value && rootId) {
 		const subPath = props.command.id.slice(rootId.length + 1).replace(/\./g, ' ')
 		navigateTo(`/admin/commands/${rootId}?path=${subPath}`)
-	} else {
+	}
+	else {
 		navigateTo(`/admin/commands/${rootId}`)
 	}
 }
@@ -218,16 +213,9 @@ function navigateToTemplateEditor() {
 
 <template>
 	<Sheet :open="props.open" @update:open="emit('update:open', $event)">
-		<!-- Setting p-0 to allow absolute control over flex boundaries -->
-		<SheetContent
-			class="
-				flex size-full flex-col border-l border-border bg-card/95 p-0 text-foreground
-				sm:max-w-2xl
-			"
-		>
-			<!-- Pinned Header Container (with px-6 py-4 padding) -->
-			<SheetHeader class="border-b border-border px-6 py-4 select-none">
-				<SheetTitle class="flex items-center gap-2 text-xl font-bold">
+		<SheetContent class="sm:max-w-2xl">
+			<SheetHeader class="border-b border-border">
+				<SheetTitle>
 					Quick Settings - <span class="font-mono font-bold text-primary">!{{ props.command?.id.replace(/\./g, ' ') }}</span>
 				</SheetTitle>
 				<SheetDescription>
@@ -235,101 +223,77 @@ function navigateToTemplateEditor() {
 				</SheetDescription>
 			</SheetHeader>
 
-			<!-- Scrollable Content Body with px-6 Padding -->
-			<div class="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+			<div class="space-y-6 overflow-y-auto px-4">
 				<!-- Alert for Non-executable Command Groups -->
-				<Alert v-if="props.command?.hasHandler === false" variant="default" class="border-border bg-muted/30 select-none">
-					<HelpCircle class="size-4 text-muted-foreground" />
-					<AlertTitle class="text-xs font-semibold text-foreground">
+				<Alert v-if="props.command?.hasHandler === false">
+					<HelpCircle />
+					<AlertTitle>
 						Command Group Trigger
 					</AlertTitle>
-					<AlertDescription class="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+					<AlertDescription>
 						This command acts strictly as a structural group/namespace trigger. Point cost and cooldown settings are disabled since it contains no direct execution handler.
 					</AlertDescription>
 				</Alert>
 
 				<!-- Link to Template Customizer Card (Dual-mode Navigation) -->
-				<Card v-if="props.command?.hasHandler !== false" class="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4">
-					<div class="flex flex-col gap-0.5">
-						<span class="flex items-center gap-1.5 text-xs font-bold text-primary">
-							Response Templates & Subcommands
-						</span>
-						<span class="text-[11px] text-muted-foreground">
-							Customize chat response messages and subcommand-specific parameters on a dedicated full-screen page.
-						</span>
-					</div>
-					<Button
-						size="sm" variant="outline" class="
-							w-full justify-between border-primary/30
-							hover:bg-primary/10
-						" @click="navigateToTemplateEditor"
-					>
-						Open Full Response Template Customizer
-						<ArrowRight class="size-3.5" />
-					</Button>
-				</Card>
+				<Item v-if="props.command?.hasHandler !== false" variant="outline">
+					<ItemContent>
+						<ItemTitle>Command Response Templates</ItemTitle>
+						<ItemDescription>
+							Customize chat response messages for this command and it's subcommands parameters on a dedicated full-screen page.
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Button
+							size="sm" variant="outline" @click="navigateToTemplateEditor"
+						>
+							Edit Templates
+							<ArrowRight class="size-3.5" />
+						</Button>
+					</ItemActions>
+				</Item>
 
 				<!-- Toggle Switch for Command Active State -->
-				<div class="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-4 select-none">
-					<div class="flex flex-col gap-0.5">
-						<span class="text-sm font-semibold">Enable Trigger</span>
-						<span class="text-xs text-muted-foreground">Toggle command activation state in chat.</span>
-					</div>
-					<label class="relative inline-flex cursor-pointer items-center">
-						<input v-model="isEnabled" type="checkbox" class="peer sr-only">
-						<div
-							class="
-								peer h-6 w-11 rounded-full border border-border bg-muted transition-all
-								peer-checked:bg-primary
-								after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-muted-foreground after:transition-all
-								peer-checked:after:translate-x-full peer-checked:after:bg-background
-							"
-						/>
-					</label>
-				</div>
+				<Item variant="muted">
+					<ItemContent>
+						<ItemTitle>Enable Trigger</ItemTitle>
+						<ItemDescription>
+							Toggle command activation state in chat.
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Switch v-model:model-value="isEnabled" />
+					</ItemActions>
+				</Item>
 
-				<!-- Active Trigger Word Segment -->
-				<div class="grid grid-cols-1 gap-4">
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="editTrigger" class="text-xs font-semibold">Active Trigger Word</Label>
-						<InputGroup v-if="isSubCommand && props.command?.parentTriggerPath" class="h-9 border-border bg-card">
-							<InputGroupAddon class="h-full border-r border-border bg-muted/50 px-3 font-mono text-xs font-semibold">
-								{{ props.command.parentTriggerPath }}
-							</InputGroupAddon>
+				<FieldGroup>
+					<!-- Active Trigger Word Segment -->
+					<Field>
+						<FieldLabel for="active-trigger">
+							Active Trigger Word
+						</FieldLabel>
+						<InputGroup>
 							<InputGroupInput
-								id="editTrigger"
+								id="active-trigger"
 								v-model="triggerName"
 								placeholder="trigger"
-								class="
-									h-full border-0 px-3 text-xs font-semibold
-									focus-visible:ring-0 focus-visible:ring-offset-0
-								"
 							/>
+							<InputGroupAddon class="bg-muted px-3">
+								{{ props?.command?.parentTriggerPath || '!' }}
+							</InputGroupAddon>
 						</InputGroup>
-						<div v-else class="relative">
-							<span class="absolute top-2 left-3 text-sm font-bold text-muted-foreground">!</span>
-							<Input
-								id="editTrigger"
-								v-model="triggerName"
-								placeholder="points"
-								class="
-									h-9 border-border pl-6 text-xs font-semibold
-									focus-visible:ring-primary
-								"
-							/>
-						</div>
-						<span v-if="isSubCommand" class="text-[10px] leading-normal text-muted-foreground italic select-none">
-							Customizing trigger word for this subcommand path. Keep blank to use default.
-						</span>
-					</div>
-				</div>
+						<FieldDescription>Keep blank to use default command value.</FieldDescription>
+					</Field>
 
-				<!-- Custom Permission Level Segment -->
-				<div class="grid grid-cols-1 gap-4 border-t border-border/80 pt-4">
-					<div class="grid w-full items-center gap-1.5">
-						<Label class="text-xs font-semibold">Required Permission Level</Label>
+					<FieldSeparator />
+
+					<!-- Custom Permission Level Segment -->
+					<Field>
+						<FieldLabel for="permission-level">
+							Required Permission Level
+						</FieldLabel>
 						<Select v-model="permissionVal">
-							<SelectTrigger class="h-9 border-border bg-card text-xs">
+							<SelectTrigger id="permission-level" class="w-full">
 								<SelectValue placeholder="Select Permission Level" />
 							</SelectTrigger>
 							<SelectContent>
@@ -350,164 +314,167 @@ function navigateToTemplateEditor() {
 								</SelectItem>
 							</SelectContent>
 						</Select>
-						<span class="text-[10px] leading-normal text-muted-foreground italic select-none">
-							Select the minimum chat badge role required to execute this trigger.
-						</span>
-					</div>
-				</div>
+						<FieldDescription>Select the minimum chat badge role required to execute this trigger.</FieldDescription>
+					</Field>
 
-				<!-- Single-Row Config Stepper Fields (Points, Global Cooldown, User Cooldown) -->
-				<div
-					class="
-						grid grid-cols-1 gap-4 border-t border-border/80 pt-4
-						sm:grid-cols-3
-					"
-				>
-					<!-- Point Cost -->
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="editCost" class="flex items-center gap-1 text-xs font-semibold">
-							<Coins class="size-3.5 text-amber-500" /> Point Cost
-						</Label>
-						<NumberField id="editCost" v-model="costVal" :min="0" :disabled="props.command?.hasHandler === false" class="h-9">
-							<NumberFieldContent class="h-9 border-border">
-								<NumberFieldDecrement />
-								<NumberFieldInput class="h-9 border-border text-xs" />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-					</div>
+					<FieldSeparator />
 
-					<!-- Global Cooldown -->
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="editGlobalCooldown" class="flex items-center gap-1 text-xs font-semibold">
-							<Clock class="size-3.5 text-muted-foreground" /> Global CD (Sec)
-						</Label>
-						<NumberField id="editGlobalCooldown" v-model="globalCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="h-9">
-							<NumberFieldContent class="h-9 border-border">
-								<NumberFieldDecrement />
-								<NumberFieldInput class="h-9 border-border text-xs" />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-					</div>
+					<!-- Config Stepper Fields (Points, Global Cooldown, User Cooldown) -->
+					<div class="grid grid-cols-3 gap-4">
+						<Field>
+							<FieldLabel for="editCost" class="flex items-center gap-1">
+								<BadgeDollarSign class="size-4" />
+								Point Cost
+							</FieldLabel>
+							<NumberField id="editCost" v-model="costVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</Field>
 
-					<!-- User Cooldown -->
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="editUserCooldown" class="flex items-center gap-1 text-xs font-semibold">
-							<Sliders class="size-3.5 text-muted-foreground" /> User CD (Sec)
-						</Label>
-						<NumberField id="editUserCooldown" v-model="userCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="h-9">
-							<NumberFieldContent class="h-9 border-border">
-								<NumberFieldDecrement />
-								<NumberFieldInput class="h-9 border-border text-xs" />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-					</div>
-				</div>
+						<Field>
+							<FieldLabel for="editGlobalCooldown" class="flex items-center gap-1">
+								<Clock class="size-4" />
+								Global CD (Sec)
+							</FieldLabel>
+							<NumberField id="editGlobalCooldown" v-model="globalCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</Field>
 
-				<!-- Command Aliases Segment -->
-				<div v-if="!isSubCommand" class="space-y-3 border-t border-border/80 pt-4">
-					<div class="flex flex-col gap-0.5 select-none">
-						<span class="text-sm font-semibold">Command Aliases & Redirection</span>
-						<span class="text-xs text-muted-foreground">Map dynamic chat triggers directly to subcommands with optional parameter overrides.</span>
+						<Field>
+							<FieldLabel for="editUserCooldown" class="flex items-center gap-1">
+								<Clock class="size-4" />
+								User CD (Sec)
+							</FieldLabel>
+							<NumberField id="editUserCooldown" v-model="userCooldownVal" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</Field>
 					</div>
 
-					<!-- Alias Adder Widget -->
-					<div
-						class="
-							grid grid-cols-1 gap-2 rounded-lg border border-border bg-muted/20 p-3
-							sm:grid-cols-3
-						"
-					>
-						<div class="flex flex-col gap-1">
-							<Label class="text-[10px] font-medium text-muted-foreground">Trigger Word</Label>
-							<div class="relative">
-								<span class="absolute top-1.5 left-2.5 text-xs font-bold text-muted-foreground">!</span>
-								<Input
-									v-model="newAliasTrigger"
-									placeholder="pts"
-									class="h-7 border-border pl-4 text-xs"
-								/>
-							</div>
-						</div>
+					<FieldSeparator />
 
-						<div v-if="executableSubcommandPaths.length > 0" class="flex flex-col gap-1">
-							<Label class="text-[10px] font-medium text-muted-foreground">Target Subcommand</Label>
-							<Select v-model="newAliasSubcommand">
-								<SelectTrigger class="h-7 border-border bg-card text-xs">
-									<SelectValue placeholder="(None - Runs Root)" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="__root__">
-										(None - Runs Root)
-									</SelectItem>
-									<SelectItem v-for="path in executableSubcommandPaths" :key="path" :value="path">
-										{{ path.replace(/\./g, ' ') }}
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
+					<!-- Command Aliases Segment -->
+					<FieldSet v-if="!isSubCommand">
+						<FieldLegend class="text-sm font-semibold">
+							Command Aliases
+						</FieldLegend>
+						<FieldDescription>Map dynamic chat triggers directly to subcommands with optional parameter overrides.</FieldDescription>
 
-						<div class="flex flex-col gap-1">
-							<Label class="text-[10px] font-medium text-muted-foreground">Arg Overrides (Comma split)</Label>
-							<Input
-								v-model="newAliasOverrides"
-								placeholder="user, 50"
-								class="h-7 border-border text-xs"
-							/>
-						</div>
+						<Item variant="outline" class="w-full">
+							<ItemContent>
+								<FieldGroup>
+									<Field orientation="horizontal">
+										<FieldLabel for="alias-trigger" class="w-52 shrink-0">
+											Trigger Word
+										</FieldLabel>
+										<InputGroup>
+											<InputGroupInput
+												id="alias-trigger"
+												v-model="newAliasTrigger"
+												placeholder="command"
+												class="w-full"
+											/>
+											<InputGroupAddon class="bg-muted px-3">
+												!
+											</InputGroupAddon>
+										</InputGroup>
+									</Field>
 
-						<div
-							class="
-								mt-1 flex justify-end
-								sm:col-span-3
-							"
-						>
-							<Button size="sm" class="h-6.5 text-[10px]" @click="addAliasLocally">
-								<Plus class="mr-1 size-3" /> Add Alias
-							</Button>
-						</div>
-					</div>
+									<Field orientation="horizontal">
+										<FieldLabel for="alias-subcommand" class="w-52 shrink-0">
+											Target Subcommand
+										</FieldLabel>
+										<Select v-model="newAliasSubcommand">
+											<SelectTrigger id="alias-subcommand" class="w-full">
+												<SelectValue placeholder="subcommand" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="__root__">
+													-- None (runs root/base command) --
+												</SelectItem>
+												<SelectItem v-for="path in executableSubcommandPaths" :key="path" :value="path">
+													{{ path.replace(/\./g, ' ') }}
+												</SelectItem>
+											</SelectContent>
+										</Select>
+									</Field>
 
-					<!-- Active Alias Badges -->
-					<div class="flex flex-wrap gap-1.5 pt-1">
-						<span v-if="aliasesList.length === 0" class="text-xs text-muted-foreground italic select-none">No aliases mapped.</span>
-						<Badge
-							v-for="(alias, index) in aliasesList"
-							:key="alias.trigger"
-							variant="secondary"
-							class="gap-1 border border-border px-2 py-0.5 text-xs"
-						>
-							<span class="font-bold text-foreground">!{{ alias.trigger }}</span>
-							<span v-if="alias.subcommand && alias.subcommand !== '__root__'" class="font-mono text-[9px] text-primary/80">
-								-> {{ alias.subcommand.replace(/\./g, ' ') }}
-							</span>
-							<span v-if="alias.overrideArgs" class="font-mono text-[8px] text-muted-foreground">
-								[{{ alias.overrideArgs.join(', ') }}]
-							</span>
-							<button
-								type="button"
-								class="
-									rounded-full p-0.5
-									hover:bg-muted-foreground/20
-								"
-								@click="removeAliasLocally(index)"
+									<Field orientation="horizontal">
+										<FieldLabel for="alias-overrides" class="w-52 shrink-0">
+											Argument Overrides (Comma split)
+										</FieldLabel>
+										<Input
+											id="alias-overrides"
+											v-model="newAliasOverrides"
+											placeholder="user, 50"
+										/>
+									</Field>
+
+									<Button size="sm" @click="addAliasLocally">
+										<Plus />
+										Add Alias
+									</Button>
+								</FieldGroup>
+							</ItemContent>
+						</Item>
+
+						<!-- Active Alias Items -->
+						<div class="w-full space-y-2">
+							<Item
+								v-for="(alias, index) in aliasesList"
+								:key="alias.trigger" variant="muted"
+								size="sm"
+								class="w-full"
 							>
-								<X class="size-3" />
-							</button>
-						</Badge>
-					</div>
-				</div>
+								<ItemContent>
+									<ItemTitle class="font-mono">
+										!{{ alias.trigger }}
+									</ItemTitle>
+									<ItemDescription>
+										<div class="ml-1 flex items-center gap-1 font-mono">
+											<CornerDownRight class="size-5" />
+											<p class="mt-1">
+												!{{ baseCommandTrigger }}
+												<span v-if="alias.subcommand && alias.subcommand !== '__root__'"> {{ alias.subcommand.replace(/\./g, ' ') }}</span>
+												<span v-if="alias.overrideArgs && alias.overrideArgs.length"> {{ alias.overrideArgs.join(' ') }}</span>
+											</p>
+										</div>
+									</ItemDescription>
+								</ItemContent>
+								<ItemActions>
+									<Button
+										size="sm" variant="destructive" @click="removeAliasLocally(index)"
+									>
+										<Trash />
+										Remove
+									</Button>
+								</ItemActions>
+							</Item>
+						</div>
+					</FieldSet>
+				</FieldGroup>
 			</div>
 
 			<!-- Pinned Bottom Footer with docked buttons -->
-			<SheetFooter class="flex shrink-0 flex-row items-center justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4">
-				<Button variant="outline" size="sm" @click="emit('update:open', false)">
+			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t">
+				<Button variant="outline" @click="emit('update:open', false)">
 					Cancel
 				</Button>
-				<Button :disabled="isSaving" size="sm" @click="saveAllConfig">
-					<Save class="mr-1.5 size-3.5" />
+				<Button :disabled="isSaving" @click="saveAllConfig">
+					<Save />
 					{{ isSaving ? 'Saving...' : 'Save Quick Config' }}
 				</Button>
 			</SheetFooter>

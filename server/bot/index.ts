@@ -1,3 +1,4 @@
+import { botLogger } from '~~/server/utils/logger'
 import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
@@ -11,7 +12,7 @@ let isRegistryInitialized = false
 export function initRegistry() {
 	if (isRegistryInitialized)
 		return
-	console.log('[Bot] Initializing registry modules...')
+	botLogger.info('Initializing registry modules...')
 	registry.register(pointsModule)
 	registry.register(commandsModule)
 	isRegistryInitialized = true

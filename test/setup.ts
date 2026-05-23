@@ -67,19 +67,23 @@ beforeAll(async () => {
 
 	const globalAny = globalThis as any
 	if (!globalAny.__db_setup__) {
-		console.log('[Test Setup] Pushing schema to sqlite_test.db...')
-		execSync('npx drizzle-kit push --force', {
-			env: {
-				...process.env,
-				DATABASE_URL: 'sqlite_test.db',
-			},
-			stdio: 'inherit', // Stream logs to see potential errors
-		})
+		try {
+			execSync('npx drizzle-kit push --force', {
+				env: {
+					...process.env,
+					DATABASE_URL: 'sqlite_test.db',
+				},
+				stdio: 'pipe',
+			})
+		}
+		catch (err: any) {
+			console.error('Database schema push failed:', err.stdout?.toString() || err.message)
+			throw err
+		}
 
 		globalAny.__db_setup__ = true
 	}
 
-	console.log('[Test Setup] Initializing bot registry and syncing with test DB...')
 	// Initialize bot commands (points, commands, etc.) and sync in-memory registry
 	initBot()
 	await registry.syncWithDb()

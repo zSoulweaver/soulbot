@@ -9,8 +9,9 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 		target: 'pino-pretty',
 		options: {
 			colorize: true,
-			ignore: 'pid,hostname',
+			ignore: 'pid,hostname,component,ip,durationMs',
 			translateTime: 'SYS:standard',
+			messageFormat: '[{component}] {msg}',
 		},
 	})
 }
@@ -35,12 +36,15 @@ if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
 
 // Initialize Pino logger
 export const logger = pino(
+	{
+		level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',
+	},
 	transports.length > 0
 		? pino.transport({ targets: transports })
-		: {},
+		: undefined,
 )
 
 // Export specialized loggers for different sub-components
-export const apiLogger = logger.child({ component: 'api' })
-export const botLogger = logger.child({ component: 'bot' })
-export const dbLogger = logger.child({ component: 'database' })
+export const apiLogger = logger.child({ component: 'API' })
+export const botLogger = logger.child({ component: 'BOT' })
+export const dbLogger = logger.child({ component: 'DATABASE' })

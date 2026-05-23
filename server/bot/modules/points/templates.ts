@@ -1,4 +1,5 @@
 import type { TemplateSourceMap } from '../../core/templates'
+import { botLogger } from '~~/server/utils/logger'
 import { templateRegistry } from '../../core/templates'
 
 export const definitions = {
@@ -41,7 +42,7 @@ export const definitions = {
 } as const satisfies TemplateSourceMap
 
 export function registerPointsTemplates() {
-	console.log('[Points] Registering templates...')
+	botLogger.info('Registering points templates...')
 
 	for (const [id, def] of Object.entries(definitions)) {
 		templateRegistry.register({

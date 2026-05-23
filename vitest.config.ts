@@ -11,6 +11,7 @@ export default defineVitestConfig({
 		setupFiles: ['./test/setup.ts'],
 		globals: true, // Enable Vitest global variables like describe, it, expect, vi
 		fileParallelism: false, // Run test files sequentially to avoid SQLite lock contention
+		silent: 'passed-only',
 	},
 	plugins: [
 		{

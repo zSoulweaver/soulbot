@@ -113,7 +113,9 @@ const columns: any[] = [
 				<div class="flex gap-2">
 					<FieldGroup class="w-full">
 						<Field>
-							<FieldLabel for="targetUser">Username</FieldLabel>
+							<FieldLabel for="targetUser">
+								Username
+							</FieldLabel>
 							<InputGroup>
 								<InputGroupInput
 									id="targetUser"
@@ -145,7 +147,9 @@ const columns: any[] = [
 					<div class="grid grid-cols-1 gap-2 pt-2">
 						<FieldGroup>
 							<Field>
-								<FieldLabel for="adjustAmount">Amount</FieldLabel>
+								<FieldLabel for="adjustAmount">
+									Amount
+								</FieldLabel>
 								<Input id="adjustAmount" v-model="amount" type="number" />
 							</Field>
 						</FieldGroup>

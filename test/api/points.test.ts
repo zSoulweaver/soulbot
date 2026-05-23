@@ -1,20 +1,20 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { db } from '~~/server/database'
-import { users } from '~~/server/database/schema'
 import { eq } from 'drizzle-orm'
-import { clearDatabase, createTestUser } from '../helpers'
-
-import leaderboardHandler from '~~/server/api/points/leaderboard.get'
+import { beforeEach, describe, expect, it } from 'vitest'
 import usernameGetHandler from '~~/server/api/points/[username].get'
 import usernamePostHandler from '~~/server/api/points/[username].post'
+import leaderboardHandler from '~~/server/api/points/leaderboard.get'
 
-describe('Points API Routes in-process', () => {
+import { db } from '~~/server/database'
+import { users } from '~~/server/database/schema'
+import { clearDatabase, createTestUser } from '../helpers'
+
+describe('points API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 		;(globalThis as any).__mockUsername__ = ''
 	})
 
-	describe('GET /api/points/leaderboard', () => {
+	describe('gET /api/points/leaderboard', () => {
 		it('should return empty leaderboard when no earners exist', async () => {
 			const res = await leaderboardHandler({} as any)
 			expect(res).toBeDefined()
@@ -27,14 +27,14 @@ describe('Points API Routes in-process', () => {
 
 			const res = await leaderboardHandler({} as any)
 			expect(res).toHaveLength(2)
-			expect(res[0].username).toBe('bob')
-			expect(res[0].points).toBe(500)
-			expect(res[1].username).toBe('alice')
-			expect(res[1].points).toBe(300)
+			expect(res[0]!.username).toBe('bob')
+			expect(res[0]!.points).toBe(500)
+			expect(res[1]!.username).toBe('alice')
+			expect(res[1]!.points).toBe(300)
 		})
 	})
 
-	describe('GET /api/points/[username]', () => {
+	describe('gET /api/points/[username]', () => {
 		it('should return 404 if the user does not exist in DB', async () => {
 			;(globalThis as any).__mockUsername__ = 'nonexistent'
 			await expect(async () => {
@@ -59,7 +59,7 @@ describe('Points API Routes in-process', () => {
 		})
 	})
 
-	describe('POST /api/points/[username]', () => {
+	describe('pOST /api/points/[username]', () => {
 		it('should fail with 400 Bad Request if parameters are invalid', async () => {
 			await createTestUser({ id: '123', username: 'alice', displayName: 'Alice', points: 100 })
 

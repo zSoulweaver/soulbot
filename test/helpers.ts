@@ -90,8 +90,6 @@ export async function createTestUser(options: {
 	})
 
 	return {
-		id,
-		username,
 		displayName,
 		...options,
 	}

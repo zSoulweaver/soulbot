@@ -421,7 +421,7 @@ function navigateToTemplateEditor() {
 						</Item>
 
 						<!-- Active Alias Items -->
-						<div class="w-full flex flex-col gap-2">
+						<div class="flex w-full flex-col gap-2">
 							<Item
 								v-for="(alias, index) in aliasesList"
 								:key="alias.trigger" variant="muted"

@@ -1,10 +1,10 @@
+import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
-import { eq } from 'drizzle-orm'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
-describe('Bot Points Command Integration', () => {
+describe('bot Points Command Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 	})
@@ -77,7 +77,7 @@ describe('Bot Points Command Integration', () => {
 				points: 100,
 			})
 
-			const { replies, user } = await simulateCommand('!points add bob 50', {
+			const { replies } = await simulateCommand('!points add bob 50', {
 				id: '12345',
 				username: 'alice',
 				displayName: 'Alice',

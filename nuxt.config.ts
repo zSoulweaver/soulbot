@@ -7,9 +7,11 @@ export default defineNuxtConfig({
 	devtools: { enabled: true },
 
 	vite: {
-		plugins: process.env.NODE_ENV === 'test' ? [] : [
-			tailwindcss(),
-		],
+		plugins: process.env.NODE_ENV === 'test'
+			? []
+			: [
+					tailwindcss(),
+				],
 		optimizeDeps: {
 			include: [
 				'lucide-vue-next',
@@ -58,4 +60,10 @@ export default defineNuxtConfig({
 	},
 
 	modules: ['nuxt-auth-utils', '@vueuse/nuxt'],
+
+	typescript: {
+		tsConfig: {
+			include: ['../test/**/*'],
+		},
+	},
 })

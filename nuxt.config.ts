@@ -7,7 +7,7 @@ export default defineNuxtConfig({
 	devtools: { enabled: true },
 
 	vite: {
-		plugins: [
+		plugins: process.env.NODE_ENV === 'test' ? [] : [
 			tailwindcss(),
 		],
 		optimizeDeps: {

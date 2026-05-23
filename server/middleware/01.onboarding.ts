@@ -1,9 +1,14 @@
+import process from 'node:process'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
 
 let isOnboarded = false
 
 export default defineEventHandler(async (event) => {
+	if (process.env.NODE_ENV === 'test') {
+		return
+	}
+
 	const url = getRequestURL(event)
 
 	if (

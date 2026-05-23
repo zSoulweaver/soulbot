@@ -4,7 +4,7 @@ import pino from 'pino'
 const transports = []
 
 // Always use pino-pretty in development for nice local logs
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 	transports.push({
 		target: 'pino-pretty',
 		options: {

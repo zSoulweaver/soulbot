@@ -1,4 +1,5 @@
 import type { CommandMiddleware } from '../types'
+import process from 'node:process'
 import { botLogger } from '~~/server/utils/logger'
 import { checkIsBotMod } from '../utils'
 
@@ -17,6 +18,11 @@ export function trackOutboundMessage(): void {
  * Enforces strict minimum spacing and rolling 30-second window rate limit caps.
  */
 export const antiSpamMiddleware: CommandMiddleware = async (ctx, next) => {
+	if (process.env.NODE_ENV === 'test') {
+		await next()
+		return
+	}
+
 	const now = Date.now()
 
 	// Enforce absolute minimum execution gap

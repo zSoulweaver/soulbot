@@ -55,16 +55,16 @@ export async function handleCommand(channel: string, user: string, message: stri
 		channel,
 		reply: async (textOrTemplate: string, ...args: any[]) => {
 			const data = args[0]
-			const text = data
-				? templateRegistry.render(textOrTemplate, data)
+			const text = templateRegistry.get(textOrTemplate)
+				? templateRegistry.render(textOrTemplate, data || {})
 				: textOrTemplate
 			trackOutboundMessage()
 			await chatClient.say(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
 		say: async (textOrTemplate: string, ...args: any[]) => {
 			const data = args[0]
-			const text = data
-				? templateRegistry.render(textOrTemplate, data)
+			const text = templateRegistry.get(textOrTemplate)
+				? templateRegistry.render(textOrTemplate, data || {})
 				: textOrTemplate
 			trackOutboundMessage()
 			await chatClient.say(channel, text)

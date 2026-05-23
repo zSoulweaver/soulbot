@@ -292,7 +292,6 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 															<Badge class="font-mono text-xs font-bold">
 																!{{ command.activeTrigger }} {{ subcommandItem.triggerPath }}
 															</Badge>
-															<span v-if="subcommandItem.detail.usage" class="font-mono text-xs text-muted-foreground">{{ subcommandItem.detail.usage }}</span>
 															<Badge v-if="subcommandItem.detail.hasHandler === false" variant="secondary" class="text-xs">
 																Command Group
 															</Badge>

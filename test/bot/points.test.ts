@@ -77,7 +77,7 @@ describe('bot Points Command Integration', () => {
 				points: 100,
 			})
 
-			const { replies } = await simulateCommand('!points add bob 50', {
+			const { replies, user: _user } = await simulateCommand('!points add bob 50', {
 				id: '12345',
 				username: 'alice',
 				displayName: 'Alice',

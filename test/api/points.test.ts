@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import usernameGetHandler from '~~/server/api/points/[username].get'
 import usernamePostHandler from '~~/server/api/points/[username].post'
 import leaderboardHandler from '~~/server/api/points/leaderboard.get'
+
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser } from '../helpers'
@@ -26,10 +27,10 @@ describe('points API Routes in-process', () => {
 
 			const res = await leaderboardHandler({} as any)
 			expect(res).toHaveLength(2)
-			expect(res[0]!.username).toBe('bob')
-			expect(res[0]!.points).toBe(500)
-			expect(res[1]!.username).toBe('alice')
-			expect(res[1]!.points).toBe(300)
+			expect(res[0].username).toBe('bob')
+			expect(res[0].points).toBe(500)
+			expect(res[1].username).toBe('alice')
+			expect(res[1].points).toBe(300)
 		})
 	})
 

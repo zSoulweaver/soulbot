@@ -3,21 +3,20 @@ import { createError, defineEventHandler } from 'h3'
 import { beforeAll, beforeEach, vi } from 'vitest'
 import { initBot, registry, templateRegistry } from '~~/server/bot'
 
-// eslint-disable-next-line import/newline-after-import
-;(globalThis as any).defineEventHandler = defineEventHandler
-;(globalThis as any).createError = createError
-;(globalThis as any).readValidatedBody = vi.fn(async (event, validator) => {
+globalThis.defineEventHandler = defineEventHandler
+globalThis.createError = createError
+globalThis.readValidatedBody = vi.fn(async (event, validator) => {
 	return validator(event?.body)
 })
 
-;(globalThis as any).getRouterParam = vi.fn((event, paramName) => {
+globalThis.getRouterParam = vi.fn((event, paramName) => {
 	if (paramName === 'username') {
 		return event?.context?.params?.username || (globalThis as any).__mockUsername__
 	}
 	return undefined
 })
 
-;(globalThis as any).readBody = vi.fn(async (event) => {
+globalThis.readBody = vi.fn(async (event) => {
 	return event?.body
 })
 

@@ -4,7 +4,6 @@ import commandsAliasesHandler from '~~/server/api/commands/aliases.put'
 import commandsIndexHandler from '~~/server/api/commands/index.get'
 import commandsSaveHandler from '~~/server/api/commands/save.put'
 import commandsTemplatesHandler from '~~/server/api/commands/templates.put'
-
 import { registry } from '~~/server/bot'
 import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
@@ -40,7 +39,7 @@ describe('commands Management API Routes in-process', () => {
 		await registry.syncWithDb()
 	})
 
-	describe('gET /api/commands', () => {
+	describe('GET /api/commands', () => {
 		it('should return list of all registered command modules and their structures', async () => {
 			const res = await commandsIndexHandler({} as any)
 			expect(res).toBeDefined()
@@ -56,7 +55,7 @@ describe('commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('pUT /api/commands/save', () => {
+	describe('PUT /api/commands/save', () => {
 		it('should update command config settings successfully in DB', async () => {
 			const res = await commandsSaveHandler({
 				body: {
@@ -109,7 +108,7 @@ describe('commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('pUT /api/commands/aliases', () => {
+	describe('PUT /api/commands/aliases', () => {
 		it('should save command aliases successfully in DB', async () => {
 			const res = await commandsAliasesHandler({
 				body: {
@@ -168,7 +167,7 @@ describe('commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('pUT /api/commands/templates', () => {
+	describe('PUT /api/commands/templates', () => {
 		it('should save template overrides successfully in DB', async () => {
 			const res = await commandsTemplatesHandler({
 				body: {

@@ -109,21 +109,24 @@ const columns: any[] = [
 				<CardTitle>Manual Adjustment</CardTitle>
 				<CardDescription>Search for a user and adjust their points manually.</CardDescription>
 			</CardHeader>
-			<CardContent class="space-y-4">
+			<CardContent class="flex flex-col gap-4">
 				<div class="flex gap-2">
-					<div class="grid w-full items-center gap-1.5">
-						<Label for="targetUser">Username</Label>
-						<div class="relative">
-							<SearchIcon class="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-							<Input
-								id="targetUser"
-								v-model="targetUsername"
-								placeholder="Search username..."
-								class="pl-9"
-								@keyup.enter="lookupUser"
-							/>
-						</div>
-					</div>
+					<FieldGroup class="w-full">
+						<Field>
+							<FieldLabel for="targetUser">Username</FieldLabel>
+							<InputGroup>
+								<InputGroupInput
+									id="targetUser"
+									v-model="targetUsername"
+									placeholder="Search username..."
+									@keyup.enter="lookupUser"
+								/>
+								<InputGroupAddon class="bg-muted px-3">
+									<SearchIcon />
+								</InputGroupAddon>
+							</InputGroup>
+						</Field>
+					</FieldGroup>
 					<div class="flex items-end">
 						<Button :disabled="loadingLookup || !targetUsername" @click="lookupUser">
 							Lookup
@@ -131,7 +134,7 @@ const columns: any[] = [
 					</div>
 				</div>
 
-				<div v-if="lookupResult" class="space-y-3 rounded-lg bg-muted p-4">
+				<div v-if="lookupResult" class="flex flex-col gap-3 rounded-lg bg-muted p-4">
 					<div class="flex items-center justify-between">
 						<span class="font-semibold">{{ lookupResult.displayName }}</span>
 						<Badge variant="secondary" class="text-lg">
@@ -140,16 +143,18 @@ const columns: any[] = [
 					</div>
 
 					<div class="grid grid-cols-1 gap-2 pt-2">
-						<div class="grid w-full items-center gap-1.5">
-							<Label for="adjustAmount">Amount</Label>
-							<Input id="adjustAmount" v-model="amount" type="number" />
-						</div>
+						<FieldGroup>
+							<Field>
+								<FieldLabel for="adjustAmount">Amount</FieldLabel>
+								<Input id="adjustAmount" v-model="amount" type="number" />
+							</Field>
+						</FieldGroup>
 						<div class="flex gap-2">
 							<Button class="flex-1" variant="outline" :disabled="adjustLoading" @click="updatePoints('add')">
-								<PlusIcon class="mr-2 size-4" /> Add
+								<PlusIcon data-icon="inline-start" /> Add
 							</Button>
 							<Button class="flex-1" :disabled="adjustLoading" @click="updatePoints('set')">
-								<HashIcon class="mr-2 size-4" /> Set
+								<HashIcon data-icon="inline-start" /> Set
 							</Button>
 						</div>
 					</div>

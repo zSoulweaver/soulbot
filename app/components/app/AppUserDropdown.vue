@@ -50,13 +50,15 @@ async function handleSignOut() {
 				align="end"
 				:side-offset="4"
 			>
-				<DropdownMenuItem
-					variant="destructive"
-					@click="handleSignOut"
-				>
-					<LogOut class="mr-2 size-4" />
-					<span>Log out</span>
-				</DropdownMenuItem>
+				<DropdownMenuGroup>
+					<DropdownMenuItem
+						variant="destructive"
+						@click="handleSignOut"
+					>
+						<LogOut />
+						<span>Log out</span>
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	</div>

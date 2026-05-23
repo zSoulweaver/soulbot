@@ -117,7 +117,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 </script>
 
 <template>
-	<div class="space-y-6">
+	<div class="flex flex-col gap-6">
 		<AppPageHeader
 			heading="Command Management"
 			subheading="Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates."
@@ -255,14 +255,14 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 									<td class="px-6 py-4 text-right">
 										<div class="flex items-center justify-end gap-1.5">
 											<Button size="sm" variant="outline" @click="openQuickEdit(command)">
-												<Settings />
+												<Settings data-icon="inline-start" />
 												Config
 											</Button>
 											<Button
 												variant="outline" size="sm" as-child
 											>
 												<NuxtLink :to="`/admin/commands/${command.id}`">
-													<MessageSquare />
+													<MessageSquare data-icon="inline-start" />
 													Templates
 												</NuxtLink>
 											</Button>
@@ -273,7 +273,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 								<!-- Nested Collapsible Subcommands Container Row -->
 								<tr v-if="command.subcommands && Object.keys(command.subcommands).length > 0 && expandedCommands[command.id]" class="bg-background">
 									<td colspan="6" class="px-6 py-4">
-										<div class="space-y-2 border-l-2 py-2 pl-4">
+										<div class="flex flex-col gap-2 border-l-2 py-2 pl-4">
 											<div class="text-xs font-semibold tracking-wider text-muted-foreground uppercase select-none">
 												Registered subcommands for !{{ command.activeTrigger }}
 											</div>

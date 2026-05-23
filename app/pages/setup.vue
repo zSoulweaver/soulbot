@@ -43,7 +43,7 @@ async function handleBotAction() {
 					Please authenticate both accounts to get started.
 				</CardDescription>
 			</CardHeader>
-			<CardContent class="space-y-6">
+			<CardContent class="flex flex-col gap-6">
 				<!-- Streamer Account -->
 				<div class="flex items-center justify-between rounded-lg border p-4">
 					<div class="flex items-center gap-3">
@@ -124,7 +124,7 @@ async function handleBotAction() {
 					:disabled="!isComplete || isLoading"
 					@click="handleBotAction"
 				>
-					<Loader2 v-if="isLoading" class="mr-2 size-4 animate-spin" />
+					<Loader2 v-if="isLoading" class="animate-spin" data-icon="inline-start" />
 					<template v-if="status?.isBotRunning">
 						Open Dashboard
 					</template>

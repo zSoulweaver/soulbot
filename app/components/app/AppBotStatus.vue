@@ -38,7 +38,7 @@ const isConnected = computed(() => status.value?.isBotRunning ?? false)
 				</div>
 			</TooltipTrigger>
 			<TooltipContent>
-				<div class="space-y-1 text-xs">
+				<div class="flex flex-col gap-1 text-xs">
 					<p
 						v-if="isConnected" class="
 							font-semibold text-green-500

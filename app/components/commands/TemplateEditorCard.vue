@@ -94,7 +94,7 @@ function handleReset() {
 							size="sm"
 							@click.stop="handleReset"
 						>
-							<RefreshCw class="size-2.5" />
+							<RefreshCw data-icon="inline-start" />
 							Reset
 						</Button>
 					</div>
@@ -148,7 +148,7 @@ function handleReset() {
 								:disabled="(templateText ?? '') === props.template.default"
 								@click="handleReset"
 							>
-								<RefreshCw />
+								<RefreshCw data-icon="inline-start" />
 								Reset to Default Value
 							</Button>
 						</div>

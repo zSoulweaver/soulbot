@@ -87,64 +87,66 @@ async function saveSettings() {
 					<CardTitle>Payout Metrics</CardTitle>
 					<CardDescription>Adjust the frequency and points payout allocations for Twitch chatters.</CardDescription>
 				</CardHeader>
-				<CardContent class="space-y-6">
+				<CardContent class="flex flex-col gap-6">
 					<div v-if="loading" class="py-10 text-center text-sm text-muted-foreground">
 						Loading active configurations...
 					</div>
-					<div v-else class="space-y-6">
-						<!-- Payout Interval -->
-						<div class="grid w-full items-center gap-2">
-							<Label for="payoutInterval" class="flex items-center gap-1.5 text-sm font-semibold">
-								<Clock class="size-4 text-primary" />
-								Payout Frequency (Minutes)
-							</Label>
-							<Input
-								id="payoutInterval"
-								v-model="intervalVal"
-								type="number"
-								min="1"
-								class="
-									border-border font-medium
-									focus-visible:ring-primary
-								"
-							/>
-							<p class="text-xs text-muted-foreground">
-								The dynamic cycle time for points distribution. Chatters must send a message within this window to count as active.
-							</p>
-						</div>
+					<div v-else class="flex flex-col gap-6">
+						<FieldGroup>
+							<!-- Payout Interval -->
+							<Field>
+								<FieldLabel for="payoutInterval" class="flex items-center gap-1.5 text-sm font-semibold">
+									<Clock class="text-primary" />
+									Payout Frequency (Minutes)
+								</FieldLabel>
+								<Input
+									id="payoutInterval"
+									v-model="intervalVal"
+									type="number"
+									min="1"
+									class="
+										border-border font-medium
+										focus-visible:ring-primary
+									"
+								/>
+								<FieldDescription>
+									The dynamic cycle time for points distribution. Chatters must send a message within this window to count as active.
+								</FieldDescription>
+							</Field>
 
-						<!-- Payout Amount -->
-						<div class="grid w-full items-center gap-2">
-							<Label for="payoutAmount" class="flex items-center gap-1.5 text-sm font-semibold">
-								<Coins class="size-4 text-amber-500" />
-								Award Amount (Points)
-							</Label>
-							<Input
-								id="payoutAmount"
-								v-model="amountVal"
-								type="number"
-								min="0"
-								class="
-									border-border font-medium
-									focus-visible:ring-primary
-								"
-							/>
-							<p class="text-xs text-muted-foreground">
-								The points amount added to each active chatter's account upon completion of a frequency cycle.
-							</p>
-						</div>
+							<!-- Payout Amount -->
+							<Field>
+								<FieldLabel for="payoutAmount" class="flex items-center gap-1.5 text-sm font-semibold">
+									<Coins class="text-amber-500" />
+									Award Amount (Points)
+								</FieldLabel>
+								<Input
+									id="payoutAmount"
+									v-model="amountVal"
+									type="number"
+									min="0"
+									class="
+										border-border font-medium
+										focus-visible:ring-primary
+									"
+								/>
+								<FieldDescription>
+									The points amount added to each active chatter's account upon completion of a frequency cycle.
+								</FieldDescription>
+							</Field>
+						</FieldGroup>
 					</div>
 				</CardContent>
 				<CardFooter class="justify-end border-t border-border bg-muted/20 pt-4">
 					<Button :disabled="isSaving || loading" @click="saveSettings">
-						<Save class="mr-1.5 size-4" />
+						<Save data-icon="inline-start" />
 						{{ isSaving ? 'Saving...' : 'Save Settings' }}
 					</Button>
 				</CardFooter>
 			</Card>
 
 			<!-- Help / Mechanics Panel -->
-			<div class="space-y-6">
+			<div class="flex flex-col gap-6">
 				<Card class="border-border bg-card/30">
 					<CardHeader class="pb-3">
 						<CardTitle class="flex items-center gap-2 text-sm font-bold">
@@ -152,7 +154,7 @@ async function saveSettings() {
 							How Payouts Work
 						</CardTitle>
 					</CardHeader>
-					<CardContent class="space-y-3 text-xs/relaxed text-muted-foreground">
+					<CardContent class="flex flex-col gap-3 text-xs/relaxed text-muted-foreground">
 						<p>
 							The bot runs a background watch-time payout engine in the thread pool that checks for chat active metrics.
 						</p>

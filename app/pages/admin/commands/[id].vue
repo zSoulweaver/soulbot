@@ -245,7 +245,7 @@ async function saveTemplates() {
 				<!-- Sidebar: Execution Path Selectors -->
 				<div
 					class="
-						space-y-3
+						flex flex-col gap-3
 						xl:col-span-1
 					"
 				>
@@ -265,7 +265,7 @@ async function saveTemplates() {
 							@click="activePathFilter = 'root'"
 						>
 							<div class="flex min-w-0 items-center gap-2">
-								<Terminal class="size-4 shrink-0" />
+								<Terminal data-icon="inline-start" />
 								<span class="truncate text-left">Root Command (!{{ command.activeTrigger }})</span>
 							</div>
 							<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="shrink-0">
@@ -283,7 +283,7 @@ async function saveTemplates() {
 								@click="activePathFilter = sub.key"
 							>
 								<div class="flex min-w-0 items-center gap-2">
-									<CornerDownRight class="size-4 shrink-0" />
+									<CornerDownRight data-icon="inline-start" />
 									<span class="truncate text-left">Subcommand: {{ sub.triggerPath }}</span>
 								</div>
 								<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="shrink-0">
@@ -297,7 +297,7 @@ async function saveTemplates() {
 				<!-- Workspace: Active Path Templates Editors -->
 				<div
 					class="
-						space-y-4
+						flex flex-col gap-4
 						xl:col-span-3
 					"
 				>
@@ -311,7 +311,7 @@ async function saveTemplates() {
 						</p>
 					</div>
 
-					<div class="space-y-4">
+					<div class="flex flex-col gap-4">
 						<!-- Individual Template Card Editors -->
 						<TemplateEditorCard
 							v-for="template in activeTemplatesToDisplay"
@@ -344,7 +344,7 @@ async function saveTemplates() {
 						Discard Changes
 					</Button>
 					<Button :disabled="isSaving" @click="saveTemplates">
-						<Save />
+						<Save data-icon="inline-start" />
 						{{ isSaving ? 'Saving Overrides...' : 'Save Templates' }}
 					</Button>
 				</ItemActions>

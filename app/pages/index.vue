@@ -21,7 +21,7 @@
 			"
 		>
 			<Card>
-				<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardHeader class="flex flex-row items-center justify-between pb-2">
 					<CardTitle class="text-sm font-medium">
 						Quick Stats
 					</CardTitle>

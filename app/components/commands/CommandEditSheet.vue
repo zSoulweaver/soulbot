@@ -212,7 +212,7 @@ function navigateToTemplateEditor() {
 				</SheetDescription>
 			</SheetHeader>
 
-			<div class="space-y-6 overflow-y-auto px-4">
+			<div class="flex flex-col gap-6 overflow-y-auto px-4">
 				<!-- Alert for Non-executable Command Groups -->
 				<Alert v-if="props.command?.hasHandler === false">
 					<HelpCircle />
@@ -237,7 +237,7 @@ function navigateToTemplateEditor() {
 							size="sm" variant="outline" @click="navigateToTemplateEditor"
 						>
 							Edit Templates
-							<ArrowRight class="size-3.5" />
+							<ArrowRight data-icon="inline-end" />
 						</Button>
 					</ItemActions>
 				</Item>
@@ -413,7 +413,7 @@ function navigateToTemplateEditor() {
 									</Field>
 
 									<Button size="sm" @click="addAliasLocally">
-										<Plus />
+										<Plus data-icon="inline-start" />
 										Add Alias
 									</Button>
 								</FieldGroup>
@@ -421,7 +421,7 @@ function navigateToTemplateEditor() {
 						</Item>
 
 						<!-- Active Alias Items -->
-						<div class="w-full space-y-2">
+						<div class="w-full flex flex-col gap-2">
 							<Item
 								v-for="(alias, index) in aliasesList"
 								:key="alias.trigger" variant="muted"
@@ -447,7 +447,7 @@ function navigateToTemplateEditor() {
 									<Button
 										size="sm" variant="destructive" @click="removeAliasLocally(index)"
 									>
-										<Trash />
+										<Trash data-icon="inline-start" />
 										Remove
 									</Button>
 								</ItemActions>
@@ -463,7 +463,7 @@ function navigateToTemplateEditor() {
 					Cancel
 				</Button>
 				<Button :disabled="isSaving" @click="saveAllConfig">
-					<Save />
+					<Save data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Quick Config' }}
 				</Button>
 			</SheetFooter>

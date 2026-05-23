@@ -60,4 +60,10 @@ export default defineNuxtConfig({
 	},
 
 	modules: ['nuxt-auth-utils', '@vueuse/nuxt'],
+
+	typescript: {
+		tsConfig: {
+			include: ['../test/**/*'],
+		},
+	},
 })

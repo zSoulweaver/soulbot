@@ -9,8 +9,9 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 		target: 'pino-pretty',
 		options: {
 			colorize: true,
-			ignore: 'pid,hostname',
+			ignore: 'pid,hostname,component',
 			translateTime: 'SYS:standard',
+			messageFormat: '[{component}] {msg}',
 		},
 	})
 }
@@ -41,6 +42,6 @@ export const logger = pino(
 )
 
 // Export specialized loggers for different sub-components
-export const apiLogger = logger.child({ component: 'api' })
-export const botLogger = logger.child({ component: 'bot' })
-export const dbLogger = logger.child({ component: 'database' })
+export const apiLogger = logger.child({ component: 'API' })
+export const botLogger = logger.child({ component: 'BOT' })
+export const dbLogger = logger.child({ component: 'DATABASE' })

@@ -1,5 +1,6 @@
 import { db } from '~~/server/database'
 import { commandTemplates } from '~~/server/database/schema'
+import { botLogger } from '~~/server/utils/logger'
 
 /**
  * Helper type to extract parameters from template definitions
@@ -32,7 +33,7 @@ class TemplateRegistry {
 	private overrides = new Map<string, string>()
 
 	register(definition: TemplateDefinition) {
-		console.log(`[Templates] Registering: ${definition.id}`)
+		botLogger.info(`Registering template: ${definition.id}`)
 		this.templates.set(definition.id, definition)
 	}
 
@@ -59,7 +60,7 @@ class TemplateRegistry {
 	render(id: string, data: Record<string, string | number>) {
 		const definition = this.get(id)
 		if (!definition) {
-			console.warn(`[Templates] Template "${id}" not found. Falling back to key/value dump.`)
+			botLogger.warn(`Template "${id}" not found. Falling back to key/value dump.`)
 			return `${id}: ${JSON.stringify(data)}`
 		}
 

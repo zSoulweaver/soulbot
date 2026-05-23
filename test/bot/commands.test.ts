@@ -1,11 +1,11 @@
+import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { registry } from '~~/server/bot'
 import { db } from '~~/server/database'
 import { commandAliases, commands, users } from '~~/server/database/schema'
-import { eq } from 'drizzle-orm'
-import { registry } from '~~/server/bot'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
-describe('Bot Dynamic Command Management & Aliases Integration', () => {
+describe('bot Dynamic Command Management & Aliases Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 
@@ -47,7 +47,7 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 		await registry.syncWithDb()
 	})
 
-	describe('Dynamic Trigger Renaming & Disabling', () => {
+	describe('dynamic Trigger Renaming & Disabling', () => {
 		it('should dynamically rename command trigger from !points to !pts', async () => {
 			// Update the trigger of the points root command in database
 			await db.update(commands)
@@ -94,9 +94,9 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 		})
 	})
 
-	describe('Dynamic Command Aliases', () => {
+	describe('dynamic Command Aliases', () => {
 		// Scenario 1: Alias a root command and ensure root/subcommands respond
-		it('Scenario 1: should support aliasing a root command (!balance -> !points)', async () => {
+		it('scenario 1: should support aliasing a root command (!balance -> !points)', async () => {
 			// Insert alias: trigger 'balance' -> root command 'points'
 			await db.insert(commandAliases).values({
 				trigger: 'balance',
@@ -127,7 +127,7 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 		})
 
 		// Scenario 2: Alias a subcommand and verify arguments pass through
-		it('Scenario 2: should support direct subcommand aliasing (!top -> !points get top)', async () => {
+		it('scenario 2: should support direct subcommand aliasing (!top -> !points get top)', async () => {
 			// Insert alias: trigger 'top' -> subcommand 'get.top' on 'points' command
 			await db.insert(commandAliases).values({
 				trigger: 'top',
@@ -153,7 +153,7 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 		})
 
 		// Scenario 3: Alias a subcommand with overriden arguments
-		it('Scenario 3: should support subcommand aliasing with override args (!addpoints <amount> -> !points add soui <amount>)', async () => {
+		it('scenario 3: should support subcommand aliasing with override args (!addpoints <amount> -> !points add soui <amount>)', async () => {
 			// Insert alias: trigger 'addpoints' -> subcommand 'add' on 'points' command, with overrideArgs: ['soui']
 			await db.insert(commandAliases).values({
 				trigger: 'addpoints',

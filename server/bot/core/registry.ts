@@ -1,6 +1,7 @@
 import type { CommandDefinition } from './types'
 import { db } from '~~/server/database'
 import { commandAliases, commands } from '~~/server/database/schema'
+import { botLogger } from '~~/server/utils/logger'
 
 class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()
@@ -10,7 +11,7 @@ class CommandRegistry {
 
 	register(def: CommandDefinition) {
 		this.commands.set(def.id, def)
-		console.log('[Bot] Registering', def.id, 'module')
+		botLogger.info(`Registering ${def.id} module`)
 	}
 
 	async syncWithDb() {

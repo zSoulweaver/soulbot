@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
@@ -38,40 +38,43 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 2. Perform sequential upserts or deletes for the template overrides
+	// 2. Perform batched upserts or deletes for the template overrides
+	const idsToDelete: string[] = []
+	const itemsToUpsert: { id: string, template: string, updatedAt: Date }[] = []
+
 	for (const templateItem of templates) {
 		const definition = templateRegistry.get(templateItem.id)!
 		const isDefault = templateItem.template === definition.default
 
 		if (isDefault) {
-			await db
-				.delete(commandTemplates)
-				.where(eq(commandTemplates.id, templateItem.id))
+			idsToDelete.push(templateItem.id)
 		}
 		else {
-			const existingRecord = await db
-				.select()
-				.from(commandTemplates)
-				.where(eq(commandTemplates.id, templateItem.id))
-				.then(results => results[0])
-
-			if (existingRecord) {
-				await db
-					.update(commandTemplates)
-					.set({
-						template: templateItem.template,
-						updatedAt: new Date(),
-					})
-					.where(eq(commandTemplates.id, templateItem.id))
-			}
-			else {
-				await db.insert(commandTemplates).values({
-					id: templateItem.id,
-					template: templateItem.template,
-					updatedAt: new Date(),
-				})
-			}
+			itemsToUpsert.push({
+				id: templateItem.id,
+				template: templateItem.template,
+				updatedAt: new Date(),
+			})
 		}
+	}
+
+	if (idsToDelete.length > 0) {
+		await db
+			.delete(commandTemplates)
+			.where(inArray(commandTemplates.id, idsToDelete))
+	}
+
+	if (itemsToUpsert.length > 0) {
+		await db
+			.insert(commandTemplates)
+			.values(itemsToUpsert)
+			.onConflictDoUpdate({
+				target: commandTemplates.id,
+				set: {
+					template: sql`excluded.template`,
+					updatedAt: sql`excluded.updated_at`,
+				},
+			})
 	}
 
 	// 3. Hot-reload templates inside the live bot execution engine

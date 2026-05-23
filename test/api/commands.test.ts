@@ -1,16 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { db } from '~~/server/database'
-import { commandAliases, commandTemplates, commands } from '~~/server/database/schema'
 import { eq } from 'drizzle-orm'
-import { registry } from '~~/server/bot'
-import { clearDatabase } from '../helpers'
-
+import { beforeEach, describe, expect, it } from 'vitest'
+import commandsAliasesHandler from '~~/server/api/commands/aliases.put'
 import commandsIndexHandler from '~~/server/api/commands/index.get'
 import commandsSaveHandler from '~~/server/api/commands/save.put'
-import commandsAliasesHandler from '~~/server/api/commands/aliases.put'
 import commandsTemplatesHandler from '~~/server/api/commands/templates.put'
 
-describe('Commands Management API Routes in-process', () => {
+import { registry } from '~~/server/bot'
+import { db } from '~~/server/database'
+import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
+import { clearDatabase } from '../helpers'
+
+describe('commands Management API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 
@@ -40,7 +40,7 @@ describe('Commands Management API Routes in-process', () => {
 		await registry.syncWithDb()
 	})
 
-	describe('GET /api/commands', () => {
+	describe('gET /api/commands', () => {
 		it('should return list of all registered command modules and their structures', async () => {
 			const res = await commandsIndexHandler({} as any)
 			expect(res).toBeDefined()
@@ -56,7 +56,7 @@ describe('Commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('PUT /api/commands/save', () => {
+	describe('pUT /api/commands/save', () => {
 		it('should update command config settings successfully in DB', async () => {
 			const res = await commandsSaveHandler({
 				body: {
@@ -109,7 +109,7 @@ describe('Commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('PUT /api/commands/aliases', () => {
+	describe('pUT /api/commands/aliases', () => {
 		it('should save command aliases successfully in DB', async () => {
 			const res = await commandsAliasesHandler({
 				body: {
@@ -168,7 +168,7 @@ describe('Commands Management API Routes in-process', () => {
 		})
 	})
 
-	describe('PUT /api/commands/templates', () => {
+	describe('pUT /api/commands/templates', () => {
 		it('should save template overrides successfully in DB', async () => {
 			const res = await commandsTemplatesHandler({
 				body: {
@@ -183,6 +183,49 @@ describe('Commands Management API Routes in-process', () => {
 			// Check database update
 			const dbTpl = await db.select().from(commandTemplates).where(eq(commandTemplates.id, 'points.show')).then(res => res[0])
 			expect(dbTpl?.template).toBe('Test template show ${amount} for ${target}')
+		})
+
+		it('should handle batch updates and deletes of multiple templates', async () => {
+			// First, seed some existing templates
+			await db.insert(commandTemplates).values([
+				{ id: 'points.add', template: 'Old points add template', updatedAt: new Date() },
+				{ id: 'points.show', template: 'Old points show template', updatedAt: new Date() },
+			])
+
+			// Sync with registry to mimic real state
+			await registry.syncWithDb()
+
+			// Perform batch update:
+			// - points.add: new custom template (update)
+			// - points.show: matches default (delete)
+			// - points.show-self: new custom template (insert)
+			// assuming a standard default for test
+			// Actually let's just lookup the defaults from registry directly to ensure match
+			const { templateRegistry } = await import('~~/server/bot/core/templates')
+
+			const showDef = templateRegistry.get('points.show')
+
+			const res = await commandsTemplatesHandler({
+				body: {
+					templates: [
+						{ id: 'points.add', template: 'New template for add' },
+						{ id: 'points.show', template: showDef?.default || 'default' },
+						{ id: 'points.show-self', template: 'Self show template' },
+					],
+				},
+			} as any)
+
+			expect(res.success).toBe(true)
+
+			// Check database update
+			const dbTplAdd = await db.select().from(commandTemplates).where(eq(commandTemplates.id, 'points.add')).then(res => res[0])
+			expect(dbTplAdd?.template).toBe('New template for add')
+
+			const dbTplShow = await db.select().from(commandTemplates).where(eq(commandTemplates.id, 'points.show')).then(res => res[0])
+			expect(dbTplShow).toBeUndefined() // Should be deleted as it matched default
+
+			const dbTplShowSelf = await db.select().from(commandTemplates).where(eq(commandTemplates.id, 'points.show-self')).then(res => res[0])
+			expect(dbTplShowSelf?.template).toBe('Self show template')
 		})
 
 		it('should fail with 404 Not Found if template ID is not in registry', async () => {

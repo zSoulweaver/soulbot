@@ -121,19 +121,9 @@ function removeAliasLocally(index: number) {
 	aliasesList.value.splice(index, 1)
 }
 
-function normalizeNumericFields() {
-	if (costValue.value === undefined || costValue.value === null || Number.isNaN(costValue.value))
-		costValue.value = 0
-	if (globalCooldownValue.value === undefined || globalCooldownValue.value === null || Number.isNaN(globalCooldownValue.value))
-		globalCooldownValue.value = 0
-	if (userCooldownValue.value === undefined || userCooldownValue.value === null || Number.isNaN(userCooldownValue.value))
-		userCooldownValue.value = 0
-}
-
 async function saveAllConfig() {
 	if (!props.command)
 		return
-	normalizeNumericFields()
 	isSaving.value = true
 
 	try {
@@ -315,10 +305,10 @@ function navigateToTemplateEditor() {
 								<BadgeDollarSign class="size-4" />
 								Point Cost
 							</FieldLabel>
-							<NumberField id="editCost" v-model="costValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editCost" v-model="costValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput @blur="normalizeNumericFields" />
+									<NumberFieldInput />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>
@@ -329,10 +319,10 @@ function navigateToTemplateEditor() {
 								<Clock class="size-4" />
 								Global CD (Sec)
 							</FieldLabel>
-							<NumberField id="editGlobalCooldown" v-model="globalCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editGlobalCooldown" v-model="globalCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput @blur="normalizeNumericFields" />
+									<NumberFieldInput />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>
@@ -343,10 +333,10 @@ function navigateToTemplateEditor() {
 								<Clock class="size-4" />
 								User CD (Sec)
 							</FieldLabel>
-							<NumberField id="editUserCooldown" v-model="userCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full">
+							<NumberField id="editUserCooldown" v-model="userCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
 								<NumberFieldContent>
 									<NumberFieldDecrement />
-									<NumberFieldInput @blur="normalizeNumericFields" />
+									<NumberFieldInput />
 									<NumberFieldIncrement />
 								</NumberFieldContent>
 							</NumberField>

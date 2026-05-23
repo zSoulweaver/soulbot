@@ -1,4 +1,5 @@
 import { botLogger } from '~~/server/utils/logger'
+import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
@@ -20,6 +21,11 @@ export function initRegistry() {
 
 export function initBot() {
 	initRegistry()
+
+	// Warm up settings cache asynchronously
+	refreshAppSettingsCache().catch((err) => {
+		botLogger.error({ err }, 'Failed to warm up settings cache on initBot')
+	})
 
 	// Start the active chatter watch-time points payout engine
 	startPayoutEngine()

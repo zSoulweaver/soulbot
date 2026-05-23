@@ -9,7 +9,7 @@ import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
 import { clearDatabase } from '../helpers'
 
-describe('commands Management API Routes in-process', () => {
+describe('Commands Management API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 

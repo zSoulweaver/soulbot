@@ -5,7 +5,7 @@ import { db } from '~~/server/database'
 import { commands, users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
-describe('bot Middleware Core Execution Pipeline', () => {
+describe('Bot Middleware Core Execution Pipeline', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 
@@ -35,7 +35,7 @@ describe('bot Middleware Core Execution Pipeline', () => {
 		await registry.syncWithDb()
 	})
 
-	describe('command & Subcommand Disablement', () => {
+	describe('Command & Subcommand Disablement', () => {
 		it('should silently drop when root command is disabled', async () => {
 			await db.update(commands)
 				.set({ enabled: false })
@@ -64,7 +64,7 @@ describe('bot Middleware Core Execution Pipeline', () => {
 		})
 	})
 
-	describe('points Cost validation & Deduction', () => {
+	describe('Points Cost Validation & Deduction', () => {
 		it('should reject execution if user has insufficient points', async () => {
 			// Update points command to cost 50 points
 			await db.update(commands)
@@ -109,7 +109,7 @@ describe('bot Middleware Core Execution Pipeline', () => {
 		})
 	})
 
-	describe('cooldown Limits (User & Global)', () => {
+	describe('Cooldown Limits (User & Global)', () => {
 		beforeEach(() => {
 			vi.useFakeTimers()
 		})
@@ -170,7 +170,7 @@ describe('bot Middleware Core Execution Pipeline', () => {
 		})
 	})
 
-	describe('arguments Parsing & Validation', () => {
+	describe('Arguments Parsing & Validation', () => {
 		it('should return Zod validation errors and command usage', async () => {
 			const { replies } = await simulateCommand('!points add', {
 				id: '12345',

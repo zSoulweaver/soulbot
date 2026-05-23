@@ -50,6 +50,12 @@ export const mockApiClient = {
 	},
 }
 
+export const mockGetStreamInfo = vi.fn(async () => ({ isOnline: false }))
+
+vi.mock('~~/server/bot/services/stream', () => ({
+	getStreamInfo: () => mockGetStreamInfo(),
+}))
+
 // Globally mock the Twurple utility module
 vi.mock('~~/server/utils/twurple', async (importOriginal) => {
 	const original = await importOriginal<typeof import('~~/server/utils/twurple')>()

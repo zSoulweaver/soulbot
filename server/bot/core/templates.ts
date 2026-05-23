@@ -1,6 +1,7 @@
 import { db } from '~~/server/database'
 import { commandTemplates } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
+import { getAppSettingsSync } from '~~/server/utils/settings'
 
 /**
  * Helper type to extract parameters from template definitions
@@ -26,6 +27,27 @@ export interface TemplateDefinition {
 	id: string
 	default: string
 	params?: readonly string[]
+}
+
+function getGlobalTemplateVariables(data: Record<string, string | number>): Record<string, string | number> {
+	const vars: Record<string, string | number> = {}
+
+	// Currency Names
+	const settings = getAppSettingsSync()
+	vars['core.currency_singular'] = settings.currencyName
+	vars['core.currency_plural'] = settings.currencyNamePlural
+
+	// Dynamic Currency (automatically pluralized based on `data.amount` or `data.points` if present)
+	const amtVal = data.amount !== undefined ? Number(data.amount) : (data.points !== undefined ? Number(data.points) : null)
+	if (amtVal !== null) {
+		vars['core.currency'] = amtVal === 1 ? settings.currencyName : settings.currencyNamePlural
+	}
+	else {
+		// Default to plural if no amount context is provided
+		vars['core.currency'] = settings.currencyNamePlural
+	}
+
+	return vars
 }
 
 class TemplateRegistry {
@@ -67,7 +89,12 @@ class TemplateRegistry {
 		// Use override if available, otherwise fallback to default
 		let text = this.overrides.get(id) || definition.default
 
-		for (const [key, value] of Object.entries(data)) {
+		const mergedData = {
+			...getGlobalTemplateVariables(data),
+			...data,
+		}
+
+		for (const [key, value] of Object.entries(mergedData)) {
 			text = text.replaceAll(`\${${key}}`, String(value))
 		}
 		return text

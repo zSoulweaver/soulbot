@@ -14,12 +14,7 @@ export default antfu(
 			'vitest/prefer-lowercase-title': [
 				'error',
 				{
-					allowedPrefixes: [
-						'GET',
-						'POST',
-						'PUT',
-						'DELETE',
-					],
+					ignore: ['describe'],
 				},
 			],
 		},

@@ -5,7 +5,7 @@ import { db } from '~~/server/database'
 import { commandAliases, commands, users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
-describe('bot Dynamic Command Management & Aliases Integration', () => {
+describe('Bot Dynamic Command Management & Aliases Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 
@@ -47,7 +47,7 @@ describe('bot Dynamic Command Management & Aliases Integration', () => {
 		await registry.syncWithDb()
 	})
 
-	describe('dynamic Trigger Renaming & Disabling', () => {
+	describe('Dynamic Trigger Renaming & Disabling', () => {
 		it('should dynamically rename command trigger from !points to !pts', async () => {
 			// Update the trigger of the points root command in database
 			await db.update(commands)
@@ -94,7 +94,7 @@ describe('bot Dynamic Command Management & Aliases Integration', () => {
 		})
 	})
 
-	describe('dynamic Command Aliases', () => {
+	describe('Dynamic Command Aliases', () => {
 		// Scenario 1: Alias a root command and ensure root/subcommands respond
 		it('scenario 1: should support aliasing a root command (!balance -> !points)', async () => {
 			// Insert alias: trigger 'balance' -> root command 'points'
@@ -123,7 +123,7 @@ describe('bot Dynamic Command Management & Aliases Integration', () => {
 				username: 'alice',
 			})
 			expect(subRes.replies).toHaveLength(1)
-			expect(subRes.replies[0]).toBe('@Alice, Top 1 Leaders: #1 User2 (90 pts)')
+			expect(subRes.replies[0]).toBe('@Alice, Top 1 Leaders: #1 User2 (90 points)')
 		})
 
 		// Scenario 2: Alias a subcommand and verify arguments pass through
@@ -149,7 +149,7 @@ describe('bot Dynamic Command Management & Aliases Integration', () => {
 			})
 
 			expect(replies).toHaveLength(1)
-			expect(replies[0]).toBe('@Alice, Top 1 Leaders: #1 User2 (99 pts)')
+			expect(replies[0]).toBe('@Alice, Top 1 Leaders: #1 User2 (99 points)')
 		})
 
 		// Scenario 3: Alias a subcommand with overriden arguments

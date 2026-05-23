@@ -1,7 +1,10 @@
-import { inArray, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
+import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
-import { settings, users } from '~~/server/database/schema'
+import { twitchTokens, users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
+import { getAppSettings } from '~~/server/utils/settings'
+import { getApiClient } from '~~/server/utils/twurple'
 
 // In-memory active chatters map (userId -> chatterDetails)
 const activeUsersMap = new Map<string, { id: string, username: string, displayName: string, timestamp: number }>()
@@ -19,62 +22,172 @@ export function trackActiveUser(userId: string, username: string, displayName: s
 }
 
 /**
- * Starts the dynamic watch-time points payout engine loop.
- * Periodically loads interval and payout settings from the database and performs high-efficiency batched payouts.
+ * Core points payout cycle execution.
  */
-export function startPayoutEngine(): void {
-	botLogger.info('[Payout Engine] Starting active chatter points loop...')
+export async function executePayoutCycle(): Promise<void> {
+	// Get streamer token to retrieve channel/broadcaster ID
+	const streamerToken = await db
+		.select()
+		.from(twitchTokens)
+		.where(eq(twitchTokens.accountType, 'streamer'))
+		.then(res => res[0])
 
-	async function runPayoutCycle() {
-		try {
-			// Fetch settings from DB (fall back to default 5 minutes and 5 points if not set)
-			const dbSettings = await db.select().from(settings)
-			const intervalSetting = dbSettings.find(s => s.key === 'points.payout_interval')
-			const amountSetting = dbSettings.find(s => s.key === 'points.payout_amount')
+	if (!streamerToken || !streamerToken.userId) {
+		botLogger.warn('[Payout Engine] Skipping cycle: Streamer Twitch token/userId not found.')
+		throw new Error('Streamer Twitch token/userId not found')
+	}
 
-			const intervalMinutes = intervalSetting ? Math.max(1, Number(intervalSetting.value)) : 5
-			const payoutAmount = amountSetting ? Math.max(0, Number(amountSetting.value)) : 5
+	// Fetch current points settings from cache
+	const settings = await getAppSettings()
 
-			const payoutIntervalMs = intervalMinutes * 60 * 1000
-			const now = Date.now()
-			const activeUserIds: string[] = []
+	// Determine online status of the streamer
+	const stream = await getStreamInfo()
+	const isOnline = stream.isOnline
 
-			// Identify chatters active within the configured window
-			for (const [userId, data] of activeUsersMap.entries()) {
-				if (now - data.timestamp <= payoutIntervalMs) {
-					activeUserIds.push(userId)
-				}
-				else {
-					// Clean up chatters who have gone inactive
-					activeUsersMap.delete(userId)
-				}
-			}
+	// Select payout details based on stream online status
+	const payoutAmount = isOnline ? settings.payoutAmount : settings.payoutAmountOffline
+	const activeBonus = settings.activeBonus
 
-			// Perform batched point awards in a single query
-			if (activeUserIds.length > 0 && payoutAmount > 0) {
-				await db.update(users)
-					.set({
-						points: sql`${users.points} + ${payoutAmount}`,
-						updatedAt: new Date(),
-					})
-					.where(inArray(users.id, activeUserIds))
+	if (!isOnline && payoutAmount === 0) {
+		botLogger.info('[Payout Engine] Stream is offline and offline payout is 0. Skipping payout.')
+		return
+	}
 
-				botLogger.info(
-					{ activeCount: activeUserIds.length, payoutAmount, intervalMinutes },
-					'Batch awarded watch-time points to active chatters',
-				)
-			}
+	botLogger.info(
+		{ isOnline, payoutAmount, activeBonus },
+		'[Payout Engine] Executing payout cycle',
+	)
 
-			// Schedule the next check dynamically to respect runtime updates to the interval setting
-			setTimeout(runPayoutCycle, payoutIntervalMs).unref()
-		}
-		catch (err) {
-			botLogger.error({ err }, 'Error in active chatter payout cycle')
-			// Retry in 1 minute on failure
-			setTimeout(runPayoutCycle, 60000).unref()
+	// Fetch all currently connected chatters from Twitch chat
+	const api = getApiClient()
+	const paginator = api.chat.getChattersPaginated(streamerToken.userId)
+	const chatters = await paginator.getAll()
+
+	const chatterValues: any[] = []
+	const now = Date.now()
+
+	// Build the payout metrics list
+	for (const chatter of chatters) {
+		const userId = chatter.userId
+		const username = chatter.userName
+		const displayName = chatter.userDisplayName
+
+		// Check if the user is active (sent a message during this interval)
+		const isActive = activeUsersMap.has(userId)
+		const earnedPoints = payoutAmount + (isOnline && isActive ? activeBonus : 0)
+
+		if (earnedPoints > 0) {
+			chatterValues.push({
+				id: userId,
+				username,
+				displayName,
+				points: earnedPoints,
+				firstSeen: now,
+				lastSeen: now,
+			})
 		}
 	}
 
-	// Schedule the first run in 5 minutes
-	setTimeout(runPayoutCycle, 5 * 60 * 1000).unref()
+	if (chatterValues.length > 0) {
+		// Chunk upserts if they exceed SQLite limits
+		const chunkSize = 500
+		for (let i = 0; i < chatterValues.length; i += chunkSize) {
+			const chunk = chatterValues.slice(i, i + chunkSize)
+			await db.insert(users)
+				.values(chunk)
+				.onConflictDoUpdate({
+					target: users.id,
+					set: {
+						points: sql`${users.points} + EXCLUDED.points`,
+						username: sql`EXCLUDED.username`,
+						displayName: sql`EXCLUDED.display_name`,
+						lastSeen: now,
+						updatedAt: new Date(),
+					},
+				})
+		}
+
+		botLogger.info(
+			{ rewardedCount: chatterValues.length, payoutAmount, activeBonus },
+			'[Payout Engine] Batch awarded points to chatters',
+		)
+	}
+
+	// Clear the active users registry only on a successful cycle
+	activeUsersMap.clear()
 }
+
+let nextPayoutTime: number | null = null
+let currentTimeout: NodeJS.Timeout | null = null
+
+/**
+ * Returns the timestamp when the next payout cycle is scheduled to run.
+ */
+export function getNextPayoutTime(): number | null {
+	return nextPayoutTime
+}
+
+/**
+ * Intelligently schedules the next payout check.
+ */
+async function scheduleNextPayout(customDelayMs?: number) {
+	if (currentTimeout) {
+		clearTimeout(currentTimeout)
+	}
+
+	let delayMs = customDelayMs
+	if (!delayMs) {
+		try {
+			const settings = await getAppSettings()
+			const stream = await getStreamInfo()
+			const payoutIntervalMinutes = stream.isOnline ? settings.payoutInterval : settings.payoutIntervalOffline
+			delayMs = payoutIntervalMinutes * 60 * 1000
+		}
+		catch (err) {
+			botLogger.error({ err }, '[Payout Engine] Error getting settings for next payout delay, defaulting to 1 minute')
+			delayMs = 60000
+		}
+	}
+
+	nextPayoutTime = Date.now() + delayMs
+	currentTimeout = setTimeout(runPayoutCycle, delayMs)
+	currentTimeout.unref()
+}
+
+/**
+ * Internal loop runner for payout cycles.
+ */
+async function runPayoutCycle() {
+	try {
+		await executePayoutCycle()
+		await scheduleNextPayout()
+	}
+	catch (err) {
+		botLogger.error({ err }, '[Payout Engine] Error in chatter payout cycle')
+		// Retry in 1 minute on failure without clearing active users map
+		await scheduleNextPayout(60000)
+	}
+}
+
+/**
+ * Starts the dynamic watch-time points payout engine loop.
+ */
+export function startPayoutEngine(): void {
+	botLogger.info('[Payout Engine] Starting active chatter points loop...')
+	// Schedule the first run in 1 minute to allow bot initialization to fully settle
+	scheduleNextPayout(60000)
+}
+
+/**
+ * Triggers a manual payout cycle immediately and schedules the next regular cycle.
+ */
+export async function triggerManualPayout(): Promise<void> {
+	botLogger.info('[Payout Engine] Manual payout triggered via API.')
+	if (currentTimeout) {
+		clearTimeout(currentTimeout)
+	}
+	await executePayoutCycle()
+	await scheduleNextPayout()
+}
+
+export { activeUsersMap }

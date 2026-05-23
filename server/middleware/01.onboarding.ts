@@ -1,6 +1,8 @@
 import process from 'node:process'
+import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
+import { getAppSettings } from '~~/server/utils/settings'
 
 let isOnboarded = false
 
@@ -38,7 +40,10 @@ export default defineEventHandler(async (event) => {
 		return sendRedirect(event, '/setup')
 	}
 
-	if (isOnboarded && url.pathname === '/setup') {
+	const settings = await getAppSettings()
+	const isOutdated = settings.streamerTokenVersion < STREAMER_OAUTH_VERSION
+
+	if (isOnboarded && !isOutdated && url.pathname === '/setup') {
 		return sendRedirect(event, '/')
 	}
 })

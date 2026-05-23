@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm'
 import { handleChatMessage } from '~~/server/bot'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
-import { commandAliases, commands, commandTemplates, users } from '~~/server/database/schema'
+import { commandAliases, commands, commandTemplates, settings, twitchTokens, users } from '~~/server/database/schema'
+import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { mockSay } from './setup'
 
 /**
@@ -171,4 +172,7 @@ export async function clearDatabase() {
 	await db.delete(commandAliases)
 	await db.delete(commands)
 	await db.delete(commandTemplates)
+	await db.delete(twitchTokens)
+	await db.delete(settings)
+	await refreshAppSettingsCache()
 }

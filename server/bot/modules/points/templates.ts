@@ -4,15 +4,15 @@ import { templateRegistry } from '../../core/templates'
 
 export const definitions = {
 	'points.add': {
-		default: 'Added ${amount} points to ${target}. They now have ${newAmount} points.',
+		default: 'Added ${amount} ${core.currency} to ${target}. They now have ${newAmount} ${core.currency}.',
 		params: { amount: 0, target: '', newAmount: 0 } as { amount: number, target: string, newAmount: number },
 	},
 	'points.show': {
-		default: '${target} has ${amount} points.',
+		default: '${target} has ${amount} ${core.currency}.',
 		params: { target: '', amount: 0 } as { target: string, amount: number },
 	},
 	'points.show-self': {
-		default: 'you have have ${amount} points.',
+		default: 'you have have ${amount} ${core.currency}.',
 		params: { amount: 0 } as { amount: number },
 	},
 	'points.user-not-found': {
@@ -24,11 +24,11 @@ export const definitions = {
 		params: { target: '' } as { target: string },
 	},
 	'points.user-no-points': {
-		default: '${target} hasn\'t earned any points yet.',
+		default: '${target} hasn\'t earned any ${core.currency} yet.',
 		params: { target: '' } as { target: string },
 	},
 	'points.user-no-points-self': {
-		default: 'you haven\'t earned any points yet.',
+		default: 'you haven\'t earned any ${core.currency} yet.',
 		params: undefined,
 	},
 	'points.get-top': {

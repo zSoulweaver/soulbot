@@ -3,6 +3,7 @@ import type { PointsGetTopArgs } from '../schema'
 import { desc, gt } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
+import { getAppSettingsSync } from '~~/server/utils/settings'
 
 export const handlePointsGetTop: CommandHandler<typeof PointsGetTopArgs> = async (ctx, [countVal]) => {
 	const count = Math.min(Math.max(countVal || 5, 1), 10)
@@ -18,8 +19,13 @@ export const handlePointsGetTop: CommandHandler<typeof PointsGetTopArgs> = async
 		return ctx.reply('points.get-top-empty')
 	}
 
+	const settings = getAppSettingsSync()
+
 	const list = topEarners
-		.map((u, i) => `#${i + 1} ${u.displayName} (${u.points} pts)`)
+		.map((u, i) => {
+			const currency = u.points === 1 ? settings.currencyName : settings.currencyNamePlural
+			return `#${i + 1} ${u.displayName} (${u.points} ${currency})`
+		})
 		.join(', ')
 
 	ctx.reply('points.get-top', {

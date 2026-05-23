@@ -62,13 +62,12 @@ async function handleBotAction() {
 						</div>
 					</div>
 					<Button
-						v-if="!status?.streamer"
 						variant="outline"
 						size="sm"
 						as="a"
 						href="/api/bot/auth/twitch?type=streamer"
 					>
-						Connect
+						{{ status?.streamer ? 'Reconnect' : 'Connect' }}
 					</Button>
 				</div>
 
@@ -90,13 +89,12 @@ async function handleBotAction() {
 						</div>
 					</div>
 					<Button
-						v-if="!status?.bot"
 						variant="outline"
 						size="sm"
 						as="a"
 						href="/api/bot/auth/twitch?type=bot"
 					>
-						Connect
+						{{ status?.bot ? 'Reconnect' : 'Connect' }}
 					</Button>
 				</div>
 

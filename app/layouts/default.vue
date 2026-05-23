@@ -1,3 +1,11 @@
+<script setup lang="ts">
+import { AlertTriangle } from 'lucide-vue-next'
+
+const { data: status } = await useFetch<any>('/api/bot/status')
+
+const showOutdatedAlert = computed(() => status.value?.isStreamerTokenOutdated)
+</script>
+
 <template>
 	<SidebarProvider>
 		<AppSidebar />
@@ -18,6 +26,32 @@
 				</div>
 			</header>
 			<main class="flex flex-1 flex-col gap-4 p-4">
+				<Alert
+					v-if="showOutdatedAlert"
+					variant="destructive"
+					class="flex animate-in items-center justify-between gap-4 border-destructive/20 bg-destructive/10 p-4 text-destructive duration-300 fade-in slide-in-from-top"
+				>
+					<div class="flex items-center gap-3">
+						<AlertTriangle class="size-5 shrink-0" />
+						<div class="flex flex-col gap-0.5">
+							<AlertTitle class="font-bold tracking-tight">
+								Twitch Permissions Out of Date
+							</AlertTitle>
+							<AlertDescription class="text-xs font-medium text-destructive/80">
+								Soulbot has new watch-time payout capabilities that require additional broadcaster permissions. Please re-authenticate now.
+							</AlertDescription>
+						</div>
+					</div>
+					<Button
+						variant="destructive"
+						size="sm"
+						as="a"
+						href="/setup"
+						class="shrink-0 font-semibold"
+					>
+						Upgrade Permissions
+					</Button>
+				</Alert>
 				<slot />
 			</main>
 		</SidebarInset>

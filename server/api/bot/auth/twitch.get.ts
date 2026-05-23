@@ -1,6 +1,8 @@
 import { exchangeCode, getTokenInfo } from '@twurple/auth'
+import { BOT_OAUTH_SCOPES, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
-import { twitchTokens } from '~~/server/database/schema'
+import { settings, twitchTokens } from '~~/server/database/schema'
+import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { getApiClient, getAuthProvider } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
@@ -67,6 +69,23 @@ export default defineEventHandler(async (event) => {
 					set: tokenPayload,
 				})
 
+			if (type === 'streamer') {
+				await db.insert(settings)
+					.values({
+						key: 'twitch.streamer_token_version',
+						value: String(STREAMER_OAUTH_VERSION),
+						updatedAt: new Date(),
+					})
+					.onConflictDoUpdate({
+						target: settings.key,
+						set: {
+							value: String(STREAMER_OAUTH_VERSION),
+							updatedAt: new Date(),
+						},
+					})
+				await refreshAppSettingsCache()
+			}
+
 			return sendRedirect(event, '/setup')
 		}
 		catch (err: any) {
@@ -86,16 +105,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const scopes = type === 'bot'
-		? ['chat:read', 'chat:edit', 'whispers:read', 'whispers:edit']
-		: [
-				'chat:read',
-				'chat:edit',
-				'channel:moderate',
-				'moderation:read',
-				'channel:read:subscriptions',
-				'channel:manage:broadcast',
-			]
+	const scopes = type === 'bot' ? BOT_OAUTH_SCOPES : STREAMER_OAUTH_SCOPES
 
 	const url = `https://id.twitch.tv/oauth2/authorize?client_id=${config.twitchClientId}&redirect_uri=${encodeURIComponent(config.botTwitchRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}&state=${type}`
 

@@ -7,7 +7,7 @@ import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser } from '../helpers'
 
-describe('points API Routes in-process', () => {
+describe('Points API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 		;(globalThis as any).__mockUsername__ = ''

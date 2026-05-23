@@ -4,7 +4,7 @@ import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
-describe('bot Points Command Integration', () => {
+describe('Bot Points Command Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 	})
@@ -165,7 +165,7 @@ describe('bot Points Command Integration', () => {
 
 			expect(replies).toHaveLength(1)
 			// User2 has 50, User1 has 30, User3 has 10. We requested top 2.
-			expect(replies[0]).toBe('@Alice, Top 2 Leaders: #1 User2 (50 pts), #2 User1 (30 pts)')
+			expect(replies[0]).toBe('@Alice, Top 2 Leaders: #1 User2 (50 points), #2 User1 (30 points)')
 		})
 	})
 })

@@ -1,5 +1,7 @@
+import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
+import { getAppSettings } from '~~/server/utils/settings'
 import { isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async () => {
@@ -7,6 +9,11 @@ export default defineEventHandler(async () => {
 
 	const botToken = tokens.find(t => t.accountType === 'bot')
 	const streamerToken = tokens.find(t => t.accountType === 'streamer')
+
+	const appSettings = await getAppSettings()
+	const isStreamerTokenOutdated = streamerToken
+		? (appSettings.streamerTokenVersion < STREAMER_OAUTH_VERSION)
+		: false
 
 	return {
 		bot: botToken
@@ -24,5 +31,6 @@ export default defineEventHandler(async () => {
 				}
 			: null,
 		isBotRunning: isBotRunning(),
+		isStreamerTokenOutdated,
 	}
 })

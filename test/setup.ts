@@ -67,11 +67,12 @@ beforeAll(async () => {
 
 	const globalAny = globalThis as any
 	if (!globalAny.__db_setup__) {
+		const workerId = process.env.VITEST_WORKER_ID || '1'
 		try {
 			execSync('npx drizzle-kit push --force', {
 				env: {
 					...process.env,
-					DATABASE_URL: 'sqlite_test.db',
+					DATABASE_URL: `sqlite_test_${workerId}.db`,
 				},
 				stdio: 'pipe',
 			})

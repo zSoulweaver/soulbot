@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, Clock, HelpCircle, Landmark, Loader2, Save, Sparkles } from 'lucide-vue-next'
+import { Clock, HelpCircle, Landmark, Loader2, Save, Sparkles } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
@@ -421,10 +421,11 @@ onUnmounted(() => {
 						<p>
 							If the channel is offline and the offline payout amount is configured to 0, the engine will skip that payout.
 						</p>
-						<div class="mt-2 flex gap-2 rounded-sm border border-yellow-500/20 bg-yellow-500/10 p-2.5 text-yellow-400">
-							<AlertCircle />
-							<span>Updates to the payout interval take effect from the next payout run. Updates to the payout amounts will take take effect on the upcoming payout run.</span>
-						</div>
+						<Alert variant="warning">
+							<AlertDescription>
+								Updates to the payout interval take effect from the next payout run. Updates to the payout amounts will take take effect on the upcoming payout run.
+							</AlertDescription>
+						</Alert>
 					</CardContent>
 				</Card>
 			</div>

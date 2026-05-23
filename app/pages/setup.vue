@@ -99,19 +99,13 @@ async function handleBotAction() {
 				</div>
 
 				<Alert
-					v-if="isComplete" variant="default" :class="status?.isBotRunning ? `border-blue-200 bg-blue-50` : `border-green-200 bg-green-50`"
+					v-if="isComplete"
+					:variant="status?.isBotRunning ? 'info' : 'success'"
 				>
-					<CheckCircle2
-						class="size-4" :class="status?.isBotRunning ? `text-blue-600` : `text-green-600`"
-					/>
-					<AlertTitle
-						:class="status?.isBotRunning ? 'text-blue-800' : `text-green-800`"
-					>
+					<AlertTitle>
 						{{ status?.isBotRunning ? 'Bot is running' : 'Ready to go!' }}
 					</AlertTitle>
-					<AlertDescription
-						:class="status?.isBotRunning ? 'text-blue-700' : `text-green-700`"
-					>
+					<AlertDescription>
 						{{ status?.isBotRunning ? 'Your bot is online and active.' : 'Both accounts are authenticated. You can now start the bot.' }}
 					</AlertDescription>
 				</Alert>

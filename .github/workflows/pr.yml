@@ -1,0 +1,91 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run ESLint
+        id: lint
+        run: pnpm run lint
+        continue-on-error: true
+
+      - name: Run Tests
+        id: test
+        run: pnpm run test:run
+        continue-on-error: true
+
+      - name: Report Status in PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lintOutcome = '${{ steps.lint.outcome }}';
+            const testOutcome = '${{ steps.test.outcome }}';
+
+            const lintIcon = lintOutcome === 'success' ? '✅' : '❌';
+            const testIcon = testOutcome === 'success' ? '✅' : '❌';
+
+            const commentBody = `### PR Checks Summary
+
+            | Check | Status |
+            | --- | --- |
+            | ESLint | ${lintIcon} ${lintOutcome} |
+            | Vitest | ${testIcon} ${testOutcome} |
+            `;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('### PR Checks Summary');
+            });
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            }
+
+      - name: Check overall status
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "Linting or testing failed."
+            sh -c 'exit 1'
+          fi

@@ -3,7 +3,8 @@ import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	// Ensure DB data is fetched in parallel using descriptive names
 	const [databaseCommands, databaseAliases, databaseTemplates] = await Promise.all([
 		db.select().from(commands),

@@ -3,6 +3,7 @@ import { db } from '../../database'
 import { users } from '../../database/schema'
 
 export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	const query = getQuery(event)
 	const search = query.q as string | undefined
 

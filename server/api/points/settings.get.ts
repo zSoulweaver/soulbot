@@ -1,6 +1,7 @@
 import { getAppSettings } from '~~/server/utils/settings'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	const settings = await getAppSettings()
 
 	return {

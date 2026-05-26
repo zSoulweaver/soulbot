@@ -15,6 +15,7 @@ const saveSettingsSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'caster')
 	const body = await readBody(event)
 	const parsed = saveSettingsSchema.safeParse(body)
 

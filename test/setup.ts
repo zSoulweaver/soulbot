@@ -2,10 +2,13 @@ import process from 'node:process'
 import { createError, defineEventHandler } from 'h3'
 import { beforeAll, beforeEach, vi } from 'vitest'
 import { initBot, registry, templateRegistry } from '~~/server/bot'
+import { requireUserRole } from '~~/server/utils/auth'
 
 // eslint-disable-next-line import/newline-after-import
 ;(globalThis as any).defineEventHandler = defineEventHandler
 ;(globalThis as any).createError = createError
+;(globalThis as any).requireUserRole = requireUserRole
+;(globalThis as any).getUserSession = vi.fn(async () => ({ user: { id: 'mock-user', role: 'caster' } }))
 ;(globalThis as any).readValidatedBody = vi.fn(async (event, validator) => {
 	return validator(event?.body)
 })

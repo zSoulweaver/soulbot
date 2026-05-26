@@ -14,6 +14,18 @@
 - **Extend for Frontend-Only State**: If the frontend page or components need additional properties for UI layout/local state (e.g. `parentTriggerPath` or optional `id` for new draft models), define a frontend interface that extends the base Nitro type.
 - **Centralize Types**: Keep these types inside the `app/types/` directory to share them cleanly across pages, composables, and component props.
 
+## API Authorization & Security Guidelines
+
+- **Enforce Role-Based Access Control (RBAC)**: All administrative server API route handlers (under `server/api/`) MUST validate the request session and permissions at the very start of the handler execution.
+- **Use the `requireUserRole` Helper**: Always call `await requireUserRole(event, role)` at the start of the handler to secure a route.
+  - Call with `'caster'` for broadcaster-only settings, OAuth controls, or system modifications.
+  - Call with `'moderator'` for standard management endpoints (e.g. commands customizers, user list, manual payouts, aliases, modifying user points).
+  - Explicitly document public routes if a route should bypass verification (e.g. leaderboard lookup, public point check).
+- **Proactive Boundary Definition**: When creating or modifying API routes:
+  1. Determine the correct role restriction level immediately.
+  2. If it is not 100% obvious who should have access, the agent MUST ask the user for clarification.
+  3. If you make a design assumption about the required role, you MUST explicitly state the assumption and role level in your final response to the user.
+
 ## Testing Guidelines
 
 - **Mandatory Test Coverage**: When introducing new bot command modules, subcommands, or server API route endpoints, you MUST write a corresponding test file under the `test/` directory to ensure full coverage of scenarios.

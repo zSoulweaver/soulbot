@@ -16,6 +16,7 @@ const saveAliasesSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	const body = await readBody(event)
 	const parsed = saveAliasesSchema.safeParse(body)
 

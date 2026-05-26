@@ -1,6 +1,7 @@
 import { triggerManualPayout } from '~~/server/bot/modules/points/payout'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	try {
 		await triggerManualPayout()
 		return { success: true }

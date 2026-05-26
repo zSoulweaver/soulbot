@@ -1,6 +1,7 @@
 import { initTwurple, startBot } from '../../utils/twurple'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'caster')
 	await initTwurple()
 	const result = await startBot()
 

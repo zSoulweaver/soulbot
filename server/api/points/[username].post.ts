@@ -7,6 +7,7 @@ const bodySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+	await requireUserRole(event, 'moderator')
 	const username = getRouterParam(event, 'username')
 	if (!username) {
 		throw createError({ statusCode: 400, statusMessage: 'Username is required' })

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { activeUsersMap, executePayoutCycle, trackActiveUser } from '~~/server/bot/modules/points/payout'
 import { db } from '~~/server/database'
-import { settings, twitchTokens, users } from '~~/server/database/schema'
+import { excludedUsers, settings, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase } from '../helpers'
 import { mockApiClient, mockGetStreamInfo } from '../setup'
@@ -122,5 +122,68 @@ describe('Points Payout Engine Cycle', () => {
 		const record = await db.select().from(users).where(eq(users.id, 'u1')).then(res => res[0])
 		expect(record?.points).toBe(3)
 		expect(activeUsersMap.size).toBe(0)
+	})
+
+	it('should exclude bot and manually excluded accounts from points payout, while including the streamer by default', async () => {
+		// Mock streamer as online
+		mockGetStreamInfo.mockResolvedValue({ isOnline: true })
+
+		await db.insert(settings).values([
+			{ key: 'points.payout_amount', value: '10', updatedAt: new Date() },
+		])
+		await refreshAppSettingsCache()
+
+		// Seed a bot token
+		await db.insert(twitchTokens).values({
+			accountType: 'bot',
+			userId: 'bot-id-456',
+			userName: 'soulbot',
+			displayName: 'Soulbot',
+			accessToken: 'access',
+			refreshToken: 'refresh',
+			scope: '[]',
+			obtainmentTimestamp: Date.now(),
+		})
+
+		// Seed a manually excluded user
+		await db.insert(excludedUsers).values({
+			id: 'exc-id-789',
+			username: 'streamelements',
+			displayName: 'StreamElements',
+			reason: 'System Bot',
+			createdAt: new Date(),
+		})
+
+		// Mock chatters in chat:
+		// - user1: regular user
+		// - soulbot: bot account (auto-excluded)
+		// - streamer: streamer account (NOT auto-excluded, should receive points)
+		// - streamelements: manually excluded bot (excluded)
+		mockChattersPaginator.getAll.mockResolvedValue([
+			{ userId: 'u1', userName: 'user1', userDisplayName: 'UserOne' },
+			{ userId: 'bot-id-456', userName: 'soulbot', userDisplayName: 'Soulbot' },
+			{ userId: 'streamer-id-123', userName: 'streamer', userDisplayName: 'Streamer' },
+			{ userId: 'exc-id-789', userName: 'streamelements', userDisplayName: 'StreamElements' },
+		])
+
+		await executePayoutCycle()
+
+		// Regular user1 (u1) should get 10 points
+		const u1Record = await db.select().from(users).where(eq(users.id, 'u1')).then(res => res[0])
+		expect(u1Record).toBeDefined()
+		expect(u1Record?.points).toBe(10)
+
+		// Streamer should get 10 points
+		const streamerRecord = await db.select().from(users).where(eq(users.id, 'streamer-id-123')).then(res => res[0])
+		expect(streamerRecord).toBeDefined()
+		expect(streamerRecord?.points).toBe(10)
+
+		// Auto-excluded bot should NOT get points (no DB record created)
+		const botRecord = await db.select().from(users).where(eq(users.id, 'bot-id-456')).then(res => res[0])
+		expect(botRecord).toBeUndefined()
+
+		// Manually excluded user should NOT get points
+		const excRecord = await db.select().from(users).where(eq(users.id, 'exc-id-789')).then(res => res[0])
+		expect(excRecord).toBeUndefined()
 	})
 })

@@ -51,6 +51,7 @@ export const navigation: NavGroup[] = [
 				items: [
 					{ title: 'Payout Settings', url: '/admin/points' },
 					{ title: 'Balances', url: '/admin/points/users' },
+					{ title: 'Exclusion List', url: '/admin/points/exclusions' },
 					{ title: 'Gambling', url: '/admin/points/gambling' },
 				],
 			},

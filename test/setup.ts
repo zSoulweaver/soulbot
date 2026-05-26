@@ -55,6 +55,15 @@ export const mockApiClient = {
 				displayName: username.charAt(0).toUpperCase() + username.slice(1),
 			}
 		}),
+		getUsersByNames: vi.fn(async (usernames: string[]) => {
+			return usernames
+				.filter(u => u !== 'nonexistent' && u !== 'charlie')
+				.map(u => ({
+					id: `mock-${u}-id`,
+					name: u,
+					displayName: u.charAt(0).toUpperCase() + u.slice(1),
+				}))
+		}),
 	},
 }
 

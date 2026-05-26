@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
-import { twitchTokens, users } from '~~/server/database/schema'
+import { excludedUsers, settings, twitchTokens, users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
 import { getApiClient } from '~~/server/utils/twurple'
@@ -63,6 +63,31 @@ export async function executePayoutCycle(): Promise<void> {
 	const paginator = api.chat.getChattersPaginated(streamerToken.userId)
 	const chatters = await paginator.getAll()
 
+	// Fetch manual exclusions from the database
+	const manualExclusions = await db.select().from(excludedUsers)
+	const excludedUserIds = new Set<string>()
+	const excludedUsernames = new Set<string>()
+
+	for (const exc of manualExclusions) {
+		if (exc.id)
+			excludedUserIds.add(exc.id)
+		excludedUsernames.add(exc.username.toLowerCase())
+	}
+
+	// Automatically exclude the bot's own account
+	const botToken = await db
+		.select()
+		.from(twitchTokens)
+		.where(eq(twitchTokens.accountType, 'bot'))
+		.then(res => res[0])
+
+	if (botToken) {
+		if (botToken.userId)
+			excludedUserIds.add(botToken.userId)
+		if (botToken.userName)
+			excludedUsernames.add(botToken.userName.toLowerCase())
+	}
+
 	const chatterValues: any[] = []
 	const now = Date.now()
 
@@ -70,6 +95,11 @@ export async function executePayoutCycle(): Promise<void> {
 	for (const chatter of chatters) {
 		const userId = chatter.userId
 		const username = chatter.userName
+
+		if (excludedUserIds.has(userId) || excludedUsernames.has(username.toLowerCase())) {
+			continue // Skip excluded account
+		}
+
 		const displayName = chatter.userDisplayName
 
 		// Check if the user is active (sent a message during this interval)
@@ -174,6 +204,10 @@ async function runPayoutCycle() {
  */
 export function startPayoutEngine(): void {
 	botLogger.info('[Payout Engine] Starting active chatter points loop...')
+
+	// Ensure we have seeded default bots on initialization
+	seedDefaultExclusions().catch(err => botLogger.error({ err }, 'Failed to seed exclusions during init'))
+
 	// Schedule the first run in 1 minute to allow bot initialization to fully settle
 	scheduleNextPayout(60000)
 }
@@ -191,3 +225,54 @@ export async function triggerManualPayout(): Promise<void> {
 }
 
 export { activeUsersMap }
+
+export async function seedDefaultExclusions() {
+	try {
+		// Check if we already seeded exclusions in the past
+		const [seededSetting] = await db
+			.select()
+			.from(settings)
+			.where(eq(settings.key, 'points.exclusions_seeded'))
+
+		if (seededSetting?.value === 'true') {
+			return // Already seeded in the past, respect user's modifications (even if empty)
+		}
+
+		botLogger.info('No points payout exclusions found. Seeding default Twitch bots...')
+		const defaultBots = ['streamelements', 'nightbot', 'wizebot', 'moobot']
+		const api = getApiClient()
+
+		const twitchUsers = await api.users.getUsersByNames(defaultBots)
+		const valuesToInsert = twitchUsers.map(user => ({
+			id: user.id,
+			username: user.name.toLowerCase(),
+			displayName: user.displayName,
+			reason: 'Default Twitch Bot',
+			createdAt: new Date(),
+		}))
+
+		if (valuesToInsert.length > 0) {
+			await db.insert(excludedUsers).values(valuesToInsert).onConflictDoNothing()
+		}
+
+		// Mark as seeded in settings so we never overwrite the user's preferences again
+		await db.insert(settings)
+			.values({
+				key: 'points.exclusions_seeded',
+				value: 'true',
+				updatedAt: new Date(),
+			})
+			.onConflictDoUpdate({
+				target: settings.key,
+				set: {
+					value: 'true',
+					updatedAt: new Date(),
+				},
+			})
+
+		botLogger.info(`Successfully seeded ${valuesToInsert.length} default point exclusions.`)
+	}
+	catch (err) {
+		botLogger.error({ err }, 'Failed to seed default point exclusions')
+	}
+}

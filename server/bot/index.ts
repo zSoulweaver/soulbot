@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { botLogger } from '~~/server/utils/logger'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { handleChatMessage } from './core/chat-dispatcher'
@@ -28,7 +29,9 @@ export function initBot() {
 	})
 
 	// Start the active chatter watch-time points payout engine
-	startPayoutEngine()
+	if (process.env.NODE_ENV !== 'test') {
+		startPayoutEngine()
+	}
 }
 
 export { handleChatMessage, handleCommand, registry, startPayoutEngine, templateRegistry }

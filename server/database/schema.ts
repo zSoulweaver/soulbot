@@ -58,3 +58,11 @@ export const settings = sqliteTable('settings', {
 	value: text('value').notNull(),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+export const excludedUsers = sqliteTable('excluded_users', {
+	id: text('id').primaryKey(), // Twitch user ID
+	username: text('username').notNull().unique(), // Twitch username (stored in lowercase for easy match/lookup)
+	displayName: text('display_name').notNull(), // Capitalized Twitch display name
+	reason: text('reason'), // Optional note/reason for exclusion (e.g. "System Bot")
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})

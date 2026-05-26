@@ -1,7 +1,10 @@
+import { randomUUID } from 'node:crypto'
+import process from 'node:process'
 import { exchangeCode, getTokenInfo } from '@twurple/auth'
 import { BOT_OAUTH_SCOPES, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { settings, twitchTokens } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { getApiClient, getAuthProvider } from '~~/server/utils/twurple'
 
@@ -9,14 +12,44 @@ export default defineEventHandler(async (event) => {
 	const query = getQuery(event)
 	const config = useRuntimeConfig()
 
+	// Check onboarding status for defense-in-depth security
+	const existingTokens = await db.select().from(twitchTokens)
+	const hasBot = existingTokens.some(t => t.accountType === 'bot')
+	const hasStreamer = existingTokens.some(t => t.accountType === 'streamer')
+	const isOnboarded = hasBot && hasStreamer
+
+	if (isOnboarded) {
+		await requireUserRole(event, 'caster')
+	}
+
 	if (query.code) {
 		const code = query.code as string
-		const type = query.state as 'bot' | 'streamer'
+		const stateStr = query.state as string
+
+		if (!stateStr) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: 'Missing state parameter in callback.',
+			})
+		}
+
+		const [type, csrfToken] = stateStr.split(':')
 
 		if (!type || (type !== 'bot' && type !== 'streamer')) {
 			throw createError({
 				statusCode: 400,
 				statusMessage: 'Invalid state/type in callback.',
+			})
+		}
+
+		// CSRF protection validation
+		const expectedCsrfToken = getCookie(event, 'twitch_oauth_csrf')
+		deleteCookie(event, 'twitch_oauth_csrf')
+
+		if (!expectedCsrfToken || expectedCsrfToken !== csrfToken) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: 'Invalid state or CSRF token matching failed.',
 			})
 		}
 
@@ -105,9 +138,18 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const scopes = type === 'bot' ? BOT_OAUTH_SCOPES : STREAMER_OAUTH_SCOPES
+	// Generate and store session-bound CSRF token
+	const csrfToken = randomUUID()
+	setCookie(event, 'twitch_oauth_csrf', csrfToken, {
+		maxAge: 600, // 10 minutes
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax',
+	})
 
-	const url = `https://id.twitch.tv/oauth2/authorize?client_id=${config.twitchClientId}&redirect_uri=${encodeURIComponent(config.botTwitchRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}&state=${type}`
+	const scopes = type === 'bot' ? BOT_OAUTH_SCOPES : STREAMER_OAUTH_SCOPES
+	const state = `${type}:${csrfToken}`
+	const url = `https://id.twitch.tv/oauth2/authorize?client_id=${config.twitchClientId}&redirect_uri=${encodeURIComponent(config.botTwitchRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}&state=${state}`
 
 	return sendRedirect(event, url)
 })

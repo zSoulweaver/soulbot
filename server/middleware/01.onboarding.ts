@@ -1,8 +1,6 @@
 import process from 'node:process'
-import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
-import { getAppSettings } from '~~/server/utils/settings'
 
 let isOnboarded = false
 
@@ -28,7 +26,7 @@ export default defineEventHandler(async (event) => {
 		isOnboarded = hasBot && hasStreamer
 	}
 
-	// 1. If not onboarded yet, only allow setup pages and auth/status APIs. Redirect all other traffic.
+	// If not onboarded yet, only allow setup pages and auth/status APIs. Redirect all other traffic.
 	if (!isOnboarded) {
 		if (
 			url.pathname === '/setup'
@@ -40,23 +38,19 @@ export default defineEventHandler(async (event) => {
 		return sendRedirect(event, '/setup')
 	}
 
-	// 2. If onboarded, restrict setup and auth endpoints
-	const settings = await getAppSettings()
-	const isOutdated = settings.streamerTokenVersion < STREAMER_OAUTH_VERSION
-
+	// If onboarded, restrict setup and auth endpoints to casters only
 	if (url.pathname === '/setup' || url.pathname.startsWith('/api/bot/auth')) {
 		const session = await getUserSession(event)
 		const isCaster = session?.user?.role === 'caster'
 
-		// Only allow casters to access when streamer token is outdated.
-		if (!isCaster || !isOutdated) {
+		if (!isCaster) {
 			if (url.pathname === '/setup') {
 				return sendRedirect(event, '/')
 			}
 			else {
 				throw createError({
 					statusCode: 403,
-					statusMessage: 'Forbidden: Only the caster can modify bot setup.',
+					statusMessage: 'Only the caster can modify bot setup.',
 				})
 			}
 		}

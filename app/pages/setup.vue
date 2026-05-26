@@ -10,6 +10,8 @@ const { data: status, refresh } = await useFetch('/api/bot/status')
 
 const isComplete = computed(() => status.value?.bot && status.value?.streamer)
 const isLoading = ref(false)
+const isRestarting = ref(false)
+const unknownStatus = ref(false)
 
 async function handleBotAction() {
 	if (status.value?.isBotRunning) {
@@ -20,27 +22,96 @@ async function handleBotAction() {
 	isLoading.value = true
 	try {
 		await $fetch('/api/bot/start', { method: 'POST' })
-		toast.success('Bot started successfully!')
+		toast.success('Chat connection established successfully!')
 		await refresh()
 		// Delay navigation slightly so user sees the success state/toast
 		navigateTo('/')
 	}
 	catch (err: any) {
-		console.error('Failed to start bot', err)
-		const errorMessage = err.data?.statusMessage || 'Failed to start bot. Please try again.'
+		console.error('Failed to connect to chat', err)
+		const errorMessage = err.data?.statusMessage || 'Failed to connect to chat. Please try again.'
 		toast.error(errorMessage)
 		isLoading.value = false
 	}
 }
+
+async function pollBotStatus(maxAttempts = 10, intervalMs = 500) {
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		await new Promise(resolve => setTimeout(resolve, intervalMs))
+		await refresh()
+		if (status.value?.isBotRunning) {
+			return true
+		}
+	}
+	return false
+}
+
+async function handleRestart() {
+	isRestarting.value = true
+	unknownStatus.value = false
+	try {
+		await $fetch('/api/bot/restart', { method: 'POST' })
+		toast.success('Reconnection initiated, waiting to establish chat connection...')
+
+		// Poll status to verify it's successfully re-established connection
+		const backOnline = await pollBotStatus()
+		if (backOnline) {
+			toast.success('Connection re-established successfully!')
+		}
+		else {
+			toast.warning('Reconnection initiated, but chat response is taking longer than expected.')
+			unknownStatus.value = true
+		}
+	}
+	catch (err: any) {
+		console.error('Failed to reconnect to chat', err)
+		const errorMessage = err.data?.statusMessage || 'Failed to reconnect to chat. Please try again.'
+		toast.error(errorMessage)
+	}
+	finally {
+		isRestarting.value = false
+	}
+}
+
+const alertVariant = computed(() => {
+	if (unknownStatus.value)
+		return 'warning'
+	if (status.value?.isBotRunning)
+		return 'info'
+	if (isRestarting.value)
+		return 'info'
+	return 'success'
+})
+
+const alertTitle = computed(() => {
+	if (unknownStatus.value)
+		return 'Connection status unknown'
+	if (status.value?.isBotRunning)
+		return 'Connected to Twitch Chat'
+	if (isRestarting.value)
+		return 'Reconnecting to Twitch Chat...'
+	return 'Ready to Connect!'
+})
+
+const alertDescription = computed(() => {
+	if (unknownStatus.value) {
+		return 'Reconnection initiated, the connection will likely establish soon but it\'s taking longer than expected. Check the debug logs for further details.'
+	}
+	if (status.value?.isBotRunning)
+		return 'Your bot is successfully connected and listening to Twitch chat.'
+	if (isRestarting.value)
+		return 'Please wait while the bot establishes a secure connection to your Twitch channel.'
+	return 'Both accounts are authenticated. You can now connect the bot to chat.'
+})
 </script>
 
 <template>
 	<div class="flex min-h-screen items-center justify-center p-4">
 		<Card class="w-full max-w-md">
 			<CardHeader>
-				<CardTitle>Bot Onboarding</CardTitle>
+				<CardTitle>Twitch Connection Onboarding</CardTitle>
 				<CardDescription>
-					Please authenticate both accounts to get started.
+					Please authenticate both accounts to connect your bot to chat.
 				</CardDescription>
 			</CardHeader>
 			<CardContent class="flex flex-col gap-6">
@@ -100,31 +171,48 @@ async function handleBotAction() {
 
 				<Alert
 					v-if="isComplete"
-					:variant="status?.isBotRunning ? 'info' : 'success'"
+					:variant="alertVariant"
 				>
 					<AlertTitle>
-						{{ status?.isBotRunning ? 'Bot is running' : 'Ready to go!' }}
+						{{ alertTitle }}
 					</AlertTitle>
 					<AlertDescription>
-						{{ status?.isBotRunning ? 'Your bot is online and active.' : 'Both accounts are authenticated. You can now start the bot.' }}
+						{{ alertDescription }}
 					</AlertDescription>
 				</Alert>
 			</CardContent>
-			<CardFooter>
+			<CardFooter class="flex flex-col gap-3">
+				<div v-if="status?.isBotRunning || isRestarting || unknownStatus" class="flex w-full gap-3">
+					<Button
+						v-if="!unknownStatus"
+						variant="destructive"
+						class="flex-1"
+						:disabled="isRestarting || isLoading"
+						@click="handleRestart"
+					>
+						<Loader2 v-if="isRestarting" class="animate-spin" data-icon="inline-start" />
+						Reconnect Bot
+					</Button>
+					<Button
+						class="flex-1"
+						:disabled="isRestarting || isLoading"
+						@click="handleBotAction"
+					>
+						Open Dashboard
+					</Button>
+				</div>
 				<Button
+					v-else
 					class="w-full"
 					:disabled="!isComplete || isLoading"
 					@click="handleBotAction"
 				>
 					<Loader2 v-if="isLoading" class="animate-spin" data-icon="inline-start" />
-					<template v-if="status?.isBotRunning">
-						Open Dashboard
-					</template>
-					<template v-else-if="isLoading">
-						Starting Bot...
+					<template v-if="isLoading">
+						Connecting to Chat...
 					</template>
 					<template v-else>
-						{{ isComplete ? 'Initialize Bot' : 'Complete Setup' }}
+						{{ isComplete ? 'Connect Bot to Chat' : 'Complete Setup' }}
 					</template>
 				</Button>
 			</CardFooter>

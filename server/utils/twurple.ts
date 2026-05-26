@@ -79,17 +79,16 @@ export async function getChatClient() {
 	if (chatClientInstance)
 		return chatClientInstance
 
-	const config = useRuntimeConfig()
 	const tokens = await db.select().from(twitchTokens)
 	const botToken = tokens.find(t => t.accountType === 'bot')
 	const streamerToken = tokens.find(t => t.accountType === 'streamer')
 
-	if (!botToken || !streamerToken)
+	if (!botToken || !streamerToken || !streamerToken.userName)
 		return null
 
 	chatClientInstance = new ChatClient({
 		authProvider: getAuthProvider(),
-		channels: [config.streamerChannel],
+		channels: [streamerToken.userName],
 		authIntents: ['chat'],
 	})
 
@@ -115,6 +114,16 @@ export async function startBot() {
 
 	await chat.connect()
 	return 'started'
+}
+
+export async function stopBot() {
+	if (chatClientInstance && chatClientInstance.isConnected) {
+		chatClientInstance.quit()
+		chatClientInstance = null
+		botLogger.info('Bot stopped manually')
+		return 'stopped'
+	}
+	return 'not_running'
 }
 
 export interface UserRoleInfo {

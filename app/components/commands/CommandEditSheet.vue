@@ -3,11 +3,6 @@ import type { Alias, Command } from '~/types/commands'
 import { ArrowRight, BadgeDollarSign, Clock, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
-import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group'
-import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
 
 const props = defineProps<{
 	command: Command | null
@@ -435,7 +430,7 @@ function navigateToTemplateEditor() {
 								</ItemContent>
 								<ItemActions>
 									<Button
-										size="sm" variant="destructive" @click="removeAliasLocally(index)"
+										size="sm" variant="ghostDestructive" @click="removeAliasLocally(index)"
 									>
 										<Trash data-icon="inline-start" />
 										Remove
@@ -449,9 +444,11 @@ function navigateToTemplateEditor() {
 
 			<!-- Pinned Bottom Footer with docked buttons -->
 			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t">
-				<Button variant="outline" @click="emit('update:open', false)">
-					Cancel
-				</Button>
+				<SheetClose as-child>
+					<Button variant="outline">
+						Cancel
+					</Button>
+				</SheetClose>
 				<Button :disabled="isSaving" @click="saveAllConfig">
 					<Save data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Quick Config' }}

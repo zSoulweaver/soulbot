@@ -117,7 +117,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 </script>
 
 <template>
-	<div class="flex flex-col gap-6">
+	<AppPageContainer>
 		<AppPageHeader
 			heading="Command Management"
 			subheading="Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates."
@@ -373,5 +373,5 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 			@update:open="isSheetOpen = $event"
 			@saved="refreshCommands"
 		/>
-	</div>
+	</AppPageContainer>
 </template>

@@ -2,7 +2,6 @@
 import type { Command, Template } from '~/types/commands'
 import {
 	CornerDownRight,
-	Save,
 	Terminal,
 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -214,7 +213,7 @@ async function saveTemplates() {
 </script>
 
 <template>
-	<div class="flex flex-1 flex-col gap-6">
+	<AppPageContainer>
 		<!-- Main Workspace Loader -->
 		<div v-if="loading" class="py-12 text-center text-muted-foreground">
 			Loading command customizer...
@@ -325,30 +324,18 @@ async function saveTemplates() {
 				</div>
 			</div>
 
-			<!-- Workspace Floating Action save card using shadcn Item (shown conditionally) -->
-			<Item
-				v-if="isAnyTemplateModified"
-				variant="outline"
-				class="sticky bottom-4 z-40 mt-auto w-full animate-in bg-card/70 shadow-lg backdrop-blur-md transition-all duration-200 fade-in slide-in-from-bottom-2"
-			>
-				<ItemContent>
-					<ItemTitle>
-						Unsaved Template Overrides
-					</ItemTitle>
-					<ItemDescription>
-						You have modified message templates. Save to instantly update Twitch chat triggers.
-					</ItemDescription>
-				</ItemContent>
-				<ItemActions>
-					<Button variant="outline" :disabled="isSaving" @click="refreshCommands">
-						Discard Changes
-					</Button>
-					<Button :disabled="isSaving" @click="saveTemplates">
-						<Save data-icon="inline-start" />
-						{{ isSaving ? 'Saving Overrides...' : 'Save Templates' }}
-					</Button>
-				</ItemActions>
-			</Item>
+			<!-- Workspace Floating Action save bar (shown conditionally) -->
+			<AppFloatingSaveBar
+				:show="isAnyTemplateModified"
+				:is-saving="isSaving"
+				title="Unsaved Template Overrides"
+				description="You have modified message templates. Save to instantly update Twitch chat triggers."
+				save-text="Save Templates"
+				saving-text="Saving Overrides..."
+				discard-text="Discard Changes"
+				@save="saveTemplates"
+				@discard="refreshCommands"
+			/>
 		</div>
-	</div>
+	</AppPageContainer>
 </template>

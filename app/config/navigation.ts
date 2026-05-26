@@ -49,9 +49,9 @@ export const navigation: NavGroup[] = [
 				icon: PiggyBank,
 				roles: ['caster', 'moderator'],
 				items: [
+					{ title: 'User Balances', url: '/admin/points/users' },
 					{ title: 'Payout Settings', url: '/admin/points' },
-					{ title: 'Balances', url: '/admin/points/users' },
-					{ title: 'Exclusion List', url: '/admin/points/exclusions' },
+					{ title: 'Payout Exclusions', url: '/admin/points/exclusions' },
 					{ title: 'Gambling', url: '/admin/points/gambling' },
 				],
 			},

@@ -108,7 +108,7 @@ const columns: any[] = [
 </script>
 
 <template>
-	<div class="flex flex-col gap-6">
+	<AppPageContainer>
 		<AppPageHeader
 			heading="Payout Exclusions"
 			subheading="Manage accounts that are excluded from watch-time points payouts."
@@ -225,5 +225,5 @@ const columns: any[] = [
 				Loading exclusion list...
 			</div>
 		</div>
-	</div>
+	</AppPageContainer>
 </template>

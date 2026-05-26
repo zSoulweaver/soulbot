@@ -15,7 +15,7 @@ function getRankIcon(index: number) {
 </script>
 
 <template>
-	<div class="mx-auto flex max-w-4xl flex-col gap-6 py-8">
+	<AppPageContainer class="mx-auto max-w-4xl py-8">
 		<div class="flex flex-col gap-2 text-center">
 			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight uppercase italic">
 				Points Leaderboard
@@ -85,5 +85,5 @@ function getRankIcon(index: number) {
 				</template>
 			</TableBody>
 		</Table>
-	</div>
+	</AppPageContainer>
 </template>

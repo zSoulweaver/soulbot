@@ -93,15 +93,8 @@ const columns: any[] = [
 </script>
 
 <template>
-	<div class="flex flex-col gap-6">
-		<div class="flex flex-col gap-1">
-			<h1 class="text-3xl font-bold tracking-tight">
-				Points Administration
-			</h1>
-			<p class="text-muted-foreground">
-				Manage user points and view the points database.
-			</p>
-		</div>
+	<AppPageContainer>
+		<AppPageHeader heading="Points Balances" subheading="Manage user points and view the points database." />
 
 		<!-- Adjustment Form -->
 		<Card>
@@ -190,5 +183,5 @@ const columns: any[] = [
 				</div>
 			</CardContent>
 		</Card>
-	</div>
+	</AppPageContainer>
 </template>

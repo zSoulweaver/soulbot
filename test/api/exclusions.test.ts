@@ -37,8 +37,10 @@ describe('Points Exclusions API Routes in-process', () => {
 			expect(res.autoExclusions).toHaveLength(1)
 			expect((res.autoExclusions as any)[0].username).toBe('soulbot')
 
-			expect(res.manualExclusions).toHaveLength(1)
-			expect((res.manualExclusions as any)[0].username).toBe('streamelements')
+			expect(res.manualExclusions.data).toHaveLength(1)
+			expect((res.manualExclusions.data as any)[0].username).toBe('streamelements')
+			expect(res.manualExclusions.meta.total).toBe(1)
+			expect(res.manualExclusions.meta.page).toBe(1)
 		})
 	})
 

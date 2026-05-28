@@ -2,47 +2,25 @@
 import type { AutoExclusion, ExcludedUser } from '~/types/points'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { Loader2, PlusIcon, SearchIcon, ShieldAlert, TrashIcon } from 'lucide-vue-next'
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
+import { usePagination } from '~/composables/usePagination'
 
-const { data, refresh, pending: loadingTable } = await useFetch<{ manualExclusions: ExcludedUser[], autoExclusions: AutoExclusion[] }>('/api/points/exclusions')
+const {
+	page: currentPage,
+	limit: itemsPerPage,
+	search: searchQuery,
+	data,
+	refresh,
+	loading: loadingTable,
+} = usePagination<{ manualExclusions: { data: ExcludedUser[], meta: any }, autoExclusions: AutoExclusion[] }>('/api/points/exclusions')
 
 const isDeleting = ref<string | null>(null)
 const isAddSheetOpen = ref(false)
 
-// Search & Pagination States
-const searchQuery = ref('')
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-
-// Client-side search filtering
-const filteredExclusions = computed(() => {
-	const query = searchQuery.value.trim().toLowerCase()
-	const list = data.value?.manualExclusions || []
-	if (!query)
-		return list
-
-	return list.filter(user =>
-		user.username.toLowerCase().includes(query)
-		|| user.displayName.toLowerCase().includes(query)
-		|| (user.reason && user.reason.toLowerCase().includes(query)),
-	)
-})
-
-const filteredTotal = computed(() => filteredExclusions.value.length)
-
-// Reset to first page on search query change
-watch(searchQuery, () => {
-	currentPage.value = 1
-})
-
-// Paginated items
-const paginatedExclusions = computed(() => {
-	const start = (currentPage.value - 1) * itemsPerPage.value
-	const end = start + itemsPerPage.value
-	return filteredExclusions.value.slice(start, end)
-})
+const paginatedExclusions = computed(() => data.value?.manualExclusions?.data || [])
+const filteredTotal = computed(() => data.value?.manualExclusions?.meta?.total || 0)
 
 const startIndex = computed(() => {
 	if (filteredTotal.value === 0)
@@ -119,7 +97,7 @@ const columns: any[] = [
 		<!-- System Exclusions Callout -->
 		<Alert
 			class="
-				border-blue-500/20 bg-blue-500/5
+				mb-8 border-blue-500/20 bg-blue-500/5
 				dark:bg-blue-500/10
 			"
 		>
@@ -191,6 +169,7 @@ const columns: any[] = [
 					</Button>
 				</div>
 			</div>
+
 			<!-- Top Pagination Row (Sits directly on top of the table) -->
 			<div
 				class="

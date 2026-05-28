@@ -26,6 +26,19 @@
   2. If it is not 100% obvious who should have access, the agent MUST ask the user for clarification.
   3. If you make a design assumption about the required role, you MUST explicitly state the assumption and role level in your final response to the user.
 
+## API Design & Pagination Guidelines
+
+- **Implement Native Pagination for Multi-Result Endpoints**: When designing or refactoring backend API routes (under `server/api/`) that are expected to fetch or return a high or unbounded number of database rows (e.g., users, transactions, logs), you MUST implement server-side pagination and filtering.
+  - **Standardized Helpers**: Use `parsePaginationParams(event)` from `~~/server/utils/pagination` to extract standardized `page`, `limit`, and `search` query parameters.
+  - **Standardized Response Payload**: Return results wrapped inside a standard pagination envelope:
+    ```typescript
+    return {
+        data: matchingRows,
+        meta: buildPaginationMeta(totalCount, page, limit)
+    }
+    ```
+- **Standardized Composable Usage**: On frontend dashboard pages, leverage the reusable composable `usePagination('/api/path/to/route')` from `~/composables/usePagination` to reactively fetch, bind, search, and paginate lists natively.
+
 ## Testing Guidelines
 
 - **Mandatory Test Coverage**: When introducing new bot command modules, subcommands, or server API route endpoints, you MUST write a corresponding test file under the `test/` directory to ensure full coverage of scenarios.

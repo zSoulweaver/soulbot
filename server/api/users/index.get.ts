@@ -1,19 +1,37 @@
-import { desc, like } from 'drizzle-orm'
+import { desc, like, or, sql } from 'drizzle-orm'
+import { requireUserRole } from '~~/server/utils/auth'
+import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
 import { db } from '../../database'
 import { users } from '../../database/schema'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
-	const query = getQuery(event)
-	const search = query.q as string | undefined
+	const { page, limit, search } = parsePaginationParams(event)
 
-	let dbQuery = db.select().from(users).$dynamic()
-
+	let conditions
 	if (search) {
-		dbQuery = dbQuery.where(like(users.username, `%${search.toLowerCase()}%`))
+		conditions = or(
+			like(users.username, `%${search.toLowerCase()}%`),
+			like(users.displayName, `%${search.toLowerCase()}%`),
+		)
 	}
 
-	const allUsers = await dbQuery.orderBy(desc(users.points)).limit(500)
+	const countRes = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(users)
+		.where(conditions)
+	const count = countRes[0]?.count || 0
 
-	return allUsers
+	const allUsers = await db
+		.select()
+		.from(users)
+		.where(conditions)
+		.orderBy(desc(users.points))
+		.limit(limit)
+		.offset((page - 1) * limit)
+
+	return {
+		data: allUsers,
+		meta: buildPaginationMeta(count, page, limit),
+	}
 })

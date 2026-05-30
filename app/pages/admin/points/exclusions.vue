@@ -96,17 +96,8 @@ const columns: any[] = [
 
 		<!-- System Exclusions Callout -->
 		<Alert
-			class="
-				mb-8 border-blue-500/20 bg-blue-500/5
-				dark:bg-blue-500/10
-			"
+			variant="info"
 		>
-			<ShieldAlert
-				class="
-					size-4 text-blue-600
-					dark:text-blue-400
-				"
-			/>
 			<AlertTitle
 				class="
 					font-semibold text-blue-700
@@ -115,12 +106,7 @@ const columns: any[] = [
 			>
 				System Exclusions
 			</AlertTitle>
-			<AlertDescription
-				class="
-					mt-1 text-blue-600/90
-					dark:text-blue-400/90
-				"
-			>
+			<AlertDescription>
 				The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch-time points payouts.
 			</AlertDescription>
 		</Alert>

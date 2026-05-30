@@ -41,7 +41,17 @@ export const navigation: NavGroup[] = [
 		label: 'Bot Administration',
 		items: [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
-			{ title: 'Commands', url: '/admin/commands', icon: Terminal, roles: ['moderator', 'caster'] },
+			{
+				title: 'Commands',
+				url: '/admin/commands/core',
+				icon: Terminal,
+				roles: ['moderator', 'caster'],
+				items: [
+					{ title: 'Core Commands', url: '/admin/commands/core' },
+					{ title: 'Custom Commands', url: '/admin/commands/custom' },
+					{ title: 'Variable Reference', url: '/admin/commands/variables' },
+				],
+			},
 			{ title: 'Timers', url: '/admin/timers', icon: Timer, roles: ['caster'] },
 			{
 				title: 'Points',

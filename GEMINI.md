@@ -33,8 +33,8 @@
   - **Standardized Response Payload**: Return results wrapped inside a standard pagination envelope:
     ```typescript
     return {
-        data: matchingRows,
-        meta: buildPaginationMeta(totalCount, page, limit)
+    	data: matchingRows,
+    	meta: buildPaginationMeta(totalCount, page, limit)
     }
     ```
 - **Standardized Composable Usage**: On frontend dashboard pages, leverage the reusable composable `usePagination('/api/path/to/route')` from `~/composables/usePagination` to reactively fetch, bind, search, and paginate lists natively.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Alias, Command } from '~/types/commands'
-import { ArrowRight, BadgeDollarSign, Clock, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
+import { ArrowRight, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -262,81 +262,17 @@ function navigateToTemplateEditor() {
 					<FieldSeparator />
 
 					<!-- Custom Permission Level Segment -->
-					<Field>
-						<FieldLabel for="permission-level">
-							Required Permission Level
-						</FieldLabel>
-						<Select v-model="permissionValue">
-							<SelectTrigger id="permission-level" class="w-full">
-								<SelectValue placeholder="Select Permission Level" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="everyone">
-									Everyone
-								</SelectItem>
-								<SelectItem value="subscriber">
-									Subscriber
-								</SelectItem>
-								<SelectItem value="vip">
-									VIP
-								</SelectItem>
-								<SelectItem value="moderator">
-									Moderator
-								</SelectItem>
-								<SelectItem value="broadcaster">
-									Broadcaster
-								</SelectItem>
-							</SelectContent>
-						</Select>
-						<FieldDescription>Select the minimum chat badge role required to execute this trigger.</FieldDescription>
-					</Field>
+					<CommandPermissionSelect v-model="permissionValue" />
 
 					<FieldSeparator />
 
 					<!-- Config Stepper Fields (Points, Global Cooldown, User Cooldown) -->
-					<div class="grid grid-cols-3 gap-4">
-						<Field>
-							<FieldLabel for="editCost" class="flex items-center gap-1">
-								<BadgeDollarSign class="size-4" />
-								Point Cost
-							</FieldLabel>
-							<NumberField id="editCost" v-model="costValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
-								<NumberFieldContent>
-									<NumberFieldDecrement />
-									<NumberFieldInput />
-									<NumberFieldIncrement />
-								</NumberFieldContent>
-							</NumberField>
-						</Field>
-
-						<Field>
-							<FieldLabel for="editGlobalCooldown" class="flex items-center gap-1">
-								<Clock class="size-4" />
-								Global CD (Sec)
-							</FieldLabel>
-							<NumberField id="editGlobalCooldown" v-model="globalCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
-								<NumberFieldContent>
-									<NumberFieldDecrement />
-									<NumberFieldInput />
-									<NumberFieldIncrement />
-								</NumberFieldContent>
-							</NumberField>
-						</Field>
-
-						<Field>
-							<FieldLabel for="editUserCooldown" class="flex items-center gap-1">
-								<Clock class="size-4" />
-								User CD (Sec)
-							</FieldLabel>
-							<NumberField id="editUserCooldown" v-model="userCooldownValue" :min="0" :disabled="props.command?.hasHandler === false" class="w-full" :default-value="0">
-								<NumberFieldContent>
-									<NumberFieldDecrement />
-									<NumberFieldInput />
-									<NumberFieldIncrement />
-								</NumberFieldContent>
-							</NumberField>
-						</Field>
-					</div>
+					<CommandLimitsFields
+						v-model:cost="costValue"
+						v-model:global-cooldown="globalCooldownValue"
+						v-model:user-cooldown="userCooldownValue"
+						:disabled="props.command?.hasHandler === false"
+					/>
 
 					<FieldSeparator />
 

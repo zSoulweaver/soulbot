@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 		db.select().from(commandTemplates),
 	])
 
-	const allCoreCommands = registry.getAllCommands()
+	const allCoreCommands = registry.getAllCommands().filter(cmd => !cmd.id.startsWith('custom:'))
 
 	const result = allCoreCommands.map((command) => {
 		const databaseConfig = databaseCommands.find(cmd => cmd.id === command.id) || {
@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
 			cost: command.cost ?? 0,
 			globalCooldown: command.globalCooldown ?? 0,
 			userCooldown: command.userCooldown ?? 0,
+			permission: null,
 		}
 
 		// Find all registered aliases for this specific command
@@ -70,6 +71,7 @@ export default defineEventHandler(async (event) => {
 					globalCooldown: 0,
 					userCooldown: 0,
 					trigger: null,
+					permission: null,
 				}
 
 				subcommandsTree[subcommandName] = {
@@ -78,7 +80,7 @@ export default defineEventHandler(async (event) => {
 					activeTrigger: subcommandDbConfig.trigger || subcommandName,
 					description: subcommand.description,
 					usage: subcommand.usage,
-					permission: subcommand.permission,
+					permission: subcommandDbConfig.permission || subcommand.permission,
 					enabled: Boolean(subcommandDbConfig.enabled),
 					cost: subcommandDbConfig.cost,
 					globalCooldown: subcommandDbConfig.globalCooldown,
@@ -97,7 +99,7 @@ export default defineEventHandler(async (event) => {
 			id: command.id,
 			description: command.description,
 			usage: command.usage,
-			permission: command.permission,
+			permission: databaseConfig.permission || command.permission,
 			// Dynamic database parameters
 			trigger: databaseConfig.trigger,
 			activeTrigger: databaseConfig.trigger || command.id,

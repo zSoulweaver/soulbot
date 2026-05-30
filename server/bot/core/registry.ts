@@ -1,6 +1,7 @@
-import type { CommandDefinition } from './types'
+import type { CommandDefinition, CommandPermission } from './types'
+import { renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { db } from '~~/server/database'
-import { commandAliases, commands } from '~~/server/database/schema'
+import { commandAliases, commands, customCommands } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 
 class CommandRegistry {
@@ -23,8 +24,58 @@ class CommandRegistry {
 		this.dbConfigs.clear()
 		this.subcommandTriggers.clear()
 
-		// 1. Core commands & database config synchronization
+		// Clear existing dynamic custom commands from registry map before rebuilding
+		for (const [key] of this.commands.entries()) {
+			if (key.startsWith('custom:')) {
+				this.commands.delete(key)
+			}
+		}
+
+		const dbCustomCommands = await db.select().from(customCommands).catch(() => [])
+
+		// Register custom commands dynamically in memory
+		for (const custom of dbCustomCommands) {
+			const commandId = `custom:${custom.id}`
+			this.commands.set(commandId, {
+				id: commandId,
+				description: custom.description || `Custom command !${custom.trigger}`,
+				permission: custom.permission as CommandPermission,
+				cost: custom.cost,
+				globalCooldown: custom.globalCooldown,
+				userCooldown: custom.userCooldown,
+				handler: async (ctx) => {
+					const response = await renderCustomTemplate(custom.response, ctx)
+					if (response) {
+						await ctx.say(response)
+					}
+				},
+			})
+		}
+
+		// Core commands & database config synchronization
 		for (const def of this.commands.values()) {
+			if (def.id.startsWith('custom:')) {
+				const custom = dbCustomCommands.find(c => `custom:${c.id}` === def.id)
+				if (custom) {
+					const mockDbRow = {
+						id: def.id,
+						trigger: custom.trigger,
+						enabled: custom.enabled,
+						cost: custom.cost,
+						cooldown: 0,
+						globalCooldown: custom.globalCooldown,
+						userCooldown: custom.userCooldown,
+						permission: custom.permission,
+					}
+					// Populate dbConfigs map so other middlewares (cooldown, cost, role checks) read the config
+					this.dbConfigs.set(def.id, mockDbRow as any)
+
+					if (custom.enabled) {
+						this.triggerMap.set(custom.trigger.toLowerCase(), { commandId: def.id })
+					}
+				}
+				continue
+			}
 			let dbCmd = dbCommands.find(c => c.id === def.id)
 			if (!dbCmd) {
 				const newRow = {
@@ -86,7 +137,7 @@ class CommandRegistry {
 			}
 		}
 
-		// 2. Dynamic trigger aliases
+		// Dynamic trigger aliases
 		for (const alias of dbAliases) {
 			const targetDbCmd = this.dbConfigs.get(alias.commandId)
 			// Only register alias if the target command exists and is enabled

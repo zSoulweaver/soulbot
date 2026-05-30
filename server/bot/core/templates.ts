@@ -29,7 +29,7 @@ export interface TemplateDefinition {
 	params?: readonly string[]
 }
 
-function getGlobalTemplateVariables(data: Record<string, string | number>): Record<string, string | number> {
+export function getGlobalTemplateVariables(data: Record<string, string | number>): Record<string, string | number> {
 	const vars: Record<string, string | number> = {}
 
 	// Currency Names
@@ -95,7 +95,7 @@ class TemplateRegistry {
 		}
 
 		for (const [key, value] of Object.entries(mergedData)) {
-			text = text.replaceAll(`\${${key}}`, String(value))
+			text = text.replaceAll(`$(${key})`, String(value))
 		}
 		return text
 	}

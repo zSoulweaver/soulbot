@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Command } from '~/types/commands'
-import { BadgeDollarSign, ChevronRight, Clock, MessageSquare, Settings, Shield, User } from 'lucide-vue-next'
+import { ChevronRight, Clock, MessageSquare, Settings } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
@@ -17,17 +17,6 @@ function toggleCommandExpanded(commandId: string) {
 // Edit Sheet triggers
 const isSheetOpen = ref(false)
 const selectedCommand = ref<Command | null>(null)
-
-// Resolve permissions colors
-function getPermissionBadgeClass(permission: string) {
-	if (permission === 'caster') {
-		return 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-	}
-	if (permission === 'moderator') {
-		return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-	}
-	return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-}
 
 // Inline toggle switch active state instantly
 async function toggleCommandActive(command: Command) {
@@ -216,34 +205,17 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 
 									<!-- Permission Badge -->
 									<td class="px-6 py-4">
-										<Badge :class="getPermissionBadgeClass(command.permission)" class="font-medium capitalize">
-											<Shield />
-											{{ command.permission }}
-										</Badge>
+										<CommandPermissionBadge :permission="command.permission" />
 									</td>
 
 									<!-- Points Cost -->
 									<td class="px-6 py-4">
-										<Badge
-											v-if="command.cost > 0"
-											class="border-amber-500/20 bg-amber-500/10 text-amber-500"
-										>
-											<BadgeDollarSign />
-											{{ command.cost }} pts
-										</Badge>
-										<span v-else class="text-muted-foreground">-</span>
+										<CommandPointsBadge :cost="command.cost" />
 									</td>
 
 									<!-- Cooldowns -->
 									<td class="px-6 py-4">
-										<div class="flex flex-col gap-0.5 text-xs text-muted-foreground">
-											<span class="flex items-center gap-1">
-												<Clock class="size-3" /> Global: {{ command.globalCooldown > 0 ? `${command.globalCooldown}s` : 'None' }}
-											</span>
-											<span class="flex items-center gap-1">
-												<User class="size-3" /> User: {{ command.userCooldown > 0 ? `${command.userCooldown}s` : 'None' }}
-											</span>
-										</div>
+										<CommandCooldownsDisplay :global="command.globalCooldown" :user="command.userCooldown" />
 									</td>
 
 									<!-- Active Status Toggle -->
@@ -305,13 +277,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 													<div class="flex items-center gap-4">
 														<!-- Custom Costs/Cooldowns badges -->
 														<div class="flex items-center gap-2">
-															<Badge
-																v-if="subcommandItem.detail.cost > 0"
-																class="border-amber-500/20 bg-amber-500/10 text-xs font-semibold text-amber-500"
-															>
-																<BadgeDollarSign />
-																{{ subcommandItem.detail.cost }} pts
-															</Badge>
+															<CommandPointsBadge v-if="subcommandItem.detail.cost > 0" :cost="subcommandItem.detail.cost" />
 															<Badge
 																v-if="subcommandItem.detail.globalCooldown > 0 || subcommandItem.detail.userCooldown > 0"
 																variant="outline"
@@ -325,10 +291,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 
 														<div class="flex items-center gap-2">
 															<!-- Subcommand Permission Badge -->
-															<Badge :class="getPermissionBadgeClass(subcommandItem.detail.permission)" class="capitalize">
-																<Shield />
-																{{ subcommandItem.detail.permission }}
-															</Badge>
+															<CommandPermissionBadge :permission="subcommandItem.detail.permission" />
 
 															<!-- Subcommand Config Action -->
 															<Button

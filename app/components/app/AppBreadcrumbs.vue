@@ -7,48 +7,48 @@ const breadcrumbs = computed(() => {
 	const path = route.path
 	const crumbs: { title: string, url?: string }[] = []
 
+	// Gather all navigation items that match the active path
 	const matches: { group: any, item: any }[] = []
 	for (const group of navigation) {
 		for (const item of group.items) {
-			if (path === item.url || path.startsWith(`${item.url}/`)) {
+			const matchesUrl = path === item.url || path.startsWith(`${item.url}/`)
+			const matchesSub = item.items?.some((subItem: any) => path === subItem.url || path.startsWith(`${subItem.url}/`))
+			if (matchesUrl || matchesSub) {
 				matches.push({ group, item })
 			}
 		}
 	}
 
-	if (matches.length > 0) {
-		const best = matches.sort((a, b) => b.item.url.length - a.item.url.length)[0]
-		if (best) {
-			const { group, item } = best
+	// Sort to find the best match (the most specific/longest URL prefix)
+	const bestMatch = matches.sort((a, b) => b.item.url.length - a.item.url.length)[0]
+	if (bestMatch) {
+		const { group, item } = bestMatch
 
-			if (group.label) {
-				crumbs.push({ title: group.label })
-			}
-
-			crumbs.push({ title: item.title, url: item.url })
-
-			// Check sub-items
-			let resolvedSub = false
-			if (item.items) {
-				const subItem = item.items.find((si: any) => path === si.url)
-				if (subItem) {
-					crumbs.push({ title: subItem.title, url: subItem.url })
-					resolvedSub = true
-				}
-			}
-
-			if (!resolvedSub && path !== item.url) {
-				const subPath = path.replace(item.url, '').split('/').filter(Boolean)
-				if (subPath.length > 0) {
-					const lastSegment = subPath[subPath.length - 1] || ''
-					crumbs.push({
-						title: lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ') : 'Unknown',
-						url: path,
-					})
-				}
-			}
-			return crumbs
+		if (group.label) {
+			crumbs.push({
+				title: group.label,
+				url: group.label === 'Bot Administration' ? '/admin' : undefined,
+			})
 		}
+		crumbs.push({ title: item.title, url: item.url })
+
+		// Check for an exact nested sub-item match
+		const subItem = item.items?.find((subItem: any) => path === subItem.url)
+		if (subItem) {
+			crumbs.push({ title: subItem.title, url: subItem.url })
+		}
+		else if (path !== item.url) {
+			// Dynamic subpage segment fallback (e.g. /admin/commands/123)
+			const subSegments = path.replace(item.url, '').split('/').filter(Boolean)
+			const lastSegment = subSegments[subSegments.length - 1] || ''
+			if (lastSegment) {
+				crumbs.push({
+					title: lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' '),
+					url: path,
+				})
+			}
+		}
+		return crumbs
 	}
 
 	// Fallback

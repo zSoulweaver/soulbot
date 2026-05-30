@@ -66,3 +66,22 @@ export const excludedUsers = sqliteTable('excluded_users', {
 	reason: text('reason'), // Optional note/reason for exclusion (e.g. "System Bot")
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+export const customCommands = sqliteTable('custom_commands', {
+	id: text('id').primaryKey(), // Unique command ID
+	trigger: text('trigger').notNull().unique(), // E.g. "deaths" or "wins"
+	response: text('response').notNull(), // E.g. "$(sender) has $(count) deaths!"
+	enabled: integer('enabled', { mode: 'boolean' }).default(true).notNull(),
+	cost: integer('cost').default(0).notNull(),
+	globalCooldown: integer('global_cooldown').default(0).notNull(),
+	userCooldown: integer('user_cooldown').default(0).notNull(),
+	permission: text('permission').default('everyone').notNull(), // 'everyone' | 'subscriber' | 'vip' | 'moderator' | 'broadcaster'
+	description: text('description'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})
+
+export const counters = sqliteTable('counters', {
+	name: text('name').primaryKey(), // E.g. "deaths" or custom name
+	value: integer('value').notNull().default(0),
+})

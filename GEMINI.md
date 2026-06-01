@@ -45,3 +45,23 @@
   - **Bot Commands**: Add command integration tests in `test/bot/` (e.g., `test/bot/points.test.ts`). Use the `simulateCommand` helper to assert both bot replies and exact database side-effects.
   - **API Endpoints**: Add endpoint tests in `test/api/` (e.g., `test/api/points.test.ts`). Test the exported Nitro route handlers **directly and in-process** by invoking them with a mocked event object (bypassing slow E2E compile builds). Use the global mocks set up in `test/setup.ts` to manage parameters and validation bodies.
 - **Sequential Execution**: Run `pnpm test:run` sequentially to confirm all tests pass cleanly, and execute `npx nuxt typecheck` to verify complete type safety.
+
+## Unified Frontend Page & Table Layout Standards
+
+To guarantee a clean, predictability-driven, and highly professional layout across all administrative panels, all dashboard and list views MUST strictly conform to the following visual structures:
+
+1. **Page Header Actions (`AppPageHeader`)**:
+   - Primary page-level actions (e.g. refresh button, primary "Add" triggers) MUST be placed inside the `<AppPageHeader>`'s default slot (rendered in the upper right corner of the page).
+   - Keeps secondary content focused entirely on data inspection.
+
+2. **No Double Headings**:
+   - Secondary `<h2>` and `<p>` blocks directly above lists or tables MUST be removed to avoid repeating title contexts and wasting vertical space.
+
+3. **Unified Table Controls**:
+   - **Search Input (Left)**: The primary search input box MUST always be left-aligned directly above the table. It must follow standard sizes (`max-w-sm` or `sm:w-64`) with the search icon on the left.
+   - **Entry Count / Metadata (Right)**: Summary totals (e.g. `Showing X of Y items`) MUST always be right-aligned directly above the table, styled with `text-xs text-muted-foreground select-none`.
+   - Never mix control placements or place primary action buttons in the control row.
+
+4. **Table Pagination Location**:
+   - All pagination panels (`<Pagination>`) MUST reside at the **bottom** of the data grid (below the table border box), never at the top.
+   - Align entry range counts (e.g. `Showing 1-10 of 100 users`) on the left, and standard Radix control buttons (First, Previous, Next, Last) on the right.

@@ -259,15 +259,16 @@ async function saveTemplates() {
 					>
 						<!-- Root Option -->
 						<Button
-							class="w-full justify-between gap-2"
+							class="w-full justify-between gap-2 transition-all duration-200"
 							:variant="activePathFilter === 'root' ? 'secondary' : 'ghost'"
+							:class="{ 'bg-secondary/80 pl-6 font-bold': activePathFilter === 'root' }"
 							@click="activePathFilter = 'root'"
 						>
 							<div class="flex min-w-0 items-center gap-2">
 								<Terminal data-icon="inline-start" />
-								<span class="truncate text-left">Root Command (!{{ command.activeTrigger }})</span>
+								<span class="truncate text-left font-mono text-xs">Root (!{{ command.activeTrigger }})</span>
 							</div>
-							<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="shrink-0">
+							<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
 								{{ command.templates?.length || 0 }}
 							</Badge>
 						</Button>
@@ -277,15 +278,16 @@ async function saveTemplates() {
 							<Button
 								v-for="sub in flatSubcommands"
 								:key="sub.key"
-								class="w-full justify-between gap-2"
+								class="w-full justify-between gap-2 transition-all duration-200"
 								:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
+								:class="{ 'bg-secondary/80 pl-6 font-bold': activePathFilter === sub.key }"
 								@click="activePathFilter = sub.key"
 							>
 								<div class="flex min-w-0 items-center gap-2">
 									<CornerDownRight data-icon="inline-start" />
-									<span class="truncate text-left">Subcommand: {{ sub.triggerPath }}</span>
+									<span class="truncate text-left font-mono text-xs">{{ sub.triggerPath }}</span>
 								</div>
-								<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="shrink-0">
+								<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
 									{{ sub.templates?.length || 0 }}
 								</Badge>
 							</Button>

@@ -2,6 +2,8 @@
 import type { Template } from '~/types/commands'
 import { useClipboard } from '@vueuse/core'
 import { ChevronRight, HelpCircle, RefreshCw } from 'lucide-vue-next'
+import { computed } from 'vue'
+
 import { toast } from 'vue-sonner'
 
 const props = defineProps<{
@@ -28,6 +30,17 @@ function getTemplateSummary() {
 function handleReset() {
 	emit('reset')
 }
+
+const borderClass = computed(() => {
+	const isModifiedState = (templateText.value ?? '') !== (props.template.custom !== null ? props.template.custom : props.template.default)
+	if (isModifiedState) {
+		return 'border-amber-500/70 dark:border-amber-500/60'
+	}
+	if (props.template.custom !== null) {
+		return 'border-emerald-500/70 dark:border-emerald-500/60'
+	}
+	return 'border-muted-foreground/25 dark:border-muted/50'
+})
 </script>
 
 <template>
@@ -35,7 +48,7 @@ function handleReset() {
 		:open="isExpanded"
 		@update:open="isExpanded = $event"
 	>
-		<Card class="gap-0 overflow-hidden p-0">
+		<Card :class="borderClass" class="gap-0 overflow-hidden p-0 transition-all duration-200">
 			<CollapsibleTrigger as-child>
 				<div
 					class="

@@ -116,134 +116,134 @@ async function confirmDelete() {
 			</div>
 		</AppPageHeader>
 
-		<!-- Search Bar and Count Row -->
-		<div class="mb-2 flex flex-row items-center justify-between gap-4">
-			<!-- Search filter group input -->
-			<div class="relative w-full max-w-sm">
-				<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-				<Input
-					v-model="searchFilter"
-					placeholder="Search custom commands..."
-					class="pl-9"
-				/>
+		<!-- Custom Commands Dashboard (Card-Free Design) -->
+		<div class="flex flex-col gap-2">
+			<!-- Search & Count Control Row -->
+			<div
+				class="
+					flex flex-col gap-4 py-2
+					sm:flex-row sm:items-center sm:justify-between
+				"
+			>
+				<div class="relative w-full max-w-sm">
+					<Search class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Input
+						v-model="searchFilter"
+						type="search"
+						placeholder="Search custom commands..."
+						class="h-9 pl-8"
+					/>
+				</div>
+				<div class="text-xs text-muted-foreground select-none">
+					Showing {{ filteredCustomCommands.length }} of {{ customCommandsList?.length || 0 }} custom commands
+				</div>
 			</div>
-			<div class="text-xs text-muted-foreground select-none">
-				Showing {{ filteredCustomCommands.length }} of {{ customCommandsList?.length || 0 }} custom commands
+
+			<!-- Custom Commands Table Container -->
+			<div class="relative overflow-hidden rounded-lg border bg-card/25 backdrop-blur-xs">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>
+								Command Trigger
+							</TableHead>
+							<TableHead>
+								Response Template
+							</TableHead>
+							<TableHead>
+								Permission
+							</TableHead>
+							<TableHead>
+								Points Cost
+							</TableHead>
+							<TableHead>
+								Cooldowns
+							</TableHead>
+							<TableHead class="text-center">
+								Status
+							</TableHead>
+							<TableHead class="text-right">
+								Actions
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody class="divide-y divide-border/60">
+						<TableRow v-if="loading" class="text-center">
+							<TableCell colspan="7" class="py-12 text-muted-foreground">
+								Loading custom commands...
+							</TableCell>
+						</TableRow>
+						<TableRow v-else-if="filteredCustomCommands.length === 0" class="text-center">
+							<TableCell colspan="7" class="py-12 text-muted-foreground">
+								No custom commands found. Click "Add Command" to create one!
+							</TableCell>
+						</TableRow>
+						<template v-for="command in filteredCustomCommands" v-else :key="command.id">
+							<TableRow
+								class="
+									transition-colors
+									hover:bg-muted/40
+								"
+								:class="{ 'opacity-55': !command.enabled }"
+							>
+								<!-- Trigger Name & Description -->
+								<TableCell class="py-3.5">
+									<div class="flex flex-col gap-1">
+										<span class="text-sm font-bold whitespace-nowrap text-primary">
+											!{{ command.trigger }}
+										</span>
+										<span v-if="command.description" class="line-clamp-1 max-w-50 text-xs text-muted-foreground">
+											{{ command.description }}
+										</span>
+									</div>
+								</TableCell>
+
+								<!-- Response Message Template -->
+								<TableCell class="py-3.5 font-mono text-xs">
+									<div class="line-clamp-2 max-w-xs break-all text-muted-foreground" :title="command.response">
+										{{ command.response }}
+									</div>
+								</TableCell>
+
+								<!-- Permission Badge -->
+								<TableCell>
+									<CommandPermissionBadge :permission="command.permission" />
+								</TableCell>
+
+								<!-- Points Cost -->
+								<TableCell>
+									<CommandPointsBadge :cost="command.cost" />
+								</TableCell>
+
+								<!-- Cooldowns -->
+								<TableCell>
+									<CommandCooldownsDisplay :global="command.globalCooldown" :user="command.userCooldown" />
+								</TableCell>
+
+								<!-- Active Status Toggle -->
+								<TableCell class="text-center">
+									<Switch v-model:model-value="command.enabled" @update:model-value="toggleCommandActive(command)" />
+								</TableCell>
+
+								<!-- Configure & Delete Actions -->
+								<TableCell class="text-right">
+									<div class="flex items-center justify-end gap-1.5">
+										<Button size="sm" variant="outline" @click="openEditSheet(command)">
+											<Settings data-icon="inline-start" />
+											Config
+										</Button>
+										<Button size="sm" variant="ghostDestructive" @click="deleteCommand(command)">
+											<Trash2 />
+											Remove
+										</Button>
+									</div>
+								</TableCell>
+							</TableRow>
+						</template>
+					</TableBody>
+				</Table>
 			</div>
 		</div>
-
-		<!-- Custom Commands Table Card -->
-		<Card>
-			<CardHeader>
-				<CardTitle>Custom Commands Directory</CardTitle>
-				<CardDescription>Moderator-configured commands evaluated at runtime dynamically by the Twitch bot.</CardDescription>
-			</CardHeader>
-			<CardContent class="p-0">
-				<div class="relative overflow-x-auto">
-					<table class="w-full text-left">
-						<thead class="border-b border-border bg-muted/50 text-xs text-muted-foreground uppercase select-none">
-							<tr>
-								<th class="px-6 py-4">
-									Command Trigger
-								</th>
-								<th class="px-6 py-4">
-									Response Template
-								</th>
-								<th class="px-6 py-4">
-									Permission
-								</th>
-								<th class="px-6 py-4">
-									Points Cost
-								</th>
-								<th class="px-6 py-4">
-									Cooldowns
-								</th>
-								<th class="px-6 py-4 text-center">
-									Status
-								</th>
-								<th class="px-6 py-4 text-right">
-									Actions
-								</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-border">
-							<tr v-if="loading" class="text-center">
-								<td colspan="7" class="py-10 text-muted-foreground">
-									Loading custom commands...
-								</td>
-							</tr>
-							<tr v-else-if="filteredCustomCommands.length === 0" class="text-center">
-								<td colspan="7" class="pt-6 text-muted-foreground">
-									No custom commands found. Click "Add Command" to create one!
-								</td>
-							</tr>
-							<template v-for="command in filteredCustomCommands" v-else :key="command.id">
-								<tr
-									class="
-										transition-colors
-										hover:bg-muted/30
-									"
-									:class="{ 'opacity-40': !command.enabled }"
-								>
-									<!-- Trigger Name & Description -->
-									<td class="px-6 py-3">
-										<div class="flex flex-col gap-0.5">
-											<span class="font-bold whitespace-nowrap text-primary">
-												!{{ command.trigger }}
-											</span>
-											<span v-if="command.description" class="line-clamp-1 max-w-50 text-xs text-muted-foreground">
-												{{ command.description }}
-											</span>
-										</div>
-									</td>
-
-									<!-- Response Message Template -->
-									<td class="px-6 py-3 font-mono text-xs">
-										<div class="line-clamp-2 max-w-xs break-all text-muted-foreground" :title="command.response">
-											{{ command.response }}
-										</div>
-									</td>
-
-									<!-- Permission Badge -->
-									<td class="px-6 py-4">
-										<CommandPermissionBadge :permission="command.permission" />
-									</td>
-
-									<!-- Points Cost -->
-									<td class="px-6 py-4">
-										<CommandPointsBadge :cost="command.cost" />
-									</td>
-
-									<!-- Cooldowns -->
-									<td class="px-6 py-4">
-										<CommandCooldownsDisplay :global="command.globalCooldown" :user="command.userCooldown" />
-									</td>
-
-									<!-- Active Status Toggle -->
-									<td class="px-6 py-4 text-center">
-										<Switch v-model:model-value="command.enabled" @update:model-value="toggleCommandActive(command)" />
-									</td>
-
-									<!-- Configure & Delete Actions -->
-									<td class="px-6 py-4 text-right">
-										<div class="flex items-center justify-end gap-1.5">
-											<Button size="sm" variant="outline" @click="openEditSheet(command)">
-												<Settings data-icon="inline-start" />
-												Config
-											</Button>
-											<Button size="sm" variant="ghostDestructive" @click="deleteCommand(command)">
-												<Trash2 />
-												Remove
-											</Button>
-										</div>
-									</td>
-								</tr>
-							</template>
-						</tbody>
-					</table>
-				</div>
-			</CardContent>
-		</Card>
 
 		<!-- Custom Command Add/Edit Slide-over Sheet -->
 		<CustomCommandEditSheet

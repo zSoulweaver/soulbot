@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ChevronRight } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
 
 interface Variable {
 	name: string
@@ -28,6 +29,15 @@ const variables = computed(() => {
 	}
 	return [positionalVariable, ...apiVariables.value]
 })
+
+// Collapsible state for each variable
+const expandedVariables = ref<Record<string, boolean>>({
+	'1...n': true, // Keep the positional guide expanded by default for onboarding feel!
+})
+
+function toggleVariableExpanded(name: string) {
+	expandedVariables.value[name] = !expandedVariables.value[name]
+}
 </script>
 
 <template>
@@ -44,14 +54,19 @@ const variables = computed(() => {
 			</span>
 		</div>
 
-		<!-- Main Variables Grid Layout -->
-		<div v-else class="grid gap-4">
+		<!-- Main Variables Collapsible List -->
+		<div v-else class="flex flex-col gap-4">
 			<!-- Pro Tip Helper alert box -->
-			<Alert variant="info">
-				<AlertTitle>
+			<Alert
+				variant="info" class="
+					border-blue-500/20 bg-blue-500/5 text-blue-700
+					dark:text-blue-300
+				"
+			>
+				<AlertTitle class="font-bold">
 					Pro Tip: Innermost Expression Parsing
 				</AlertTitle>
-				<AlertDescription>
+				<AlertDescription class="mt-1 text-xs">
 					The bot processes nested placeholder variables from the **inside out**.
 					For example, if you write <code>$(count $(1) +1)</code> and trigger the command via <code>!score bob</code>,
 					the bot will first resolve the positional variable <code>$(1)</code> to <code>bob</code>, resulting in <code>$(count bob +1)</code>,
@@ -59,46 +74,93 @@ const variables = computed(() => {
 				</AlertDescription>
 			</Alert>
 
-			<Card
+			<Collapsible
 				v-for="variable in variables"
 				:key="variable.name"
-				class="gap-2"
+				:open="expandedVariables[variable.name]"
+				class="overflow-hidden rounded-lg border bg-card/25 backdrop-blur-xs"
+				@update:open="expandedVariables[variable.name] = $event"
 			>
-				<CardHeader>
-					<div class="flex items-start justify-between gap-4">
-						<div class="flex flex-col gap-1.5">
-							<CardTitle class="font-mono text-lg">
-								$({{ variable.name }})
-							</CardTitle>
-							<CardDescription>
-								{{ variable.description }}
-							</CardDescription>
+				<CollapsibleTrigger as-child>
+					<div
+						class="
+							flex cursor-pointer items-center justify-between p-4 transition-colors select-none
+							hover:bg-muted/45
+						"
+						@click="toggleVariableExpanded(variable.name)"
+					>
+						<div class="flex items-center gap-3">
+							<!-- Chevron Indicator -->
+							<ChevronRight
+								class="size-4 text-primary transition-transform"
+								:class="{ 'rotate-90': expandedVariables[variable.name] }"
+							/>
+
+							<div class="flex flex-col gap-0.5">
+								<span class="font-mono text-base font-bold text-foreground">
+									$({{ variable.name }})
+								</span>
+								<span
+									class="
+										line-clamp-1 max-w-sm text-xs text-muted-foreground
+										sm:max-w-xl
+									"
+								>
+									{{ variable.description }}
+								</span>
+							</div>
 						</div>
 
 						<!-- Aliases Badges -->
-						<div v-if="variable.aliases && variable.aliases.length > 0" class="flex flex-wrap items-center gap-1.5">
-							<span class="text-xs font-semibold text-muted-foreground uppercase">Aliases:</span>
+						<div
+							v-if="variable.aliases && variable.aliases.length > 0" class="
+								ml-4 hidden shrink-0 items-center gap-1.5
+								sm:flex
+							"
+						>
+							<span class="text-[10px] font-bold text-muted-foreground uppercase">Aliases:</span>
 							<Badge
 								v-for="alias in variable.aliases"
 								:key="alias"
 								variant="secondary"
-								class="font-mono"
+								class="py-0 font-mono text-[10px]"
 							>
 								$({{ alias }})
 							</Badge>
 						</div>
 					</div>
-				</CardHeader>
+				</CollapsibleTrigger>
 
-				<CardContent class="p-0">
+				<CollapsibleContent class="border-t border-border/40">
+					<!-- Mobile Aliases List -->
+					<div
+						v-if="variable.aliases && variable.aliases.length > 0" class="
+							flex items-center gap-1.5 border-b border-border/40 bg-muted/20 p-4
+							sm:hidden
+						"
+					>
+						<span class="text-[10px] font-bold text-muted-foreground uppercase">Aliases:</span>
+						<div class="flex flex-wrap gap-1.5">
+							<Badge
+								v-for="alias in variable.aliases"
+								:key="alias"
+								variant="secondary"
+								class="py-0 font-mono text-[10px]"
+							>
+								$({{ alias }})
+							</Badge>
+						</div>
+					</div>
+
+					<!-- Details examples table -->
 					<div class="overflow-x-auto">
 						<Table class="w-full">
-							<TableHeader>
+							<TableHeader class="bg-muted/30">
 								<TableRow>
-									<TableHead class="w-1/3 px-6">
+									<TableHead class="w-1/3 px-6 text-xs select-none">
 										Syntax Placeholder
 									</TableHead>
-									<TableHead class="w-2/3 px-6">
+									<TableHead class="w-2/3 px-6 text-xs select-none">
 										Behavior Description
 									</TableHead>
 								</TableRow>
@@ -107,24 +169,28 @@ const variables = computed(() => {
 								<TableRow
 									v-for="example in variable.examples"
 									:key="example.syntax"
+									class="
+										border-border/40
+										hover:bg-muted/10
+									"
 								>
 									<!-- Syntax Code Block Badge -->
-									<TableCell class="px-6">
-										<Badge variant="outline" class="font-mono">
+									<TableCell class="px-6 py-3">
+										<Badge variant="outline" class="py-0.5 font-mono text-xs font-semibold">
 											{{ example.syntax }}
 										</Badge>
 									</TableCell>
 
 									<!-- Behavior Description -->
-									<TableCell class="px-6 text-muted-foreground">
+									<TableCell class="px-6 py-3 text-xs text-muted-foreground">
 										{{ example.description }}
 									</TableCell>
 								</TableRow>
 							</TableBody>
 						</Table>
 					</div>
-				</CardContent>
-			</Card>
+				</CollapsibleContent>
+			</Collapsible>
 		</div>
 	</AppPageContainer>
 </template>

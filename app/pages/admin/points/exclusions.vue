@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AutoExclusion, ExcludedUser } from '~/types/points'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Loader2, PlusIcon, SearchIcon, ShieldAlert, TrashIcon } from 'lucide-vue-next'
+import { Loader2, PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
@@ -92,7 +92,12 @@ const columns: any[] = [
 		<AppPageHeader
 			heading="Payout Exclusions"
 			subheading="Manage accounts that are excluded from watch-time points payouts."
-		/>
+		>
+			<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddSheetOpen = true">
+				<PlusIcon data-icon="inline-start" />
+				Add Exclusion
+			</Button>
+		</AppPageHeader>
 
 		<!-- System Exclusions Callout -->
 		<Alert
@@ -111,56 +116,50 @@ const columns: any[] = [
 			</AlertDescription>
 		</Alert>
 
-		<div>
-			<!-- Header & Search/Action Control Row -->
+		<div class="flex flex-col gap-2">
+			<!-- Search & Count Control Row -->
 			<div
 				class="
-					flex flex-col gap-4
-					md:flex-row md:items-center md:justify-between
+					flex flex-col gap-4 py-2
+					sm:flex-row sm:items-center sm:justify-between
 				"
 			>
-				<div>
-					<h2 class="text-xl font-bold text-foreground">
-						Excluded Users
-					</h2>
-					<p class="mt-1 text-sm text-muted-foreground">
-						Accounts manually blocked from earning watch-time payout points.
-					</p>
+				<div class="relative w-full max-w-sm">
+					<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Input
+						v-model="searchQuery"
+						type="search"
+						placeholder="Search username or reason..."
+						class="h-9 pl-8"
+					/>
 				</div>
 
-				<div
-					class="
-						flex items-center gap-2 self-start
-						md:self-auto
-					"
-				>
-					<div
-						class="
-							relative flex w-full items-center
-							sm:w-64
-						"
-					>
-						<SearchIcon class="absolute left-2.5 size-4 text-muted-foreground" />
-						<Input
-							v-model="searchQuery"
-							type="search"
-							placeholder="Search username or reason..."
-							class="h-9 pl-8"
-						/>
-					</div>
-
-					<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddSheetOpen = true">
-						<PlusIcon data-icon="inline-start" class="size-4" />
-						Add Exclusion
-					</Button>
+				<div class="text-xs text-muted-foreground select-none">
+					Showing {{ paginatedExclusions.length }} of {{ filteredTotal }} exclusions
 				</div>
 			</div>
 
-			<!-- Top Pagination Row (Sits directly on top of the table) -->
+			<!-- Table container -->
+			<div class="relative min-h-50">
+				<DataTable
+					v-if="paginatedExclusions.length > 0"
+					:columns="columns"
+					:data="paginatedExclusions"
+				/>
+				<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
+					<Loader2 class="size-6 animate-spin text-primary" />
+					<span class="text-sm text-muted-foreground">Loading exclusions...</span>
+				</div>
+				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
+					No excluded users found.
+				</div>
+			</div>
+
+			<!-- Bottom Pagination Row -->
 			<div
-				class="
-					sticky top-0 z-10 flex flex-col gap-4 bg-background py-4
-					sm:flex-row sm:items-center sm:justify-between
+				v-if="filteredTotal > 0" class="
+					flex flex-col items-center justify-between gap-4 select-none
+					sm:flex-row
 				"
 			>
 				<span class="text-xs text-muted-foreground">
@@ -181,22 +180,6 @@ const columns: any[] = [
 						<PaginationLast />
 					</PaginationContent>
 				</Pagination>
-			</div>
-
-			<!-- Table container -->
-			<div class="relative min-h-50">
-				<DataTable
-					v-if="paginatedExclusions.length > 0"
-					:columns="columns"
-					:data="paginatedExclusions"
-				/>
-				<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
-					<Loader2 class="size-6 animate-spin text-primary" />
-					<span class="text-sm text-muted-foreground">Loading exclusions...</span>
-				</div>
-				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
-					No excluded users found.
-				</div>
 			</div>
 		</div>
 

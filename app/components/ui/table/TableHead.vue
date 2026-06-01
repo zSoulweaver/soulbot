@@ -11,7 +11,7 @@ const props = defineProps<{
 	<th
 		data-slot="table-head"
 		:class="cn(`
-			h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground
+			h-12 px-6 text-left align-middle text-xs font-bold whitespace-nowrap text-muted-foreground uppercase select-none
 			[&:has([role=checkbox])]:pr-0
 			*:[[role=checkbox]]:translate-y-[2px]
 		`, props.class)"

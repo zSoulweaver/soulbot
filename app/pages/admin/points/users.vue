@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table'
-import { HashIcon, Loader2, PlusIcon, SearchIcon } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { Loader2, PencilIcon, PlusIcon, SearchIcon } from 'lucide-vue-next'
+import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
+import UserPointsEditSheet from '~/components/points/UserPointsEditSheet.vue'
+import { Button } from '~/components/ui/button'
 import { usePagination } from '~/composables/usePagination'
 
 interface User {
@@ -34,60 +36,26 @@ const endIndex = computed(() => {
 	return Math.min(currentPage.value * itemsPerPage.value, totalUsers.value)
 })
 
-// Manual Adjust State
-const targetUsername = ref('')
-const amount = ref<number>(0)
-const lookupResult = ref<User | null>(null)
-const loadingLookup = ref(false)
-const adjustError = ref('')
-const adjustLoading = ref(false)
+// Point adjustment state
+const isAdjustSheetOpen = ref(false)
+const selectedUserForAdjustment = ref<User | null>(null)
 
-async function lookupUser() {
-	if (!targetUsername.value)
-		return
-	loadingLookup.value = true
-	adjustError.value = ''
-	try {
-		const res = await $fetch<{ points: number }>(`/api/points/${targetUsername.value}`)
-		lookupResult.value = {
-			id: '',
-			username: targetUsername.value,
-			displayName: targetUsername.value,
-			points: res.points,
-		}
-	}
-	catch (err: any) {
-		adjustError.value = err.data?.statusMessage || 'User not found'
-		lookupResult.value = null
-	}
-	finally {
-		loadingLookup.value = false
-	}
+function openAdjustSheet(user: User) {
+	selectedUserForAdjustment.value = user
+	isAdjustSheetOpen.value = true
 }
 
-async function updatePoints(mode: 'add' | 'set') {
-	if (!targetUsername.value)
+function openAdjustSheetForNewUser() {
+	const clean = searchQuery.value.trim().toLowerCase()
+	if (!clean)
 		return
-	adjustLoading.value = true
-	adjustError.value = ''
-	try {
-		await $fetch(`/api/points/${targetUsername.value}`, {
-			method: 'POST' as any,
-			body: {
-				amount: amount.value,
-				mode,
-			},
-		})
-		amount.value = 0
-		await lookupUser() // Refresh lookup display
-		await refreshUsers() // Refresh table
+	selectedUserForAdjustment.value = {
+		id: '',
+		username: clean,
+		displayName: searchQuery.value.trim(),
+		points: 0,
 	}
-	catch (err: any) {
-		adjustError.value = err.data?.statusMessage || 'Failed to update points'
-	}
-	finally {
-		adjustLoading.value = false
-	}
+	isAdjustSheetOpen.value = true
 }
 
 // Table Columns
@@ -103,7 +71,21 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('points', {
 		header: 'Points',
-		cell: info => info.getValue().toLocaleString(),
+		cell: info => h('span', { class: 'font-mono font-medium tabular-nums' }, info.getValue().toLocaleString()),
+	}),
+	columnHelper.display({
+		id: 'actions',
+		header: () => h('div', { class: 'text-right' }, 'Actions'),
+		cell: info => h('div', { class: 'flex justify-end' }, [
+			h(Button, {
+				variant: 'outline',
+				size: 'sm',
+				onClick: () => openAdjustSheet(info.row.original),
+			}, [
+				h(PencilIcon),
+				'Adjust Points',
+			]),
+		]),
 	}),
 ]
 </script>
@@ -112,99 +94,16 @@ const columns: any[] = [
 	<AppPageContainer>
 		<AppPageHeader heading="Points Balances" subheading="Manage user points and view the points database." />
 
-		<!-- Adjustment Form (Keep in a compact Card as it's an action panel) -->
-		<Card class="mb-8">
-			<CardHeader>
-				<CardTitle>Manual Adjustment</CardTitle>
-				<CardDescription>Search for a user and adjust their points manually.</CardDescription>
-			</CardHeader>
-			<CardContent class="flex flex-col gap-4">
-				<div class="flex gap-2">
-					<FieldGroup class="w-full">
-						<Field>
-							<FieldLabel for="targetUser">
-								Username
-							</FieldLabel>
-							<InputGroup>
-								<InputGroupInput
-									id="targetUser"
-									v-model="targetUsername"
-									placeholder="Search username..."
-									@keyup.enter="lookupUser"
-								/>
-								<InputGroupAddon class="bg-muted px-3">
-									<SearchIcon />
-								</InputGroupAddon>
-							</InputGroup>
-						</Field>
-					</FieldGroup>
-					<div class="flex items-end">
-						<Button :disabled="loadingLookup || !targetUsername" @click="lookupUser">
-							Lookup
-						</Button>
-					</div>
-				</div>
-
-				<div v-if="lookupResult" class="flex flex-col gap-3 rounded-lg bg-muted p-4">
-					<div class="flex items-center justify-between">
-						<span class="font-semibold">{{ lookupResult.displayName }}</span>
-						<Badge variant="secondary" class="text-lg">
-							{{ lookupResult.points.toLocaleString() }} pts
-						</Badge>
-					</div>
-
-					<div class="grid grid-cols-1 gap-2 pt-2">
-						<FieldGroup>
-							<Field>
-								<FieldLabel for="adjustAmount">
-									Amount
-								</FieldLabel>
-								<Input id="adjustAmount" v-model="amount" type="number" />
-							</Field>
-						</FieldGroup>
-						<div class="flex gap-2">
-							<Button class="flex-1" variant="outline" :disabled="adjustLoading" @click="updatePoints('add')">
-								<PlusIcon data-icon="inline-start" /> Add
-							</Button>
-							<Button class="flex-1" :disabled="adjustLoading" @click="updatePoints('set')">
-								<HashIcon data-icon="inline-start" /> Set
-							</Button>
-						</div>
-					</div>
-				</div>
-
-				<div v-if="adjustError" class="text-sm font-medium text-destructive">
-					{{ adjustError }}
-				</div>
-			</CardContent>
-		</Card>
-
-		<!-- Users Table - Redesigned to be Card-Free -->
-		<div>
-			<!-- Header & Search Control Row -->
+		<div class="flex flex-col gap-2">
+			<!-- Search & Count Control Row -->
 			<div
 				class="
-					flex flex-col gap-4
-					md:flex-row md:items-center md:justify-between
+					flex flex-col gap-4 py-2
+					sm:flex-row sm:items-center sm:justify-between
 				"
 			>
-				<div>
-					<h2 class="text-xl font-bold text-foreground">
-						User Database
-					</h2>
-					<p class="mt-1 text-sm text-muted-foreground">
-						Browse all users and their point balances.
-					</p>
-				</div>
-
-				<div
-					class="
-						relative flex w-full items-center self-start
-						sm:w-64
-						md:self-auto
-					"
-				>
-					<SearchIcon class="absolute left-2.5 size-4 text-muted-foreground" />
+				<div class="relative w-full max-w-sm">
+					<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						v-model="searchQuery"
 						type="search"
@@ -212,13 +111,41 @@ const columns: any[] = [
 						class="h-9 pl-8"
 					/>
 				</div>
+
+				<div class="text-xs text-muted-foreground select-none">
+					Showing {{ paginatedUsers.length }} of {{ totalUsers }} users
+				</div>
 			</div>
 
-			<!-- Top Pagination Row (Sits directly on top of the table) -->
+			<!-- Table container -->
+			<div class="relative min-h-50">
+				<DataTable
+					v-if="paginatedUsers.length > 0"
+					:columns="columns"
+					:data="paginatedUsers"
+				/>
+				<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
+					<Loader2 class="size-6 animate-spin text-primary" />
+					<span class="text-sm text-muted-foreground">Loading users...</span>
+				</div>
+				<div v-else class="flex flex-col items-center justify-center gap-3 rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground select-none">
+					<span>No users found matching your search.</span>
+					<Button
+						v-if="searchQuery.trim()"
+						size="sm"
+						@click="openAdjustSheetForNewUser"
+					>
+						<PlusIcon data-icon="inline-start" />
+						Add "{{ searchQuery.trim() }}" & Set Points
+					</Button>
+				</div>
+			</div>
+
+			<!-- Bottom Pagination Row -->
 			<div
-				class="
-					sticky top-0 z-10 flex flex-col gap-4 bg-background py-4
-					sm:flex-row sm:items-center sm:justify-between
+				v-if="totalUsers > 0" class="
+					flex flex-col items-center justify-between gap-4 select-none
+					sm:flex-row
 				"
 			>
 				<span class="text-xs text-muted-foreground">
@@ -240,22 +167,13 @@ const columns: any[] = [
 					</PaginationContent>
 				</Pagination>
 			</div>
-
-			<!-- Table container -->
-			<div class="relative min-h-50">
-				<DataTable
-					v-if="paginatedUsers.length > 0"
-					:columns="columns"
-					:data="paginatedUsers"
-				/>
-				<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
-					<Loader2 class="size-6 animate-spin text-primary" />
-					<span class="text-sm text-muted-foreground">Loading users...</span>
-				</div>
-				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
-					No users found matching your search.
-				</div>
-			</div>
 		</div>
+
+		<!-- Points Adjust Sheet Slide-over -->
+		<UserPointsEditSheet
+			v-model:open="isAdjustSheetOpen"
+			:user="selectedUserForAdjustment"
+			@saved="refreshUsers"
+		/>
 	</AppPageContainer>
 </template>

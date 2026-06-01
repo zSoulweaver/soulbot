@@ -103,12 +103,7 @@ const columns: any[] = [
 		<Alert
 			variant="info"
 		>
-			<AlertTitle
-				class="
-					font-semibold text-blue-700
-					dark:text-blue-300
-				"
-			>
+			<AlertTitle>
 				System Exclusions
 			</AlertTitle>
 			<AlertDescription>

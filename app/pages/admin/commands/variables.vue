@@ -56,17 +56,11 @@ function toggleVariableExpanded(name: string) {
 
 		<!-- Main Variables Collapsible List -->
 		<div v-else class="flex flex-col gap-4">
-			<!-- Pro Tip Helper alert box -->
-			<Alert
-				variant="info" class="
-					border-blue-500/20 bg-blue-500/5 text-blue-700
-					dark:text-blue-300
-				"
-			>
-				<AlertTitle class="font-bold">
+			<Alert variant="info">
+				<AlertTitle>
 					Pro Tip: Innermost Expression Parsing
 				</AlertTitle>
-				<AlertDescription class="mt-1 text-xs">
+				<AlertDescription>
 					The bot processes nested placeholder variables from the **inside out**.
 					For example, if you write <code>$(count $(1) +1)</code> and trigger the command via <code>!score bob</code>,
 					the bot will first resolve the positional variable <code>$(1)</code> to <code>bob</code>, resulting in <code>$(count bob +1)</code>,

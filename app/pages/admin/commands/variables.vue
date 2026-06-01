@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronRight } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { ChevronRight, Search } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
 
 interface Variable {
 	name: string
@@ -30,13 +30,47 @@ const variables = computed(() => {
 	return [positionalVariable, ...apiVariables.value]
 })
 
-// Collapsible state for each variable
-const expandedVariables = ref<Record<string, boolean>>({
-	'1...n': true, // Keep the positional guide expanded by default for onboarding feel!
+// Search query
+const searchQuery = ref('')
+
+// Expandable rows state mapping
+const expandedRows = ref<Record<string, boolean>>({
+	'1...n': true, // Keep positional guide expanded by default for onboarding feel!
 })
 
-function toggleVariableExpanded(name: string) {
-	expandedVariables.value[name] = !expandedVariables.value[name]
+// Filtered variables computed property based on search
+const filteredVariables = computed(() => {
+	const allVars = variables.value
+	const query = searchQuery.value.trim().toLowerCase()
+
+	if (!query)
+		return allVars
+
+	return allVars.filter((v) => {
+		const nameMatch = v.name.toLowerCase().includes(query)
+		const descMatch = v.description.toLowerCase().includes(query)
+		const aliasMatch = v.aliases?.some(a => a.toLowerCase().includes(query))
+		const exampleMatch = v.examples?.some(e =>
+			e.syntax.toLowerCase().includes(query)
+			|| e.description.toLowerCase().includes(query),
+		)
+		return nameMatch || descMatch || aliasMatch || exampleMatch
+	})
+})
+
+// Auto-expand matching rows if search is active
+watch(searchQuery, (newQuery) => {
+	if (newQuery.trim()) {
+		const newExpanded: Record<string, boolean> = {}
+		for (const v of filteredVariables.value) {
+			newExpanded[v.name] = true
+		}
+		expandedRows.value = newExpanded
+	}
+})
+
+function toggleRowExpanded(name: string) {
+	expandedRows.value[name] = !expandedRows.value[name]
 }
 </script>
 
@@ -54,8 +88,8 @@ function toggleVariableExpanded(name: string) {
 			</span>
 		</div>
 
-		<!-- Main Variables Collapsible List -->
-		<div v-else class="flex flex-col gap-4">
+		<div v-else class="flex flex-col gap-6">
+			<!-- Pro Tip Helper alert box -->
 			<Alert variant="info">
 				<AlertTitle>
 					Pro Tip: Innermost Expression Parsing
@@ -68,123 +102,126 @@ function toggleVariableExpanded(name: string) {
 				</AlertDescription>
 			</Alert>
 
-			<Collapsible
-				v-for="variable in variables"
-				:key="variable.name"
-				:open="expandedVariables[variable.name]"
-				class="overflow-hidden rounded-lg border bg-card/25 backdrop-blur-xs"
-				@update:open="expandedVariables[variable.name] = $event"
-			>
-				<CollapsibleTrigger as-child>
-					<div
-						class="
-							flex cursor-pointer items-center justify-between p-4 transition-colors select-none
-							hover:bg-muted/45
-						"
-						@click="toggleVariableExpanded(variable.name)"
-					>
-						<div class="flex items-center gap-3">
-							<!-- Chevron Indicator -->
-							<ChevronRight
-								class="size-4 text-primary transition-transform"
-								:class="{ 'rotate-90': expandedVariables[variable.name] }"
-							/>
+			<!-- Search & Filtration Row -->
+			<div class="relative w-full max-w-sm py-1">
+				<Search class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+				<Input
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search variables, aliases or behavior..."
+					class="h-9 pl-8"
+				/>
+			</div>
 
-							<div class="flex flex-col gap-0.5">
-								<span class="font-mono text-base font-bold text-foreground">
+			<!-- Unified Data Table of Variables -->
+			<div class="relative overflow-hidden rounded-xl border">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead class="w-10" />
+							<TableHead class="w-1/4">
+								Variable Trigger
+							</TableHead>
+							<TableHead class="w-1/6">
+								Aliases
+							</TableHead>
+							<TableHead>
+								Description
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						<TableRow v-if="filteredVariables.length === 0">
+							<TableCell colspan="4" class="py-12 text-center text-muted-foreground">
+								No variables found matching your search.
+							</TableCell>
+						</TableRow>
+						<template v-for="variable in filteredVariables" v-else :key="variable.name">
+							<!-- Primary Row -->
+							<TableRow
+								class="cursor-pointer transition-colors"
+								:class="{ 'border-b-0': expandedRows[variable.name] }"
+								@click="toggleRowExpanded(variable.name)"
+							>
+								<!-- Expand chevron button -->
+								<TableCell class="text-center">
+									<div class="flex items-center justify-center">
+										<ChevronRight
+											class="size-4 text-muted-foreground transition-transform duration-200"
+											:class="{ 'rotate-90 text-primary': expandedRows[variable.name] }"
+										/>
+									</div>
+								</TableCell>
+
+								<!-- Variable placeholder tag -->
+								<TableCell class="font-mono">
 									$({{ variable.name }})
-								</span>
-								<span
-									class="
-										line-clamp-1 max-w-sm text-xs text-muted-foreground
-										sm:max-w-xl
-									"
-								>
-									{{ variable.description }}
-								</span>
-							</div>
-						</div>
+								</TableCell>
 
-						<!-- Aliases Badges -->
-						<div
-							v-if="variable.aliases && variable.aliases.length > 0" class="
-								ml-4 hidden shrink-0 items-center gap-1.5
-								sm:flex
-							"
-						>
-							<span class="text-[10px] font-bold text-muted-foreground uppercase">Aliases:</span>
-							<Badge
-								v-for="alias in variable.aliases"
-								:key="alias"
-								variant="secondary"
-								class="py-0 font-mono text-[10px]"
-							>
-								$({{ alias }})
-							</Badge>
-						</div>
-					</div>
-				</CollapsibleTrigger>
-
-				<CollapsibleContent class="border-t border-border/40">
-					<!-- Mobile Aliases List -->
-					<div
-						v-if="variable.aliases && variable.aliases.length > 0" class="
-							flex items-center gap-1.5 border-b border-border/40 bg-muted/20 p-4
-							sm:hidden
-						"
-					>
-						<span class="text-[10px] font-bold text-muted-foreground uppercase">Aliases:</span>
-						<div class="flex flex-wrap gap-1.5">
-							<Badge
-								v-for="alias in variable.aliases"
-								:key="alias"
-								variant="secondary"
-								class="py-0 font-mono text-[10px]"
-							>
-								$({{ alias }})
-							</Badge>
-						</div>
-					</div>
-
-					<!-- Details examples table -->
-					<div class="overflow-x-auto">
-						<Table class="w-full">
-							<TableHeader class="bg-muted/30">
-								<TableRow>
-									<TableHead class="w-1/3 px-6 text-xs select-none">
-										Syntax Placeholder
-									</TableHead>
-									<TableHead class="w-2/3 px-6 text-xs select-none">
-										Behavior Description
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								<TableRow
-									v-for="example in variable.examples"
-									:key="example.syntax"
-									class="
-										border-border/40
-										hover:bg-muted/10
-									"
-								>
-									<!-- Syntax Code Block Badge -->
-									<TableCell class="px-6 py-3">
-										<Badge variant="outline" class="py-0.5 font-mono text-xs font-semibold">
-											{{ example.syntax }}
+								<!-- Alternate aliases -->
+								<TableCell>
+									<div class="flex flex-wrap gap-1">
+										<Badge
+											v-for="alias in variable.aliases"
+											:key="alias"
+											variant="secondary"
+											class="font-mono text-xs"
+										>
+											$({{ alias }})
 										</Badge>
-									</TableCell>
+										<span v-if="!variable.aliases?.length" class="text-xs text-muted-foreground/40 italic select-none">
+											None
+										</span>
+									</div>
+								</TableCell>
 
-									<!-- Behavior Description -->
-									<TableCell class="px-6 py-3 text-xs text-muted-foreground">
-										{{ example.description }}
-									</TableCell>
-								</TableRow>
-							</TableBody>
-						</Table>
-					</div>
-				</CollapsibleContent>
-			</Collapsible>
+								<!-- Primary description -->
+								<TableCell class="whitespace-normal text-muted-foreground">
+									{{ variable.description }}
+								</TableCell>
+							</TableRow>
+
+							<!-- Secondary Collapsible Examples Row -->
+							<TableRow
+								v-if="expandedRows[variable.name]"
+							>
+								<TableCell
+									colspan="4" class="bg-background! p-2"
+								>
+									<div class="ml-10 flex flex-col gap-2 border-l border-border py-1.5 pl-4">
+										<div class="overflow-hidden rounded-lg border">
+											<Table class="w-full">
+												<TableBody>
+													<TableRow
+														v-for="example in variable.examples"
+														:key="example.syntax"
+														class="
+															border-border/30
+															last:border-none
+														"
+													>
+														<!-- Code syntax badge -->
+														<TableCell class="w-1/3 px-4">
+															<Badge variant="secondary" class="font-mono text-xs font-bold">
+																{{ example.syntax }}
+															</Badge>
+														</TableCell>
+
+														<!-- Example Description -->
+														<TableCell class="w-2/3 px-4 text-xs whitespace-normal text-muted-foreground">
+															{{ example.description }}
+														</TableCell>
+													</TableRow>
+												</TableBody>
+											</Table>
+										</div>
+									</div>
+								</TableCell>
+							</TableRow>
+						</template>
+					</TableBody>
+				</Table>
+			</div>
 		</div>
 	</AppPageContainer>
 </template>

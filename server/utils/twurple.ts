@@ -3,6 +3,7 @@ import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
 import { eq } from 'drizzle-orm'
 import { handleChatMessage, initBot, registry, templateRegistry } from '../bot'
+import { eventSubManager } from '../bot/core/eventsub'
 import { db } from '../database'
 import { twitchTokens } from '../database/schema'
 import { botLogger } from './logger'
@@ -113,10 +114,24 @@ export async function startBot() {
 	})
 
 	await chat.connect()
+
+	// Start EventSub WebSocket manager using streamer credentials
+	const tokens = await db.select().from(twitchTokens)
+	const streamerToken = tokens.find(t => t.accountType === 'streamer')
+	if (streamerToken && streamerToken.userId) {
+		const api = getApiClient()
+		eventSubManager.start(api, streamerToken.userId).catch((err) => {
+			botLogger.error({ err }, 'Failed to start EventSub manager on startBot')
+		})
+	}
+
 	return 'started'
 }
 
 export async function stopBot() {
+	// Stop EventSub WebSocket connection
+	eventSubManager.stop()
+
 	if (chatClientInstance && chatClientInstance.isConnected) {
 		chatClientInstance.quit()
 		chatClientInstance = null

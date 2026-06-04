@@ -43,6 +43,11 @@ export default defineNuxtConfig({
 		botTwitchRedirectUri: process.env.BOT_TWITCH_REDIRECT_URI,
 		streamerChannel: process.env.STREAMER_CHANNEL,
 		enableBot: process.env.ENABLE_BOT === 'true',
+		twitchEventSubTransport: process.env.TWITCH_EVENTSUB_TRANSPORT || 'ws',
+		twitchEventSubSecret: process.env.TWITCH_EVENTSUB_SECRET || 'default-fixed-secret-change-me',
+		twitchEventSubHost: process.env.TWITCH_EVENTSUB_HOST,
+		twitchEventSubPort: process.env.TWITCH_EVENTSUB_PORT || '8080',
+		ngrokAuthtoken: process.env.NGROK_AUTHTOKEN,
 		oauth: {
 			twitch: {
 				clientId: process.env.TWITCH_CLIENT_ID,

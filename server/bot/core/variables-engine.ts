@@ -20,7 +20,11 @@ export const registeredVariables = [
  * Main parser that parses dynamic template strings, evaluating innermost variables first.
  * Recursion guard prevents loops from nesting deeper than 10 levels.
  */
-export async function renderCustomTemplate(template: string, ctx: CommandContext): Promise<string> {
+export async function renderCustomTemplate(
+	template: string,
+	ctx: CommandContext,
+	extraVars?: Record<string, string | number>,
+): Promise<string> {
 	let text = template
 	let depth = 0
 	const maxDepth = 10
@@ -40,7 +44,7 @@ export async function renderCustomTemplate(template: string, ctx: CommandContext
 		if (!expression)
 			break
 
-		const resolved = await resolveVariableExpression(expression, ctx, cache)
+		const resolved = await resolveVariableExpression(expression, ctx, cache, extraVars)
 		text = text.replace(fullMatch, resolved)
 		depth++
 	}
@@ -51,7 +55,12 @@ export async function renderCustomTemplate(template: string, ctx: CommandContext
 /**
  * Resolves a single, flattened variable expression.
  */
-async function resolveVariableExpression(expr: string, ctx: CommandContext, cache: Record<string, any>): Promise<string> {
+async function resolveVariableExpression(
+	expr: string,
+	ctx: CommandContext,
+	cache: Record<string, any>,
+	extraVars?: Record<string, string | number>,
+): Promise<string> {
 	const parts = expr.trim().split(/\s+/)
 	const rawName = parts[0]
 
@@ -106,6 +115,11 @@ async function resolveVariableExpression(expr: string, ctx: CommandContext, cach
 		}
 	}
 
+	// Check if the expression is defined in the extraVars (e.g. alert template custom variables)
+	if (extraVars && expr in extraVars) {
+		return String(extraVars[expr])
+	}
+
 	// Check if it's a global template variable from templates.ts (e.g. core.currency)
 	const globalVars = getGlobalTemplateVariables({})
 	if (expr in globalVars) {
@@ -114,4 +128,25 @@ async function resolveVariableExpression(expr: string, ctx: CommandContext, cach
 
 	// Return the original tag so it's not silently swallowed if it's invalid/unrecognized
 	return `$(${expr})`
+}
+
+/**
+ * Builds a lightweight mock CommandContext for parsing variables inside templates
+ */
+export function createTemplateContext(
+	channel: string,
+	user?: { id: string, name: string, displayName: string },
+	rawArgs: string[] = [],
+): CommandContext {
+	const mockSay = async (_msg: string) => {}
+	return {
+		user: user || { id: '', name: '', displayName: '' },
+		channel,
+		rawArgs,
+		args: undefined,
+		say: mockSay as any,
+		reply: mockSay as any,
+		raw: {} as any, // Mock ChatMessage
+		state: {},
+	}
 }

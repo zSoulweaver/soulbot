@@ -1,4 +1,5 @@
 import {
+	Bell,
 	Clock,
 	LayoutDashboard,
 	Music,
@@ -53,6 +54,7 @@ export const navigation: NavGroup[] = [
 				],
 			},
 			{ title: 'Timers', url: '/admin/timers', icon: Timer, roles: ['caster'] },
+			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
 			{
 				title: 'Points',
 				url: '/admin/points',

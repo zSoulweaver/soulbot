@@ -5,8 +5,10 @@ import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
 import { templateRegistry } from './core/templates'
+import { registerAlertsEventSubHandlers } from './modules/alerts/eventsub'
 import { commandsModule } from './modules/commands'
 import { pointsModule } from './modules/points'
+import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { startPayoutEngine } from './modules/points/payout'
 
 let isRegistryInitialized = false
@@ -22,6 +24,10 @@ export function initRegistry() {
 
 export function initBot() {
 	initRegistry()
+
+	// Register modular EventSub event listeners
+	registerPointsEventSubHandlers()
+	registerAlertsEventSubHandlers()
 
 	// Warm up settings cache asynchronously
 	refreshAppSettingsCache().catch((err) => {

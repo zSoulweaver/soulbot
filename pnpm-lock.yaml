@@ -15,14 +15,26 @@ importers:
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.33(typescript@6.0.3))
       '@twurple/api':
-        specifier: ^8.1.3
+        specifier: 8.1.3
         version: 8.1.3(@twurple/auth@8.1.3)
       '@twurple/auth':
-        specifier: ^8.1.3
+        specifier: 8.1.3
         version: 8.1.3
       '@twurple/chat':
-        specifier: ^8.1.3
+        specifier: 8.1.3
         version: 8.1.3(@twurple/auth@8.1.3)
+      '@twurple/eventsub-base':
+        specifier: 8.1.3
+        version: 8.1.3
+      '@twurple/eventsub-http':
+        specifier: 8.1.3
+        version: 8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))
+      '@twurple/eventsub-ngrok':
+        specifier: 8.1.3
+        version: 8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))(@twurple/eventsub-http@8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3)))
+      '@twurple/eventsub-ws':
+        specifier: 8.1.3
+        version: 8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.33(typescript@6.0.3))
@@ -1224,6 +1236,91 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
+  '@ngrok/ngrok-android-arm-eabi@0.5.2':
+    resolution: {integrity: sha512-O8/qxTrtwvOLafnp2dRK2Jjbj7xf7bwTinXiAoEf8Y+/24p3EDCzMqcyFkJS3NuBQU/TiWloER5qCmOK/aX/UQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [android]
+
+  '@ngrok/ngrok-android-arm64@0.5.2':
+    resolution: {integrity: sha512-SFFlxHKCHqcJPD/nKzJGibXAtQDWy+R5VuCakvzPmWKer47QQ1B/2kLy7ua4tFEmARGHYWOHGZHzP7mkq73oMA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [android]
+
+  '@ngrok/ngrok-darwin-arm64@0.5.2':
+    resolution: {integrity: sha512-6OcddF5wioQIuawXh1ONxmIywP5GskVT7H4MeKp5BjN2s9sIr7zhy7JBkwfAXFvNJtqw1dasV6JbYeGWXYCBnQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@ngrok/ngrok-darwin-universal@0.5.2':
+    resolution: {integrity: sha512-g3Q8qn5Z62m/z9zNxDGCMYVOgMBCXbZmNVpsfmhSBze5Rp1a1mUtloem8FvBeS9LyZYbXpbUbpeo2eJvZjF6Qg==}
+    engines: {node: '>= 10'}
+    os: [darwin]
+
+  '@ngrok/ngrok-darwin-x64@0.5.2':
+    resolution: {integrity: sha512-/s+R2qGbkYUrzXkNBsrdpftGj80ZTnIzHVsvPsOhnSU0rOcWJ/+/MN/Be0f8AXw7uHBRr+i7smVYW9sSIfroKw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@ngrok/ngrok-freebsd-x64@0.5.2':
+    resolution: {integrity: sha512-D2TVtW6ug8pFFR6Yrq/Q4XvYslIvQFbouSNyy7wvsZ/ZqSHwXR8XU3rG9D2+QnMG4qRS0DpUcf3qLQPWdWJAVw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@ngrok/ngrok-linux-arm-gnueabihf@0.5.2':
+    resolution: {integrity: sha512-3euA0sbSI6+AX8qrpjgpJSjW16IKnFjLtzN9DZo/QLajc237Vq1gc1/8GWD/zI1zT+zquIFR9clq0SRRwO83pQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [linux]
+
+  '@ngrok/ngrok-linux-arm64-gnu@0.5.2':
+    resolution: {integrity: sha512-O5nEuB2wIG6IoX6bon7vAnhCqbC54bPfkul5wsNA9+A17GkmsFVwpKs0wI0a2OoskmyG2DRKo9DSXS+AwsJ6Xg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@ngrok/ngrok-linux-arm64-musl@0.5.2':
+    resolution: {integrity: sha512-BryCXIGzaA3YPJ3OgSbOX3VHlDm7c7tj1dYI3PfQyI2Od7HC1uRUv4FRZgwl+OjY/AckXFm02oV1H6ho+iJqgA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@ngrok/ngrok-linux-x64-gnu@0.5.2':
+    resolution: {integrity: sha512-6S4m4Tqbf4vxFAFY7b9U2NuhujxcHKWR3lR4Na9aLWR9VBg2E/3Qa0nTvfWk+SGBilU03QELKaT3yYhLz/Y2zw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@ngrok/ngrok-linux-x64-musl@0.5.2':
+    resolution: {integrity: sha512-33tt/nOTUm/QN1xx2jvqQpBSv5tOn2LrU0MXuvoTQFOOr0XwrlqaZguyFhdGoU5J5bPaecw5lfhZb2JH3zJliQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@ngrok/ngrok-win32-ia32-msvc@0.5.2':
+    resolution: {integrity: sha512-rJ4+JP6TrWYmw6iaUwQEKoTIxX7vKGWJh9b2RL0ZcRbb8FMTZWY9KoyogkxSZDfx4BuTz2kSe4AMqe5RRhFt6Q==}
+    engines: {node: '>= 10'}
+    cpu: [ia32]
+    os: [win32]
+
+  '@ngrok/ngrok-win32-x64-msvc@0.5.2':
+    resolution: {integrity: sha512-FMdljqqhbilwoY0FLb8iEW3179WkAHwb3i2e3U/XrqTlO1nvF8hbjoWLesrLzAICY9wSH5mgqC7i6qxHAA1Neg==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@ngrok/ngrok@0.5.2':
+    resolution: {integrity: sha512-IDTLnK93UZlpiN0Ftr5aIXvMADioMEHFcydrvmP27kypHGmW5ww1883TWiASGTPUwBEVtnVqfUtCzbu+NRhyPQ==}
+    engines: {node: '>= 10'}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -2387,6 +2484,25 @@ packages:
   '@twurple/common@8.1.3':
     resolution: {integrity: sha512-B2BT42fJAEYqSPGjTd6qyZoUv6kgFzIvUJuTIrOUcBiJxcvZh8tD+WLRd5xfMKhtLbUFgesYlHxdPhmdar8/zw==}
 
+  '@twurple/eventsub-base@8.1.3':
+    resolution: {integrity: sha512-a+zISBwFK6FHrzG+VYR3ysi71SgX2cJUyu2Hbdg2qX9LtSvyDDAZ1AVOcV7vQVHAInNQpCVacgn5dcnrloDE5A==}
+
+  '@twurple/eventsub-http@8.1.3':
+    resolution: {integrity: sha512-ul5C46P4Hcq93lrrsZpXTRbYwvgy7olluNeHVAOakezB7dVIA7AMaZINLFf0jtqDhopX2u0jyRxSqcUy8lYkOA==}
+    peerDependencies:
+      '@twurple/api': 8.1.3
+
+  '@twurple/eventsub-ngrok@8.1.3':
+    resolution: {integrity: sha512-W5wC8p/8UuhJ5UgVp3bJptAYe/XNMf/8G69bdhZrD0r23umUaVIIwktoX+HkmApD23w9/pcq4wKI5cPW1byi9g==}
+    peerDependencies:
+      '@twurple/api': 8.1.3
+      '@twurple/eventsub-http': 8.1.3
+
+  '@twurple/eventsub-ws@8.1.3':
+    resolution: {integrity: sha512-/iIjyCaz1mJpCOrMydO1PoY/fyx8VjaTRukRTGpgMs0FtcK99C6Np5K/aJCPmVerDrNoQcfbjJuDiv4OroRjWA==}
+    peerDependencies:
+      '@twurple/api': 8.1.3
+
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
@@ -2411,6 +2527,9 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
+  '@types/express-serve-static-core@5.1.1':
+    resolution: {integrity: sha512-v4zIMr/cX7/d2BpAEX3KNKL/JrT1s43s96lLvvdTmza1oEvDudCqK9aF/djc/SWgy8Yh0h30TZx5VpzqFCxk5A==}
+
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
@@ -2429,14 +2548,26 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
+  '@types/node@14.18.63':
+    resolution: {integrity: sha512-fAtCfv4jJg+ExtXhvCkCqUKZ+4ok/JQk01qDKhL5BDDoS3AxKXhV5/MAVUZyQnSEd2GT92fkgZl0pz0Q0AzcIQ==}
+
   '@types/node@20.19.39':
     resolution: {integrity: sha512-orrrD74MBUyK8jOAD/r0+lfa1I2MO6I+vAkmAWzMYbCcgrN4lCrmK52gRFQq/JRxfYPfonkr4b0jcY7Olqdqbw==}
 
   '@types/pluralize@0.0.33':
     resolution: {integrity: sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg==}
 
+  '@types/qs@6.15.1':
+    resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
+
+  '@types/range-parser@1.2.7':
+    resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
+
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/send@1.2.1':
+    resolution: {integrity: sha512-arsCikDvlU99zl1g69TcAB3mzZPpxgw0UQnaHeC1Nwb015xp8bknZv5rIfri9xTOcMuaVgvabfIRA7PSZVuZIQ==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -2960,6 +3091,10 @@ packages:
   bundle-name@4.1.0:
     resolution: {integrity: sha512-tjwM5exMg6BGRI+kNmTntNsvdZS1X8BFYS6tnJ2hdH0kVxM6/eVZ2xy+FqStSWvYmtfFMDLIxurorHwDKfDz5Q==}
     engines: {node: '>=18'}
+
+  bytes@3.1.2:
+    resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
+    engines: {node: '>= 0.8'}
 
   c12@3.3.4:
     resolution: {integrity: sha512-cM0ApFQSBXuourJejzwv/AuPRvAxordTyParRVcHjjtXirtkzM0uK2L9TTn9s0cXZbG7E55jCivRQzoxYmRAlA==}
@@ -4015,6 +4150,9 @@ packages:
     resolution: {integrity: sha512-S9wWkJ/VSY9/k4qcjG318bqJNruzE4HySUhFYknwmu6LBP97KLLfwNf+n4V1BHurvFNkSKLFnK/RsuUnRTf9Vw==}
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
 
+  httpanda@0.5.0:
+    resolution: {integrity: sha512-cGCNiVt4CLymrWfogWmyLhOzYxiHAufG5HfC/Oapx+3+W6r6cfRq3I3va1ujRouUpArt1tdig7xMP6zrMhjY1A==}
+
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
@@ -4025,6 +4163,10 @@ packages:
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
+
+  iconv-lite@0.7.2:
+    resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
+    engines: {node: '>=0.10.0'}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -5138,6 +5280,10 @@ packages:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
 
+  raw-body@3.0.2:
+    resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
+    engines: {node: '>= 0.10'}
+
   rc9@3.0.1:
     resolution: {integrity: sha512-gMDyleLWVE+i6Sgtc0QbbY6pEKqYs97NGi6isHQPqYlLemPoO8dxQ3uGi0f4NiP98c+jMW6cG1Kx9dDwfvqARQ==}
 
@@ -5265,6 +5411,9 @@ packages:
   safe-stable-stringify@2.5.0:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
     engines: {node: '>=10'}
+
+  safer-buffer@2.1.2:
+    resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
   sax@1.6.0:
     resolution: {integrity: sha512-6R3J5M4AcbtLUdZmRv2SygeVaM7IhrLXu9BmnOGmmACak8fiUtOsYNWUS4uK7upbmHIBbLBeFeI//477BKLBzA==}
@@ -5709,6 +5858,10 @@ packages:
 
   unist-util-visit@5.1.0:
     resolution: {integrity: sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg==}
+
+  unpipe@1.0.0:
+    resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
+    engines: {node: '>= 0.8'}
 
   unplugin-utils@0.3.1:
     resolution: {integrity: sha512-5lWVjgi6vuHhJ526bI4nlCOmkCIF3nnfXkCMDeMJrtdvxTs6ZFCM8oNufGTsDbKv/tJ/xj8RpvXjRuPBZJuJog==}
@@ -7091,6 +7244,61 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
+  '@ngrok/ngrok-android-arm-eabi@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-android-arm64@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-darwin-arm64@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-darwin-universal@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-darwin-x64@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-freebsd-x64@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-linux-arm-gnueabihf@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-linux-arm64-gnu@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-linux-arm64-musl@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-linux-x64-gnu@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-linux-x64-musl@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-win32-ia32-msvc@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok-win32-x64-msvc@0.5.2':
+    optional: true
+
+  '@ngrok/ngrok@0.5.2':
+    optionalDependencies:
+      '@ngrok/ngrok-android-arm-eabi': 0.5.2
+      '@ngrok/ngrok-android-arm64': 0.5.2
+      '@ngrok/ngrok-darwin-arm64': 0.5.2
+      '@ngrok/ngrok-darwin-universal': 0.5.2
+      '@ngrok/ngrok-darwin-x64': 0.5.2
+      '@ngrok/ngrok-freebsd-x64': 0.5.2
+      '@ngrok/ngrok-linux-arm-gnueabihf': 0.5.2
+      '@ngrok/ngrok-linux-arm64-gnu': 0.5.2
+      '@ngrok/ngrok-linux-arm64-musl': 0.5.2
+      '@ngrok/ngrok-linux-x64-gnu': 0.5.2
+      '@ngrok/ngrok-linux-x64-musl': 0.5.2
+      '@ngrok/ngrok-win32-ia32-msvc': 0.5.2
+      '@ngrok/ngrok-win32-x64-msvc': 0.5.2
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -8161,6 +8369,53 @@ snapshots:
       klona: 2.0.6
       tslib: 2.8.1
 
+  '@twurple/eventsub-base@8.1.3':
+    dependencies:
+      '@d-fischer/logger': 4.2.4
+      '@d-fischer/shared-utils': 3.6.4
+      '@d-fischer/typed-event-emitter': 3.3.3
+      '@twurple/api': 8.1.3(@twurple/auth@8.1.3)
+      '@twurple/auth': 8.1.3
+      '@twurple/common': 8.1.3
+      tslib: 2.8.1
+
+  '@twurple/eventsub-http@8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))':
+    dependencies:
+      '@d-fischer/logger': 4.2.4
+      '@d-fischer/shared-utils': 3.6.4
+      '@d-fischer/typed-event-emitter': 3.3.3
+      '@twurple/api': 8.1.3(@twurple/auth@8.1.3)
+      '@twurple/auth': 8.1.3
+      '@twurple/common': 8.1.3
+      '@twurple/eventsub-base': 8.1.3
+      '@types/express-serve-static-core': 5.1.1
+      httpanda: 0.5.0
+      raw-body: 3.0.2
+      tslib: 2.8.1
+
+  '@twurple/eventsub-ngrok@8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))(@twurple/eventsub-http@8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3)))':
+    dependencies:
+      '@d-fischer/shared-utils': 3.6.4
+      '@ngrok/ngrok': 0.5.2
+      '@twurple/api': 8.1.3(@twurple/auth@8.1.3)
+      '@twurple/eventsub-http': 8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))
+      tslib: 2.8.1
+
+  '@twurple/eventsub-ws@8.1.3(@twurple/api@8.1.3(@twurple/auth@8.1.3))':
+    dependencies:
+      '@d-fischer/connection': 10.0.1
+      '@d-fischer/logger': 4.2.4
+      '@d-fischer/shared-utils': 3.6.4
+      '@d-fischer/typed-event-emitter': 3.3.3
+      '@twurple/api': 8.1.3(@twurple/auth@8.1.3)
+      '@twurple/auth': 8.1.3
+      '@twurple/common': 8.1.3
+      '@twurple/eventsub-base': 8.1.3
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@tybys/wasm-util@0.10.2':
     dependencies:
       tslib: 2.8.1
@@ -8187,6 +8442,13 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
+  '@types/express-serve-static-core@5.1.1':
+    dependencies:
+      '@types/node': 20.19.39
+      '@types/qs': 6.15.1
+      '@types/range-parser': 1.2.7
+      '@types/send': 1.2.1
+
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -8203,13 +8465,23 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
+  '@types/node@14.18.63': {}
+
   '@types/node@20.19.39':
     dependencies:
       undici-types: 6.21.0
 
   '@types/pluralize@0.0.33': {}
 
+  '@types/qs@6.15.1': {}
+
+  '@types/range-parser@1.2.7': {}
+
   '@types/resolve@1.20.2': {}
+
+  '@types/send@1.2.1':
+    dependencies:
+      '@types/node': 20.19.39
 
   '@types/unist@3.0.3': {}
 
@@ -8877,6 +9149,8 @@ snapshots:
   bundle-name@4.1.0:
     dependencies:
       run-applescript: 7.1.0
+
+  bytes@3.1.2: {}
 
   c12@3.3.4(magicast@0.5.2):
     dependencies:
@@ -9963,6 +10237,11 @@ snapshots:
 
   http-shutdown@1.2.2: {}
 
+  httpanda@0.5.0:
+    dependencies:
+      '@types/node': 14.18.63
+      tslib: 2.8.1
+
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
@@ -9973,6 +10252,10 @@ snapshots:
   httpxy@0.5.2: {}
 
   human-signals@5.0.0: {}
+
+  iconv-lite@0.7.2:
+    dependencies:
+      safer-buffer: 2.1.2
 
   ieee754@1.2.1: {}
 
@@ -11504,6 +11787,13 @@ snapshots:
 
   range-parser@1.2.1: {}
 
+  raw-body@3.0.2:
+    dependencies:
+      bytes: 3.1.2
+      http-errors: 2.0.1
+      iconv-lite: 0.7.2
+      unpipe: 1.0.0
+
   rc9@3.0.1:
     dependencies:
       defu: 6.1.7
@@ -11659,6 +11949,8 @@ snapshots:
   safe-buffer@5.2.1: {}
 
   safe-stable-stringify@2.5.0: {}
+
+  safer-buffer@2.1.2: {}
 
   sax@1.6.0: {}
 
@@ -12108,6 +12400,8 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
+
+  unpipe@1.0.0: {}
 
   unplugin-utils@0.3.1:
     dependencies:

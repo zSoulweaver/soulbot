@@ -11,6 +11,22 @@ export interface AppSettings {
 	payoutAmountOffline: number
 	activeBonus: number
 	streamerTokenVersion: number
+	eventsubAlertFollowEnabled: boolean
+	eventsubAlertSubEnabled: boolean
+	eventsubAlertGiftEnabled: boolean
+	eventsubAlertCheerEnabled: boolean
+	eventsubPointsFollowEnabled: boolean
+	eventsubPointsSubEnabled: boolean
+	eventsubPointsGiftEnabled: boolean
+	eventsubPointsCheerEnabled: boolean
+	eventsubAlertFollow: string
+	eventsubAlertSub: string
+	eventsubAlertGift: string
+	eventsubAlertCheer: string
+	eventsubPointsFollow: number
+	eventsubPointsSub: number
+	eventsubPointsGift: number
+	eventsubPointsCheer: number
 }
 
 let cachedSettings: AppSettings | null = null
@@ -33,6 +49,22 @@ export function getAppSettingsSync(): AppSettings {
 			payoutAmountOffline: 0,
 			activeBonus: 5,
 			streamerTokenVersion: 1,
+			eventsubAlertFollowEnabled: false,
+			eventsubAlertSubEnabled: false,
+			eventsubAlertGiftEnabled: false,
+			eventsubAlertCheerEnabled: false,
+			eventsubPointsFollowEnabled: false,
+			eventsubPointsSubEnabled: false,
+			eventsubPointsGiftEnabled: false,
+			eventsubPointsCheerEnabled: false,
+			eventsubAlertFollow: 'Thank you for the follow, $(sender)!',
+			eventsubAlertSub: 'Thank you for subscribing, $(sender)! Welcome to the club!',
+			eventsubAlertGift: 'Thank you @$(sender) for gifting $(1) sub(s) to the community!',
+			eventsubAlertCheer: 'Thank you @$(sender) for cheering $(1) bits! $(2)',
+			eventsubPointsFollow: 100,
+			eventsubPointsSub: 500,
+			eventsubPointsGift: 500,
+			eventsubPointsCheer: 1,
 		}
 	}
 	return cachedSettings
@@ -52,6 +84,22 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			payoutAmountOffline: Math.max(0, Number(getVal('points.payout_amount_offline', '0'))),
 			activeBonus: Math.max(0, Number(getVal('points.active_bonus', '5'))),
 			streamerTokenVersion: Number(getVal('twitch.streamer_token_version', '1')),
+			eventsubAlertFollowEnabled: getVal('eventsub.alert.follow.enabled', 'false') === 'true',
+			eventsubAlertSubEnabled: getVal('eventsub.alert.sub.enabled', 'false') === 'true',
+			eventsubAlertGiftEnabled: getVal('eventsub.alert.gift.enabled', 'false') === 'true',
+			eventsubAlertCheerEnabled: getVal('eventsub.alert.cheer.enabled', 'false') === 'true',
+			eventsubPointsFollowEnabled: getVal('eventsub.points.follow.enabled', 'false') === 'true',
+			eventsubPointsSubEnabled: getVal('eventsub.points.sub.enabled', 'false') === 'true',
+			eventsubPointsGiftEnabled: getVal('eventsub.points.gift.enabled', 'false') === 'true',
+			eventsubPointsCheerEnabled: getVal('eventsub.points.cheer.enabled', 'false') === 'true',
+			eventsubAlertFollow: getVal('eventsub.alert.follow', 'Thank you for the follow, $(sender)!'),
+			eventsubAlertSub: getVal('eventsub.alert.sub', 'Thank you for subscribing, $(sender)! Welcome to the club!'),
+			eventsubAlertGift: getVal('eventsub.alert.gift', 'Thank you @$(sender) for gifting $(giftCount) sub(s) to the community!'),
+			eventsubAlertCheer: getVal('eventsub.alert.cheer', 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)'),
+			eventsubPointsFollow: Math.max(0, Number(getVal('eventsub.points.follow', '100'))),
+			eventsubPointsSub: Math.max(0, Number(getVal('eventsub.points.sub', '500'))),
+			eventsubPointsGift: Math.max(0, Number(getVal('eventsub.points.gift', '500'))),
+			eventsubPointsCheer: Math.max(0, Number(getVal('eventsub.points.cheer', '1'))),
 		}
 	}
 	catch (err) {

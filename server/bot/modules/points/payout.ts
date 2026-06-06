@@ -1,10 +1,10 @@
 import { eq, sql } from 'drizzle-orm'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
-import { excludedUsers, settings, twitchTokens, users } from '~~/server/database/schema'
+import { excludedUsers, settings, users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getApiClient } from '~~/server/utils/twurple'
+import { getApiClient, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 
 // In-memory active chatters map (userId -> chatterDetails)
 const activeUsersMap = new Map<string, { id: string, username: string, displayName: string, timestamp: number }>()
@@ -26,11 +26,7 @@ export function trackActiveUser(userId: string, username: string, displayName: s
  */
 export async function executePayoutCycle(): Promise<void> {
 	// Get streamer token to retrieve channel/broadcaster ID
-	const streamerToken = await db
-		.select()
-		.from(twitchTokens)
-		.where(eq(twitchTokens.accountType, 'streamer'))
-		.then(res => res[0])
+	const streamerToken = await getStreamerToken()
 
 	if (!streamerToken || !streamerToken.userId) {
 		botLogger.warn('[Payout Engine] Skipping cycle: Streamer Twitch token/userId not found.')
@@ -74,12 +70,7 @@ export async function executePayoutCycle(): Promise<void> {
 		excludedUsernames.add(exc.username.toLowerCase())
 	}
 
-	// Automatically exclude the bot's own account
-	const botToken = await db
-		.select()
-		.from(twitchTokens)
-		.where(eq(twitchTokens.accountType, 'bot'))
-		.then(res => res[0])
+	const botToken = await getBotToken()
 
 	if (botToken) {
 		if (botToken.userId)

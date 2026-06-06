@@ -1,7 +1,6 @@
 import type { HelixUser } from '@twurple/api'
-import { eq } from 'drizzle-orm'
-import { db } from '~~/server/database'
-import { twitchTokens } from '~~/server/database/schema'
+import { botLogger } from '~~/server/utils/logger'
+import { getApiClient, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 
 /**
  * Standardizes a Twitch username by removing a leading '@' and converting to lowercase.
@@ -67,8 +66,8 @@ export async function checkIsBotMod(): Promise<boolean> {
 
 	try {
 		const [botToken, streamerToken] = await Promise.all([
-			db.select().from(twitchTokens).where(eq(twitchTokens.accountType, 'bot')).then(res => res[0]),
-			db.select().from(twitchTokens).where(eq(twitchTokens.accountType, 'streamer')).then(res => res[0]),
+			getBotToken(),
+			getStreamerToken(),
 		])
 
 		if (!botToken || !streamerToken || !botToken.userId || !streamerToken.userId) {

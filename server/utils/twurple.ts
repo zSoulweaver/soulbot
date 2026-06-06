@@ -12,6 +12,36 @@ let authProviderInstance: RefreshingAuthProvider | null = null
 let apiClientInstance: ApiClient | null = null
 let chatClientInstance: ChatClient | null = null
 
+let cachedStreamerToken: typeof twitchTokens.$inferSelect | null = null
+let cachedBotToken: typeof twitchTokens.$inferSelect | null = null
+
+export async function getStreamerToken(forceRefresh = false) {
+	if (!cachedStreamerToken || forceRefresh) {
+		cachedStreamerToken = await db
+			.select()
+			.from(twitchTokens)
+			.where(eq(twitchTokens.accountType, 'streamer'))
+			.then(res => res[0]) || null
+	}
+	return cachedStreamerToken
+}
+
+export async function getBotToken(forceRefresh = false) {
+	if (!cachedBotToken || forceRefresh) {
+		cachedBotToken = await db
+			.select()
+			.from(twitchTokens)
+			.where(eq(twitchTokens.accountType, 'bot'))
+			.then(res => res[0]) || null
+	}
+	return cachedBotToken
+}
+
+export async function getStreamerChannelName(forceRefresh = false): Promise<string | null> {
+	const token = await getStreamerToken(forceRefresh)
+	return token?.userName || null
+}
+
 export function getAuthProvider() {
 	if (authProviderInstance)
 		return authProviderInstance
@@ -33,6 +63,28 @@ export function getAuthProvider() {
 				scope: JSON.stringify(newTokenData.scope),
 			})
 			.where(eq(twitchTokens.userId, userId))
+
+		if (cachedStreamerToken && cachedStreamerToken.userId === userId) {
+			cachedStreamerToken = {
+				...cachedStreamerToken,
+				accessToken: newTokenData.accessToken,
+				refreshToken: newTokenData.refreshToken!,
+				expiresIn: newTokenData.expiresIn,
+				obtainmentTimestamp: newTokenData.obtainmentTimestamp,
+				scope: JSON.stringify(newTokenData.scope),
+			}
+		}
+		if (cachedBotToken && cachedBotToken.userId === userId) {
+			cachedBotToken = {
+				...cachedBotToken,
+				accessToken: newTokenData.accessToken,
+				refreshToken: newTokenData.refreshToken!,
+				expiresIn: newTokenData.expiresIn,
+				obtainmentTimestamp: newTokenData.obtainmentTimestamp,
+				scope: JSON.stringify(newTokenData.scope),
+			}
+		}
+
 		botLogger.info({ userId }, 'Tokens refreshed')
 	})
 
@@ -53,9 +105,11 @@ export async function initTwurple() {
 		}
 
 		if (token.accountType === 'bot') {
+			cachedBotToken = token
 			await provider.addUserForToken(tokenData, ['chat'])
 		}
 		else {
+			cachedStreamerToken = token
 			await provider.addUserForToken(tokenData)
 		}
 		botLogger.info({ accountType: token.accountType, userId: token.userId }, 'Loaded tokens')
@@ -80,9 +134,8 @@ export async function getChatClient() {
 	if (chatClientInstance)
 		return chatClientInstance
 
-	const tokens = await db.select().from(twitchTokens)
-	const botToken = tokens.find(t => t.accountType === 'bot')
-	const streamerToken = tokens.find(t => t.accountType === 'streamer')
+	const botToken = await getBotToken()
+	const streamerToken = await getStreamerToken()
 
 	if (!botToken || !streamerToken || !streamerToken.userName)
 		return null
@@ -116,8 +169,7 @@ export async function startBot() {
 	await chat.connect()
 
 	// Start EventSub WebSocket manager using streamer credentials
-	const tokens = await db.select().from(twitchTokens)
-	const streamerToken = tokens.find(t => t.accountType === 'streamer')
+	const streamerToken = await getStreamerToken()
 	if (streamerToken && streamerToken.userId) {
 		const api = getApiClient()
 		eventSubManager.start(api, streamerToken.userId).catch((err) => {
@@ -149,7 +201,7 @@ export interface UserRoleInfo {
 
 export async function getTwitchUserRole(userId: string): Promise<UserRoleInfo> {
 	const api = getApiClient()
-	const streamerToken = await db.select().from(twitchTokens).where(eq(twitchTokens.accountType, 'streamer')).then(res => res[0])
+	const streamerToken = await getStreamerToken()
 
 	const info: UserRoleInfo = {
 		role: 'viewer',
@@ -191,4 +243,9 @@ export async function getTwitchUserRole(userId: string): Promise<UserRoleInfo> {
 
 export function isBotRunning() {
 	return chatClientInstance?.isConnected ?? false
+}
+
+export function clearTwitchTokenCache() {
+	cachedStreamerToken = null
+	cachedBotToken = null
 }

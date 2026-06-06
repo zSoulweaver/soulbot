@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands, customCommands } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 const createCustomCommandSchema = z.object({
 	trigger: z.string().min(1).regex(/^[\w-]+$/, 'Trigger must be alphanumeric and cannot contain spaces or prefix characters'),

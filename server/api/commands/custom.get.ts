@@ -1,6 +1,7 @@
 import { asc } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { customCommands } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')

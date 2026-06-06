@@ -1,14 +1,9 @@
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
-import { db } from '~~/server/database'
-import { twitchTokens } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getChatClient } from '~~/server/utils/twurple'
+import { getChatClient, getStreamerChannelName } from '~~/server/utils/twurple'
 
-/**
- * Sends a raw message to the broadcaster's Twitch channel chat
- */
 async function postAlertToChat(message: string) {
 	const chat = await getChatClient()
 	if (!chat || !chat.isConnected) {
@@ -16,131 +11,103 @@ async function postAlertToChat(message: string) {
 		return
 	}
 
-	const tokens = await db.select().from(twitchTokens)
-	const streamerToken = tokens.find(t => t.accountType === 'streamer')
-	if (streamerToken && streamerToken.userName) {
-		await chat.say(streamerToken.userName, message)
+	const channelName = await getStreamerChannelName()
+	if (channelName) {
+		await chat.say(channelName, message)
 	}
 }
 
-export function registerAlertsEventSubHandlers() {
-	// Retrieve the channel name from the database once or dynamically inside the emitter
-	const getChannelName = async (): Promise<string> => {
-		const tokens = await db.select().from(twitchTokens)
-		const streamer = tokens.find(t => t.accountType === 'streamer')
-		return streamer?.userName || 'streamer'
+async function renderAndPostAlert(
+	enabled: boolean,
+	template: string | undefined,
+	eventUser: { id: string, name: string, displayName: string },
+	extraVars?: Record<string, string | number>,
+	logContext?: Record<string, any>,
+) {
+	if (!enabled || !template) {
+		return
 	}
 
-	// Follow alerts
+	// Defer alert rendering slightly to let other EventSub handlers (e.g. points module) complete their async database writes
+	await new Promise(resolve => setTimeout(resolve, 10))
+
+	const channel = (await getStreamerChannelName()) || 'streamer'
+	const ctx = createTemplateContext(channel, eventUser)
+	const rendered = await renderCustomTemplate(template, ctx, extraVars)
+	botLogger.info({ ...logContext, message: rendered }, '[EventSub Alerts] Posting alert')
+	await postAlertToChat(rendered)
+}
+
+export function registerAlertsEventSubHandlers() {
 	eventSubManager.events.on('follow', async (event) => {
 		try {
-			// Settle delay for database transactions
-			await new Promise(resolve => setTimeout(resolve, 20))
-
 			const settings = await getAppSettings()
-			if (!settings.eventsubAlertFollowEnabled || !settings.eventsubAlertFollow) {
-				return
-			}
-
-			const channel = await getChannelName()
-			const ctx = createTemplateContext(
-				channel,
+			await renderAndPostAlert(
+				settings.eventsubAlertFollowEnabled,
+				settings.eventsubAlertFollow,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
+				undefined,
+				{ user: event.userName, type: 'follow' },
 			)
-
-			const rendered = await renderCustomTemplate(settings.eventsubAlertFollow, ctx)
-			botLogger.info({ user: event.userName, message: rendered }, '[EventSub Alerts] Posting follow alert')
-			await postAlertToChat(rendered)
 		}
 		catch (err) {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle follow alert')
 		}
 	})
 
-	// Subscription alerts
 	eventSubManager.events.on('subscription', async (event) => {
 		try {
-			await new Promise(resolve => setTimeout(resolve, 20))
-
 			const settings = await getAppSettings()
-			if (!settings.eventsubAlertSubEnabled || !settings.eventsubAlertSub) {
-				return
-			}
-
-			const channel = await getChannelName()
-			const ctx = createTemplateContext(
-				channel,
+			await renderAndPostAlert(
+				settings.eventsubAlertSubEnabled,
+				settings.eventsubAlertSub,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
+				{ subTier: event.tier },
+				{ user: event.userName, type: 'subscription' },
 			)
-
-			const rendered = await renderCustomTemplate(settings.eventsubAlertSub, ctx, {
-				subTier: event.tier,
-			})
-			botLogger.info({ user: event.userName, message: rendered }, '[EventSub Alerts] Posting subscription alert')
-			await postAlertToChat(rendered)
 		}
 		catch (err) {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle subscription alert')
 		}
 	})
 
-	// Subscription Gift alerts
 	eventSubManager.events.on('subscription.gift', async (event) => {
 		try {
-			await new Promise(resolve => setTimeout(resolve, 20))
-
 			const settings = await getAppSettings()
-			if (!settings.eventsubAlertGiftEnabled || !settings.eventsubAlertGift) {
-				return
-			}
-
-			const channel = await getChannelName()
-			const ctx = createTemplateContext(
-				channel,
+			await renderAndPostAlert(
+				settings.eventsubAlertGiftEnabled,
+				settings.eventsubAlertGift,
 				{
 					id: event.gifterId || 'anonymous',
 					name: event.gifterName || 'anonymous',
 					displayName: event.gifterDisplayName || 'Anonymous',
 				},
+				{ giftCount: event.amount },
+				{ gifter: event.gifterName || 'anonymous', type: 'subscription.gift' },
 			)
-
-			const rendered = await renderCustomTemplate(settings.eventsubAlertGift, ctx, {
-				giftCount: event.amount,
-			})
-			botLogger.info({ gifter: event.gifterName || 'anonymous', message: rendered }, '[EventSub Alerts] Posting subscription gift alert')
-			await postAlertToChat(rendered)
 		}
 		catch (err) {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle sub-gift alert')
 		}
 	})
 
-	// Cheer / Bits alerts
 	eventSubManager.events.on('cheer', async (event) => {
 		try {
-			await new Promise(resolve => setTimeout(resolve, 20))
-
 			const settings = await getAppSettings()
-			if (!settings.eventsubAlertCheerEnabled || !settings.eventsubAlertCheer) {
-				return
-			}
-
-			const channel = await getChannelName()
-			const ctx = createTemplateContext(
-				channel,
+			await renderAndPostAlert(
+				settings.eventsubAlertCheerEnabled,
+				settings.eventsubAlertCheer,
 				{
 					id: event.userId || 'anonymous',
 					name: event.userName || 'anonymous',
 					displayName: event.userDisplayName || 'Anonymous',
 				},
+				{
+					bitsCount: event.bits,
+					cheerMessage: event.message,
+				},
+				{ user: event.userName || 'anonymous', bits: event.bits, type: 'cheer' },
 			)
-
-			const rendered = await renderCustomTemplate(settings.eventsubAlertCheer, ctx, {
-				bitsCount: event.bits,
-				cheerMessage: event.message,
-			})
-			botLogger.info({ user: event.userName || 'anonymous', bits: event.bits, message: rendered }, '[EventSub Alerts] Posting cheer alert')
-			await postAlertToChat(rendered)
 		}
 		catch (err) {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle cheer alert')

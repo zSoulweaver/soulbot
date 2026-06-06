@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 const saveAliasesSchema = z.object({
 	commandId: z.string().min(1),
@@ -30,7 +31,6 @@ export default defineEventHandler(async (event) => {
 
 	const { commandId, aliases } = parsed.data
 
-	// 1. Verify target command exists
 	const coreCommand = registry.getCommand(commandId)
 	if (!coreCommand) {
 		throw createError({
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
 		overrideArgs: alias.overrideArgs || null,
 	}))
 
-	// 2. Validate collisions against root command triggers & request duplicates
+	// Validate collisions against root command triggers & request duplicates
 	const seenTriggers = new Set<string>()
 
 	for (const alias of cleanAliases) {
@@ -70,7 +70,6 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 3. Batch override the database records
 	// Clear existing aliases for this command
 	await db.delete(commandAliases).where(eq(commandAliases.commandId, commandId))
 
@@ -86,7 +85,6 @@ export default defineEventHandler(async (event) => {
 		)
 	}
 
-	// 4. Reload registry dynamic maps in-memory
 	await registry.syncWithDb()
 
 	return { success: true }

@@ -46,6 +46,15 @@
   - **API Endpoints**: Add endpoint tests in `test/api/` (e.g., `test/api/points.test.ts`). Test the exported Nitro route handlers **directly and in-process** by invoking them with a mocked event object (bypassing slow E2E compile builds). Use the global mocks set up in `test/setup.ts` to manage parameters and validation bodies.
 - **Sequential Execution**: Run `pnpm test:run` sequentially to confirm all tests pass cleanly, and execute `npx nuxt typecheck` to verify complete type safety.
 
+## Backend & Bot Coding Standards
+
+- **Twitch Token Access**: Never perform raw database queries to select broadcaster or bot credentials (`twitchTokens`). Always use the cached helper functions `getStreamerToken()`, `getBotToken()`, and `getStreamerChannelName()` imported from `~~/server/utils/twurple`. If you write new tokens, call them with `true` (e.g. `getStreamerToken(true)`) to force-refresh the in-memory cache.
+- **Username Cleaning**: Always use the standard `cleanUsername(username)` helper function from `~~/server/bot/core/utils` to standardize user names (removing leading `@` and lowercasing) instead of inline `.replace(...)` or `.toLowerCase()`.
+- **Explicit Imports**: Always explicitly import route authorization helpers like `requireUserRole` from `~~/server/utils/auth` instead of relying on Nitro's virtual auto-imports. This keeps IDE indexers and offline type-checkers accurate.
+- **Minimal Code Comments**: Avoid verbose step-by-step numbering comments (e.g. `// 1. do this`, `// 2. do that`). Write self-documenting code. Keep comments focused only on explaining non-obvious architecture or complex domain rules.
+- **EventSub Parallel Writes**: If an alert handler resolves database variables (such as a user's points balance) inside its template, defer its execution slightly using a brief delay (e.g., `await new Promise(resolve => setTimeout(resolve, 10))`) to allow parallel reward/points write operations from other parallel EventSub listeners to finish settling.
+
+
 ## Unified Frontend Page & Table Layout Standards
 
 To guarantee a clean, predictability-driven, and highly professional layout across all administrative panels, all dashboard and list views MUST strictly conform to the following visual structures:

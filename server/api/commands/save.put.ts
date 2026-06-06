@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 const saveCommandSchema = z.object({
 	id: z.string().min(1),
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
 	if (cleanTrigger) {
 		if (!isSubCommand) {
-			// 1. Prevent collision with another root command's trigger
+			// Prevent collision with another root command's trigger
 			const collidingCommand = await db
 				.select()
 				.from(commands)
@@ -48,7 +49,7 @@ export default defineEventHandler(async (event) => {
 				})
 			}
 
-			// 2. Prevent collision with any existing command alias
+			// Prevent collision with any existing command alias
 			const collidingAlias = await db
 				.select()
 				.from(commandAliases)
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
 			const parentPrefix = id.substring(0, id.lastIndexOf('.'))
 			const parentParts = parentPrefix.split('.')
 
-			// A. Prevent collision with sibling subcommands defined in code (default keys)
+			// Prevent collision with sibling subcommands defined in code (default keys)
 			const firstPart = parentParts[0]
 			let currentScope: any = firstPart ? registry.getCommand(firstPart) : undefined
 			for (let i = 1; i < parentParts.length; i++) {
@@ -90,7 +91,7 @@ export default defineEventHandler(async (event) => {
 				}
 			}
 
-			// B. Prevent collision with other custom triggers of siblings in database
+			// Prevent collision with other custom triggers of siblings in database
 			const siblingCommands = await db
 				.select()
 				.from(commands)
@@ -107,7 +108,7 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 3. Update command config in database
+	// Update command config in database
 	const existingRecord = await db.select().from(commands).where(eq(commands.id, id)).then(results => results[0])
 
 	if (existingRecord) {
@@ -136,7 +137,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	// 4. Trigger in-memory re-sync of the live Twitch chat client triggers
+	// Trigger in-memory re-sync of the live Twitch chat client triggers
 	await registry.syncWithDb()
 
 	return { success: true }

@@ -5,6 +5,7 @@ import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates, settings, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
+import { clearTwitchTokenCache } from '~~/server/utils/twurple'
 import { mockSay } from './setup'
 
 /**
@@ -168,6 +169,7 @@ export async function simulateCommand(
  * Clean up database collections between tests to keep isolation high.
  */
 export async function clearDatabase() {
+	clearTwitchTokenCache()
 	await db.delete(users)
 	await db.delete(commandAliases)
 	await db.delete(commands)

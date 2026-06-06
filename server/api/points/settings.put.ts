@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveSettingsSchema = z.object({

@@ -2,9 +2,9 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
-import { excludedUsers, twitchTokens } from '~~/server/database/schema'
+import { excludedUsers } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getApiClient } from '~~/server/utils/twurple'
+import { getApiClient, getBotToken } from '~~/server/utils/twurple'
 
 const addExclusionSchema = z.object({
 	username: z.string().min(1, 'Twitch username is required'),
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Check if system bot
-	const botToken = await db.select().from(twitchTokens).where(eq(twitchTokens.accountType, 'bot')).then(res => res[0])
+	const botToken = await getBotToken()
 	if (botToken && botToken.userId === twitchUser.id) {
 		throw createError({
 			statusCode: 400,

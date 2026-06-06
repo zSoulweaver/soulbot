@@ -1,8 +1,9 @@
-import { desc, eq, like, or, sql } from 'drizzle-orm'
+import { desc, like, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
-import { excludedUsers, twitchTokens } from '~~/server/database/schema'
+import { excludedUsers } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
+import { getBotToken } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
@@ -31,11 +32,7 @@ export default defineEventHandler(async (event) => {
 		.limit(limit)
 		.offset((page - 1) * limit)
 
-	const botToken = await db
-		.select()
-		.from(twitchTokens)
-		.where(eq(twitchTokens.accountType, 'bot'))
-		.then(res => res[0])
+	const botToken = await getBotToken()
 
 	const autoExclusions = []
 	if (botToken) {

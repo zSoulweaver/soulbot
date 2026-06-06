@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, customCommands } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 const deleteCustomCommandSchema = z.object({
 	id: z.string().min(1),

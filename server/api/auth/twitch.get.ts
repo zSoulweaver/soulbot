@@ -10,10 +10,8 @@ export default defineOAuthTwitchEventHandler({
 	async onSuccess(event, { user: twitchUser }) {
 		const now = new Date()
 
-		// 1. Calculate Role
 		const roleInfo = await getTwitchUserRole(twitchUser.id)
 
-		// 2. Upsert User in DB
 		const results = await db.insert(users)
 			.values({
 				id: twitchUser.id,
@@ -48,7 +46,6 @@ export default defineOAuthTwitchEventHandler({
 			})
 		}
 
-		// 3. Set Session
 		await setUserSession(event, {
 			user: {
 				id: dbUser.id,

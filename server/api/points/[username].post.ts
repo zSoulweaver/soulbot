@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { requireUserRole } from '~~/server/utils/auth'
 import { updateUserPoints } from '../../bot/modules/points/service'
 
 const bodySchema = z.object({

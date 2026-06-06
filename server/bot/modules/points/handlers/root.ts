@@ -1,9 +1,10 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import type { PointsArgs } from '../schema'
+import { cleanUsername } from '~~/server/bot/core/utils'
 import { getUserRecord } from '~~/server/bot/services/user'
 
 export const handlePointsRoot: CommandHandler<typeof PointsArgs> = async (ctx, [target]) => {
-	const username = (target || ctx.user.name).toLowerCase().replace('@', '')
+	const username = cleanUsername(target || ctx.user.name)
 	const dbUser = await getUserRecord(username)
 
 	if (!dbUser) {

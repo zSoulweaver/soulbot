@@ -1,3 +1,4 @@
+import { requireUserRole } from '~~/server/utils/auth'
 import { initTwurple, startBot } from '../../utils/twurple'
 
 export default defineEventHandler(async (event) => {

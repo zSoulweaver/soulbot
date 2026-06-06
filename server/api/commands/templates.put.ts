@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { commandTemplates } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 const saveTemplatesSchema = z.object({
 	templates: z.array(
@@ -28,7 +29,6 @@ export default defineEventHandler(async (event) => {
 
 	const { templates } = parsed.data
 
-	// 1. Verify all template IDs exist in the template registry
 	for (const templateItem of templates) {
 		const existingDefinition = templateRegistry.get(templateItem.id)
 		if (!existingDefinition) {
@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 2. Perform sequential upserts or deletes for the template overrides
 	for (const templateItem of templates) {
 		const definition = templateRegistry.get(templateItem.id)!
 		const isDefault = templateItem.template === definition.default
@@ -75,7 +74,6 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// 3. Hot-reload templates inside the live bot execution engine
 	await templateRegistry.syncWithDb()
 
 	return { success: true }

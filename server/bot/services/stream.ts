@@ -1,8 +1,5 @@
-import { eq } from 'drizzle-orm'
-import { db } from '~~/server/database'
-import { twitchTokens } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
-import { getApiClient } from '~~/server/utils/twurple'
+import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
 
 export interface StreamInfo {
 	isOnline: boolean
@@ -16,11 +13,7 @@ export interface StreamInfo {
  */
 export async function getStreamInfo(): Promise<StreamInfo> {
 	try {
-		const streamerToken = await db
-			.select()
-			.from(twitchTokens)
-			.where(eq(twitchTokens.accountType, 'streamer'))
-			.then(res => res[0])
+		const streamerToken = await getStreamerToken()
 
 		if (!streamerToken || !streamerToken.userId) {
 			return { isOnline: false }

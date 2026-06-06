@@ -69,49 +69,41 @@ class EventSubManager {
 				throw new Error(`Unsupported Twitch EventSub transport: ${transport}`)
 			}
 
-			// 1. Follow alerts (broadcaster ID, moderator ID)
 			const followSub = this.listener.onChannelFollow(streamerUserId, streamerUserId, (e) => {
 				botLogger.info({ user: e.userName }, '[EventSub] follow received')
 				this.events.emit('follow', e)
 			})
 			this.activeSubscriptions.push(followSub)
 
-			// 2. Subscriptions
 			const subSub = this.listener.onChannelSubscription(streamerUserId, (e) => {
 				botLogger.info({ user: e.userName }, '[EventSub] subscription received')
 				this.events.emit('subscription', e)
 			})
 			this.activeSubscriptions.push(subSub)
 
-			// 3. Subscription gifts
 			const giftSub = this.listener.onChannelSubscriptionGift(streamerUserId, (e) => {
 				botLogger.info({ gifter: e.gifterName, amount: e.amount }, '[EventSub] subscription gift received')
 				this.events.emit('subscription.gift', e)
 			})
 			this.activeSubscriptions.push(giftSub)
 
-			// 4. Cheers
 			const cheerSub = this.listener.onChannelCheer(streamerUserId, (e) => {
 				botLogger.info({ user: e.userName, bits: e.bits }, '[EventSub] cheer received')
 				this.events.emit('cheer', e)
 			})
 			this.activeSubscriptions.push(cheerSub)
 
-			// 5. Stream Online
 			const onlineSub = this.listener.onStreamOnline(streamerUserId, (e) => {
 				botLogger.info('[EventSub] stream went online')
 				this.events.emit('stream.online', e)
 			})
 			this.activeSubscriptions.push(onlineSub)
 
-			// 6. Stream Offline
 			const offlineSub = this.listener.onStreamOffline(streamerUserId, (e) => {
 				botLogger.info('[EventSub] stream went offline')
 				this.events.emit('stream.offline', e)
 			})
 			this.activeSubscriptions.push(offlineSub)
-
-			// Start the listener
 			if (this.listener instanceof EventSubMiddleware) {
 				await this.listener.markAsReady()
 			}

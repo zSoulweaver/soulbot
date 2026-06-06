@@ -1,14 +1,10 @@
 import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
-import { db } from '~~/server/database'
-import { twitchTokens } from '~~/server/database/schema'
 import { getAppSettings } from '~~/server/utils/settings'
-import { isBotRunning } from '~~/server/utils/twurple'
+import { getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async () => {
-	const tokens = await db.select().from(twitchTokens)
-
-	const botToken = tokens.find(t => t.accountType === 'bot')
-	const streamerToken = tokens.find(t => t.accountType === 'streamer')
+	const botToken = await getBotToken()
+	const streamerToken = await getStreamerToken()
 
 	const appSettings = await getAppSettings()
 	const isStreamerTokenOutdated = streamerToken

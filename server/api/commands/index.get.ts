@@ -2,6 +2,7 @@ import { registry } from '~~/server/bot/core/registry'
 import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { commandAliases, commands, commandTemplates } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')

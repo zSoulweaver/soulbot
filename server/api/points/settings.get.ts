@@ -1,3 +1,4 @@
+import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
 
 export default defineEventHandler(async (event) => {

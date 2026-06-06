@@ -6,7 +6,7 @@ import { db } from '~~/server/database'
 import { settings, twitchTokens } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
-import { getApiClient, getAuthProvider } from '~~/server/utils/twurple'
+import { getApiClient, getAuthProvider, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
 	const query = getQuery(event)
@@ -101,6 +101,10 @@ export default defineEventHandler(async (event) => {
 					target: twitchTokens.accountType,
 					set: tokenPayload,
 				})
+
+			// Force refresh the token cache
+			await getStreamerToken(true)
+			await getBotToken(true)
 
 			if (type === 'streamer') {
 				await db.insert(settings)

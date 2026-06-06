@@ -2,9 +2,9 @@ import { eq } from 'drizzle-orm'
 import { botEventBus } from '~~/server/bot/core/events'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
-import { timers, twitchTokens } from '~~/server/database/schema'
+import { timers } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
-import { getChatClient } from '~~/server/utils/twurple'
+import { getChatClient, getStreamerChannelName } from '~~/server/utils/twurple'
 
 let globalMessageCount = 0
 export const lastTriggerMessageCountMap = new Map<string, number>()
@@ -30,17 +30,10 @@ export async function executeTimerCheck() {
 			return
 		}
 
-		const streamerToken = await db
-			.select()
-			.from(twitchTokens)
-			.where(eq(twitchTokens.accountType, 'streamer'))
-			.then(res => res[0])
-
-		if (!streamerToken || !streamerToken.userName) {
+		const channelName = await getStreamerChannelName()
+		if (!channelName) {
 			return
 		}
-
-		const channelName = streamerToken.userName
 
 		const streamInfo = await getStreamInfo()
 		const isOnline = streamInfo.isOnline

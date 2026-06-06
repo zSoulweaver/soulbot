@@ -10,6 +10,7 @@ import { commandsModule } from './modules/commands'
 import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { startPayoutEngine } from './modules/points/payout'
+import { startTimerEngine } from './modules/timers'
 
 let isRegistryInitialized = false
 
@@ -37,6 +38,7 @@ export function initBot() {
 	// Start the active chatter watch-time points payout engine
 	if (process.env.NODE_ENV !== 'test') {
 		startPayoutEngine()
+		startTimerEngine()
 	}
 }
 

@@ -85,3 +85,22 @@ export const counters = sqliteTable('counters', {
 	name: text('name').primaryKey(), // E.g. "deaths" or custom name
 	value: integer('value').notNull().default(0),
 })
+
+export interface TimerMessage {
+	text: string
+	enabled: boolean
+}
+
+export const timers = sqliteTable('timers', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	enabled: integer('enabled', { mode: 'boolean' }).default(true).notNull(),
+	messages: text('messages', { mode: 'json' }).$type<TimerMessage[]>().notNull(),
+	lastSentIndex: integer('last_sent_index').default(0).notNull(),
+	intervalOnline: integer('interval_online').default(10).notNull(),
+	intervalOffline: integer('interval_offline').default(30).notNull(),
+	minMessages: integer('min_messages').default(0).notNull(),
+	lastTriggeredAt: integer('last_triggered_at', { mode: 'timestamp' }),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})

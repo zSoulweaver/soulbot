@@ -5,7 +5,7 @@ import { toast } from 'vue-sonner'
 import CustomCommandEditSheet from '~/components/commands/CustomCommandEditSheet.vue'
 
 // Fetch custom commands
-const { data: customCommandsList, refresh: refreshCustomCommands, pending: loading } = await useFetch<any[]>('/api/commands/custom')
+const { data: customCommandsList, refresh: refreshCustomCommands, pending: loading } = useFetch<any[]>('/api/commands/custom')
 
 // Search & Filter state
 const searchFilter = ref('')
@@ -117,23 +117,24 @@ async function confirmDelete() {
 		</AppPageHeader>
 
 		<!-- Custom Commands Dashboard (Card-Free Design) -->
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-4">
 			<!-- Search & Count Control Row -->
 			<div
 				class="
-					flex flex-col gap-4 py-2
+					flex flex-col gap-4
 					sm:flex-row sm:items-center sm:justify-between
 				"
 			>
-				<div class="relative w-full max-w-sm">
-					<Search class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
+				<InputGroup class="w-full max-w-sm">
+					<InputGroupAddon>
+						<Search class="text-muted-foreground" />
+					</InputGroupAddon>
+					<InputGroupInput
 						v-model="searchFilter"
 						type="search"
 						placeholder="Search custom commands..."
-						class="h-9 pl-8"
 					/>
-				</div>
+				</InputGroup>
 				<div class="text-xs text-muted-foreground select-none">
 					Showing {{ filteredCustomCommands.length }} of {{ customCommandsList?.length || 0 }} custom commands
 				</div>

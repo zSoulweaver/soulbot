@@ -16,7 +16,7 @@ interface PointsSettings {
 }
 
 // Fetch active settings
-const { data: settingsData, refresh: refreshSettings, pending: loading } = await useFetch<PointsSettings>('/api/points/settings')
+const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<PointsSettings>('/api/points/settings')
 
 const form = ref<PointsSettings>({
 	currencyName: 'point',
@@ -113,7 +113,7 @@ async function saveSettings() {
 }
 
 // Next Payout live monitor state
-const { data: nextPayoutData, refresh: refreshNextPayout } = await useFetch('/api/points/next-payout')
+const { data: nextPayoutData, refresh: refreshNextPayout } = useFetch('/api/points/next-payout')
 const currentTime = ref(Date.now())
 const isPayoutNowLoading = ref(false)
 let timeIntervalId: any = null

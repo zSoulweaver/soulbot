@@ -9,7 +9,10 @@ const props = defineProps<{
 <template>
 	<Badge
 		v-if="props.cost > 0"
-		class="border-amber-500/20 bg-amber-500/10 font-semibold text-amber-500 select-none"
+		class="
+			border border-amber-200 bg-amber-50 font-semibold text-amber-600 select-none
+			dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400
+		"
 	>
 		<BadgeDollarSign class="mr-1 size-3.5" />
 		{{ props.cost }} pts

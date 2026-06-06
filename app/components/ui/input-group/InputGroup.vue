@@ -13,7 +13,7 @@ const props = defineProps<{
 		role="group"
 		:class="cn(
 			`
-				group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none
+				group/input-group relative flex w-full items-center overflow-hidden rounded-md border border-input shadow-xs transition-[color,box-shadow] outline-none
 				dark:bg-input/30
 			`,
 			`

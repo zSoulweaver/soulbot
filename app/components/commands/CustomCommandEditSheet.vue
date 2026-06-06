@@ -143,14 +143,14 @@ async function saveConfig() {
 							Trigger Word
 						</FieldLabel>
 						<InputGroup>
+							<InputGroupAddon class="bg-muted px-3">
+								!
+							</InputGroupAddon>
 							<InputGroupInput
 								id="custom-trigger"
 								v-model="triggerName"
 								placeholder="hello"
 							/>
-							<InputGroupAddon class="rounded-l-md bg-muted px-3">
-								!
-							</InputGroupAddon>
 						</InputGroup>
 						<FieldDescription>Alphanumeric trigger word typed by users (e.g. <code>!wins</code>).</FieldDescription>
 					</Field>

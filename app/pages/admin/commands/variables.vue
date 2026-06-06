@@ -9,7 +9,7 @@ interface Variable {
 	examples: { syntax: string, description: string, output?: string }[]
 }
 
-const { data: apiVariables, pending: loading } = await useFetch<Variable[]>('/api/commands/variables')
+const { data: apiVariables, pending: loading } = useFetch<Variable[]>('/api/commands/variables')
 
 // Hardcoded positional variables definition (core aspect of custom commands)
 const positionalVariable: Variable = {
@@ -88,7 +88,7 @@ function toggleRowExpanded(name: string) {
 			</span>
 		</div>
 
-		<div v-else class="flex flex-col gap-6">
+		<div v-else class="flex flex-col gap-4">
 			<!-- Pro Tip Helper alert box -->
 			<Alert variant="info">
 				<AlertTitle>
@@ -103,15 +103,16 @@ function toggleRowExpanded(name: string) {
 			</Alert>
 
 			<!-- Search & Filtration Row -->
-			<div class="relative w-full max-w-sm py-1">
-				<Search class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-				<Input
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<Search class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
 					v-model="searchQuery"
 					type="search"
 					placeholder="Search variables, aliases or behavior..."
-					class="h-9 pl-8"
 				/>
-			</div>
+			</InputGroup>
 
 			<!-- Unified Data Table of Variables -->
 			<div class="relative overflow-hidden rounded-xl border">

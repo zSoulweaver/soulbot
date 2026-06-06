@@ -7,7 +7,7 @@ interface BotStatus {
 	isBotRunning: boolean
 }
 
-const { data: status, refresh } = await useFetch<BotStatus>('/api/bot/status')
+const { data: status, refresh } = useFetch<BotStatus>('/api/bot/status')
 
 // Refresh status every 30 seconds
 useIntervalFn(() => {

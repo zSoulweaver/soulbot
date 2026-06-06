@@ -54,7 +54,6 @@
 - **Minimal Code Comments**: Avoid verbose step-by-step numbering comments (e.g. `// 1. do this`, `// 2. do that`). Write self-documenting code. Keep comments focused only on explaining non-obvious architecture or complex domain rules.
 - **EventSub Parallel Writes**: If an alert handler resolves database variables (such as a user's points balance) inside its template, defer its execution slightly using a brief delay (e.g., `await new Promise(resolve => setTimeout(resolve, 10))`) to allow parallel reward/points write operations from other parallel EventSub listeners to finish settling.
 
-
 ## Unified Frontend Page & Table Layout Standards
 
 To guarantee a clean, predictability-driven, and highly professional layout across all administrative panels, all dashboard and list views MUST strictly conform to the following visual structures:
@@ -69,8 +68,17 @@ To guarantee a clean, predictability-driven, and highly professional layout acro
 3. **Unified Table Controls**:
    - **Search Input (Left)**: The primary search input box MUST always be left-aligned directly above the table. It must follow standard sizes (`max-w-sm` or `sm:w-64`) with the search icon on the left.
    - **Entry Count / Metadata (Right)**: Summary totals (e.g. `Showing X of Y items`) MUST always be right-aligned directly above the table, styled with `text-xs text-muted-foreground select-none`.
+   - **Paginated Table Exception**: If a table uses pagination, **do not** render the top-right metadata count. The bottom-left page range summary (e.g. `Showing 1-10 of 100 users`) is sufficient. Non-paginated pages will keep the top-right count.
    - Never mix control placements or place primary action buttons in the control row.
 
 4. **Table Pagination Location**:
    - All pagination panels (`<Pagination>`) MUST reside at the **bottom** of the data grid (below the table border box), never at the top.
    - Align entry range counts (e.g. `Showing 1-10 of 100 users`) on the left, and standard Radix control buttons (First, Previous, Next, Last) on the right.
+
+5. **Table Component Selection**:
+   - Use `DataTable` (which wraps `@tanstack/vue-table` columns) for dynamic grids with interactive columns or programmatic definitions.
+   - Use the primitive `Table` sub-components (`<Table>`, `<TableHeader>`, etc.) for static lists or complex hierarchical tree structures (like core subcommands).
+
+6. **Page & Layout Spacing Guidelines**:
+   - **Major Content Blocks**: Elements under `AppPageHeader` (search input, table, pagination) should be wrapped in a `<div class="flex flex-col gap-4">` container to group the grid components cleanly.
+   - **Table Container Border & Clipping**: All tables must be enclosed in a wrapper container with borders and corner clipping: `<div class="rounded-lg border overflow-hidden">` (or `<div class="relative rounded-lg border overflow-hidden">` when loading overlay triggers are needed). This guarantees that header and row background fills are clipped nicely to the rounded border.

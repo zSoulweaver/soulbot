@@ -124,7 +124,7 @@ async function saveAllConfig() {
 	try {
 		const cleanTrigger = triggerName.value.trim().toLowerCase().replace(/^!/, '') || null
 
-		// 1. Update primary command DB config
+		// Update primary command DB config
 		await $fetch('/api/commands/save', {
 			method: 'PUT',
 			body: {
@@ -138,7 +138,7 @@ async function saveAllConfig() {
 			},
 		})
 
-		// 2. Overwrite aliases list (only for root commands)
+		// Overwrite aliases list (only for root commands)
 		if (!isSubCommand.value) {
 			await $fetch('/api/commands/aliases', {
 				method: 'PUT',
@@ -247,14 +247,14 @@ function navigateToTemplateEditor() {
 							Active Trigger Word
 						</FieldLabel>
 						<InputGroup>
+							<InputGroupAddon class="bg-muted px-3">
+								{{ props?.command?.parentTriggerPath || '!' }}
+							</InputGroupAddon>
 							<InputGroupInput
 								id="active-trigger"
 								v-model="triggerName"
 								placeholder="trigger"
 							/>
-							<InputGroupAddon class="bg-muted px-3">
-								{{ props?.command?.parentTriggerPath || '!' }}
-							</InputGroupAddon>
 						</InputGroup>
 						<FieldDescription>Keep blank to use default command value.</FieldDescription>
 					</Field>
@@ -291,15 +291,15 @@ function navigateToTemplateEditor() {
 											Trigger Word
 										</FieldLabel>
 										<InputGroup>
+											<InputGroupAddon class="bg-muted px-3">
+												!
+											</InputGroupAddon>
 											<InputGroupInput
 												id="alias-trigger"
 												v-model="newAliasTrigger"
 												placeholder="command"
 												class="w-full"
 											/>
-											<InputGroupAddon class="bg-muted px-3">
-												!
-											</InputGroupAddon>
 										</InputGroup>
 									</Field>
 

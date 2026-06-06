@@ -6,7 +6,7 @@ definePageMeta({
 	layout: 'blank',
 })
 
-const { data: status, refresh } = await useFetch('/api/bot/status')
+const { data: status, refresh } = useFetch('/api/bot/status')
 
 const isComplete = computed(() => status.value?.bot && status.value?.streamer)
 const isLoading = ref(false)

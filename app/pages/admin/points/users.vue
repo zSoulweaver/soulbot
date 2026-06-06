@@ -94,39 +94,27 @@ const columns: any[] = [
 	<AppPageContainer>
 		<AppPageHeader heading="Points Balances" subheading="Manage user points and view the points database." />
 
-		<div class="flex flex-col gap-2">
-			<!-- Search & Count Control Row -->
-			<div
-				class="
-					flex flex-col gap-4 py-2
-					sm:flex-row sm:items-center sm:justify-between
-				"
-			>
-				<div class="relative w-full max-w-sm">
-					<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						v-model="searchQuery"
-						type="search"
-						placeholder="Search username..."
-						class="h-9 pl-8"
-					/>
-				</div>
+		<div class="flex flex-col gap-4">
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<SearchIcon class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search username..."
+				/>
+			</InputGroup>
 
-				<div class="text-xs text-muted-foreground select-none">
-					Showing {{ paginatedUsers.length }} of {{ totalUsers }} users
-				</div>
-			</div>
-
-			<!-- Table container -->
-			<div class="relative min-h-50">
+			<div class="relative">
 				<DataTable
 					v-if="paginatedUsers.length > 0"
 					:columns="columns"
 					:data="paginatedUsers"
 				/>
-				<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
+				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
 					<Loader2 class="size-6 animate-spin text-primary" />
-					<span class="text-sm text-muted-foreground">Loading users...</span>
+					<span>Loading users...</span>
 				</div>
 				<div v-else class="flex flex-col items-center justify-center gap-3 rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground select-none">
 					<span>No users found matching your search.</span>

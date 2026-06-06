@@ -5,7 +5,7 @@ const { user } = useUserSession()
 const isCaster = computed(() => user.value?.role === 'caster')
 
 // Fetch status only if the user is a caster
-const { data: status } = await useFetch<BotStatusResponse>('/api/bot/status', {
+const { data: status } = useFetch<BotStatusResponse>('/api/bot/status', {
 	immediate: isCaster.value,
 })
 

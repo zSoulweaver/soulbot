@@ -5,7 +5,7 @@ import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
 
-const { data: commandsList, refresh: refreshCommands, pending: loading } = await useFetch<Command[]>('/api/commands')
+const { data: commandsList, refresh: refreshCommands, pending: loading } = useFetch<Command[]>('/api/commands')
 
 // Expandable subcommands state mapping
 const expandedCommands = ref<Record<string, boolean>>({})
@@ -134,23 +134,24 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 		</AppPageHeader>
 
 		<!-- Command Controls and Dashboard Table (Card-Free Design) -->
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-4">
 			<!-- Search & Count Control Row -->
 			<div
 				class="
-					flex flex-col gap-4 py-2
+					flex flex-col gap-4
 					sm:flex-row sm:items-center sm:justify-between
 				"
 			>
-				<div class="relative w-full max-w-sm">
-					<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
+				<InputGroup class="w-full max-w-sm">
+					<InputGroupAddon>
+						<SearchIcon class="text-muted-foreground" />
+					</InputGroupAddon>
+					<InputGroupInput
 						v-model="searchQuery"
 						type="search"
 						placeholder="Search trigger or description..."
-						class="h-9 pl-8"
 					/>
-				</div>
+				</InputGroup>
 
 				<div class="text-xs text-muted-foreground select-none">
 					Showing {{ filteredCommands.length }} of {{ commandsList?.length || 0 }} core commands

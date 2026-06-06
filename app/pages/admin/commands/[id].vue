@@ -10,7 +10,7 @@ import { toast } from 'vue-sonner'
 import TemplateEditorCard from '~/components/commands/TemplateEditorCard.vue'
 
 const route = useRoute()
-const { data: commands, refresh: refreshCommands, pending: loading } = await useFetch<Command[]>('/api/commands')
+const { data: commands, refresh: refreshCommands, pending: loading } = useFetch<Command[]>('/api/commands')
 
 const command = computed(() => {
 	if (!commands.value)

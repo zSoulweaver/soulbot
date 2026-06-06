@@ -8,18 +8,18 @@ const props = defineProps<{
 function getPermissionBadgeClass(permission: string) {
 	const perm = permission.toLowerCase()
 	if (perm === 'caster' || perm === 'broadcaster') {
-		return 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+		return 'text-rose-600 bg-rose-50 border border-rose-200 dark:text-rose-400 dark:bg-rose-500/10 dark:border-rose-500/20'
 	}
 	if (perm === 'moderator' || perm === 'mod') {
-		return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+		return 'text-indigo-600 bg-indigo-50 border border-indigo-200 dark:text-indigo-400 dark:bg-indigo-500/10 dark:border-indigo-500/20'
 	}
 	if (perm === 'vip') {
-		return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+		return 'text-amber-600 bg-amber-50 border border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20'
 	}
 	if (perm === 'subscriber' || perm === 'sub') {
-		return 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+		return 'text-sky-600 bg-sky-50 border border-sky-200 dark:text-sky-400 dark:bg-sky-500/10 dark:border-sky-500/20'
 	}
-	return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+	return 'text-emerald-600 bg-emerald-50 border border-emerald-200 dark:text-emerald-400 dark:bg-emerald-500/10 dark:border-emerald-500/20'
 }
 </script>
 

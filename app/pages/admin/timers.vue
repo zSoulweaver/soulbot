@@ -201,7 +201,7 @@ const columns: any[] = [
 			</div>
 		</AppPageHeader>
 
-		<div class="flex flex-col gap-2">
+		<div class="flex flex-col gap-4">
 			<!-- Search & Count Control Row -->
 			<InputGroup class="w-full max-w-sm">
 				<InputGroupAddon>

@@ -2,7 +2,7 @@
 
 ## General Instructions
 
-- After completing any tasks that involved editing any files in the `app` or `server` directories, run `npx nuxt typecheck` to ensure there are no type errors. If everything is succeeds and you are finished with your task, ensure `pnpm run lint:fix` is run to fix any issues and ensure you manually fix any issues that eslint is unable to autofix. Rerun the typecheck and eslint again until no issues are present, do not get stuck in a loop and running of these commands.
+- After completing any non-plan tasks that involved editing any files in the `app` or `server` directories, run `npx nuxt typecheck && pnpm run lint:fix` to ensure there are no type errors and lint errors. Ensure you manually fix any issues that eslint is unable to autofix and resolve any type errors. Rerun the typecheck and eslint again until no issues are present, do not get stuck in a loop and running of these commands.
 
 ## TypeScript & API Type Sharing Guidelines
 

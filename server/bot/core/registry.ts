@@ -10,9 +10,15 @@ class CommandRegistry {
 	private dbConfigs = new Map<string, typeof commands.$inferSelect>()
 	private subcommandTriggers = new Map<string, string>()
 
-	register(def: CommandDefinition) {
-		this.commands.set(def.id, def)
-		botLogger.info('[Bot] Registering %s module', def.id)
+	register(definition: CommandDefinition | CommandDefinition[]) {
+		if (Array.isArray(definition)) {
+			for (const def of definition) {
+				this.register(def)
+			}
+			return
+		}
+		this.commands.set(definition.id, definition)
+		botLogger.info('[Bot] Registering %s module', definition.id)
 	}
 
 	async syncWithDb() {

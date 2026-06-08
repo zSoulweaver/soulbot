@@ -1,11 +1,13 @@
+import type { StreamInfo } from '~~/server/bot/services/stream'
+
 import process from 'node:process'
 import { createError, defineEventHandler } from 'h3'
 import { beforeAll, beforeEach, vi } from 'vitest'
 import { initBot, registry, templateRegistry } from '~~/server/bot'
-import { requireUserRole } from '~~/server/utils/auth'
 
-// eslint-disable-next-line import/newline-after-import
-;(globalThis as any).defineEventHandler = defineEventHandler
+import { requireUserRole } from '~~/server/utils/auth';
+
+(globalThis as any).defineEventHandler = defineEventHandler
 ;(globalThis as any).createError = createError
 ;(globalThis as any).getQuery = vi.fn()
 ;(globalThis as any).sendRedirect = vi.fn()
@@ -65,9 +67,17 @@ export const mockApiClient = {
 				}))
 		}),
 	},
+	channels: {
+		getChannelFollowers: vi.fn(async (_broadcasterId: string, _userId: string): Promise<{ data: any[], total: number }> => {
+			return {
+				data: [],
+				total: 0,
+			}
+		}),
+	},
 }
 
-export const mockGetStreamInfo = vi.fn(async () => ({ isOnline: false }))
+export const mockGetStreamInfo = vi.fn(async (): Promise<StreamInfo> => ({ isOnline: false }))
 
 vi.mock('~~/server/bot/services/stream', () => ({
 	getStreamInfo: () => mockGetStreamInfo(),

@@ -81,7 +81,7 @@ const columns: any[] = [
 				variant: 'outline',
 				size: 'sm',
 				onClick: () => openAdjustSheet(info.row.original),
-			}, [
+			}, () => [
 				h(PencilIcon),
 				'Adjust Points',
 			]),

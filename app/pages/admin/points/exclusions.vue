@@ -76,7 +76,7 @@ const columns: any[] = [
 				size: 'sm',
 				disabled: isDeleting.value === info.row.original.id,
 				onClick: () => removeExclusion(info.row.original.id),
-			}, [
+			}, () => [
 				isDeleting.value === info.row.original.id
 					? h(Loader2, { 'class': 'animate-spin', 'data-icon': 'inline-start' })
 					: h(TrashIcon, { 'data-icon': 'inline-start' }),

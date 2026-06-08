@@ -166,7 +166,7 @@ const columns: any[] = [
 					size: 'sm',
 					variant: 'outline',
 					onClick: () => openEditSheet(timer),
-				}, [
+				}, () => [
 					h(Settings),
 					'Config',
 				]),
@@ -174,7 +174,7 @@ const columns: any[] = [
 					size: 'sm',
 					variant: 'ghostDestructive',
 					onClick: () => deleteTimer(timer),
-				}, [
+				}, () => [
 					h(Trash2),
 					'Remove',
 				]),

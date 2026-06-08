@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<PrimitiveProps & {
 		:as="as"
 		:as-child="asChild"
 		:data-size="size"
-		:data-active="isActive ? '' : undefined"
+		:data-active="isActive"
 		:class="cn(
 			`
 				flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden

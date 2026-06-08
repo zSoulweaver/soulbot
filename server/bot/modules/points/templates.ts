@@ -39,6 +39,30 @@ export const definitions = {
 		default: 'The leaderboard is currently empty.',
 		params: undefined,
 	},
+	'points.gambling.win': {
+		default: '$(sender) rolled a $(roll) and won $(winAmount) $(core.currency)! They went from $(oldAmount) to $(newAmount) $(core.currency).',
+		params: { sender: '', roll: 0, winAmount: 0, oldAmount: 0, newAmount: 0 } as { sender: string, roll: number, winAmount: number, oldAmount: number, newAmount: number },
+	},
+	'points.gambling.lose': {
+		default: '$(sender) rolled a $(roll) and lost $(betAmount) $(core.currency). They went from $(oldAmount) to $(newAmount) $(core.currency).',
+		params: { sender: '', roll: 0, betAmount: 0, oldAmount: 0, newAmount: 0 } as { sender: string, roll: number, betAmount: number, oldAmount: number, newAmount: number },
+	},
+	'points.gambling.min-bet': {
+		default: 'The minimum amount to gamble is $(minBet) $(core.currency).',
+		params: { minBet: 0 } as { minBet: number },
+	},
+	'points.gambling.max-bet': {
+		default: 'The maximum amount to gamble is $(maxBet) $(core.currency).',
+		params: { maxBet: 0 } as { maxBet: number },
+	},
+	'points.gambling.not-enough-points': {
+		default: 'You only have $(current) $(core.currency) (bet: $(bet)).',
+		params: { current: 0, bet: 0 } as { current: number, bet: number },
+	},
+	'points.gambling.invalid-amount': {
+		default: 'Invalid gamble amount. Please use !gamble <amount|all|half>',
+		params: undefined,
+	},
 } as const satisfies TemplateSourceMap
 
 export function registerPointsTemplates() {

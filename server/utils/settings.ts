@@ -27,6 +27,10 @@ export interface AppSettings {
 	eventsubPointsSub: number
 	eventsubPointsGift: number
 	eventsubPointsCheer: number
+	pointsGamblingMinBet: number
+	pointsGamblingMaxBet: number
+	pointsGamblingWinMinRoll: number
+	pointsGamblingWinMultiplier: number
 }
 
 let cachedSettings: AppSettings | null = null
@@ -65,6 +69,10 @@ export function getAppSettingsSync(): AppSettings {
 			eventsubPointsSub: 500,
 			eventsubPointsGift: 500,
 			eventsubPointsCheer: 1,
+			pointsGamblingMinBet: 5,
+			pointsGamblingMaxBet: 100000,
+			pointsGamblingWinMinRoll: 50,
+			pointsGamblingWinMultiplier: 1.0,
 		}
 	}
 	return cachedSettings
@@ -100,6 +108,10 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			eventsubPointsSub: Math.max(0, Number(getVal('eventsub.points.sub', '500'))),
 			eventsubPointsGift: Math.max(0, Number(getVal('eventsub.points.gift', '500'))),
 			eventsubPointsCheer: Math.max(0, Number(getVal('eventsub.points.cheer', '1'))),
+			pointsGamblingMinBet: Math.max(1, Number(getVal('points.gambling_min_bet', '10'))),
+			pointsGamblingMaxBet: Math.max(1, Number(getVal('points.gambling_max_bet', '100000'))),
+			pointsGamblingWinMinRoll: Math.max(1, Math.min(100, Number(getVal('points.gambling_win_min_roll', '50')))),
+			pointsGamblingWinMultiplier: Math.max(0.1, Number(getVal('points.gambling_win_multiplier', '1.0'))),
 		}
 	}
 	catch (err) {

@@ -128,3 +128,35 @@ beforeEach(() => {
 	// Reset the spy so assertions start fresh in every single test case
 	mockSay.mockClear()
 })
+
+let mockSpotifyToken: any
+let mockCurrentlyPlaying: any
+
+;(globalThis as any).__setMockSpotifyToken__ = (val: any) => {
+	mockSpotifyToken = val
+}
+;(globalThis as any).__setMockCurrentlyPlaying__ = (val: any) => {
+	mockCurrentlyPlaying = val
+}
+
+vi.mock('~~/server/utils/spotify', async (importOriginal) => {
+	const original = await importOriginal<typeof import('~~/server/utils/spotify')>()
+	return {
+		...original,
+		getSpotifyToken: vi.fn(async (forceRefresh?: boolean) => {
+			if (mockSpotifyToken !== undefined) {
+				return mockSpotifyToken
+			}
+			return original.getSpotifyToken(forceRefresh)
+		}),
+		getCurrentlyPlaying: vi.fn(async () => {
+			if (mockCurrentlyPlaying !== undefined) {
+				return mockCurrentlyPlaying
+			}
+			return original.getCurrentlyPlaying()
+		}),
+		clearSpotifyTokenCache: vi.fn(() => {
+			return original.clearSpotifyTokenCache()
+		}),
+	}
+})

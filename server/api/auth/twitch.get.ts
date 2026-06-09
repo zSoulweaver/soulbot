@@ -5,7 +5,7 @@ import { getTwitchUserRole } from '~~/server/utils/twurple'
 export default defineOAuthTwitchEventHandler({
 	config: {
 		scope: ['user:read:email'],
-		redirectURL: 'http://localhost:3000/api/auth/twitch',
+		redirectURL: useRuntimeConfig().twitchRedirectUri,
 	},
 	async onSuccess(event, { user: twitchUser }) {
 		const now = new Date()

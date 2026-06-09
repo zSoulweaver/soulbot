@@ -12,7 +12,7 @@ const props = defineProps<{
 		data-slot="field-description"
 		:class="cn(
 			`
-				text-sm/normal font-normal text-muted-foreground
+				text-xs/normal font-normal text-muted-foreground
 				group-has-data-[orientation=horizontal]/field:text-balance
 			`,
 			`

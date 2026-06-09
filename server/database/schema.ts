@@ -13,6 +13,15 @@ export const twitchTokens = sqliteTable('twitch_tokens', {
 	scope: text('scope').notNull(), // Store as JSON stringified array or comma separated
 })
 
+export const spotifyTokens = sqliteTable('spotify_tokens', {
+	id: text('id').primaryKey(), // 'streamer'
+	accessToken: text('access_token').notNull(),
+	refreshToken: text('refresh_token').notNull(),
+	expiresIn: integer('expires_in'),
+	obtainmentTimestamp: integer('obtainment_timestamp').notNull(),
+	scope: text('scope').notNull(),
+})
+
 export const commands = sqliteTable('commands', {
 	id: text('id').primaryKey(), // internal code handler ID
 	trigger: text('trigger').unique(), // current trigger word

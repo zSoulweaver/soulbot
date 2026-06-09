@@ -11,6 +11,7 @@ import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
 import { startPayoutEngine } from './modules/points/payout'
+import { spotifyModule } from './modules/spotify'
 import { startTimerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
 
@@ -24,6 +25,7 @@ export function initRegistry() {
 	registry.register(gambleModule)
 	registry.register(commandsModule)
 	registry.register(twitchModule)
+	registry.register(spotifyModule)
 	isRegistryInitialized = true
 }
 

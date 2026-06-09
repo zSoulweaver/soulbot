@@ -6,6 +6,11 @@ export default defineNuxtConfig({
 	compatibilityDate: '2025-07-15',
 	devtools: { enabled: true },
 
+	devServer: {
+		host: '127.0.0.1',
+		https: true,
+	},
+
 	vite: {
 		plugins: process.env.NODE_ENV === 'test'
 			? []
@@ -43,6 +48,9 @@ export default defineNuxtConfig({
 		botTwitchRedirectUri: process.env.BOT_TWITCH_REDIRECT_URI,
 		streamerChannel: process.env.STREAMER_CHANNEL,
 		enableBot: process.env.ENABLE_BOT === 'true',
+		spotifyClientId: process.env.SPOTIFY_CLIENT_ID,
+		spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+		spotifyRedirectUri: process.env.SPOTIFY_REDIRECT_URI,
 		twitchEventSubTransport: process.env.TWITCH_EVENTSUB_TRANSPORT || 'ws',
 		twitchEventSubSecret: process.env.TWITCH_EVENTSUB_SECRET || 'default-fixed-secret-change-me',
 		twitchEventSubHost: process.env.TWITCH_EVENTSUB_HOST,

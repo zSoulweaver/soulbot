@@ -54,6 +54,7 @@ export const navigation: NavGroup[] = [
 				],
 			},
 			{ title: 'Timers', url: '/admin/timers', icon: Timer, roles: ['caster'] },
+			{ title: 'Spotify', url: '/admin/spotify', icon: Music, roles: ['caster'] },
 			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
 			{
 				title: 'Points',

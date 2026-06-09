@@ -30,7 +30,7 @@ function toggleTheme() {
 	<ClientOnly>
 		<Button
 			size="icon"
-			variant="outline"
+			variant="ghost"
 			class="transition-transform"
 			@click="toggleTheme"
 		>

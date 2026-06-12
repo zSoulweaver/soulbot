@@ -31,6 +31,20 @@ export interface AppSettings {
 	pointsGamblingMaxBet: number
 	pointsGamblingWinMinRoll: number
 	pointsGamblingWinMultiplier: number
+	spotifySongRequestEnabled: boolean
+	spotifySongRequestPointsCost: number
+	spotifySongRequestMaxLength: number
+	spotifySongRequestMaxQueue: number
+	spotifySongRequestMaxUserRequests: number
+	spotifySongRequestModsBypassLimits: boolean
+	spotifySongRequestFollowersOnly: boolean
+	spotifySongRequestPermitExplicit: boolean
+	spotifySongRequestOfflineOverride: boolean
+	spotifyPlaylistTargetId: string
+	spotifyPlaylistTargetName: string
+	spotifyPlaylistAllowMods: boolean
+	spotifyPlaylistWhisper: boolean
+	spotifyRequestPlaylistId: string
 }
 
 let cachedSettings: AppSettings | null = null
@@ -73,6 +87,20 @@ export function getAppSettingsSync(): AppSettings {
 			pointsGamblingMaxBet: 100000,
 			pointsGamblingWinMinRoll: 50,
 			pointsGamblingWinMultiplier: 1.0,
+			spotifySongRequestEnabled: true,
+			spotifySongRequestPointsCost: 10,
+			spotifySongRequestMaxLength: 8,
+			spotifySongRequestMaxQueue: 50,
+			spotifySongRequestMaxUserRequests: 0,
+			spotifySongRequestModsBypassLimits: true,
+			spotifySongRequestFollowersOnly: false,
+			spotifySongRequestPermitExplicit: true,
+			spotifySongRequestOfflineOverride: false,
+			spotifyPlaylistTargetId: '',
+			spotifyPlaylistTargetName: '',
+			spotifyPlaylistAllowMods: true,
+			spotifyPlaylistWhisper: false,
+			spotifyRequestPlaylistId: '',
 		}
 	}
 	return cachedSettings
@@ -112,6 +140,20 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			pointsGamblingMaxBet: Math.max(1, Number(getVal('points.gambling_max_bet', '100000'))),
 			pointsGamblingWinMinRoll: Math.max(1, Math.min(100, Number(getVal('points.gambling_win_min_roll', '50')))),
 			pointsGamblingWinMultiplier: Math.max(0.1, Number(getVal('points.gambling_win_multiplier', '1.0'))),
+			spotifySongRequestEnabled: getVal('spotify.sr.enabled', 'true') === 'true',
+			spotifySongRequestPointsCost: Math.max(0, Number(getVal('spotify.sr.points_cost', '10'))),
+			spotifySongRequestMaxLength: Math.max(0, Number(getVal('spotify.sr.max_length', '8'))),
+			spotifySongRequestMaxQueue: Math.max(0, Number(getVal('spotify.sr.max_queue', '50'))),
+			spotifySongRequestMaxUserRequests: Math.max(0, Number(getVal('spotify.sr.max_user_requests', '0'))),
+			spotifySongRequestModsBypassLimits: getVal('spotify.sr.mods_bypass_limits', 'true') === 'true',
+			spotifySongRequestFollowersOnly: getVal('spotify.sr.followers_only', 'false') === 'true',
+			spotifySongRequestPermitExplicit: getVal('spotify.sr.permit_explicit', 'true') === 'true',
+			spotifySongRequestOfflineOverride: getVal('spotify.sr.offline_override', 'false') === 'true',
+			spotifyPlaylistTargetId: getVal('spotify.playlist.target_id', ''),
+			spotifyPlaylistTargetName: getVal('spotify.playlist.target_name', ''),
+			spotifyPlaylistAllowMods: getVal('spotify.playlist.allow_mods', 'true') === 'true',
+			spotifyPlaylistWhisper: getVal('spotify.playlist.whisper', 'false') === 'true',
+			spotifyRequestPlaylistId: getVal('spotify.request.playlist_id', ''),
 		}
 	}
 	catch (err) {

@@ -1,0 +1,6 @@
+export { default as SettingsGroup } from './SettingsGroup.vue'
+export { default as SettingsGroupAction } from './SettingsGroupAction.vue'
+export { default as SettingsGroupContent } from './SettingsGroupContent.vue'
+export { default as SettingsGroupDescription } from './SettingsGroupDescription.vue'
+export { default as SettingsGroupItem } from './SettingsGroupItem.vue'
+export { default as SettingsGroupLabel } from './SettingsGroupLabel.vue'

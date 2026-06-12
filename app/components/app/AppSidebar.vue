@@ -9,7 +9,12 @@ const filteredNavigation = computed(() => {
 	const userRole = user.value?.role || 'viewer'
 	return navigation.map(group => ({
 		...group,
-		items: group.items.filter(item => !item.roles || item.roles.includes(userRole)),
+		items: group.items
+			.filter(item => !item.roles || item.roles.includes(userRole))
+			.map(item => ({
+				...item,
+				items: item.items ? item.items.filter(subItem => !subItem.roles || subItem.roles.includes(userRole)) : undefined,
+			})),
 	})).filter(group => group.items.length > 0)
 })
 </script>

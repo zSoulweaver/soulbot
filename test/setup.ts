@@ -21,8 +21,11 @@ import { requireUserRole } from '~~/server/utils/auth';
 })
 
 ;(globalThis as any).getRouterParam = vi.fn((event, paramName) => {
+	if (event?.context?.params?.[paramName] !== undefined) {
+		return event.context.params[paramName]
+	}
 	if (paramName === 'username') {
-		return event?.context?.params?.username || (globalThis as any).__mockUsername__
+		return (globalThis as any).__mockUsername__
 	}
 	return undefined
 })

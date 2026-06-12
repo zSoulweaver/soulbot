@@ -16,7 +16,29 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
  */
 export async function requireUserRole(event: H3Event, minRole?: UserRole) {
 	if (process.env.NODE_ENV === 'test') {
-		return { id: 'mock-user', role: 'caster' } as any
+		try {
+			const session = await getUserSession(event)
+			if (session?.user) {
+				const user = session.user
+				if (minRole) {
+					const userWeight = ROLE_HIERARCHY[user.role] ?? 0
+					const requiredWeight = ROLE_HIERARCHY[minRole] ?? 0
+
+					if (userWeight < requiredWeight) {
+						throw createError({
+							statusCode: 403,
+							statusMessage: `Forbidden: Minimum role of "${minRole}" is required.`,
+						})
+					}
+				}
+				return user
+			}
+		}
+		catch (err: any) {
+			if (err?.statusCode === 403)
+				throw err
+		}
+		return { id: 'mock-user', username: 'mock-user', displayName: 'MockUser', role: 'caster' } as any
 	}
 
 	const session = await getUserSession(event)

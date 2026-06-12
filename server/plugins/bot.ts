@@ -1,10 +1,12 @@
 import { initRegistry, registry, templateRegistry } from '~~/server/bot'
+import { startSpotifyQueueEngine } from '~~/server/bot/modules/spotify/queue-engine'
 
 export default defineNitroPlugin(() => {
 	const config = useRuntimeConfig()
 
 	// Always initialize registry in memory and sync with SQLite so the Web UI always has command definitions loaded
 	initRegistry()
+	startSpotifyQueueEngine()
 	Promise.resolve().then(async () => {
 		try {
 			await Promise.all([

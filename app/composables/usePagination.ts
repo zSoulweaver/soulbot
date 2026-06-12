@@ -7,9 +7,13 @@ export interface PaginationOptions {
 	defaultParams?: Record<string, any>
 	watchParams?: any[]
 	debounceMs?: number
+	immediate?: boolean
 }
 
-export function usePagination<T>(apiRoute: string, options: PaginationOptions = {}) {
+export function usePagination<T>(
+	apiRoute: string | (() => string | null | undefined),
+	options: PaginationOptions = {},
+) {
 	const page = ref(options.initialPage || 1)
 	const limit = ref(options.initialLimit || 10)
 	const search = ref('')
@@ -30,9 +34,10 @@ export function usePagination<T>(apiRoute: string, options: PaginationOptions = 
 		page.value = 1
 	})
 
-	const { data, refresh, pending: loading } = useFetch<T>(apiRoute, {
+	const { data, refresh, pending: loading } = useFetch<T>(apiRoute as any, {
 		query: queryParams,
 		watch: options.watchParams ? [queryParams, ...options.watchParams] : [queryParams],
+		immediate: options.immediate,
 	})
 
 	return {

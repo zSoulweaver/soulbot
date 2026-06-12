@@ -108,6 +108,8 @@ export default defineEventHandler(async (event) => {
 		'user-read-currently-playing',
 		'user-read-playback-state',
 		'user-modify-playback-state',
+		'playlist-modify-private',
+		'playlist-modify-public',
 	]
 
 	const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(config.spotifyRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}&state=${csrfToken}`

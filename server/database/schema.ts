@@ -113,3 +113,38 @@ export const timers = sqliteTable('timers', {
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+export const spotifyQueue = sqliteTable('spotify_queue', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	trackId: text('track_id').notNull(),
+	title: text('title').notNull(),
+	artist: text('artist').notNull(),
+	durationMs: integer('duration_ms').notNull(),
+	albumArt: text('album_art'),
+	requestedBy: text('requested_by').notNull(),
+	pointsCost: integer('points_cost').notNull().default(0),
+	playedAt: integer('played_at'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	status: text('status').$type<'pending' | 'queued' | 'playing' | 'played' | 'removed'>().default('pending').notNull(),
+})
+
+export const spotifyPlaylistCache = sqliteTable('spotify_playlist_cache', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	playlistId: text('playlist_id').notNull(),
+	trackId: text('track_id').notNull(),
+	uri: text('uri').notNull(),
+	title: text('title').notNull(),
+	artist: text('artist').notNull(),
+	durationMs: integer('duration_ms').notNull(),
+	albumArt: text('album_art'),
+})
+
+export const spotifyBlacklist = sqliteTable('spotify_blacklist', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	trackId: text('track_id').notNull().unique(),
+	title: text('title').notNull(),
+	artist: text('artist').notNull(),
+	albumArt: text('album_art'),
+	addedBy: text('added_by').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})

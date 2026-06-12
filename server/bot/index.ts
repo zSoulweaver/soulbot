@@ -1,6 +1,6 @@
 import process from 'node:process'
 import { botLogger } from '~~/server/utils/logger'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
+import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
@@ -12,6 +12,7 @@ import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
 import { startPayoutEngine } from './modules/points/payout'
 import { spotifyModule } from './modules/spotify'
+import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
 
@@ -37,7 +38,13 @@ export function initBot() {
 	registerAlertsEventSubHandlers()
 
 	// Warm up settings cache asynchronously
-	refreshAppSettingsCache().catch((err) => {
+	refreshAppSettingsCache().then(async () => {
+		const appSettings = getAppSettingsSync()
+		if (appSettings.spotifyPlaylistTargetId) {
+			const { loadTargetPlaylistCache } = await import('~~/server/utils/spotify')
+			await loadTargetPlaylistCache(appSettings.spotifyPlaylistTargetId)
+		}
+	}).catch((err) => {
 		botLogger.error({ err }, 'Failed to warm up settings cache on initBot')
 	})
 
@@ -45,6 +52,7 @@ export function initBot() {
 	if (process.env.NODE_ENV !== 'test') {
 		startPayoutEngine()
 		startTimerEngine()
+		startSpotifyQueueEngine()
 	}
 }
 

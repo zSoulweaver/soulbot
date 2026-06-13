@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SaveIcon } from 'lucide-vue-next'
+import { SaveIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'

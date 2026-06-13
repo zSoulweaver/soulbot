@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Music, PlusIcon, RefreshCcw, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Music, PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { computed, h, ref, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import {
@@ -145,9 +145,12 @@ const columns: any[] = [
 			heading="Spotify Blacklist"
 			subheading="Prevent specific tracks from being requested via chat commands or the queue page."
 		>
-			<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddDialogOpen = true">
+			<Button @click="isAddDialogOpen = true">
 				<PlusIcon data-icon="inline-start" />
 				Add to Blacklist
+			</Button>
+			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
+				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 			</Button>
 		</AppPageHeader>
 

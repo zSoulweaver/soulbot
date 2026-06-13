@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CurrentlyPlayingTrack } from '~/types/spotify'
-import { Link2, Radio } from 'lucide-vue-next'
+import { Link2, Radio } from '@lucide/vue'
 import { computed } from 'vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -115,11 +115,20 @@ function formatTime(ms: number) {
 
 			<!-- Playback Progress Bar -->
 			<div v-if="props.currentlyPlaying" class="space-y-2">
-				<Progress :model-value="progressPercent" class="h-1" />
-				<div class="flex justify-between text-xs text-muted-foreground select-none">
-					<span>{{ formatTime(props.activeProgressMs) }}</span>
-					<span>{{ formatTime(props.currentlyPlaying.durationMs || 0) }}</span>
-				</div>
+				<ClientOnly>
+					<Progress :model-value="progressPercent" class="h-1" />
+					<div class="flex justify-between text-xs text-muted-foreground select-none">
+						<span>{{ formatTime(props.activeProgressMs) }}</span>
+						<span>{{ formatTime(props.currentlyPlaying.durationMs || 0) }}</span>
+					</div>
+					<template #fallback>
+						<Progress :model-value="0" class="h-1" />
+						<div class="flex justify-between text-xs text-muted-foreground select-none">
+							<span>0:00</span>
+							<span>{{ formatTime(props.currentlyPlaying.durationMs || 0) }}</span>
+						</div>
+					</template>
+				</ClientOnly>
 			</div>
 
 			<!-- Custom Controls Slot -->

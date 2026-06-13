@@ -1,17 +1,10 @@
 <script setup lang="ts">
+import { MoonIcon, SunIcon } from '@lucide/vue'
 import { useColorMode } from '@vueuse/core'
-import { MoonIcon, SunIcon } from 'lucide-vue-next'
 import { ref } from 'vue'
 
 const mode = useColorMode()
 const displayedMode = ref(mode.value)
-
-// Disable Dark Reader extension when in dark mode
-useHead(() => ({
-	meta: mode.value === 'dark'
-		? [{ name: 'darkreader-lock', content: 'true' }]
-		: [],
-}))
 
 function toggleTheme() {
 	const nextMode = mode.value === 'dark' ? 'light' : 'dark'

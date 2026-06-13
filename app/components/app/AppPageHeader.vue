@@ -15,6 +15,8 @@ defineProps<{
 				{{ subheading }}
 			</p>
 		</div>
-		<slot />
+		<div class="flex gap-2">
+			<slot />
+		</div>
 	</div>
 </template>

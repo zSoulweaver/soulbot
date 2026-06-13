@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Command } from '~/types/commands'
-import { ChevronRight, Clock, CornerDownRight, MessageSquare, SearchIcon, Settings } from 'lucide-vue-next'
+import { ChevronRight, Clock, CornerDownRight, MessageSquare, SearchIcon, Settings } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'

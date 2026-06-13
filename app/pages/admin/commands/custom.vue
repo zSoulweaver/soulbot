@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Search, Settings, Trash2 } from 'lucide-vue-next'
+import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CustomCommandEditSheet from '~/components/commands/CustomCommandEditSheet.vue'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Template } from '~/types/commands'
+import { ChevronRight, HelpCircle, RefreshCw } from '@lucide/vue'
 import { useClipboard } from '@vueuse/core'
-import { ChevronRight, HelpCircle, RefreshCw } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 import { toast } from 'vue-sonner'

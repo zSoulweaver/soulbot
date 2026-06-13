@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Timer } from '~/types/timers'
+import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Plus, Search, Settings, Trash2 } from 'lucide-vue-next'
-import { computed, h, ref } from 'vue'
+import { computed, h, ref, resolveComponent } from 'vue'
 import { toast } from 'vue-sonner'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import TimerEditSheet from '~/components/timers/TimerEditSheet.vue'
@@ -138,7 +138,14 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('lastTriggeredAt', {
 		header: 'Last Run',
-		cell: info => formatLastRun(info.getValue() ? String(info.getValue()) : null),
+		cell: info => h(
+			resolveComponent('ClientOnly'),
+			{},
+			{
+				default: () => formatLastRun(info.getValue() ? String(info.getValue()) : null),
+				fallback: () => 'Never',
+			},
+		),
 	}),
 	columnHelper.display({
 		id: 'enabled',

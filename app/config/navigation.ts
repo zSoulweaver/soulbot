@@ -7,7 +7,7 @@ import {
 	Terminal,
 	Timer,
 	Trophy,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 export type UserRole = 'viewer' | 'moderator' | 'caster' | 'admin'
 

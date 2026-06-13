@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Save } from 'lucide-vue-next'
+import { Save } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'

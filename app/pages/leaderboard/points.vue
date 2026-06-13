@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MedalIcon, TrophyIcon } from 'lucide-vue-next'
+import { MedalIcon, TrophyIcon } from '@lucide/vue'
 
 const { data: leaderboard, pending } = useFetch<any[]>('/api/points/leaderboard')
 </script>

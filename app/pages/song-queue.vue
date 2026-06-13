@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Ban, ChevronDown, Heart, ListMusic, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { Ban, ChevronDown, Heart, ListMusic, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from 'lucide-vue-next'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import SpotifyPlayer from '~/components/spotify/SpotifyPlayer.vue'

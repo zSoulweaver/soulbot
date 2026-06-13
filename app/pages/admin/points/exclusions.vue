@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AutoExclusion, ExcludedUser } from '~/types/points'
+import { PlusIcon, RefreshCcw, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
@@ -97,6 +97,9 @@ const columns: any[] = [
 			<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddSheetOpen = true">
 				<PlusIcon data-icon="inline-start" />
 				Add Exclusion
+			</Button>
+			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
+				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 			</Button>
 		</AppPageHeader>
 

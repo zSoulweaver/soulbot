@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Circle } from 'lucide-vue-next'
+import { CheckCircle2, Circle } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'
 

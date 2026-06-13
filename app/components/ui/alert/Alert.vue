@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Component, HTMLAttributes } from 'vue'
 import type { AlertVariants } from '.'
-import { AlertCircle, AlertTriangle, CheckCircle2, Info } from 'lucide-vue-next'
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from '@lucide/vue'
 import { computed } from 'vue'
 import { cn } from '@/lib/utils'
 import { alertVariants } from '.'

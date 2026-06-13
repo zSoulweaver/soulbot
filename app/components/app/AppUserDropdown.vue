@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut, MoreVertical } from 'lucide-vue-next'
+import { LogOut, MoreVertical } from '@lucide/vue'
 import { Avatar, AvatarFallback, AvatarImage } from '~~/app/components/ui/avatar'
 import {
 	DropdownMenu,

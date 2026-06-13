@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import 'vue-sonner/style.css'
+
+useHead({
+	meta: [{ name: 'darkreader-lock', content: 'true' }],
+})
 </script>
 
 <template>

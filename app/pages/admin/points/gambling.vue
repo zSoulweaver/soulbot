@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Coins, Dices, HelpCircle, Sliders } from 'lucide-vue-next'
+import { Coins, Dices, HelpCircle, RefreshCcw, Sliders } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
@@ -103,8 +103,8 @@ async function saveSettings() {
 			heading="Gambling Settings"
 			subheading="Configure limits, win thresholds, and payout multipliers for the chat !gamble command."
 		>
-			<Button variant="outline" size="sm" :disabled="loading" @click="refreshSettings">
-				Refresh
+			<Button variant="ghost" :disabled="loading" @click="refreshSettings">
+				<RefreshCcw :class="{ 'animate-spin': loading }" />
 			</Button>
 		</AppPageHeader>
 

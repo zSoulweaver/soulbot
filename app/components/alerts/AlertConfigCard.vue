@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, HelpCircle, PiggyBank } from 'lucide-vue-next'
+import { Bell, HelpCircle, PiggyBank } from '@lucide/vue'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 

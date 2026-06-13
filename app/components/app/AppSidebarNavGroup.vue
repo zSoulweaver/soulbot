@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NavGroup, NavItem } from '~/config/navigation'
-import { ChevronRight } from 'lucide-vue-next'
+import { ChevronRight } from '@lucide/vue'
 import { ref, watch } from 'vue'
 
 const props = defineProps<{

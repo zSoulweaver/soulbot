@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCw } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCw } from 'lucide-vue-next'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'

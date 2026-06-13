@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PlusIcon } from 'lucide-vue-next'
+import { PlusIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'

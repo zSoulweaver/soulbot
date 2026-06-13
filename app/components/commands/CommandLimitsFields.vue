@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BadgeDollarSign, Clock } from 'lucide-vue-next'
+import { BadgeDollarSign, Clock } from '@lucide/vue'
 
 const props = defineProps<{
 	disabled?: boolean

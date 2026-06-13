@@ -3,7 +3,7 @@ import type { Command, Template } from '~/types/commands'
 import {
 	CornerDownRight,
 	Terminal,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'

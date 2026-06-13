@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BadgeDollarSign } from 'lucide-vue-next'
+import { BadgeDollarSign } from '@lucide/vue'
 
 const props = defineProps<{
 	cost: number

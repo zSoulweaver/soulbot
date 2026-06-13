@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock, User } from 'lucide-vue-next'
+import { Clock, User } from '@lucide/vue'
 
 const props = defineProps<{
 	global: number

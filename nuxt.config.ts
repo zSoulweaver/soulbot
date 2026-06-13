@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 				],
 		optimizeDeps: {
 			include: [
-				'lucide-vue-next',
+				'@lucide/vue',
 				'vue-sonner',
 				'clsx',
 				'tailwind-merge',
@@ -72,7 +72,12 @@ export default defineNuxtConfig({
 		sourceMap: true,
 	},
 
-	modules: ['nuxt-auth-utils', '@vueuse/nuxt'],
+	modules: ['nuxt-auth-utils', '@vueuse/nuxt', '@nuxtjs/color-mode'],
+
+	colorMode: {
+		preference: 'system',
+		fallback: 'dark',
+	},
 
 	typescript: {
 		tsConfig: {

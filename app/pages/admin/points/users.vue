@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { PencilIcon, PlusIcon, RefreshCcw, SearchIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { PencilIcon, PlusIcon, SearchIcon } from 'lucide-vue-next'
 import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import UserPointsEditSheet from '~/components/points/UserPointsEditSheet.vue'
@@ -92,7 +92,11 @@ const columns: any[] = [
 
 <template>
 	<AppPageContainer>
-		<AppPageHeader heading="Points Balances" subheading="Manage user points and view the points database." />
+		<AppPageHeader heading="Points Balances" subheading="Manage user points and view the points database.">
+			<Button variant="ghost" :disabled="loadingTable" @click="refreshUsers">
+				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
+			</Button>
+		</AppPageHeader>
 
 		<div class="flex flex-col gap-4">
 			<InputGroup class="w-full max-w-sm">

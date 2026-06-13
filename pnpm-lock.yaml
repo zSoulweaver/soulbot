@@ -14,6 +14,9 @@ importers:
       '@lucide/vue':
         specifier: ^1.17.0
         version: 1.17.0(vue@3.5.33(typescript@6.0.3))
+      '@nuxtjs/color-mode':
+        specifier: 4.0.1
+        version: 4.0.1(magicast@0.5.3)
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.33(typescript@6.0.3))
@@ -56,9 +59,6 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.9.0)
-      lucide-vue-next:
-        specifier: ^1.0.0
-        version: 1.0.0(vue@3.5.33(typescript@6.0.3))
       nuxt:
         specifier: ^4.4.6
         version: 4.4.6(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@babel/plugin-syntax-typescript@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@20.19.39)(@vue/compiler-sfc@3.5.34)(better-sqlite3@12.9.0)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.9.0)(drizzle-orm@0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.9.0)))(drizzle-orm@0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.9.0))(eslint@10.2.1(jiti@2.7.0))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.3)(optionator@0.9.4)(rollup-plugin-visualizer@7.0.1(rollup@4.60.4))(rollup@4.60.4)(srvx@0.11.15)(terser@5.47.1)(tsx@4.21.0)(typescript@6.0.3)(vite@7.3.3(@types/node@20.19.39)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.9.0)
@@ -1472,6 +1472,9 @@ packages:
         optional: true
       rollup-plugin-visualizer:
         optional: true
+
+  '@nuxtjs/color-mode@4.0.1':
+    resolution: {integrity: sha512-eiA7hWXi5zNHaYKyJFCGF6i0wFZtuvR7KDXZ6jiSvwxjCpRFwphrw0MOSmNfArTSSsT1wpW+/2H92cejeVfUlg==}
 
   '@ota-meshi/ast-token-store@0.3.0':
     resolution: {integrity: sha512-XRO0zi2NIUKq2lUk3T1ecFSld1fMWRKE6naRFGkgkdeosx7IslyUKNv5Dcb5PJTja9tHJoFu0v/7yEpAkrkrTg==}
@@ -4504,11 +4507,6 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-vue-next@1.0.0:
-    resolution: {integrity: sha512-V6SPvx1IHTj/UY+FrIYWV5faISsPSb8BnWSFDxAtezWKvWc9ZZ40PDrdu1/Qb5vg4lHWr1hs1BAMGVGm6V1Xdg==}
-    peerDependencies:
-      vue: '>=3.0.1'
-
   magic-regexp@0.11.0:
     resolution: {integrity: sha512-LG77Z/gVnwz7oaDpD4heX6ryl+lcr4l1B2gnP4MMvt2pGhGC1Dfj7dl1pXpP4ih+VQFLuAadeKVa+lARAzfW+Q==}
 
@@ -5448,6 +5446,11 @@ packages:
 
   semver@7.8.0:
     resolution: {integrity: sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.8.4:
+    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -7718,6 +7721,16 @@ snapshots:
       - vti
       - vue-tsc
       - yaml
+
+  '@nuxtjs/color-mode@4.0.1(magicast@0.5.3)':
+    dependencies:
+      '@nuxt/kit': 4.4.6(magicast@0.5.3)
+      exsolve: 1.0.8
+      pathe: 2.0.3
+      pkg-types: 2.3.1
+      semver: 7.8.4
+    transitivePeerDependencies:
+      - magicast
 
   '@ota-meshi/ast-token-store@0.3.0': {}
 
@@ -10555,10 +10568,6 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-vue-next@1.0.0(vue@3.5.33(typescript@6.0.3)):
-    dependencies:
-      vue: 3.5.33(typescript@6.0.3)
-
   magic-regexp@0.11.0:
     dependencies:
       magic-string: 0.30.21
@@ -11981,6 +11990,8 @@ snapshots:
   semver@7.7.4: {}
 
   semver@7.8.0: {}
+
+  semver@7.8.4: {}
 
   send@1.2.1:
     dependencies:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bot } from 'lucide-vue-next'
+import { Bot } from '@lucide/vue'
 import { TwitchIcon } from 'vue3-simple-icons'
 import { navigation } from '~/config/navigation'
 

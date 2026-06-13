@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Timer, TimerMessage } from '~/types/timers'
-import { Plus, Save, Trash2 } from 'lucide-vue-next'
+import { Plus, Save, Trash2 } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 

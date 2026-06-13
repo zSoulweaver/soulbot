@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Alias, Command } from '~/types/commands'
-import { ArrowRight, CornerDownRight, HelpCircle, Plus, Save, Trash } from 'lucide-vue-next'
+import { ArrowRight, CornerDownRight, HelpCircle, Plus, Save, Trash } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 

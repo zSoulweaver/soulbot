@@ -163,20 +163,16 @@ const columns: any[] = [
 				/>
 			</InputGroup>
 
-			<div class="relative">
-				<DataTable
-					v-if="blacklistItems.length > 0"
-					:columns="columns"
-					:data="blacklistItems"
-				/>
-				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-					<Spinner class="size-6 text-primary" />
-					<span>Loading blacklist...</span>
-				</div>
-				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
+			<DataTable
+				:columns="columns"
+				:data="blacklistItems"
+				:loading="loadingTable"
+				loading-text="Loading blacklist..."
+			>
+				<template #empty>
 					No blacklisted tracks found.
-				</div>
-			</div>
+				</template>
+			</DataTable>
 
 			<!-- Bottom Pagination Row -->
 			<div

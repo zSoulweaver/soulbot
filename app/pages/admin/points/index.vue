@@ -194,7 +194,14 @@ onUnmounted(() => {
 			</Button>
 		</AppPageHeader>
 
+		<!-- Loading state -->
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8 text-primary" />
+			<span class="text-sm text-muted-foreground">Loading active configurations...</span>
+		</div>
+
 		<div
+			v-else
 			class="
 				grid grid-cols-1 gap-6
 				lg:grid-cols-3
@@ -202,10 +209,7 @@ onUnmounted(() => {
 		>
 			<!-- Settings Editor Panel -->
 			<div class="lg:col-span-2">
-				<div v-if="loading" class="py-10 text-center text-muted-foreground">
-					Loading active configurations...
-				</div>
-				<div v-else class="flex flex-col gap-8">
+				<div class="flex flex-col gap-8">
 					<!-- Section 1: Currency Configuration -->
 					<div class="flex flex-col gap-4">
 						<h3 class="flex items-center gap-2 text-lg font-semibold">

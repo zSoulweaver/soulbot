@@ -5,7 +5,6 @@ import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import UserPointsEditSheet from '~/components/points/UserPointsEditSheet.vue'
 import { Button } from '~/components/ui/button'
-import { Spinner } from '~/components/ui/spinner'
 import { usePagination } from '~/composables/usePagination'
 
 interface User {
@@ -107,28 +106,26 @@ const columns: any[] = [
 				/>
 			</InputGroup>
 
-			<div class="relative">
-				<DataTable
-					v-if="paginatedUsers.length > 0"
-					:columns="columns"
-					:data="paginatedUsers"
-				/>
-				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-					<Spinner class="size-6 text-primary" />
-					<span>Loading users...</span>
-				</div>
-				<div v-else class="flex flex-col items-center justify-center gap-3 rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground select-none">
-					<span>No users found matching your search.</span>
-					<Button
-						v-if="searchQuery.trim()"
-						size="sm"
-						@click="openAdjustSheetForNewUser"
-					>
-						<PlusIcon data-icon="inline-start" />
-						Add "{{ searchQuery.trim() }}" & Set Points
-					</Button>
-				</div>
-			</div>
+			<DataTable
+				:columns="columns"
+				:data="paginatedUsers"
+				:loading="loadingTable"
+				loading-text="Loading users..."
+			>
+				<template #empty>
+					<div class="flex flex-col items-center justify-center gap-3 py-6 text-center">
+						<span>No users found matching your search.</span>
+						<Button
+							v-if="searchQuery.trim()"
+							size="sm"
+							@click="openAdjustSheetForNewUser"
+						>
+							<PlusIcon data-icon="inline-start" />
+							Add "{{ searchQuery.trim() }}" & Set Points
+						</Button>
+					</div>
+				</template>
+			</DataTable>
 
 			<!-- Bottom Pagination Row -->
 			<div

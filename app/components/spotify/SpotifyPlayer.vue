@@ -40,7 +40,7 @@ function formatTime(ms: number) {
 		<img
 			v-if="props.currentlyPlaying?.albumArt"
 			:src="props.currentlyPlaying.albumArt"
-			class="absolute inset-0 -z-1 size-full object-cover opacity-15 blur-2xl"
+			class="pointer-events-none absolute inset-0 size-full object-cover opacity-15 blur-2xl"
 			alt=""
 		>
 		<CardHeader class="z-1 flex flex-row items-center justify-between">
@@ -73,9 +73,9 @@ function formatTime(ms: number) {
 				OFFLINE
 			</Badge>
 		</CardHeader>
-		<CardContent class="space-y-6">
+		<CardContent class="z-1 space-y-6">
 			<!-- Album Art cover frame -->
-			<div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-background/70 shadow-sm">
+			<div v-if="props.currentlyPlaying" class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-background/70 shadow-sm">
 				<img
 					v-if="props.currentlyPlaying?.albumArt"
 					:src="props.currentlyPlaying.albumArt"
@@ -84,7 +84,6 @@ function formatTime(ms: number) {
 				>
 				<!-- Vinyl / Radio Placeholder -->
 				<div v-else class="flex flex-col items-center justify-center p-6 text-muted-foreground">
-					<Radio class="mb-2 size-16 animate-pulse stroke-1" />
 					<p class="text-center text-xs font-medium">
 						No Cover Art Available
 					</p>
@@ -129,7 +128,7 @@ function formatTime(ms: number) {
 
 		<!-- Footer -->
 		<slot name="footer">
-			<CardFooter v-if="props.showDefaultFooter && props.currentlyPlaying?.link">
+			<CardFooter v-if="props.showDefaultFooter && props.currentlyPlaying?.link" class="z-1">
 				<Button
 					as="a"
 					:href="props.currentlyPlaying.link"

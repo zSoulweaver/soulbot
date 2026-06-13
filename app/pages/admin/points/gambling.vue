@@ -108,7 +108,14 @@ async function saveSettings() {
 			</Button>
 		</AppPageHeader>
 
+		<!-- Loading state -->
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8 text-primary" />
+			<span class="text-sm text-muted-foreground">Loading gambling configuration...</span>
+		</div>
+
 		<div
+			v-else
 			class="
 				grid grid-cols-1 gap-6
 				lg:grid-cols-3
@@ -116,10 +123,7 @@ async function saveSettings() {
 		>
 			<!-- Config Editor Column -->
 			<div class="lg:col-span-2">
-				<div v-if="loading" class="py-10 text-center text-muted-foreground">
-					Loading gambling configuration...
-				</div>
-				<div v-else class="flex flex-col gap-8">
+				<div class="flex flex-col gap-8">
 					<!-- Section 1: Bet Constraints -->
 					<div class="flex flex-col gap-4">
 						<h3 class="flex items-center gap-2 text-lg font-semibold">

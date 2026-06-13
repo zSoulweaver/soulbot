@@ -8,7 +8,6 @@ import DataTable from '@/components/ui/data-table/DataTable.vue'
 import TimerEditSheet from '~/components/timers/TimerEditSheet.vue'
 import TimerMessagesHoverCard from '~/components/timers/TimerMessagesHoverCard.vue'
 import { Button } from '~/components/ui/button'
-import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 import { usePagination } from '~/composables/usePagination'
 
@@ -216,17 +215,15 @@ const columns: any[] = [
 			</InputGroup>
 
 			<DataTable
-				v-if="paginatedTimers.length > 0"
 				:columns="columns"
 				:data="paginatedTimers"
-			/>
-			<div v-else-if="loadingTable" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/50">
-				<Spinner class="size-6 text-primary" />
-				<span class="text-sm text-muted-foreground">Loading timers...</span>
-			</div>
-			<div v-else class="flex flex-col items-center justify-center rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground select-none">
-				<span>No timers found matching your search.</span>
-			</div>
+				:loading="loadingTable"
+				loading-text="Loading timers..."
+			>
+				<template #empty>
+					<span>No timers found matching your search.</span>
+				</template>
+			</DataTable>
 
 			<div
 				v-if="totalTimers > 0"

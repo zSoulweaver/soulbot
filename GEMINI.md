@@ -82,3 +82,10 @@ To guarantee a clean, predictability-driven, and highly professional layout acro
 6. **Page & Layout Spacing Guidelines**:
    - **Major Content Blocks**: Elements under `AppPageHeader` (search input, table, pagination) should be wrapped in a `<div class="flex flex-col gap-4">` container to group the grid components cleanly.
    - **Table Container Border & Clipping**: All tables must be enclosed in a wrapper container with borders and corner clipping: `<div class="rounded-lg border overflow-hidden">` (or `<div class="relative rounded-lg border overflow-hidden">` when loading overlay triggers are needed). This guarantees that header and row background fills are clipped nicely to the rounded border.
+
+7. **Non-Blocking Page Fetches & Loading States**:
+   - **Avoid Top-Level Await**: Do not use `await` on top-level `useFetch` or `useAsyncData` calls inside page components (`app/pages/`). This blocks client-side route navigation on slow connections. Use lazy/non-blocking fetches instead, rendering fallback states (skeletons or spinners) dynamically.
+   - **Retention of Table Headers**: During data fetches, table headers must always remain visible to preserve page geometry.
+     - **For Primitive Tables**: Render a loading row (`<TableRow v-if="loading">`) containing a full-span loading cell.
+     - **For Paginated Tables (`DataTable`)**: Pass the `:loading` prop directly to `<DataTable>`. The component will automatically render an inline loading row on initial fetch (when data is empty) or a semi-transparent absolute overlay during background updates (searching, paging), keeping the header visible and avoiding layout shifts. Custom empty views should be passed via the `#empty` slot.
+   - **Full-Page Loader for Settings**: For dashboard panels containing configuration settings (e.g. Points, Gambling, Spotify), wrap the entire content grid in a `v-if="!loading"` block and display a single centered loader under the page header when fetching. Never render settings panels with null or default values while server data is pending.

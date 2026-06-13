@@ -32,7 +32,7 @@ import { usePagination } from '~/composables/usePagination'
 const { loggedIn, user } = useUserSession()
 
 // Fetch queue and currently playing details
-const { data: queueData, refresh: originalRefresh, pending } = await useFetch<any>('/api/spotify/queue')
+const { data: queueData, refresh: originalRefresh, pending } = useFetch<any>('/api/spotify/queue')
 
 const activeTab = ref('active')
 

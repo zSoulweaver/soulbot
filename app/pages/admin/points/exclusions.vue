@@ -124,20 +124,16 @@ const columns: any[] = [
 				/>
 			</InputGroup>
 
-			<div class="relative">
-				<DataTable
-					v-if="paginatedExclusions.length > 0"
-					:columns="columns"
-					:data="paginatedExclusions"
-				/>
-				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-					<Spinner class="size-6 text-primary" />
-					<span>Loading exclusions...</span>
-				</div>
-				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
+			<DataTable
+				:columns="columns"
+				:data="paginatedExclusions"
+				:loading="loadingTable"
+				loading-text="Loading exclusions..."
+			>
+				<template #empty>
 					No excluded users found.
-				</div>
-			</div>
+				</template>
+			</DataTable>
 
 			<!-- Bottom Pagination Row -->
 			<div

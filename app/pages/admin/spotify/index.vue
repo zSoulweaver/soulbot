@@ -23,7 +23,7 @@ watchEffect(() => {
 })
 
 const forceRefreshQuery = ref(false)
-const { data: status, pending, refresh } = await useFetch('/api/spotify/status', {
+const { data: status, pending, refresh } = useFetch('/api/spotify/status', {
 	query: computed(() => ({
 		refresh: forceRefreshQuery.value ? 'true' : 'false',
 	})),
@@ -127,7 +127,7 @@ const progressPercent = computed(() => {
 	return (activeProgressMs.value / track.durationMs) * 100
 })
 
-const { data: settingsData, refresh: refreshSettings } = await useFetch('/api/spotify/settings')
+const { data: settingsData, refresh: refreshSettings, pending: loadingSettings } = useFetch('/api/spotify/settings')
 
 const form = ref({
 	active: true,
@@ -282,7 +282,7 @@ function formatTime(ms?: number) {
 		</AppPageHeader>
 
 		<!-- Loading State -->
-		<div v-if="pending && !status" class="flex items-center justify-center p-12">
+		<div v-if="(pending && !status) || (loadingSettings && !settingsData)" class="flex items-center justify-center p-12">
 			<div class="flex flex-col items-center gap-2">
 				<Spinner class="size-8" />
 				<p class="text-muted-foreground">

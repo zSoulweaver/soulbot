@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCw } from 'lucide-vue-next'
-import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
+import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Progress } from '~/components/ui/progress'
@@ -98,20 +99,24 @@ watch(() => status.value?.currentlyPlaying, (newTrack) => {
 }, { immediate: true })
 
 // Polling interval to refresh status from the server (uses cached API path)
-let statusPollingId: any = null
+const { pause: pauseStatusPolling, resume: resumeStatusPolling } = useIntervalFn(() => {
+	refresh()
+}, 10000)
 
-onMounted(() => {
-	statusPollingId = setInterval(() => {
+const visibility = useDocumentVisibility()
+watch(visibility, (current) => {
+	if (current === 'visible') {
 		refresh()
-	}, 10000) // Poll every 10 seconds
+		resumeStatusPolling()
+	}
+	else {
+		pauseStatusPolling()
+	}
 })
 
 onUnmounted(() => {
 	if (progressIntervalId) {
 		clearInterval(progressIntervalId)
-	}
-	if (statusPollingId) {
-		clearInterval(statusPollingId)
 	}
 })
 

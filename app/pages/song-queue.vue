@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { Ban, ChevronDown, Heart, ListMusic, Loader2, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from 'lucide-vue-next'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import SpotifyPlayer from '~/components/spotify/SpotifyPlayer.vue'
 import {
@@ -111,15 +112,22 @@ watch(() => queueData.value?.currentlyPlaying, (newTrack) => {
 }, { immediate: true })
 
 // Polling for snappy queue/status updates
-let pollingId: any = null
+const { pause: pauseQueuePolling, resume: resumeQueuePolling } = useIntervalFn(() => {
+	refresh()
+}, 8000)
 
-onMounted(() => {
-	pollingId = setInterval(refresh, 8000) // Poll every 8 seconds
+const visibility = useDocumentVisibility()
+watch(visibility, (current) => {
+	if (current === 'visible') {
+		refresh()
+		resumeQueuePolling()
+	}
+	else {
+		pauseQueuePolling()
+	}
 })
 
 onUnmounted(() => {
-	if (pollingId)
-		clearInterval(pollingId)
 	if (progressIntervalId)
 		clearInterval(progressIntervalId)
 })

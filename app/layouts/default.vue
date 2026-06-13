@@ -1,5 +1,8 @@
 <script setup lang="ts">
-// Default layout with sidebar and status information
+const { loggedIn, user } = useUserSession()
+const isModeratorOrCaster = computed(() => {
+	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
+})
 </script>
 
 <template>
@@ -16,7 +19,7 @@
 					<AppBreadcrumbs />
 
 					<div class="ml-auto flex items-center gap-4">
-						<AppBotStatus />
+						<AppBotStatus v-if="isModeratorOrCaster" />
 						<AppThemeSwitcherButton />
 					</div>
 				</div>

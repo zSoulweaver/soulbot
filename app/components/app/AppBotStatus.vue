@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useIntervalFn } from '@vueuse/core'
+import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
+import { computed, watch } from 'vue'
 
 interface BotStatus {
 	bot: { displayName: string } | null
@@ -10,9 +11,20 @@ interface BotStatus {
 const { data: status, refresh } = useFetch<BotStatus>('/api/bot/status')
 
 // Refresh status every 30 seconds
-useIntervalFn(() => {
+const { pause, resume } = useIntervalFn(() => {
 	refresh()
 }, 30000)
+
+const visibility = useDocumentVisibility()
+watch(visibility, (current) => {
+	if (current === 'visible') {
+		refresh()
+		resume()
+	}
+	else {
+		pause()
+	}
+})
 
 const isConnected = computed(() => status.value?.isBotRunning ?? false)
 </script>

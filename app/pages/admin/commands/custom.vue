@@ -234,7 +234,7 @@ async function confirmDelete() {
 											Config
 										</Button>
 										<Button size="sm" variant="ghostDestructive" @click="deleteCommand(command)">
-											<Trash2 />
+											<Trash2 data-icon="inline-start" />
 											Remove
 										</Button>
 									</div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronRight, Search } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { Spinner } from '~/components/ui/spinner'
 
 interface Variable {
 	name: string
@@ -82,8 +83,9 @@ function toggleRowExpanded(name: string) {
 		/>
 
 		<!-- Loading state -->
-		<div v-if="loading" class="flex items-center justify-center py-20">
-			<span class="animate-pulse text-muted-foreground">
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8" />
+			<span class="text-sm text-muted-foreground">
 				Loading variable documentation registry...
 			</span>
 		</div>

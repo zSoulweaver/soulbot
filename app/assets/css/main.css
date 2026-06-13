@@ -7,6 +7,10 @@
 
 @theme {
 	--font-sans: 'Inter', Arial, ui-sans-serif, system-ui, sans-serif;
+	--color-spotify: #1ed760;
+	--color-spotify-hover: #2bea6e;
+	--color-twitch: #9146ff;
+	--color-twitch-hover: #772ce8;
 }
 
 @theme inline {

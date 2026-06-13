@@ -109,3 +109,36 @@ defineProps({
 <!-- Usage -->
 <StatusBadge :icon="CheckIcon" />
 ```
+
+---
+
+## Use Spinner component instead of Loader2 or other loader icons
+
+Instead of using `Loader2` (or similar icons) manually to show a loading state, use the `Spinner` component.
+
+**Incorrect:**
+
+```html
+<Button disabled>
+  <Loader2 class="animate-spin" data-icon="inline-start" />
+  Saving...
+</Button>
+
+<div class="flex items-center justify-center p-4">
+  <Loader2 class="animate-spin size-8 text-primary" />
+</div>
+```
+
+**Correct:**
+
+```html
+<Button disabled>
+  <Spinner data-icon="inline-start" />
+  Saving...
+</Button>
+
+<div class="flex items-center justify-center p-4">
+  <Spinner class="size-8 text-primary" />
+</div>
+```
+

@@ -122,8 +122,8 @@ async function saveSettings() {
 				<div v-else class="flex flex-col gap-8">
 					<!-- Section 1: Bet Constraints -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 font-semibold">
-							<Coins class="size-4" />
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<Coins class="size-5 text-muted-foreground" />
 							Bet Limits & Constraints
 						</h3>
 						<FieldGroup
@@ -133,7 +133,7 @@ async function saveSettings() {
 							"
 						>
 							<Field>
-								<FieldLabel for="minBet" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="minBet">
 									Minimum Bet
 								</FieldLabel>
 								<NumberField id="minBet" v-model="form.minBet" :min="1" :default-value="10">
@@ -149,7 +149,7 @@ async function saveSettings() {
 							</Field>
 
 							<Field>
-								<FieldLabel for="maxBet" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="maxBet">
 									Maximum Bet
 								</FieldLabel>
 								<NumberField id="maxBet" v-model="form.maxBet" :min="1" :default-value="100000">
@@ -170,13 +170,13 @@ async function saveSettings() {
 
 					<!-- Section 2: Chance & Payoffs -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 font-semibold">
-							<Sliders class="size-4" />
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<Sliders class="size-5 text-muted-foreground" />
 							Odds & Multipliers
 						</h3>
 						<FieldGroup class="flex flex-col gap-6">
 							<Field>
-								<FieldLabel for="winMultiplier" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="winMultiplier">
 									Net Win Gain Multiplier
 								</FieldLabel>
 								<NumberField id="winMultiplier" v-model="form.winMultiplier" :min="0.1" :step="0.1" :default-value="1.0">
@@ -193,7 +193,7 @@ async function saveSettings() {
 
 							<Field>
 								<div class="flex items-center justify-between">
-									<FieldLabel class="text-xs font-bold text-muted-foreground uppercase">
+									<FieldLabel>
 										Winning Roll Threshold (Roll >= {{ form.winMinRoll }})
 									</FieldLabel>
 									<span class="text-sm font-semibold text-primary">

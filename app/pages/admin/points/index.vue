@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Clock, HelpCircle, Landmark, Loader2, Sparkles } from 'lucide-vue-next'
+import { Clock, HelpCircle, Landmark, Sparkles } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Progress } from '~/components/ui/progress'
+import { Spinner } from '~/components/ui/spinner'
 
 interface PointsSettings {
 	currencyName: string
@@ -207,8 +208,8 @@ onUnmounted(() => {
 				<div v-else class="flex flex-col gap-8">
 					<!-- Section 1: Currency Configuration -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 font-semibold">
-							<Landmark class="size-4" />
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<Landmark class="size-5 text-muted-foreground" />
 							Currency Customization
 						</h3>
 						<FieldGroup
@@ -218,7 +219,7 @@ onUnmounted(() => {
 							"
 						>
 							<Field>
-								<FieldLabel for="currencyName" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="currencyName">
 									Singular Name
 								</FieldLabel>
 								<Input
@@ -232,7 +233,7 @@ onUnmounted(() => {
 								</FieldDescription>
 							</Field>
 							<Field>
-								<FieldLabel for="currencyNamePlural" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="currencyNamePlural">
 									Plural Name
 								</FieldLabel>
 								<Input
@@ -252,7 +253,7 @@ onUnmounted(() => {
 
 					<!-- Section 2: Online Payout Settings -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 font-semibold">
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
 							<span class="relative flex size-2">
 								<span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
 								<span class="relative inline-flex size-2 rounded-full bg-green-500" />
@@ -266,7 +267,7 @@ onUnmounted(() => {
 							"
 						>
 							<Field>
-								<FieldLabel for="payoutInterval" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="payoutInterval">
 									Interval (Minutes)
 								</FieldLabel>
 								<NumberField id="payoutInterval" v-model="form.payoutInterval" :min="1" :default-value="1">
@@ -281,7 +282,7 @@ onUnmounted(() => {
 								</FieldDescription>
 							</Field>
 							<Field>
-								<FieldLabel for="payoutAmount" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="payoutAmount">
 									Base Payout
 								</FieldLabel>
 								<NumberField id="payoutAmount" v-model="form.payoutAmount" :min="0" :default-value="0">
@@ -296,7 +297,7 @@ onUnmounted(() => {
 								</FieldDescription>
 							</Field>
 							<Field>
-								<FieldLabel for="activeBonus" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="activeBonus">
 									Active Chat Bonus
 								</FieldLabel>
 								<NumberField id="activeBonus" v-model="form.activeBonus" :min="0" :default-value="0">
@@ -317,7 +318,7 @@ onUnmounted(() => {
 
 					<!-- Section 3: Offline Payout Settings -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 text-base font-semibold">
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
 							<span class="inline-flex size-2 rounded-full bg-muted-foreground" />
 							Offline Payout Schedule
 						</h3>
@@ -328,7 +329,7 @@ onUnmounted(() => {
 							"
 						>
 							<Field>
-								<FieldLabel for="payoutIntervalOffline" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="payoutIntervalOffline">
 									Interval (Minutes)
 								</FieldLabel>
 								<NumberField id="payoutIntervalOffline" v-model="form.payoutIntervalOffline" :min="1" :default-value="1">
@@ -343,7 +344,7 @@ onUnmounted(() => {
 								</FieldDescription>
 							</Field>
 							<Field>
-								<FieldLabel for="payoutAmountOffline" class="text-xs font-bold text-muted-foreground uppercase">
+								<FieldLabel for="payoutAmountOffline">
 									Base Payout
 								</FieldLabel>
 								<NumberField id="payoutAmountOffline" v-model="form.payoutAmountOffline" :default-value="0">
@@ -402,8 +403,8 @@ onUnmounted(() => {
 							:disabled="isPayoutNowLoading"
 							@click="triggerPayoutNow"
 						>
-							<Sparkles v-if="!isPayoutNowLoading" />
-							<Loader2 v-else class="animate-spin" />
+							<Spinner v-if="isPayoutNowLoading" data-icon="inline-start" />
+							<Sparkles v-else data-icon="inline-start" />
 							Payout Now
 						</Button>
 					</CardContent>

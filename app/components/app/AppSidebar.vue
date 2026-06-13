@@ -49,8 +49,8 @@ const filteredNavigation = computed(() => {
 						v-else
 						size="lg"
 						class="
-							bg-purple-600 text-white
-							hover:bg-purple-700
+							bg-twitch text-white
+							hover:bg-twitch-hover
 						"
 						as-child
 					>

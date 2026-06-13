@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Loader2, Save } from 'lucide-vue-next'
+import { Save } from 'lucide-vue-next'
+import { Spinner } from '~/components/ui/spinner'
 
 defineProps<{
 	show: boolean
@@ -47,8 +48,8 @@ defineEmits<{
 						{{ discardText || 'Discard Changes' }}
 					</Button>
 					<Button :disabled="isSaving" @click="$emit('save')">
-						<Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" />
-						<Save v-else data-icon="inline-start" class="mr-2 size-4" />
+						<Spinner v-if="isSaving" data-icon="inline-start" />
+						<Save v-else data-icon="inline-start" />
 						{{ isSaving ? (savingText || 'Saving...') : (saveText || 'Save Changes') }}
 					</Button>
 				</slot>

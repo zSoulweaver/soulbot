@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { CheckCircle2, Circle, Loader2 } from 'lucide-vue-next'
+import { CheckCircle2, Circle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
+import { Spinner } from '~/components/ui/spinner'
 
 definePageMeta({
 	layout: 'blank',
@@ -190,7 +191,7 @@ const alertDescription = computed(() => {
 						:disabled="isRestarting || isLoading"
 						@click="handleRestart"
 					>
-						<Loader2 v-if="isRestarting" class="animate-spin" data-icon="inline-start" />
+						<Spinner v-if="isRestarting" data-icon="inline-start" />
 						Reconnect Bot
 					</Button>
 					<Button
@@ -207,7 +208,7 @@ const alertDescription = computed(() => {
 					:disabled="!isComplete || isLoading"
 					@click="handleBotAction"
 				>
-					<Loader2 v-if="isLoading" class="animate-spin" data-icon="inline-start" />
+					<Spinner v-if="isLoading" data-icon="inline-start" />
 					<template v-if="isLoading">
 						Connecting to Chat...
 					</template>

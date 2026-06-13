@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { AutoExclusion, ExcludedUser } from '~/types/points'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Loader2, PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
+import { PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
+import { Spinner } from '~/components/ui/spinner'
 import { usePagination } from '~/composables/usePagination'
 
 const {
@@ -78,7 +79,7 @@ const columns: any[] = [
 				onClick: () => removeExclusion(info.row.original.id),
 			}, () => [
 				isDeleting.value === info.row.original.id
-					? h(Loader2, { 'class': 'animate-spin', 'data-icon': 'inline-start' })
+					? h(Spinner, { 'data-icon': 'inline-start' })
 					: h(TrashIcon, { 'data-icon': 'inline-start' }),
 				'Remove',
 			]),
@@ -130,7 +131,7 @@ const columns: any[] = [
 					:data="paginatedExclusions"
 				/>
 				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-					<Loader2 class="size-6 animate-spin text-primary" />
+					<Spinner class="size-6 text-primary" />
 					<span>Loading exclusions...</span>
 				</div>
 				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">

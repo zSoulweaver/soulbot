@@ -2,6 +2,7 @@
 import { Save } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import { Spinner } from '~/components/ui/spinner'
 
 // Reactive config state matching GET/PUT payload
 const isLoading = ref(true)
@@ -117,7 +118,8 @@ onMounted(() => {
 				:disabled="isLoading || isSaving"
 				@click="saveAlertSettings"
 			>
-				<Save />
+				<Spinner v-if="isSaving" data-icon="inline-start" />
+				<Save v-else data-icon="inline-start" />
 				{{ isSaving ? 'Saving...' : 'Save Settings' }}
 			</Button>
 		</AppPageHeader>

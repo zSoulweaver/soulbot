@@ -276,7 +276,7 @@ function formatTime(ms?: number) {
 				:disabled="pending || status?.rateLimited"
 				@click="handleRefresh"
 			>
-				<RefreshCw />
+				<RefreshCw data-icon="inline-start" />
 				{{ status?.rateLimited ? 'Rate Limited' : 'Refresh Status' }}
 			</Button>
 		</AppPageHeader>
@@ -311,11 +311,11 @@ function formatTime(ms?: number) {
 							as="a"
 							href="/api/auth/spotify"
 							class="
-								bg-[#1ed760] font-semibold text-black shadow-xs
-								hover:bg-[#2bea6e]
+								bg-spotify font-semibold text-black shadow-xs
+								hover:bg-spotify-hover
 							"
 						>
-							<Link2 class="mr-2 size-4" />
+							<Link2 data-icon="inline-start" />
 							Connect Account
 						</Button>
 					</ItemActions>
@@ -357,7 +357,7 @@ function formatTime(ms?: number) {
 								:disabled="isDisconnecting"
 								@click="handleDisconnect"
 							>
-								<Link2Off />
+								<Link2Off data-icon="inline-start" />
 								Disconnect Account
 							</Button>
 						</ItemActions>
@@ -461,8 +461,8 @@ function formatTime(ms?: number) {
 
 					<!-- Settings Section 1: Song Request Settings -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 text-xl font-semibold">
-							<Radio class="size-6 text-muted-foreground" />
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<Radio class="size-5 text-muted-foreground" />
 							Song Request Settings
 						</h3>
 
@@ -507,13 +507,13 @@ function formatTime(ms?: number) {
 										:disabled="isInitializingPlaylist"
 										@click="handleInitializePlaylist"
 									>
-										<Plus class="mr-2 size-4" />
+										<Plus data-icon="inline-start" />
 										Create "Soulbot Song Requests" Playlist
 									</Button>
 								</CardContent>
 							</Card>
 							<div v-else class="flex items-center justify-between rounded-lg border bg-emerald-500/5 p-4">
-								<div class="space-y-0.5">
+								<div class="flex flex-col gap-0.5">
 									<p
 										class="
 											text-sm font-semibold text-emerald-600
@@ -646,8 +646,8 @@ function formatTime(ms?: number) {
 
 					<!-- Settings Section 2: Save-to-Playlist Integration -->
 					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 text-xl font-semibold">
-							<ListMusic class="size-6 text-muted-foreground" />
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<ListMusic class="size-5 text-muted-foreground" />
 							Save-to-Playlist Integration
 						</h3>
 

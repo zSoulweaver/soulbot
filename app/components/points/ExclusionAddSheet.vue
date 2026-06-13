@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Loader2, PlusIcon } from 'lucide-vue-next'
+import { PlusIcon } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import { Spinner } from '~/components/ui/spinner'
 
 const props = defineProps<{
 	open: boolean
@@ -94,8 +95,8 @@ async function addExclusion() {
 				</SheetClose>
 
 				<Button :disabled="isAdding || !newUsername.trim()" @click="addExclusion">
-					<Loader2 v-if="isAdding" class="size-4 animate-spin" />
-					<PlusIcon v-else class="size-4" />
+					<Spinner v-if="isAdding" data-icon="inline-start" />
+					<PlusIcon v-else data-icon="inline-start" />
 					{{ isAdding ? 'Adding...' : 'Add Exclusion' }}
 				</Button>
 			</SheetFooter>

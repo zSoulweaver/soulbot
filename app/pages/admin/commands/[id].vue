@@ -8,6 +8,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import TemplateEditorCard from '~/components/commands/TemplateEditorCard.vue'
+import { Spinner } from '~/components/ui/spinner'
 
 const route = useRoute()
 const { data: commands, refresh: refreshCommands, pending: loading } = useFetch<Command[]>('/api/commands')
@@ -215,8 +216,9 @@ async function saveTemplates() {
 <template>
 	<AppPageContainer>
 		<!-- Main Workspace Loader -->
-		<div v-if="loading" class="py-12 text-center text-muted-foreground">
-			Loading command customizer...
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+			<Spinner class="size-8" />
+			<span>Loading command customizer...</span>
 		</div>
 
 		<div v-else-if="!command" class="py-12 text-center text-muted-foreground">

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Loader2, SaveIcon } from 'lucide-vue-next'
+import { SaveIcon } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '~/components/ui/item'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
+import { Spinner } from '~/components/ui/spinner'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 
 interface User {
@@ -150,8 +151,8 @@ async function saveAdjustment() {
 				</SheetClose>
 
 				<Button :disabled="isSaving" @click="saveAdjustment">
-					<Loader2 v-if="isSaving" class="size-4 animate-spin" data-icon="inline-start" />
-					<SaveIcon v-else class="size-4" data-icon="inline-start" />
+					<Spinner v-if="isSaving" data-icon="inline-start" />
+					<SaveIcon v-else data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Adjustments' }}
 				</Button>
 			</SheetFooter>

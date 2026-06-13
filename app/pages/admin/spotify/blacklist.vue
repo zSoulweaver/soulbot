@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Loader2, Music, PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
+import { Music, PlusIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { computed, h, ref, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import {
@@ -130,8 +130,8 @@ const columns: any[] = [
 				},
 			}, () => [
 				isDeleting.value === info.row.original.id
-					? h(Spinner)
-					: h(TrashIcon),
+					? h(Spinner, { 'data-icon': 'inline-start' })
+					: h(TrashIcon, { 'data-icon': 'inline-start' }),
 				'Remove',
 			]),
 		]),
@@ -152,86 +152,84 @@ const columns: any[] = [
 		</AppPageHeader>
 
 		<div class="flex flex-col gap-4">
-			<div class="flex flex-col gap-4">
-				<InputGroup class="w-full max-w-sm">
-					<InputGroupAddon>
-						<SearchIcon class="text-muted-foreground" />
-					</InputGroupAddon>
-					<InputGroupInput
-						v-model="searchQuery"
-						type="search"
-						placeholder="Search track title or artist..."
-					/>
-				</InputGroup>
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<SearchIcon class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search track title or artist..."
+				/>
+			</InputGroup>
 
-				<div class="relative overflow-hidden rounded-lg border">
-					<DataTable
-						v-if="blacklistItems.length > 0"
-						:columns="columns"
-						:data="blacklistItems"
-					/>
-					<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-						<Loader2 class="size-6 animate-spin text-primary" />
-						<span>Loading blacklist...</span>
-					</div>
-					<div v-else class="rounded-lg bg-muted/20 py-12 text-center text-sm text-muted-foreground">
-						No blacklisted tracks found.
-					</div>
+			<div class="relative">
+				<DataTable
+					v-if="blacklistItems.length > 0"
+					:columns="columns"
+					:data="blacklistItems"
+				/>
+				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
+					<Spinner class="size-6 text-primary" />
+					<span>Loading blacklist...</span>
 				</div>
-
-				<!-- Bottom Pagination Row -->
-				<div
-					v-if="filteredTotal > 0" class="
-						flex flex-col items-center justify-between gap-4 select-none
-						sm:flex-row
-					"
-				>
-					<span class="text-xs text-muted-foreground">
-						Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} blacklisted tracks
-					</span>
-
-					<Pagination
-						v-model:page="currentPage"
-						:total="filteredTotal"
-						:sibling-count="1"
-						:items-per-page="itemsPerPage"
-						class="mx-0 w-auto"
-					>
-						<PaginationContent>
-							<PaginationFirst />
-							<PaginationPrevious />
-							<PaginationNext />
-							<PaginationLast />
-						</PaginationContent>
-					</Pagination>
+				<div v-else class="rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground">
+					No blacklisted tracks found.
 				</div>
 			</div>
+
+			<!-- Bottom Pagination Row -->
+			<div
+				v-if="filteredTotal > 0" class="
+					flex flex-col items-center justify-between gap-4 select-none
+					sm:flex-row
+				"
+			>
+				<span class="text-xs text-muted-foreground">
+					Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} blacklisted tracks
+				</span>
+
+				<Pagination
+					v-model:page="currentPage"
+					:total="filteredTotal"
+					:sibling-count="1"
+					:items-per-page="itemsPerPage"
+					class="mx-0 w-auto"
+				>
+					<PaginationContent>
+						<PaginationFirst />
+						<PaginationPrevious />
+						<PaginationNext />
+						<PaginationLast />
+					</PaginationContent>
+				</Pagination>
+			</div>
+
+			<!-- Add Blacklist Modal Dialog Component -->
+			<BlacklistAddDialog
+				v-model:open="isAddDialogOpen"
+				@added="refresh"
+			/>
+
+			<!-- Confirm Remove Blacklist Dialog -->
+			<AlertDialog v-model:open="isRemoveDialogOpen">
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Remove from Blacklist?</AlertDialogTitle>
+						<AlertDialogDescription v-if="trackToRemove">
+							Are you sure you want to remove <strong>{{ trackToRemove.title }}</strong> by <strong>{{ trackToRemove.artist }}</strong> from the blacklist? Users will be able to request this song again.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel @click="trackToRemove = null">
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction @click="confirmRemoveTrack">
+							Confirm
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
-
-		<!-- Add Blacklist Modal Dialog Component -->
-		<BlacklistAddDialog
-			v-model:open="isAddDialogOpen"
-			@added="refresh"
-		/>
-
-		<!-- Confirm Remove Blacklist Dialog -->
-		<AlertDialog v-model:open="isRemoveDialogOpen">
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Remove from Blacklist?</AlertDialogTitle>
-					<AlertDialogDescription v-if="trackToRemove">
-						Are you sure you want to remove <strong>{{ trackToRemove.title }}</strong> by <strong>{{ trackToRemove.artist }}</strong> from the blacklist? Users will be able to request this song again.
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel @click="trackToRemove = null">
-						Cancel
-					</AlertDialogCancel>
-					<AlertDialogAction @click="confirmRemoveTrack">
-						Confirm
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
 	</AppPageContainer>
 </template>

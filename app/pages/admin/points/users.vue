@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table'
-import { Loader2, PencilIcon, PlusIcon, SearchIcon } from 'lucide-vue-next'
+import { PencilIcon, PlusIcon, SearchIcon } from 'lucide-vue-next'
 import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import UserPointsEditSheet from '~/components/points/UserPointsEditSheet.vue'
 import { Button } from '~/components/ui/button'
+import { Spinner } from '~/components/ui/spinner'
 import { usePagination } from '~/composables/usePagination'
 
 interface User {
@@ -82,7 +83,7 @@ const columns: any[] = [
 				size: 'sm',
 				onClick: () => openAdjustSheet(info.row.original),
 			}, () => [
-				h(PencilIcon),
+				h(PencilIcon, { 'data-icon': 'inline-start' }),
 				'Adjust Points',
 			]),
 		]),
@@ -113,7 +114,7 @@ const columns: any[] = [
 					:data="paginatedUsers"
 				/>
 				<div v-else-if="loadingTable" class="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground select-none">
-					<Loader2 class="size-6 animate-spin text-primary" />
+					<Spinner class="size-6 text-primary" />
 					<span>Loading users...</span>
 				</div>
 				<div v-else class="flex flex-col items-center justify-center gap-3 rounded-lg border bg-muted/20 py-12 text-center text-sm text-muted-foreground select-none">

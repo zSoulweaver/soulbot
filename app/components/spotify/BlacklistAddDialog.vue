@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2, PlusIcon } from 'lucide-vue-next'
+import { PlusIcon } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Button } from '~/components/ui/button'
@@ -14,6 +14,7 @@ import {
 } from '~/components/ui/dialog'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '~/components/ui/field'
 import { Input } from '~/components/ui/input'
+import { Spinner } from '~/components/ui/spinner'
 
 const props = defineProps<{
 	open: boolean
@@ -127,8 +128,8 @@ async function addBlacklistTrack() {
 				</DialogClose>
 
 				<Button :disabled="isAdding || !newLink.trim()" @click="addBlacklistTrack">
-					<Loader2 v-if="isAdding" class="size-4 animate-spin" />
-					<PlusIcon v-else class="size-4" />
+					<Spinner v-if="isAdding" data-icon="inline-start" />
+					<PlusIcon v-else data-icon="inline-start" />
 					{{ isAdding ? 'Blacklisting...' : 'Add to Blacklist' }}
 				</Button>
 			</DialogFooter>

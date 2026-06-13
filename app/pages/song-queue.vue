@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { Ban, ChevronDown, Heart, ListMusic, Loader2, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from 'lucide-vue-next'
+import { Ban, ChevronDown, Heart, ListMusic, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from 'lucide-vue-next'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import SpotifyPlayer from '~/components/spotify/SpotifyPlayer.vue'
@@ -351,7 +351,7 @@ function formatTimeAgo(timestamp?: number | null) {
 					:disabled="isToggling"
 					@click="handleToggleQueue"
 				>
-					<Loader2 v-if="isToggling" class="size-4 animate-spin" />
+					<Spinner v-if="isToggling" data-icon="inline-start" />
 					{{ queueData?.settings?.active ? 'Pause Queue' : 'Enable Queue' }}
 				</Button>
 				<Button
@@ -360,7 +360,7 @@ function formatTimeAgo(timestamp?: number | null) {
 					:disabled="isClearing"
 					@click="handleClearQueue"
 				>
-					<Loader2 v-if="isClearing" class="size-4 animate-spin" />
+					<Spinner v-if="isClearing" data-icon="inline-start" />
 					Clear Queue
 				</Button>
 			</div>
@@ -427,8 +427,8 @@ function formatTimeAgo(timestamp?: number | null) {
 								/>
 							</div>
 							<Button type="submit" :disabled="isSubmitting" class="shrink-0">
-								<Spinner v-if="isSubmitting" />
-								<Plus v-else />
+								<Spinner v-if="isSubmitting" data-icon="inline-start" />
+								<Plus v-else data-icon="inline-start" />
 								Request Song
 								<Badge v-if="queueData?.settings?.pointsCost" variant="secondary">
 									{{ queueData.settings.pointsCost }} pts
@@ -574,7 +574,7 @@ function formatTimeAgo(timestamp?: number | null) {
 								<TableBody>
 									<TableRow v-if="historyLoading && !historyData" class="hover:bg-transparent">
 										<TableCell colspan="3" class="py-10 text-center text-muted-foreground">
-											<Loader2 class="mx-auto mb-2 size-6 animate-spin" />
+											<Spinner class="mx-auto mb-2 size-6" />
 											Loading history...
 										</TableCell>
 									</TableRow>
@@ -669,8 +669,8 @@ function formatTimeAgo(timestamp?: number | null) {
 								:disabled="isPlaying"
 								@click="handleStartPlayback"
 							>
-								<Loader2 v-if="isPlaying" class="size-4 animate-spin" />
-								<Play v-else class="size-4" />
+								<Spinner v-if="isPlaying" data-icon="inline-start" />
+								<Play v-else data-icon="inline-start" />
 								Start Queue
 							</Button>
 							<!-- Skip Song / Button Group (Caster / Mods) -->
@@ -682,8 +682,8 @@ function formatTimeAgo(timestamp?: number | null) {
 									:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
 									@click="handleSkipSong"
 								>
-									<Loader2 v-if="isSkipping" class="size-4 animate-spin" />
-									<SkipForward v-else class="size-4" />
+									<Spinner v-if="isSkipping" data-icon="inline-start" />
+									<SkipForward v-else data-icon="inline-start" />
 									Skip Song
 								</Button>
 								<DropdownMenu>
@@ -694,7 +694,7 @@ function formatTimeAgo(timestamp?: number | null) {
 											class="shrink-0 rounded-l-none border-l-0 px-2"
 											:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
 										>
-											<ChevronDown class="size-4" />
+											<ChevronDown />
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end">
@@ -705,8 +705,8 @@ function formatTimeAgo(timestamp?: number | null) {
 											"
 											@click="handleSkipAndBlacklist"
 										>
-											<Loader2 v-if="isBlacklisting" class="size-4 animate-spin" />
-											<Ban v-else class="size-4" />
+											<Spinner v-if="isBlacklisting" />
+											<Ban v-else />
 											<span>Skip & Blacklist Track</span>
 										</DropdownMenuItem>
 									</DropdownMenuContent>
@@ -725,9 +725,9 @@ function formatTimeAgo(timestamp?: number | null) {
 								:title="queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist'"
 								@click="handleLikeSong"
 							>
-								<Loader2 v-if="isLiking" class="size-4 animate-spin" />
+								<Spinner v-if="isLiking" />
 								<Heart
-									v-else class="size-4 transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
+									v-else class="transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
 								/>
 							</Button>
 						</div>

@@ -45,7 +45,7 @@ function copyVariable(variable: string) {
 			"
 		>
 			<!-- Points Reward Settings -->
-			<div class="space-y-4">
+			<div class="flex flex-col gap-4">
 				<Item variant="muted">
 					<ItemContent>
 						<ItemTitle>
@@ -61,7 +61,7 @@ function copyVariable(variable: string) {
 					</ItemActions>
 				</Item>
 
-				<div v-if="pointsEnabled" class="animate-in space-y-3 duration-200 fade-in slide-in-from-top-2">
+				<div v-if="pointsEnabled" class="flex animate-in flex-col gap-3 duration-200 fade-in slide-in-from-top-2">
 					<Label :for="`${props.title}-points`">
 						{{ props.pointsLabel || 'Points Reward Amount' }}
 					</Label>
@@ -79,7 +79,7 @@ function copyVariable(variable: string) {
 			</div>
 
 			<!-- Chat Alert Settings -->
-			<div class="space-y-4">
+			<div class="flex flex-col gap-4">
 				<Item variant="muted">
 					<ItemContent>
 						<ItemTitle>
@@ -95,7 +95,7 @@ function copyVariable(variable: string) {
 					</ItemActions>
 				</Item>
 
-				<div v-if="alertEnabled" class="animate-in space-y-3 duration-200 fade-in slide-in-from-top-2">
+				<div v-if="alertEnabled" class="flex animate-in flex-col gap-3 duration-200 fade-in slide-in-from-top-2">
 					<Label :for="`${props.title}-template`">
 						Chat Announcement Message
 					</Label>
@@ -108,7 +108,7 @@ function copyVariable(variable: string) {
 					/>
 
 					<!-- Help Variables list -->
-					<div class="space-y-1.5">
+					<div class="flex flex-col gap-1.5">
 						<div class="flex items-center gap-1 text-xs text-muted-foreground">
 							<HelpCircle class="size-3.5" />
 							<span>Available dynamic variables (click to copy):</span>

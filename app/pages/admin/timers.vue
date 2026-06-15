@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Timer } from '~/types/timers'
-import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
+import { Plus, RefreshCcw, Search, Settings, Trash2 } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref, resolveComponent } from 'vue'
 import { toast } from 'vue-sonner'
@@ -198,12 +198,12 @@ const columns: any[] = [
 			subheading="Set up automated, rotating chat announcements to be sent to Twitch chat at specified time intervals."
 		>
 			<div class="flex items-center gap-2">
-				<Button variant="outline" :disabled="loadingTable" @click="refreshTimers">
-					Refresh List
-				</Button>
 				<Button @click="openCreateSheet">
 					<Plus data-icon="inline-start" />
 					Add Timer
+				</Button>
+				<Button variant="ghost" :disabled="loadingTable" @click="refreshTimers">
+					<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 				</Button>
 			</div>
 		</AppPageHeader>

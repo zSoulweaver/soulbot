@@ -2,6 +2,7 @@
 import type { Command, Template } from '~/types/commands'
 import {
 	CornerDownRight,
+	RefreshCcw,
 	Terminal,
 } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
@@ -231,8 +232,8 @@ async function saveTemplates() {
 				:heading="`Response Customizer - !${command.activeTrigger}`"
 				subheading="Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly."
 			>
-				<Button variant="outline" size="sm" :disabled="loading" @click="refreshCommands">
-					Refresh Details
+				<Button variant="ghost" :disabled="loading" @click="refreshCommands">
+					<RefreshCcw :class="{ 'animate-spin': loading }" />
 				</Button>
 			</AppPageHeader>
 

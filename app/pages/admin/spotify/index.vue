@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCw } from '@lucide/vue'
+import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
@@ -32,6 +32,8 @@ const { data: status, pending, refresh } = useFetch('/api/spotify/status', {
 const isDisconnecting = ref(false)
 
 async function handleDisconnect() {
+	if (isDisconnecting.value)
+		return
 	isDisconnecting.value = true
 	try {
 		await $fetch('/api/spotify/disconnect', { method: 'POST' })
@@ -48,6 +50,8 @@ async function handleDisconnect() {
 }
 
 async function handleRefresh() {
+	if (pending.value || status.value?.rateLimited)
+		return
 	forceRefreshQuery.value = true
 	await refresh()
 	forceRefreshQuery.value = false
@@ -242,6 +246,8 @@ watch(() => form.value.targetPlaylist, (newVal) => {
 const isInitializingPlaylist = ref(false)
 
 async function handleInitializePlaylist() {
+	if (isInitializingPlaylist.value)
+		return
 	isInitializingPlaylist.value = true
 	try {
 		await $fetch('/api/spotify/playlist-init', { method: 'POST' })
@@ -270,14 +276,9 @@ function formatTime(ms?: number) {
 <template>
 	<AppPageContainer>
 		<AppPageHeader heading="Spotify Integration" subheading="Manage Spotify authentication, automated queue requests, and saved playlists.">
-			<Button
-				variant="outline"
-				size="sm"
-				:disabled="pending || status?.rateLimited"
-				@click="handleRefresh"
-			>
-				<RefreshCw data-icon="inline-start" />
-				{{ status?.rateLimited ? 'Rate Limited' : 'Refresh Status' }}
+			<Button variant="ghost" :disabled="pending || status?.rateLimited" @click="handleRefresh">
+				<RefreshCcw :class="{ 'animate-spin': pending }" />
+				{{ status?.rateLimited ? 'Rate Limited' : '' }}
 			</Button>
 		</AppPageHeader>
 

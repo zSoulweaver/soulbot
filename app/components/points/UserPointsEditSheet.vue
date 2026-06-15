@@ -35,7 +35,7 @@ watch(() => props.open, (isOpen) => {
 })
 
 async function saveAdjustment() {
-	if (!props.user)
+	if (!props.user || isSaving.value)
 		return
 
 	isSaving.value = true

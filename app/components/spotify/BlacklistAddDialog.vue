@@ -47,6 +47,8 @@ function parseSpotifyTrackId(input: string): string | null {
 }
 
 async function addBlacklistTrack() {
+	if (isAdding.value)
+		return
 	validationError.value = ''
 	const link = newLink.value.trim()
 	if (!link) {

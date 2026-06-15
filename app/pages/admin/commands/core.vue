@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Command } from '~/types/commands'
-import { ChevronRight, Clock, CornerDownRight, MessageSquare, SearchIcon, Settings } from '@lucide/vue'
+import { ChevronRight, Clock, CornerDownRight, MessageSquare, RefreshCcw, SearchIcon, Settings } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
@@ -128,8 +128,8 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 			heading="Command Management"
 			subheading="Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates."
 		>
-			<Button variant="outline" :disabled="loading" @click="refreshCommands">
-				Refresh Commands
+			<Button variant="ghost" :disabled="loading" @click="refreshCommands">
+				<RefreshCcw :class="{ 'animate-spin': loading }" />
 			</Button>
 		</AppPageHeader>
 

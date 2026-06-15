@@ -117,7 +117,7 @@ function removeAliasLocally(index: number) {
 }
 
 async function saveAllConfig() {
-	if (!props.command)
+	if (!props.command || isSaving.value)
 		return
 	isSaving.value = true
 

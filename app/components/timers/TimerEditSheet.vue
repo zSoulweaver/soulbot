@@ -53,10 +53,14 @@ function addMessage() {
 }
 
 function removeMessage(index: number) {
+	if (messagesList.value.length <= 1)
+		return
 	messagesList.value.splice(index, 1)
 }
 
 async function saveConfig() {
+	if (isSaving.value)
+		return
 	const name = timerName.value.trim()
 	if (!name) {
 		toast.error('Timer name is required.')

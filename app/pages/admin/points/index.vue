@@ -153,6 +153,8 @@ const formattedCountdown = computed(() => {
 })
 
 async function triggerPayoutNow() {
+	if (isPayoutNowLoading.value)
+		return
 	isPayoutNowLoading.value = true
 	try {
 		await $fetch('/api/points/payout-now', { method: 'POST' })

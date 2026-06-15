@@ -54,6 +54,8 @@ watch(() => props.open, (isOpen) => {
 })
 
 async function saveConfig() {
+	if (isSaving.value)
+		return
 	const trigger = triggerName.value.trim().toLowerCase().replace(/^!/, '')
 	if (!trigger) {
 		toast.error('Trigger word is required.')

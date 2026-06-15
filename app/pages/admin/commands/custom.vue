@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
+import { Plus, RefreshCcw, Search, Settings, Trash2 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CustomCommandEditSheet from '~/components/commands/CustomCommandEditSheet.vue'
@@ -106,12 +106,12 @@ async function confirmDelete() {
 			subheading="Construct dynamic chat commands using variables like sender, touser, and database-backed persistent counters."
 		>
 			<div class="flex items-center gap-2">
-				<Button variant="outline" :disabled="loading" @click="refreshCustomCommands">
-					Refresh List
-				</Button>
 				<Button @click="openCreateSheet">
 					<Plus data-icon="inline-start" />
 					Add Command
+				</Button>
+				<Button variant="ghost" :disabled="loading" @click="refreshCustomCommands">
+					<RefreshCcw :class="{ 'animate-spin': loading }" />
 				</Button>
 			</div>
 		</AppPageHeader>

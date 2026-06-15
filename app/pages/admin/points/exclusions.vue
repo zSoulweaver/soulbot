@@ -34,6 +34,8 @@ const endIndex = computed(() => {
 })
 
 async function removeExclusion(id: string) {
+	if (isDeleting.value === id)
+		return
 	isDeleting.value = id
 	try {
 		await $fetch(`/api/points/exclusions/${id}`, { method: 'DELETE' })

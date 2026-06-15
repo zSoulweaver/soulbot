@@ -137,6 +137,8 @@ const songLink = ref('')
 const isSubmitting = ref(false)
 
 async function handleSubmitRequest() {
+	if (isSubmitting.value)
+		return
 	if (!songLink.value.trim()) {
 		toast.error('Please enter a Spotify link or track URI.')
 		return
@@ -164,6 +166,7 @@ const isClearing = ref(false)
 const isSkipping = ref(false)
 const isPlaying = ref(false)
 const isLiking = ref(false)
+const isBlacklisting = ref(false)
 
 const isModeratorOrCaster = computed(() => {
 	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
@@ -180,6 +183,8 @@ const userQueueCount = computed(() => {
 })
 
 async function handleToggleQueue() {
+	if (isToggling.value)
+		return
 	isToggling.value = true
 	try {
 		const res = await $fetch<any>('/api/spotify/queue/toggle', { method: 'PUT' })
@@ -199,6 +204,8 @@ const deleteItemOpen = ref(false)
 const itemToDelete = ref<any>(null)
 
 function handleClearQueue() {
+	if (isClearing.value)
+		return
 	clearQueueOpen.value = true
 }
 
@@ -219,6 +226,8 @@ async function confirmClearQueue() {
 }
 
 async function handleSkipSong() {
+	if (isSkipping.value || isBlacklisting.value || !queueData.value?.currentlyPlaying)
+		return
 	isSkipping.value = true
 	try {
 		await $fetch('/api/spotify/queue/skip', { method: 'POST' })
@@ -232,8 +241,6 @@ async function handleSkipSong() {
 		isSkipping.value = false
 	}
 }
-
-const isBlacklisting = ref(false)
 
 async function handleSkipAndBlacklist() {
 	if (!queueData.value?.currentlyPlaying)
@@ -258,6 +265,8 @@ async function handleSkipAndBlacklist() {
 }
 
 async function handleStartPlayback() {
+	if (isPlaying.value)
+		return
 	isPlaying.value = true
 	try {
 		await $fetch('/api/spotify/queue/play', { method: 'POST' })
@@ -273,6 +282,8 @@ async function handleStartPlayback() {
 }
 
 async function handleLikeSong() {
+	if (isLiking.value)
+		return
 	isLiking.value = true
 	try {
 		const res = await $fetch<any>('/api/spotify/like', { method: 'POST' })

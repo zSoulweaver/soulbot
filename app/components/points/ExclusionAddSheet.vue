@@ -23,7 +23,7 @@ watch(() => props.open, (isOpen) => {
 })
 
 async function addExclusion() {
-	if (!newUsername.value.trim())
+	if (!newUsername.value.trim() || isAdding.value)
 		return
 	isAdding.value = true
 	try {

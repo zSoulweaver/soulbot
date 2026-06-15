@@ -1,19 +1,14 @@
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getChatClient, getStreamerChannelName } from '~~/server/utils/twurple'
+import { getStreamerChannelName } from '~~/server/utils/twurple'
 
 async function postAlertToChat(message: string) {
-	const chat = await getChatClient()
-	if (!chat || !chat.isConnected) {
-		botLogger.warn('[EventSub Alerts] Chat client not connected, skipping alert message.')
-		return
-	}
-
 	const channelName = await getStreamerChannelName()
 	if (channelName) {
-		await chat.say(channelName, message)
+		await sendRawChatMessage(channelName, message)
 	}
 }
 

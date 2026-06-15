@@ -3,6 +3,7 @@ import { botEventBus } from '~~/server/bot/core/events'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { timers } from '~~/server/database/schema'
+import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
 import { getChatClient, getStreamerChannelName } from '~~/server/utils/twurple'
 
@@ -100,7 +101,7 @@ export async function executeTimerCheck() {
 				{ timerId: timer.id, name: timer.name, message: messageToSend },
 				'[Timer Engine] Sending scheduled message to chat',
 			)
-			await chatClient.say(channelName, messageToSend)
+			await sendRawChatMessage(channelName, messageToSend)
 
 			const nextSentIndex = (foundIndex + 1) % allMessages.length
 			await db

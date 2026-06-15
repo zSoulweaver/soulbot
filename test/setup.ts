@@ -39,8 +39,16 @@ export const mockSay = vi.fn(async (_channel: string, _message: string) => {
 	// Simple log if needed or noop
 })
 
+export const mockAction = vi.fn(async (_channel: string, _message: string) => {
+	// Simple log if needed or noop
+})
+
 export const mockChatClient = {
 	say: mockSay,
+	action: vi.fn(async (channel: string, message: string) => {
+		await mockAction(channel, message)
+		await mockSay(channel, message)
+	}),
 	isConnected: true,
 	connect: vi.fn(async () => {}),
 	onConnect: vi.fn(),
@@ -130,6 +138,7 @@ beforeAll(async () => {
 beforeEach(() => {
 	// Reset the spy so assertions start fresh in every single test case
 	mockSay.mockClear()
+	mockAction.mockClear()
 })
 
 let mockSpotifyToken: any

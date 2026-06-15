@@ -45,6 +45,8 @@ export interface AppSettings {
 	spotifyPlaylistAllowMods: boolean
 	spotifyPlaylistWhisper: boolean
 	spotifyRequestPlaylistId: string
+	botChatMode: 'normal' | 'action'
+	botMuted: boolean
 }
 
 let cachedSettings: AppSettings | null = null
@@ -101,6 +103,8 @@ export function getAppSettingsSync(): AppSettings {
 			spotifyPlaylistAllowMods: true,
 			spotifyPlaylistWhisper: false,
 			spotifyRequestPlaylistId: '',
+			botChatMode: 'action',
+			botMuted: false,
 		}
 	}
 	return cachedSettings
@@ -154,6 +158,8 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			spotifyPlaylistAllowMods: getVal('spotify.playlist.allow_mods', 'true') === 'true',
 			spotifyPlaylistWhisper: getVal('spotify.playlist.whisper', 'false') === 'true',
 			spotifyRequestPlaylistId: getVal('spotify.request.playlist_id', ''),
+			botChatMode: getVal('bot.chat_mode', 'action') as 'normal' | 'action',
+			botMuted: getVal('bot.muted', 'false') === 'true',
 		}
 	}
 	catch (err) {

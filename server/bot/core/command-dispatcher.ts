@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@twurple/chat'
 import type { CommandContext, CommandMiddleware } from './types'
+import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
 import { getChatClient } from '~~/server/utils/twurple'
 import { antiSpamMiddleware, trackOutboundMessage } from './middleware/anti-spam'
@@ -59,7 +60,7 @@ export async function handleCommand(channel: string, user: string, message: stri
 				? templateRegistry.render(textOrTemplate, data || {})
 				: textOrTemplate
 			trackOutboundMessage()
-			await chatClient.say(channel, `@${raw.userInfo.displayName}, ${text}`)
+			await sendRawChatMessage(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
 		say: async (textOrTemplate: string, ...args: any[]) => {
 			const data = args[0]
@@ -67,7 +68,7 @@ export async function handleCommand(channel: string, user: string, message: stri
 				? templateRegistry.render(textOrTemplate, data || {})
 				: textOrTemplate
 			trackOutboundMessage()
-			await chatClient.say(channel, text)
+			await sendRawChatMessage(channel, text)
 		},
 		raw,
 		rawArgs: parts.slice(1),

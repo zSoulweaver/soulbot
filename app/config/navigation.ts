@@ -1,5 +1,6 @@
 import {
 	Bell,
+	Bot,
 	Clock,
 	LayoutDashboard,
 	Music,
@@ -78,6 +79,16 @@ export const navigation: NavGroup[] = [
 					{ title: 'Gambling', url: '/admin/loyalty/gambling' },
 				],
 			},
+			{
+				title: 'Miscellaneous',
+				url: '/admin/misc/settings',
+				icon: Bot,
+				roles: ['caster'],
+				items: [
+					{ title: 'Bot Settings', url: '/admin/misc/settings' },
+				],
+			},
+
 		],
 	},
 ]

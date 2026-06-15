@@ -77,7 +77,7 @@ describe('Bot Gamble Command Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Alice rolled a 25 and lost 100 points. They went from 500 to 400 points.')
+		expect(replies[0]).toBe('@Alice, rolled a 25 and lost 100 points. You went from 500 to 400 points.')
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(400)
@@ -95,7 +95,7 @@ describe('Bot Gamble Command Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Alice rolled a 75 and won 100 points! They went from 500 to 600 points.')
+		expect(replies[0]).toBe('@Alice, rolled a 75 and won 100 points! You went from 500 to 600 points.')
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(600)
@@ -112,7 +112,7 @@ describe('Bot Gamble Command Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Alice rolled a 75 and won 500 points! They went from 500 to 1000 points.')
+		expect(replies[0]).toBe('@Alice, rolled a 75 and won 500 points! You went from 500 to 1000 points.')
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(1000)
@@ -129,7 +129,7 @@ describe('Bot Gamble Command Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Alice rolled a 11 and lost 250 points. They went from 500 to 250 points.')
+		expect(replies[0]).toBe('@Alice, rolled a 11 and lost 250 points. You went from 500 to 250 points.')
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(250)

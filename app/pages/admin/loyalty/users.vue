@@ -3,7 +3,7 @@ import { PencilIcon, PlusIcon, RefreshCcw, SearchIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
-import UserPointsEditSheet from '~/components/points/UserPointsEditSheet.vue'
+import UserPointsEditSheet from '~/components/loyalty/UserPointsEditSheet.vue'
 import { Button } from '~/components/ui/button'
 import { usePagination } from '~/composables/usePagination'
 

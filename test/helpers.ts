@@ -60,6 +60,7 @@ export async function createTestUser(options: {
 	isVip?: boolean
 	isSubscriber?: boolean
 	points?: number
+	watchTime?: number
 }) {
 	const now = new Date()
 	const username = cleanUsername(options.username)
@@ -74,6 +75,7 @@ export async function createTestUser(options: {
 		isVip: options.isVip || false,
 		isSubscriber: options.isSubscriber || false,
 		points: options.points ?? 0,
+		watchTime: options.watchTime ?? 0,
 		firstSeen: Date.now(),
 		lastSeen: Date.now(),
 		createdAt: now,
@@ -87,6 +89,7 @@ export async function createTestUser(options: {
 			isVip: options.isVip || false,
 			isSubscriber: options.isSubscriber || false,
 			points: options.points ?? 0,
+			watchTime: options.watchTime ?? 0,
 			lastSeen: Date.now(),
 			updatedAt: now,
 		},
@@ -112,6 +115,7 @@ export async function simulateCommand(
 		isVip?: boolean
 		isSubscriber?: boolean
 		points?: number
+		watchTime?: number
 	} = {},
 ) {
 	mockSay.mockClear()
@@ -123,6 +127,7 @@ export async function simulateCommand(
 	const isVip = userOptions.isVip || false
 	const isSubscriber = userOptions.isSubscriber || false
 	const points = userOptions.points ?? 0
+	const watchTime = userOptions.watchTime ?? 0
 
 	// Ensure the user exists in the database
 	await createTestUser({
@@ -133,6 +138,7 @@ export async function simulateCommand(
 		isVip,
 		isSubscriber,
 		points,
+		watchTime,
 	})
 
 	// Construct mock Twurple ChatMessage

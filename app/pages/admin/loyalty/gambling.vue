@@ -5,9 +5,9 @@ import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Slider } from '~/components/ui/slider'
 
-type GamblingSettings = Awaited<ReturnType<typeof import('~~/server/api/points/gambling.get').default>>
+type GamblingSettings = Awaited<ReturnType<typeof import('~~/server/api/loyalty/gambling.get').default>>
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<GamblingSettings>('/api/points/gambling')
+const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<GamblingSettings>('/api/loyalty/gambling')
 
 const form = ref<GamblingSettings>({
 	minBet: 10,
@@ -76,7 +76,7 @@ async function saveSettings() {
 
 	isSaving.value = true
 	try {
-		await $fetch('/api/points/gambling', {
+		await $fetch('/api/loyalty/gambling', {
 			method: 'PUT',
 			body: {
 				minBet: Number(form.value.minBet),

@@ -1,18 +1,18 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import idDeleteHandler from '~~/server/api/points/exclusions/[id].delete'
-import indexGetHandler from '~~/server/api/points/exclusions/index.get'
-import indexPostHandler from '~~/server/api/points/exclusions/index.post'
+import idDeleteHandler from '~~/server/api/loyalty/exclusions/[id].delete'
+import indexGetHandler from '~~/server/api/loyalty/exclusions/index.get'
+import indexPostHandler from '~~/server/api/loyalty/exclusions/index.post'
 import { db } from '~~/server/database'
 import { excludedUsers, twitchTokens } from '~~/server/database/schema'
 import { clearDatabase } from '../helpers'
 
-describe('Points Exclusions API Routes in-process', () => {
+describe('Loyalty Exclusions API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 	})
 
-	describe('GET /api/points/exclusions', () => {
+	describe('GET /api/loyalty/exclusions', () => {
 		it('should return manual and auto exclusions', async () => {
 			await db.insert(twitchTokens).values({
 				accountType: 'bot',
@@ -44,7 +44,7 @@ describe('Points Exclusions API Routes in-process', () => {
 		})
 	})
 
-	describe('POST /api/points/exclusions', () => {
+	describe('POST /api/loyalty/exclusions', () => {
 		it('should fail if user does not exist on Twitch', async () => {
 			try {
 				await indexPostHandler({
@@ -115,7 +115,7 @@ describe('Points Exclusions API Routes in-process', () => {
 		})
 	})
 
-	describe('DELETE /api/points/exclusions/[id]', () => {
+	describe('DELETE /api/loyalty/exclusions/[id]', () => {
 		it('should delete an exclusion', async () => {
 			await db.insert(excludedUsers).values({
 				id: 'to-delete',

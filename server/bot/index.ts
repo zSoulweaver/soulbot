@@ -1,6 +1,7 @@
 import process from 'node:process'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
+import { activityTracker } from './core/activity-tracker'
 import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
@@ -15,6 +16,7 @@ import { spotifyModule } from './modules/spotify'
 import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
+import { watchtimeModule } from './modules/watchtime'
 
 let isRegistryInitialized = false
 
@@ -27,6 +29,7 @@ export function initRegistry() {
 	registry.register(commandsModule)
 	registry.register(twitchModule)
 	registry.register(spotifyModule)
+	registry.register(watchtimeModule)
 	isRegistryInitialized = true
 }
 
@@ -51,6 +54,7 @@ export function initBot() {
 	// Start the active chatter watch-time points payout engine
 	if (process.env.NODE_ENV !== 'test') {
 		startPayoutEngine()
+		activityTracker.start()
 		startTimerEngine()
 		startSpotifyQueueEngine()
 	}

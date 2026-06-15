@@ -1,18 +1,18 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import gamblingGetHandler from '~~/server/api/points/gambling.get'
-import gamblingPutHandler from '~~/server/api/points/gambling.put'
+import gamblingGetHandler from '~~/server/api/loyalty/gambling.get'
+import gamblingPutHandler from '~~/server/api/loyalty/gambling.put'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase } from '../helpers'
 
-describe('Points Gambling Settings API Routes', () => {
+describe('Loyalty Gambling Settings API Routes', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 	})
 
-	describe('GET /api/points/gambling', () => {
+	describe('GET /api/loyalty/gambling', () => {
 		it('should return default settings if none are configured in database', async () => {
 			const res = await gamblingGetHandler({} as any)
 			expect(res).toBeDefined()
@@ -40,7 +40,7 @@ describe('Points Gambling Settings API Routes', () => {
 		})
 	})
 
-	describe('PUT /api/points/gambling', () => {
+	describe('PUT /api/loyalty/gambling', () => {
 		it('should fail with 400 status if validation fails', async () => {
 			try {
 				await gamblingPutHandler({

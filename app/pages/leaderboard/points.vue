@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { MedalIcon, TrophyIcon } from '@lucide/vue'
 
-const { data: leaderboard, pending } = useFetch<any[]>('/api/points/leaderboard')
+const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/leaderboard')
 </script>
 
 <template>

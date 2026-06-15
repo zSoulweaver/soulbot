@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
+import { activityTracker } from '~~/server/bot/core/activity-tracker'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { excludedUsers, settings, users } from '~~/server/database/schema'
@@ -139,7 +140,6 @@ export async function executePayoutCycle(): Promise<void> {
 }
 
 let nextPayoutTime: number | null = null
-let currentTimeout: NodeJS.Timeout | null = null
 
 /**
  * Returns the timestamp when the next payout cycle is scheduled to run.
@@ -148,59 +148,106 @@ export function getNextPayoutTime(): number | null {
 	return nextPayoutTime
 }
 
-/**
- * Intelligently schedules the next payout check.
- */
-async function scheduleNextPayout(customDelayMs?: number) {
-	if (currentTimeout) {
-		clearTimeout(currentTimeout)
+export async function handleActivityTick(payload: { chatters: { id: string, username: string, displayName: string }[], isOnline: boolean, timestamp: number }) {
+	const { chatters, isOnline, timestamp } = payload
+
+	// Fetch settings from cache
+	const appSettings = await getAppSettings()
+	const payoutIntervalMinutes = isOnline ? appSettings.payoutInterval : appSettings.payoutIntervalOffline
+
+	if (nextPayoutTime === null) {
+		// Initialize on first tick
+		nextPayoutTime = timestamp + payoutIntervalMinutes * 60 * 1000
+		return
 	}
 
-	let delayMs = customDelayMs
-	if (!delayMs) {
-		try {
-			const settings = await getAppSettings()
-			const stream = await getStreamInfo()
-			const payoutIntervalMinutes = stream.isOnline ? settings.payoutInterval : settings.payoutIntervalOffline
-			delayMs = payoutIntervalMinutes * 60 * 1000
-		}
-		catch (err) {
-			botLogger.error({ err }, '[Payout Engine] Error getting settings for next payout delay, defaulting to 1 minute')
-			delayMs = 60000
+	if (timestamp < nextPayoutTime) {
+		return // Not due yet
+	}
+
+	// Payout is due!
+	const payoutAmount = isOnline ? appSettings.payoutAmount : appSettings.payoutAmountOffline
+	const activeBonus = appSettings.activeBonus
+
+	if (!isOnline && payoutAmount === 0) {
+		// Offline and payout is 0, skip payout but reset timer
+		nextPayoutTime = timestamp + payoutIntervalMinutes * 60 * 1000
+		return
+	}
+
+	botLogger.info(
+		{ isOnline, payoutAmount, activeBonus },
+		'[Payout Engine] Executing points payout via activity tick',
+	)
+
+	const chatterValues: any[] = []
+	for (const chatter of chatters) {
+		const userId = chatter.id
+		const username = chatter.username
+		const displayName = chatter.displayName
+
+		// Check if the user is active (sent a message during this interval)
+		const isActive = activeUsersMap.has(userId)
+		const earnedPoints = payoutAmount + (isOnline && isActive ? activeBonus : 0)
+
+		if (earnedPoints > 0) {
+			chatterValues.push({
+				id: userId,
+				username,
+				displayName,
+				points: earnedPoints,
+				firstSeen: timestamp,
+				lastSeen: timestamp,
+			})
 		}
 	}
 
-	nextPayoutTime = Date.now() + delayMs
-	currentTimeout = setTimeout(runPayoutCycle, delayMs)
-	currentTimeout.unref()
+	if (chatterValues.length > 0) {
+		// Chunk upserts if they exceed SQLite limits
+		const chunkSize = 500
+		for (let i = 0; i < chatterValues.length; i += chunkSize) {
+			const chunk = chatterValues.slice(i, i + chunkSize)
+			await db.insert(users)
+				.values(chunk)
+				.onConflictDoUpdate({
+					target: users.id,
+					set: {
+						points: sql`${users.points} + EXCLUDED.points`,
+						username: sql`EXCLUDED.username`,
+						displayName: sql`EXCLUDED.display_name`,
+						lastSeen: timestamp,
+						updatedAt: new Date(),
+					},
+				})
+		}
+
+		botLogger.info(
+			{ rewardedCount: chatterValues.length, payoutAmount, activeBonus },
+			'[Payout Engine] Batch awarded points to chatters',
+		)
+	}
+
+	// Clear active users registry only on successful payout
+	activeUsersMap.clear()
+
+	// Update next payout time
+	nextPayoutTime = timestamp + payoutIntervalMinutes * 60 * 1000
 }
 
 /**
- * Internal loop runner for payout cycles.
- */
-async function runPayoutCycle() {
-	try {
-		await executePayoutCycle()
-		await scheduleNextPayout()
-	}
-	catch (err) {
-		botLogger.error({ err }, '[Payout Engine] Error in chatter payout cycle')
-		// Retry in 1 minute on failure without clearing active users map
-		await scheduleNextPayout(60000)
-	}
-}
-
-/**
- * Starts the dynamic watch-time points payout engine loop.
+ * Starts the points payout listener.
  */
 export function startPayoutEngine(): void {
-	botLogger.info('[Payout Engine] Starting active chatter points loop...')
+	botLogger.info('[Payout Engine] Starting active chatter points loop listener...')
 
 	// Ensure we have seeded default bots on initialization
 	seedDefaultExclusions().catch(err => botLogger.error({ err }, 'Failed to seed exclusions during init'))
 
-	// Schedule the first run in 1 minute to allow bot initialization to fully settle
-	scheduleNextPayout(60000)
+	// Initialize nextPayoutTime to 1 minute from now so points payout runs on the first tick!
+	nextPayoutTime = Date.now() + 60000
+
+	// Register with activityTracker
+	activityTracker.on('tick', handleActivityTick)
 }
 
 /**
@@ -208,11 +255,13 @@ export function startPayoutEngine(): void {
  */
 export async function triggerManualPayout(): Promise<void> {
 	botLogger.info('[Payout Engine] Manual payout triggered via API.')
-	if (currentTimeout) {
-		clearTimeout(currentTimeout)
-	}
 	await executePayoutCycle()
-	await scheduleNextPayout()
+
+	// Reset nextPayoutTime to payoutInterval minutes from now
+	const appSettings = await getAppSettings()
+	const stream = await getStreamInfo()
+	const payoutIntervalMinutes = stream.isOnline ? appSettings.payoutInterval : appSettings.payoutIntervalOffline
+	nextPayoutTime = Date.now() + payoutIntervalMinutes * 60 * 1000
 }
 
 export { activeUsersMap }

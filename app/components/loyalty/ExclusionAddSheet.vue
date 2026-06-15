@@ -27,7 +27,7 @@ async function addExclusion() {
 		return
 	isAdding.value = true
 	try {
-		await $fetch('/api/points/exclusions', {
+		await $fetch('/api/loyalty/exclusions', {
 			method: 'POST',
 			body: {
 				username: newUsername.value,

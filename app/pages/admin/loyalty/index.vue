@@ -17,7 +17,7 @@ interface PointsSettings {
 }
 
 // Fetch active settings
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<PointsSettings>('/api/points/settings')
+const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<PointsSettings>('/api/loyalty/settings')
 
 const form = ref<PointsSettings>({
 	currencyName: 'point',
@@ -90,7 +90,7 @@ async function saveSettings() {
 
 	isSaving.value = true
 	try {
-		await $fetch('/api/points/settings', {
+		await $fetch('/api/loyalty/settings', {
 			method: 'PUT',
 			body: {
 				currencyName: form.value.currencyName,
@@ -114,7 +114,7 @@ async function saveSettings() {
 }
 
 // Next Payout live monitor state
-const { data: nextPayoutData, refresh: refreshNextPayout } = useFetch('/api/points/next-payout')
+const { data: nextPayoutData, refresh: refreshNextPayout } = useFetch('/api/loyalty/next-payout')
 const currentTime = ref(Date.now())
 const isPayoutNowLoading = ref(false)
 let timeIntervalId: any = null
@@ -157,7 +157,7 @@ async function triggerPayoutNow() {
 		return
 	isPayoutNowLoading.value = true
 	try {
-		await $fetch('/api/points/payout-now', { method: 'POST' })
+		await $fetch('/api/loyalty/payout-now', { method: 'POST' })
 		toast.success('Payout triggered successfully!')
 		await refreshNextPayout()
 	}
@@ -376,7 +376,7 @@ onUnmounted(() => {
 					<CardHeader>
 						<CardTitle class="flex items-center gap-2">
 							<Clock class="size-4" />
-							Payout Engine Status
+							Point Payout Engine Status
 						</CardTitle>
 						<CardDescription>
 							Real-time monitoring and manual execution controls.
@@ -425,7 +425,7 @@ onUnmounted(() => {
 					</CardHeader>
 					<CardContent class="flex flex-col gap-3 text-sm/relaxed text-muted-foreground">
 						<p>
-							The bot runs a background watch-time payout engine that queries the Twitch API to fetch all chatters currently connected to your channel.
+							The bot runs a background payout engine that queries the Twitch API to fetch all chatters currently connected to your channel.
 						</p>
 						<p>
 							Every chatter in the list is awarded the base payout amount (online or offline). If a chatter has sent a message during the current interval, they are also awarded the active chatter bonus!

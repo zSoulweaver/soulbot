@@ -1,19 +1,19 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import usernameGetHandler from '~~/server/api/points/[username].get'
-import usernamePostHandler from '~~/server/api/points/[username].post'
-import leaderboardHandler from '~~/server/api/points/leaderboard.get'
+import usernameGetHandler from '~~/server/api/loyalty/[username].get'
+import usernamePostHandler from '~~/server/api/loyalty/[username].post'
+import leaderboardHandler from '~~/server/api/loyalty/leaderboard.get'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser } from '../helpers'
 
-describe('Points API Routes in-process', () => {
+describe('Loyalty API Routes in-process', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 		;(globalThis as any).__mockUsername__ = ''
 	})
 
-	describe('GET /api/points/leaderboard', () => {
+	describe('GET /api/loyalty/leaderboard', () => {
 		it('should return empty leaderboard when no earners exist', async () => {
 			const res = await leaderboardHandler({} as any)
 			expect(res).toBeDefined()
@@ -33,7 +33,7 @@ describe('Points API Routes in-process', () => {
 		})
 	})
 
-	describe('GET /api/points/[username]', () => {
+	describe('GET /api/loyalty/[username]', () => {
 		it('should return 404 if the user does not exist in DB', async () => {
 			;(globalThis as any).__mockUsername__ = 'nonexistent'
 			await expect(async () => {
@@ -58,7 +58,7 @@ describe('Points API Routes in-process', () => {
 		})
 	})
 
-	describe('POST /api/points/[username]', () => {
+	describe('POST /api/loyalty/[username]', () => {
 		it('should fail with 400 Bad Request if parameters are invalid', async () => {
 			await createTestUser({ id: '123', username: 'alice', displayName: 'Alice', points: 100 })
 

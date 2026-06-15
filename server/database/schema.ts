@@ -50,6 +50,7 @@ export const users = sqliteTable('users', {
 	isVip: integer('is_vip', { mode: 'boolean' }).default(false).notNull(),
 	isSubscriber: integer('is_subscriber', { mode: 'boolean' }).default(false).notNull(),
 	points: integer('points').default(0).notNull(),
+	watchTime: integer('watch_time').default(0).notNull(),
 	firstSeen: integer('first_seen'), // Null if never seen in chat
 	lastSeen: integer('last_seen'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),

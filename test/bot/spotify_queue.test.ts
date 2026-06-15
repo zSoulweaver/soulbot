@@ -60,7 +60,7 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Track Blinding Lights by The Weeknd has been added to the queue (Position #1).')
+		expect(replies[0]).toBe('@Alice, "Blinding Lights by The Weeknd" has been added to the queue (Position #1).')
 		expect(user!.points).toBe(90) // 100 - 10
 
 		const dbItems = await db.select().from(spotifyQueue)
@@ -102,7 +102,7 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Track Rap God by Eminem has been added to the queue (Position #1).')
+		expect(replies[0]).toBe('@Alice, "Rap God by Eminem" has been added to the queue (Position #1).')
 		expect(user!.points).toBe(90) // 100 - 10
 
 		const dbItems = await db.select().from(spotifyQueue)

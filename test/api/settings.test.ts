@@ -1,18 +1,18 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
-import settingsGetHandler from '~~/server/api/points/settings.get'
-import settingsPutHandler from '~~/server/api/points/settings.put'
+import settingsGetHandler from '~~/server/api/loyalty/settings.get'
+import settingsPutHandler from '~~/server/api/loyalty/settings.put'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase } from '../helpers'
 
-describe('Points Settings API Routes', () => {
+describe('Loyalty Settings API Routes', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 	})
 
-	describe('GET /api/points/settings', () => {
+	describe('GET /api/loyalty/settings', () => {
 		it('should return default settings if none are configured in database', async () => {
 			const res = await settingsGetHandler({} as any)
 			expect(res).toBeDefined()
@@ -49,7 +49,7 @@ describe('Points Settings API Routes', () => {
 		})
 	})
 
-	describe('PUT /api/points/settings', () => {
+	describe('PUT /api/loyalty/settings', () => {
 		it('should fail with 400 status if validation fails', async () => {
 			try {
 				await settingsPutHandler({

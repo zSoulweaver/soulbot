@@ -16,6 +16,9 @@ export default defineEventHandler(async (event) => {
 		)
 	}
 
+	const query = getQuery(event) || {}
+	const sortBy = query.sortBy === 'watchTime' ? 'watchTime' : 'points'
+
 	const countRes = await db
 		.select({ count: sql<number>`count(*)` })
 		.from(users)
@@ -26,7 +29,7 @@ export default defineEventHandler(async (event) => {
 		.select()
 		.from(users)
 		.where(conditions)
-		.orderBy(desc(users.points))
+		.orderBy(sortBy === 'watchTime' ? desc(users.watchTime) : desc(users.points))
 		.limit(limit)
 		.offset((page - 1) * limit)
 

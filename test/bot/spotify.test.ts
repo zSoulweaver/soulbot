@@ -59,7 +59,7 @@ describe('Bot Spotify Commands Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, Now playing: After Hours by The Weeknd - https://open.spotify.com/track/AfterHours')
+		expect(replies[0]).toBe('@Alice, Now playing: "After Hours by The Weeknd" - https://open.spotify.com/track/AfterHours')
 	})
 
 	it('should reply that no song is playing if the track is paused', async () => {

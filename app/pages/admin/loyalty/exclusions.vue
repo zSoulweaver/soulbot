@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AutoExclusion, ExcludedUser } from '~/types/points'
+import type { AutoExclusion, ExcludedUser } from '~/types/loyalty'
 import { PlusIcon, RefreshCcw, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
@@ -15,7 +15,7 @@ const {
 	data,
 	refresh,
 	loading: loadingTable,
-} = usePagination<{ manualExclusions: { data: ExcludedUser[], meta: any }, autoExclusions: AutoExclusion[] }>('/api/points/exclusions')
+} = usePagination<{ manualExclusions: { data: ExcludedUser[], meta: any }, autoExclusions: AutoExclusion[] }>('/api/loyalty/exclusions')
 
 const isDeleting = ref<string | null>(null)
 const isAddSheetOpen = ref(false)
@@ -38,7 +38,7 @@ async function removeExclusion(id: string) {
 		return
 	isDeleting.value = id
 	try {
-		await $fetch(`/api/points/exclusions/${id}`, { method: 'DELETE' })
+		await $fetch(`/api/loyalty/exclusions/${id}`, { method: 'DELETE' })
 		toast.success('Exclusion removed successfully')
 		await refresh()
 	}
@@ -94,7 +94,7 @@ const columns: any[] = [
 	<AppPageContainer>
 		<AppPageHeader
 			heading="Payout Exclusions"
-			subheading="Manage accounts that are excluded from watch-time points payouts."
+			subheading="Manage accounts that are excluded from watch time & points payouts."
 		>
 			<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddSheetOpen = true">
 				<PlusIcon data-icon="inline-start" />
@@ -113,7 +113,7 @@ const columns: any[] = [
 				System Exclusions
 			</AlertTitle>
 			<AlertDescription>
-				The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch-time points payouts.
+				The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
 			</AlertDescription>
 		</Alert>
 

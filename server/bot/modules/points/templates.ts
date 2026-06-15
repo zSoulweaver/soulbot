@@ -40,11 +40,11 @@ export const definitions = {
 		params: undefined,
 	},
 	'points.gambling.win': {
-		default: '$(sender) rolled a $(roll) and won $(winAmount) $(core.currency)! They went from $(oldAmount) to $(newAmount) $(core.currency).',
+		default: 'rolled a $(roll) and won $(winAmount) $(core.currency)! You went from $(oldAmount) to $(newAmount) $(core.currency).',
 		params: { sender: '', roll: 0, winAmount: 0, oldAmount: 0, newAmount: 0 } as { sender: string, roll: number, winAmount: number, oldAmount: number, newAmount: number },
 	},
 	'points.gambling.lose': {
-		default: '$(sender) rolled a $(roll) and lost $(betAmount) $(core.currency). They went from $(oldAmount) to $(newAmount) $(core.currency).',
+		default: 'rolled a $(roll) and lost $(betAmount) $(core.currency). You went from $(oldAmount) to $(newAmount) $(core.currency).',
 		params: { sender: '', roll: 0, betAmount: 0, oldAmount: 0, newAmount: 0 } as { sender: string, roll: number, betAmount: number, oldAmount: number, newAmount: number },
 	},
 	'points.gambling.min-bet': {

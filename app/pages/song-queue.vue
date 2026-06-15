@@ -140,7 +140,7 @@ async function handleSubmitRequest() {
 	if (isSubmitting.value)
 		return
 	if (!songLink.value.trim()) {
-		toast.error('Please enter a Spotify link or track URI.')
+		toast.error('Please enter a Spotify link, URI, or song title.')
 		return
 	}
 	isSubmitting.value = true
@@ -397,7 +397,7 @@ function formatTimeAgo(timestamp?: number | null) {
 							Request a Song
 						</CardTitle>
 						<CardDescription>
-							Submit a Spotify track URL or URI to add a song to the queue.
+							Submit a Spotify track URL, URI, or search by song title to add a song to the queue.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -432,7 +432,7 @@ function formatTimeAgo(timestamp?: number | null) {
 							<div class="relative flex-1">
 								<Input
 									v-model="songLink"
-									placeholder="https://open.spotify.com/track/... or spotify:track:..."
+									placeholder="Spotify link, URI, or search by song title..."
 									class="pr-10"
 									:disabled="isSubmitting"
 								/>

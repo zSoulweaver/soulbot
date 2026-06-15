@@ -1,3 +1,4 @@
+import type { PlaylistTrackInfo } from '~~/server/utils/spotify'
 import { and, asc, eq, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getUserPoints, updateUserPoints } from '~~/server/bot/modules/points/service'
@@ -6,7 +7,7 @@ import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
 import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
 
 const submitRequestSchema = z.object({
@@ -78,13 +79,24 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	const trackId = parseSpotifyTrackId(parsed.data.link)
-	if (!trackId) {
+	const trackIdFromLink = parseSpotifyTrackId(parsed.data.link)
+	let track: PlaylistTrackInfo | null = null
+
+	if (trackIdFromLink) {
+		track = await getTrackDetails(trackIdFromLink)
+	}
+	else {
+		track = await searchTrack(parsed.data.link)
+	}
+
+	if (!track) {
 		throw createError({
 			statusCode: 400,
-			statusMessage: 'Invalid Spotify link. Direct track links or Spotify URIs only.',
+			statusMessage: 'Track not found on Spotify.',
 		})
 	}
+
+	const trackId = trackIdFromLink || track.id
 
 	// Check blacklist
 	const isBlacklisted = await db
@@ -118,14 +130,6 @@ export default defineEventHandler(async (event) => {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'This track is already in the queue.',
-		})
-	}
-
-	const track = await getTrackDetails(trackId)
-	if (!track) {
-		throw createError({
-			statusCode: 400,
-			statusMessage: 'Track not found on Spotify.',
 		})
 	}
 

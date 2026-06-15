@@ -1,4 +1,5 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
+import type { PlaylistTrackInfo } from '~~/server/utils/spotify'
 import type { SongRequestArgs } from '../schema'
 import { and, asc, eq, or, sql } from 'drizzle-orm'
 import { cleanUsername } from '~~/server/bot/core/utils'
@@ -6,7 +7,7 @@ import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
 import { getStreamerToken } from '~~/server/utils/twurple'
 import { getUserPoints, updateUserPoints } from '../../points/service'
 import { checkIsFollowing, parseSpotifyTrackId } from '../utils'
@@ -30,11 +31,22 @@ export const handleSongRequestRoot: CommandHandler<typeof SongRequestArgs> = asy
 		}
 	}
 
-	// Parse Spotify link
-	const trackId = parseSpotifyTrackId(spotifyLink)
-	if (!trackId) {
+	// Parse Spotify link or search query
+	const trackIdFromLink = parseSpotifyTrackId(spotifyLink)
+	let track: PlaylistTrackInfo | null = null
+
+	if (trackIdFromLink) {
+		track = await getTrackDetails(trackIdFromLink)
+	}
+	else {
+		track = await searchTrack(spotifyLink)
+	}
+
+	if (!track) {
 		return ctx.reply('spotify.sr.not-found')
 	}
+
+	const trackId = trackIdFromLink || track.id
 
 	// Check blacklist
 	const isBlacklisted = await db
@@ -63,12 +75,6 @@ export const handleSongRequestRoot: CommandHandler<typeof SongRequestArgs> = asy
 
 	if (existing.length > 0) {
 		return ctx.reply('This track is already in the queue.')
-	}
-
-	// Fetch details
-	const track = await getTrackDetails(trackId)
-	if (!track) {
-		return ctx.reply('spotify.sr.not-found')
 	}
 
 	// Check explicit tracks constraint

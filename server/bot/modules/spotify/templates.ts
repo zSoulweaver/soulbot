@@ -4,7 +4,7 @@ import { templateRegistry } from '../../core/templates'
 
 const definitions = {
 	'spotify.song.playing': {
-		default: 'Now playing: $(track) by $(artist) - $(link)',
+		default: 'Now playing: "$(track) by $(artist)" - $(link)',
 		params: { track: '', artist: '', link: '' } as { track: string, artist: string, link: string },
 	},
 	'spotify.song.not-playing': {
@@ -40,7 +40,7 @@ const definitions = {
 		params: undefined,
 	},
 	'spotify.sr.requested': {
-		default: 'Track $(track) by $(artist) has been added to the queue (Position #$(position)).',
+		default: '"$(track) by $(artist)" has been added to the queue (Position #$(position)).',
 		params: { track: '', artist: '', position: 0 } as { track: string, artist: string, position: number },
 	},
 	'spotify.sr.not-found': {

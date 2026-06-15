@@ -397,6 +397,42 @@ export async function getTrackDetails(trackId: string): Promise<PlaylistTrackInf
 	}
 }
 
+export async function searchTrack(query: string): Promise<PlaylistTrackInfo | null> {
+	const token = await getValidSpotifyToken()
+	if (!token)
+		return null
+	try {
+		const res = await $fetch<any>('https://api.spotify.com/v1/search', {
+			headers: {
+				Authorization: `Bearer ${token.accessToken}`,
+			},
+			query: {
+				q: query,
+				type: 'track',
+				limit: 1,
+			},
+		})
+
+		const track = res.tracks?.items?.[0]
+		if (!track)
+			return null
+
+		return {
+			id: track.id,
+			uri: track.uri,
+			title: track.name,
+			artist: track.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
+			durationMs: track.duration_ms,
+			explicit: track.explicit === true,
+			albumArt: track.album?.images?.[0]?.url || null,
+		}
+	}
+	catch (err) {
+		botLogger.error({ err, query }, `[Spotify] Failed to search track for query: ${query}`)
+		return null
+	}
+}
+
 export interface CachedPlaylistTrack {
 	playlistId: string
 	trackId: string

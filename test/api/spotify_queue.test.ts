@@ -254,6 +254,60 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			expect(items[0]!.status).toBe('pending')
 		})
 
+		it('should search for track by query string, accept song request, deduct points, and push to database and playlist', async () => {
+			mockFetch.mockImplementation(async (url: string, opts?: any) => {
+				if (url.includes('/v1/search')) {
+					const query = opts?.query || {}
+					if (query.q === 'rap god' && query.type === 'track') {
+						return {
+							tracks: {
+								items: [
+									{
+										id: '2x7jGWnCl5crN4VoRj48S4',
+										uri: 'spotify:track:2x7jGWnCl5crN4VoRj48S4',
+										name: 'Rap God',
+										artists: [{ name: 'Eminem' }],
+										duration_ms: 363529,
+										explicit: false,
+										album: { images: [{ url: 'https://art.com/rapgod' }] },
+									},
+								],
+							},
+						}
+					}
+				}
+				if (url.includes('/playlists/playlist-123/tracks')) {
+					return { snapshot_id: 'snapshot-1' }
+				}
+				return {}
+			})
+
+			// Logged in as viewer with 500 points
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'viewer-id', username: 'alice', role: 'viewer', displayName: 'Alice' },
+			})
+			await createTestUser({ id: 'viewer-id', username: 'alice', points: 500 })
+
+			const mockEvent = {
+				body: { link: 'rap god' },
+			} as any
+
+			const res = await queuePostHandler(mockEvent)
+			expect(res.success).toBe(true)
+			expect(res.track.title).toBe('Rap God')
+
+			// Verify points deduction
+			const [dbUser] = await db.select().from(users).where(eq(users.id, 'viewer-id'))
+			expect(dbUser!.points).toBe(400) // 500 - 100
+
+			// Verify DB queue item
+			const items = await db.select().from(spotifyQueue)
+			expect(items).toHaveLength(1)
+			expect(items[0]!.title).toBe('Rap God')
+			expect(items[0]!.requestedBy).toBe('Alice')
+			expect(items[0]!.status).toBe('pending')
+		})
+
 		it('should allow Caster to clear queue and refund points', async () => {
 			// Seed active queue
 			await createTestUser({ id: 'viewer-id', username: 'alice', points: 0 })

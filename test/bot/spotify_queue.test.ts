@@ -69,6 +69,48 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		expect(dbItems[0]!.status).toBe('pending')
 	})
 
+	it('should search for track by query string, add it to queue, deduct points, and reply with success', async () => {
+		mockFetch.mockImplementation(async (url: string, opts?: any) => {
+			if (url.includes('/v1/search')) {
+				const query = opts?.query || {}
+				if (query.q === 'rap god' && query.type === 'track') {
+					return {
+						tracks: {
+							items: [
+								{
+									id: '2x7jGWnCl5crN4VoRj48S4',
+									uri: 'spotify:track:2x7jGWnCl5crN4VoRj48S4',
+									name: 'Rap God',
+									artists: [{ name: 'Eminem' }],
+									duration_ms: 363529,
+									explicit: true,
+									album: { images: [{ url: 'https://art.com/rapgod' }] },
+								},
+							],
+						},
+					}
+				}
+			}
+			return { success: true }
+		})
+
+		const { replies, user } = await simulateCommand('!songrequest rap god', {
+			id: '12345',
+			username: 'alice',
+			displayName: 'Alice',
+			points: 100,
+		})
+
+		expect(replies).toHaveLength(1)
+		expect(replies[0]).toBe('@Alice, Track Rap God by Eminem has been added to the queue (Position #1).')
+		expect(user!.points).toBe(90) // 100 - 10
+
+		const dbItems = await db.select().from(spotifyQueue)
+		expect(dbItems).toHaveLength(1)
+		expect(dbItems[0]!.title).toBe('Rap God')
+		expect(dbItems[0]!.status).toBe('pending')
+	})
+
 	it('should allow user to run wrongsong to refund points and remove last request', async () => {
 		await db.insert(spotifyQueue).values({
 			trackId: 'track-123',

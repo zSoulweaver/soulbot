@@ -43,6 +43,7 @@ export const navigation: NavGroup[] = [
 		label: 'Bot Administration',
 		items: [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
+			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
 			{
 				title: 'Commands',
 				url: '/admin/commands/core',
@@ -65,7 +66,7 @@ export const navigation: NavGroup[] = [
 					{ title: 'Blacklist', url: '/admin/spotify/blacklist', roles: ['moderator', 'caster'] },
 				],
 			},
-			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
+
 			{
 				title: 'Loyalty & Points',
 				url: '/admin/loyalty',

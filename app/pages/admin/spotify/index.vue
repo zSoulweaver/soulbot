@@ -485,7 +485,7 @@ function formatTime(ms?: number) {
 						<!-- Dedicated Playlist Initialization Card -->
 						<div class="mt-2">
 							<Card v-if="!settingsData?.playlistId" class="border-amber-500/20 bg-amber-500/5">
-								<CardHeader class="pb-3">
+								<CardHeader>
 									<CardTitle
 										class="
 											text-sm font-bold text-amber-600

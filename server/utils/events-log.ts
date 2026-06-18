@@ -1,0 +1,28 @@
+import { db } from '~~/server/database'
+import { eventsLog } from '~~/server/database/schema'
+import { botLogger } from '~~/server/utils/logger'
+
+export async function logTwitchEvent(
+	type: 'follow' | 'subscription' | 'gift' | 'cheer',
+	userName: string,
+	displayName: string,
+	metadata: {
+		tier?: string
+		giftCount?: number
+		bitsCount?: number
+		cheerMessage?: string
+	} = {},
+) {
+	try {
+		await db.insert(eventsLog).values({
+			type,
+			userName,
+			displayName,
+			metadata,
+			createdAt: new Date(),
+		})
+	}
+	catch (err) {
+		botLogger.error({ err, type, userName }, '[Events Log] Failed to log Twitch event to database')
+	}
+}

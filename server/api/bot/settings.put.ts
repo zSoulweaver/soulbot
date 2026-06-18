@@ -11,7 +11,7 @@ const saveBotSettingsSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-	await requireUserRole(event, 'caster')
+	await requireUserRole(event, 'moderator')
 	const body = await readBody(event)
 	const parsed = saveBotSettingsSchema.safeParse(body)
 

@@ -1,6 +1,7 @@
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { sendRawChatMessage } from '~~/server/utils/chat'
+import { logTwitchEvent } from '~~/server/utils/events-log'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
 import { getStreamerChannelName } from '~~/server/utils/twurple'
@@ -36,6 +37,7 @@ async function renderAndPostAlert(
 export function registerAlertsEventSubHandlers() {
 	eventSubManager.events.on('follow', async (event) => {
 		try {
+			await logTwitchEvent('follow', event.userName, event.userDisplayName)
 			const settings = await getAppSettings()
 			await renderAndPostAlert(
 				settings.eventsubAlertFollowEnabled,
@@ -52,6 +54,7 @@ export function registerAlertsEventSubHandlers() {
 
 	eventSubManager.events.on('subscription', async (event) => {
 		try {
+			await logTwitchEvent('subscription', event.userName, event.userDisplayName, { tier: event.tier })
 			const settings = await getAppSettings()
 			await renderAndPostAlert(
 				settings.eventsubAlertSubEnabled,
@@ -68,6 +71,7 @@ export function registerAlertsEventSubHandlers() {
 
 	eventSubManager.events.on('subscription.gift', async (event) => {
 		try {
+			await logTwitchEvent('gift', event.gifterName || 'anonymous', event.gifterDisplayName || 'Anonymous', { giftCount: event.amount })
 			const settings = await getAppSettings()
 			await renderAndPostAlert(
 				settings.eventsubAlertGiftEnabled,
@@ -88,6 +92,10 @@ export function registerAlertsEventSubHandlers() {
 
 	eventSubManager.events.on('cheer', async (event) => {
 		try {
+			await logTwitchEvent('cheer', event.userName || 'anonymous', event.userDisplayName || 'Anonymous', {
+				bitsCount: event.bits,
+				cheerMessage: event.message,
+			})
 			const settings = await getAppSettings()
 			await renderAndPostAlert(
 				settings.eventsubAlertCheerEnabled,

@@ -149,3 +149,17 @@ export const spotifyBlacklist = sqliteTable('spotify_blacklist', {
 	addedBy: text('added_by').notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+export const eventsLog = sqliteTable('events_log', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	type: text('type').notNull(), // 'follow' | 'subscription' | 'gift' | 'cheer'
+	userName: text('user_name').notNull(),
+	displayName: text('display_name').notNull(),
+	metadata: text('metadata', { mode: 'json' }).$type<{
+		tier?: string
+		giftCount?: number
+		bitsCount?: number
+		cheerMessage?: string
+	}>(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})

@@ -61,6 +61,9 @@ export async function createTestUser(options: {
 	isSubscriber?: boolean
 	points?: number
 	watchTime?: number
+	gambleWins?: number
+	gambleLosses?: number
+	gambleNetPoints?: number
 }) {
 	const now = new Date()
 	const username = cleanUsername(options.username)
@@ -76,6 +79,9 @@ export async function createTestUser(options: {
 		isSubscriber: options.isSubscriber || false,
 		points: options.points ?? 0,
 		watchTime: options.watchTime ?? 0,
+		gambleWins: options.gambleWins ?? 0,
+		gambleLosses: options.gambleLosses ?? 0,
+		gambleNetPoints: options.gambleNetPoints ?? 0,
 		firstSeen: Date.now(),
 		lastSeen: Date.now(),
 		createdAt: now,
@@ -90,6 +96,9 @@ export async function createTestUser(options: {
 			isSubscriber: options.isSubscriber || false,
 			points: options.points ?? 0,
 			watchTime: options.watchTime ?? 0,
+			gambleWins: options.gambleWins ?? 0,
+			gambleLosses: options.gambleLosses ?? 0,
+			gambleNetPoints: options.gambleNetPoints ?? 0,
 			lastSeen: Date.now(),
 			updatedAt: now,
 		},
@@ -116,6 +125,9 @@ export async function simulateCommand(
 		isSubscriber?: boolean
 		points?: number
 		watchTime?: number
+		gambleWins?: number
+		gambleLosses?: number
+		gambleNetPoints?: number
 	} = {},
 ) {
 	mockSay.mockClear()
@@ -128,6 +140,9 @@ export async function simulateCommand(
 	const isSubscriber = userOptions.isSubscriber || false
 	const points = userOptions.points ?? 0
 	const watchTime = userOptions.watchTime ?? 0
+	const gambleWins = userOptions.gambleWins ?? 0
+	const gambleLosses = userOptions.gambleLosses ?? 0
+	const gambleNetPoints = userOptions.gambleNetPoints ?? 0
 
 	// Ensure the user exists in the database
 	await createTestUser({
@@ -139,6 +154,9 @@ export async function simulateCommand(
 		isSubscriber,
 		points,
 		watchTime,
+		gambleWins,
+		gambleLosses,
+		gambleNetPoints,
 	})
 
 	// Construct mock Twurple ChatMessage

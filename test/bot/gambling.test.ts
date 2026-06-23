@@ -81,6 +81,9 @@ describe('Bot Gamble Command Integration', () => {
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(400)
+		expect(aliceRecord?.gambleWins).toBe(0)
+		expect(aliceRecord?.gambleLosses).toBe(1)
+		expect(aliceRecord?.gambleNetPoints).toBe(-100)
 	})
 
 	it('should win points when die roll is at or above threshold (default 50)', async () => {
@@ -99,6 +102,9 @@ describe('Bot Gamble Command Integration', () => {
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(600)
+		expect(aliceRecord?.gambleWins).toBe(1)
+		expect(aliceRecord?.gambleLosses).toBe(0)
+		expect(aliceRecord?.gambleNetPoints).toBe(100)
 	})
 
 	it('should support !gamble all shortcut', async () => {
@@ -116,6 +122,9 @@ describe('Bot Gamble Command Integration', () => {
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(1000)
+		expect(aliceRecord?.gambleWins).toBe(1)
+		expect(aliceRecord?.gambleLosses).toBe(0)
+		expect(aliceRecord?.gambleNetPoints).toBe(500)
 	})
 
 	it('should support !gamble half shortcut', async () => {
@@ -133,5 +142,8 @@ describe('Bot Gamble Command Integration', () => {
 
 		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
 		expect(aliceRecord?.points).toBe(250)
+		expect(aliceRecord?.gambleWins).toBe(0)
+		expect(aliceRecord?.gambleLosses).toBe(1)
+		expect(aliceRecord?.gambleNetPoints).toBe(-250)
 	})
 })

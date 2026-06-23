@@ -8,6 +8,7 @@ import { initBot, registry, templateRegistry } from '~~/server/bot'
 import { requireUserRole } from '~~/server/utils/auth';
 
 (globalThis as any).defineEventHandler = defineEventHandler
+;(globalThis as any).defineCachedEventHandler = (handler: any) => defineEventHandler(handler)
 ;(globalThis as any).createError = createError
 ;(globalThis as any).getQuery = vi.fn()
 ;(globalThis as any).sendRedirect = vi.fn()

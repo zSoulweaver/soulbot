@@ -51,6 +51,9 @@ export const users = sqliteTable('users', {
 	isSubscriber: integer('is_subscriber', { mode: 'boolean' }).default(false).notNull(),
 	points: integer('points').default(0).notNull(),
 	watchTime: integer('watch_time').default(0).notNull(),
+	gambleWins: integer('gamble_wins').default(0).notNull(),
+	gambleLosses: integer('gamble_losses').default(0).notNull(),
+	gambleNetPoints: integer('gamble_net_points').default(0).notNull(),
 	firstSeen: integer('first_seen'), // Null if never seen in chat
 	lastSeen: integer('last_seen'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),

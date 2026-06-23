@@ -25,3 +25,32 @@ export async function updateUserPoints(username: string, amount: number, mode: '
 		points: newAmount,
 	}
 }
+
+export async function updateUserPointsAndGambleStats(username: string, pointsDiff: number, isWin: boolean) {
+	const dbUser = await getUserRecord(username)
+	if (!dbUser) {
+		return null
+	}
+
+	const newPoints = dbUser.points + pointsDiff
+	const newWins = dbUser.gambleWins + (isWin ? 1 : 0)
+	const newLosses = dbUser.gambleLosses + (isWin ? 0 : 1)
+	const newNet = dbUser.gambleNetPoints + pointsDiff
+
+	await db.update(users)
+		.set({
+			points: newPoints,
+			gambleWins: newWins,
+			gambleLosses: newLosses,
+			gambleNetPoints: newNet,
+		})
+		.where(eq(users.id, dbUser.id))
+
+	return {
+		...dbUser,
+		points: newPoints,
+		gambleWins: newWins,
+		gambleLosses: newLosses,
+		gambleNetPoints: newNet,
+	}
+}

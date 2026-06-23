@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { getAppSettingsSync } from '~~/server/utils/settings'
 import { defineCommand } from '../../core/define-command'
-import { getUserPoints, updateUserPoints } from './service'
+import { getUserPoints, updateUserPointsAndGambleStats } from './service'
 
 export const gambleModule = defineCommand({
 	id: 'gamble',
@@ -67,7 +67,7 @@ export const gambleModule = defineCommand({
 
 		if (roll >= winMinRoll) {
 			const winAmount = Math.floor(betAmount * winMultiplier)
-			const updated = await updateUserPoints(username, winAmount, 'add')
+			const updated = await updateUserPointsAndGambleStats(username, winAmount, true)
 			const newAmount = updated?.points ?? (currentPoints + winAmount)
 			return ctx.reply('points.gambling.win', {
 				sender: ctx.user.displayName,
@@ -78,7 +78,7 @@ export const gambleModule = defineCommand({
 			})
 		}
 		else {
-			const updated = await updateUserPoints(username, -betAmount, 'add')
+			const updated = await updateUserPointsAndGambleStats(username, -betAmount, false)
 			const newAmount = updated?.points ?? (currentPoints - betAmount)
 			return ctx.reply('points.gambling.lose', {
 				sender: ctx.user.displayName,

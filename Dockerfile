@@ -2,7 +2,7 @@
 FROM node:24-alpine AS builder
 
 RUN apk add --no-cache python3 make g++ git \
-    && npm install -g pnpm
+    && npm install -g pnpm@11
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY . .
 RUN pnpm build
 
 # Prune dev dependencies, leaving only production dependencies in node_modules
-RUN pnpm prune --prod
+RUN pnpm prune --prod --ignore-scripts
 
 # Stage 2: Runtime
 FROM node:24-alpine AS runner

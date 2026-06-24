@@ -6,10 +6,12 @@ trustPolicy: no-downgrade
 trustPolicyExclude:
   - chokidar@4.0.3
   - semver@6.3.1
-
+  - undici-types@6.21.0
 packages:
   - .
 
-onlyBuiltDependencies:
-  - better-sqlite3
-  - esbuild
+allowBuilds:
+  '@parcel/watcher': true
+  better-sqlite3: true
+  esbuild: true
+  vue-demi: true

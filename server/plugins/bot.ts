@@ -1,11 +1,18 @@
+import process from 'node:process'
 import { initRegistry, registry, templateRegistry } from '~~/server/bot'
 import { startSpotifyQueueEngine } from '~~/server/bot/modules/spotify/queue-engine'
+import { seedDefaultExclusions } from '../bot/modules/points/payout'
 
 export default defineNitroPlugin(() => {
 	const config = useRuntimeConfig()
 
 	// Always initialize registry in memory and sync with SQLite so the Web UI always has command definitions loaded
 	initRegistry()
+
+	if (process.env.NODE_ENV !== 'test') {
+		seedDefaultExclusions().catch(err => botLogger.error({ err }, 'Failed to seed exclusions during init'))
+	}
+
 	startSpotifyQueueEngine()
 	Promise.resolve().then(async () => {
 		try {

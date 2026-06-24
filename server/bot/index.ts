@@ -11,7 +11,7 @@ import { commandsModule } from './modules/commands'
 import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
-import { startPayoutEngine } from './modules/points/payout'
+import { seedDefaultExclusions, startPayoutEngine } from './modules/points/payout'
 import { spotifyModule } from './modules/spotify'
 import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine } from './modules/timers'
@@ -39,6 +39,11 @@ export function initBot() {
 	// Register modular EventSub event listeners
 	registerPointsEventSubHandlers()
 	registerAlertsEventSubHandlers()
+
+	// Ensure we have seeded default bots on initialization
+	if (process.env.NODE_ENV !== 'test') {
+		seedDefaultExclusions().catch(err => botLogger.error({ err }, 'Failed to seed exclusions during init'))
+	}
 
 	// Warm up settings cache asynchronously
 	refreshAppSettingsCache().then(async () => {

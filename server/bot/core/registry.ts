@@ -18,7 +18,7 @@ class CommandRegistry {
 			return
 		}
 		this.commands.set(definition.id, definition)
-		botLogger.info('[Bot] Registering %s module', definition.id)
+		botLogger.info('Registering %s module', definition.id)
 	}
 
 	async syncWithDb() {

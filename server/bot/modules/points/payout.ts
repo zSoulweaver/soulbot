@@ -240,9 +240,6 @@ export async function handleActivityTick(payload: { chatters: { id: string, user
 export function startPayoutEngine(): void {
 	botLogger.info('[Payout Engine] Starting active chatter points loop listener...')
 
-	// Ensure we have seeded default bots on initialization
-	seedDefaultExclusions().catch(err => botLogger.error({ err }, 'Failed to seed exclusions during init'))
-
 	// Initialize nextPayoutTime to 1 minute from now so points payout runs on the first tick!
 	nextPayoutTime = Date.now() + 60000
 
@@ -274,6 +271,8 @@ export async function seedDefaultExclusions() {
 			.from(settings)
 			.where(eq(settings.key, 'points.exclusions_seeded'))
 
+		console.warn('ssed', seededSetting)
+
 		if (seededSetting?.value === 'true') {
 			return // Already seeded in the past, respect user's modifications (even if empty)
 		}
@@ -292,7 +291,9 @@ export async function seedDefaultExclusions() {
 		}))
 
 		if (valuesToInsert.length > 0) {
-			await db.insert(excludedUsers).values(valuesToInsert).onConflictDoNothing()
+			await db.insert(excludedUsers)
+				.values(valuesToInsert)
+				.onConflictDoNothing({ target: excludedUsers.username })
 		}
 
 		// Mark as seeded in settings so we never overwrite the user's preferences again

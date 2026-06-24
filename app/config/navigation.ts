@@ -86,6 +86,7 @@ export const navigation: NavGroup[] = [
 				icon: Bot,
 				items: [
 					{ title: 'Bot Settings', url: '/admin/misc/settings' },
+					{ title: 'Migration', url: '/admin/misc/migration', roles: ['caster'] },
 				],
 			},
 

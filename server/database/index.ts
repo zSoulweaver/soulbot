@@ -8,7 +8,7 @@ function getDbPath() {
 		const workerId = process.env.VITEST_WORKER_ID || '1'
 		return `sqlite_test_${workerId}.db`
 	}
-	return 'sqlite.db'
+	return process.env.DATABASE_URL || 'sqlite.db'
 }
 
 const sqlite = new Database(getDbPath())

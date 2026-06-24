@@ -1,0 +1,22 @@
+# Example Docker Compose Configuration for Soulbot
+# Update this with your actual image path and environment values.
+
+services:
+  soulbot:
+    image: ghcr.io/<your-github-username>/<your-repo-name>:latest
+    container_name: soulbot
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      # Path inside the container where SQLite database will be written
+      - DATABASE_URL=/app/data/sqlite.db
+    # Load all environment variables from a local .env file in the same directory
+    env_file:
+      - .env
+    volumes:
+      # Persists the SQLite database to the host filesystem at ./data/sqlite.db
+      - ./data:/app/data

@@ -1,0 +1,14 @@
+node_modules
+.nuxt
+.output
+.git
+.github
+.agents
+.migration-temp
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example

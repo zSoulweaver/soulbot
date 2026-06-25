@@ -7,6 +7,11 @@ RUN apk add --no-cache python3 make g++ git \
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Inject supportedArchitectures dynamically so the builder stage installs optional dependencies
+# for both linux/x64 and linux/arm64 (keeps local developer machines clean)
+RUN printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\n    - arm64\n" >> pnpm-workspace.yaml
+
 RUN pnpm install --frozen-lockfile
 
 COPY . .

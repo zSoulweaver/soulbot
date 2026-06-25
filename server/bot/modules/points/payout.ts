@@ -271,8 +271,6 @@ export async function seedDefaultExclusions() {
 			.from(settings)
 			.where(eq(settings.key, 'points.exclusions_seeded'))
 
-		console.warn('ssed', seededSetting)
-
 		if (seededSetting?.value === 'true') {
 			return // Already seeded in the past, respect user's modifications (even if empty)
 		}

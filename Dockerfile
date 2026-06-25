@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:24-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 
 RUN apk add --no-cache python3 make g++ git \
     && npm install -g pnpm@11
@@ -12,18 +12,26 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-# Prune dev dependencies, leaving only production dependencies in node_modules
-RUN pnpm prune --prod --ignore-scripts
+# Stage 2: Production dependencies
+FROM node:24-alpine AS prod-deps
 
-# Stage 2: Runtime
+RUN apk add --no-cache python3 make g++ git \
+    && npm install -g pnpm@11
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --prod --frozen-lockfile
+
+# Stage 3: Runtime
 FROM node:24-alpine AS runner
 
 RUN apk add --no-cache bash
 
 WORKDIR /app
 
-# Copy production node_modules and built Nuxt output from builder
-COPY --from=builder /app/node_modules ./node_modules
+# Copy production node_modules from prod-deps stage and built Nuxt output from builder
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.output ./.output
 
 # Copy migrations folder for programmatic startup execution

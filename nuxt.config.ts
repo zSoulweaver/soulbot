@@ -70,6 +70,9 @@ export default defineNuxtConfig({
 
 	nitro: {
 		sourceMap: true,
+		externals: {
+			inline: ['@lucide/vue'],
+		},
 	},
 
 	modules: ['nuxt-auth-utils', '@vueuse/nuxt', '@nuxtjs/color-mode'],

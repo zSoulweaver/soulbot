@@ -3,7 +3,7 @@ import process from 'node:process'
 import { exchangeCode, getTokenInfo } from '@twurple/auth'
 import { BOT_OAUTH_SCOPES, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
-import { settings, twitchTokens } from '~~/server/database/schema'
+import { settings, twitchTokens, users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { getApiClient, getAuthProvider, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
@@ -107,20 +107,62 @@ export default defineEventHandler(async (event) => {
 			await getBotToken(true)
 
 			if (type === 'streamer') {
+				const now = new Date()
 				await db.insert(settings)
 					.values({
 						key: 'twitch.streamer_token_version',
 						value: String(STREAMER_OAUTH_VERSION),
-						updatedAt: new Date(),
+						updatedAt: now,
 					})
 					.onConflictDoUpdate({
 						target: settings.key,
 						set: {
 							value: String(STREAMER_OAUTH_VERSION),
-							updatedAt: new Date(),
+							updatedAt: now,
 						},
 					})
 				await refreshAppSettingsCache()
+
+				// Automatically log in the broadcaster (caster)
+				const results = await db.insert(users)
+					.values({
+						id: userId,
+						username: twitchUser.name,
+						displayName: twitchUser.displayName,
+						image: twitchUser.profilePictureUrl || '',
+						role: 'caster',
+						isVip: false,
+						isSubscriber: false,
+						createdAt: now,
+						updatedAt: now,
+					})
+					.onConflictDoUpdate({
+						target: users.id,
+						set: {
+							username: twitchUser.name,
+							displayName: twitchUser.displayName,
+							image: twitchUser.profilePictureUrl || '',
+							role: 'caster',
+							updatedAt: now,
+						},
+					})
+					.returning()
+
+				const dbUser = results[0]
+				if (dbUser) {
+					await setUserSession(event, {
+						user: {
+							id: dbUser.id,
+							username: dbUser.username,
+							displayName: dbUser.displayName,
+							image: dbUser.image,
+							role: dbUser.role,
+							isVip: dbUser.isVip,
+							isSubscriber: dbUser.isSubscriber,
+						},
+						loggedInAt: now.toISOString(),
+					})
+				}
 			}
 
 			return sendRedirect(event, '/setup')

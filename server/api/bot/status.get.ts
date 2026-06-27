@@ -1,10 +1,20 @@
 import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
+import { db } from '~~/server/database'
+import { twitchTokens } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
 import { getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
-	await requireUserRole(event, 'moderator')
+	// Allow public access to status check during initial onboarding
+	const existingTokens = await db.select().from(twitchTokens)
+	const hasBot = existingTokens.some(t => t.accountType === 'bot')
+	const hasStreamer = existingTokens.some(t => t.accountType === 'streamer')
+	const isOnboarded = hasBot && hasStreamer
+
+	if (isOnboarded) {
+		await requireUserRole(event, 'moderator')
+	}
 
 	const botToken = await getBotToken()
 	const streamerToken = await getStreamerToken()

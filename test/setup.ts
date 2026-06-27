@@ -17,6 +17,7 @@ import { requireUserRole } from '~~/server/utils/auth';
 ;(globalThis as any).deleteCookie = vi.fn()
 ;(globalThis as any).requireUserRole = requireUserRole
 ;(globalThis as any).getUserSession = vi.fn(async () => ({ user: { id: 'mock-user', role: 'caster' } }))
+;(globalThis as any).setUserSession = vi.fn(async () => {})
 ;(globalThis as any).readValidatedBody = vi.fn(async (event, validator) => {
 	return validator(event?.body)
 })

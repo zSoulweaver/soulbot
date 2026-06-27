@@ -46,7 +46,6 @@ export default defineNuxtConfig({
 		twitchClientSecret: '',
 		twitchRedirectUri: '',
 		botTwitchRedirectUri: '',
-		streamerChannel: '',
 		enableBot: true,
 		spotifyClientId: '',
 		spotifyClientSecret: '',

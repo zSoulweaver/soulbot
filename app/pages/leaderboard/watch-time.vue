@@ -6,8 +6,8 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 
 <template>
 	<AppPageContainer class="mx-auto max-w-4xl py-8">
-		<div class="flex flex-col gap-2 text-center">
-			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight uppercase italic">
+		<div class="mb-8 flex flex-col gap-2 text-center">
+			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight text-foreground uppercase">
 				Watch Time Leaderboard
 			</h1>
 			<p class="text-lg text-muted-foreground">
@@ -15,7 +15,7 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 			</p>
 		</div>
 
-		<div class="overflow-hidden rounded-lg border">
+		<div class="overflow-hidden rounded-xl border border-border/50 bg-card/10 shadow-sm">
 			<Table>
 				<TableHeader class="bg-muted/50">
 					<TableRow>

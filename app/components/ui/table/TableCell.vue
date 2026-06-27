@@ -14,7 +14,7 @@ const props = defineProps<{
 			cn(
 				`
 					px-6 py-2 align-middle whitespace-nowrap
-					[&:has([role=checkbox])]:pr-0
+					has-[[role=checkbox]]:pr-0
 					*:[[role=checkbox]]:translate-y-0.5
 				`,
 				props.class,

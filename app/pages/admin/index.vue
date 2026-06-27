@@ -30,7 +30,7 @@ const isServiceActionPending = ref(false)
 const isChatSending = ref(false)
 
 // 1. Fetch live stream information
-const { data: streamStatus, refresh: refreshStream, pending: loadingStream } = useFetch<{
+const { data: streamStatus, refresh: refreshStream, pending: loadingStream, error: errorStream } = useFetch<{
 	isOnline: boolean
 	title: string
 	gameName: string
@@ -67,7 +67,7 @@ const formattedUptime = computed(() => {
 })
 
 // 2. Fetch bot connection status
-const { data: botStatus, refresh: refreshBotStatus, pending: loadingBotStatus } = useFetch<{
+const { data: botStatus, refresh: refreshBotStatus, pending: loadingBotStatus, error: errorBotStatus } = useFetch<{
 	bot: { displayName: string } | null
 	streamer: { displayName: string } | null
 	isBotRunning: boolean
@@ -77,7 +77,7 @@ const { data: botStatus, refresh: refreshBotStatus, pending: loadingBotStatus } 
 })
 
 // 3. Fetch bot configuration settings
-const { data: botSettings, refresh: refreshBotSettings } = useFetch<{
+const { data: botSettings, refresh: refreshBotSettings, error: errorBotSettings } = useFetch<{
 	chatMode: 'normal' | 'action'
 	muted: boolean
 }>('/api/bot/settings', {
@@ -85,7 +85,7 @@ const { data: botSettings, refresh: refreshBotSettings } = useFetch<{
 })
 
 // 4. Fetch recent events for client-side filtering and pagination
-const { data: eventsResponse, refresh: refreshEvents, pending: loadingEvents } = useFetch<{
+const { data: eventsResponse, refresh: refreshEvents, pending: loadingEvents, error: errorEvents } = useFetch<{
 	data: any[]
 	meta: any
 }>('/api/admin/events', {
@@ -138,7 +138,20 @@ async function refreshDashboard() {
 		refreshBotSettings(),
 		refreshEvents(),
 	])
-	toast.success('Dashboard data refreshed.')
+
+	const errors = [errorStream.value, errorBotStatus.value, errorBotSettings.value, errorEvents.value].filter(Boolean)
+	if (errors.length > 0) {
+		const isUnauthorized = errors.some(err => err?.statusCode === 401)
+		if (isUnauthorized) {
+			toast.error('Session expired or unauthorized. Please log in again.')
+		}
+		else {
+			toast.error('Failed to refresh some dashboard data.')
+		}
+	}
+	else {
+		toast.success('Dashboard data refreshed.')
+	}
 }
 
 // Bot Mute Toggle Action

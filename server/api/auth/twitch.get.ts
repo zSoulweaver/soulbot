@@ -63,6 +63,6 @@ export default defineOAuthTwitchEventHandler({
 	},
 	onError(event, error) {
 		console.error('[Twitch Auth Error]', error)
-		return sendRedirect(event, '/login?error=auth_failed')
+		return sendRedirect(event, '/?error=auth_failed')
 	},
 })

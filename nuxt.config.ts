@@ -57,9 +57,9 @@ export default defineNuxtConfig({
 		ngrokAuthtoken: '',
 		oauth: {
 			twitch: {
-				clientId: '',
-				clientSecret: '',
-				redirectURL: '',
+				clientId: process.env.NUXT_OAUTH_TWITCH_CLIENT_ID || process.env.NUXT_TWITCH_CLIENT_ID || '',
+				clientSecret: process.env.NUXT_OAUTH_TWITCH_CLIENT_SECRET || process.env.NUXT_TWITCH_CLIENT_SECRET || '',
+				redirectURL: process.env.NUXT_OAUTH_TWITCH_REDIRECT_URL || process.env.NUXT_TWITCH_REDIRECT_URI || '',
 			},
 		},
 		public: {

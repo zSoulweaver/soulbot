@@ -1,9 +1,11 @@
 import { eq } from 'drizzle-orm'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registry } from '~~/server/bot'
 import { db } from '~~/server/database'
-import { counters, customCommands, users } from '~~/server/database/schema'
+import { counters, customCommands, twitchTokens, users } from '~~/server/database/schema'
+import { getStreamerToken } from '~~/server/utils/twurple'
 import { clearDatabase, simulateCommand } from '../helpers'
+import { mockApiClient, mockGetStreamInfo } from '../setup'
 
 describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 	beforeEach(async () => {
@@ -299,6 +301,169 @@ describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 			const res2 = await simulateCommand('!limited', { id: '1', username: 'alice', displayName: 'Alice' })
 			expect(res2.replies).toHaveLength(1)
 			expect(res2.replies[0]).toContain('This command is on global cooldown. Please wait 10s.')
+		})
+	})
+
+	describe('New Custom Variables & Phantombot syntax', () => {
+		beforeEach(async () => {
+			vi.restoreAllMocks()
+
+			// Seed streamer token for Twitch API variables
+			await db.insert(twitchTokens).values({
+				accountType: 'streamer',
+				userId: 'streamer-id-123',
+				userName: 'streamerchannel',
+				displayName: 'StreamerChannel',
+				accessToken: 'access',
+				refreshToken: 'refresh',
+				scope: '[]',
+				obtainmentTimestamp: Date.now(),
+			})
+			await getStreamerToken(true)
+		})
+
+		it('should resolve $(randint) and custom range $(randint start end)', async () => {
+			await db.insert(customCommands).values({
+				id: 'randint-test',
+				trigger: 'random',
+				response: 'Default: $(randint) | Custom: $(randint 10 20)',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			await registry.syncWithDb()
+
+			const { replies } = await simulateCommand('!random', { id: '1', username: 'alice', displayName: 'Alice' })
+			expect(replies).toHaveLength(1)
+
+			// Extract values to verify they are numbers within range
+			const parts = replies[0]!.split(' | ')
+			const defaultVal = Number(parts[0]!.replace('Default: ', ''))
+			const customVal = Number(parts[1]!.replace('Custom: ', ''))
+
+			expect(defaultVal).toBeGreaterThanOrEqual(1)
+			expect(defaultVal).toBeLessThanOrEqual(100)
+			expect(customVal).toBeGreaterThanOrEqual(10)
+			expect(customVal).toBeLessThanOrEqual(20)
+		})
+
+		it('should resolve $(uptime) when live and offline', async () => {
+			await db.insert(customCommands).values({
+				id: 'uptime-test',
+				trigger: 'up',
+				response: 'Stream uptime: $(uptime)',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			await registry.syncWithDb()
+
+			// Case A: Online
+			mockGetStreamInfo.mockResolvedValueOnce({
+				isOnline: true,
+				uptime: 7300, // 2 hours, 1 minute, 40 seconds
+			})
+			const resA = await simulateCommand('!up', { id: '1', username: 'alice', displayName: 'Alice' })
+			expect(resA.replies).toHaveLength(1)
+			expect(resA.replies[0]).toBe('Stream uptime: 2 hours, 1 minute, 40 seconds')
+
+			// Case B: Offline
+			mockGetStreamInfo.mockResolvedValueOnce({
+				isOnline: false,
+			})
+			const resB = await simulateCommand('!up', { id: '1', username: 'alice', displayName: 'Alice' })
+			expect(resB.replies).toHaveLength(1)
+			expect(resB.replies[0]).toBe('Stream uptime: offline')
+		})
+
+		it('should resolve $(followage) when user is following and when they are not', async () => {
+			await db.insert(customCommands).values({
+				id: 'followage-test',
+				trigger: 'follow',
+				response: '$(sender) $(followage) | checking other: $(followage bob)',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			await registry.syncWithDb()
+
+			// Setup follow records: alice follows 5 days ago, bob is not following
+			const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 - 10 * 1000)
+			mockApiClient.channels.getChannelFollowers.mockImplementation(async (_broadcasterId, userId) => {
+				if (userId === 'mock-alice-id') {
+					return {
+						data: [
+							{
+								userId: 'mock-alice-id',
+								userName: 'alice',
+								userDisplayName: 'Alice',
+								followDate: fiveDaysAgo,
+							},
+						],
+						total: 1,
+					}
+				}
+				// bob is not following
+				return { data: [], total: 0 }
+			})
+
+			const { replies } = await simulateCommand('!follow', { id: '12345', username: 'alice', displayName: 'Alice' })
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('Alice has been following for 5 days, 10 seconds | checking other: is not following this channel')
+		})
+
+		it('should pre-process Phantombot syntax: (#), (followage), (uptime)', async () => {
+			await db.insert(customCommands).values({
+				id: 'phantombot-test',
+				trigger: 'pb',
+				response: 'turned (#) years old, (followage), stream has been online for (uptime)',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			await registry.syncWithDb()
+
+			// Setup mocks
+			mockGetStreamInfo.mockResolvedValueOnce({
+				isOnline: true,
+				uptime: 3600, // 1 hour
+			})
+			const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+			mockApiClient.channels.getChannelFollowers.mockResolvedValueOnce({
+				data: [
+					{
+						userId: 'mock-alice-id',
+						userName: 'alice',
+						userDisplayName: 'Alice',
+						followDate: fiveDaysAgo,
+					},
+				],
+				total: 1,
+			})
+
+			const { replies } = await simulateCommand('!pb', { id: '12345', username: 'alice', displayName: 'Alice' })
+			expect(replies).toHaveLength(1)
+
+			// Verify it replaced (#) with a random number, (followage) with follow status, and (uptime) with uptime
+			expect(replies[0]).toContain('has been following for 5 days')
+			expect(replies[0]).toContain('stream has been online for 1 hour')
+			expect(replies[0]).toMatch(/turned \d+ years old/)
 		})
 	})
 })

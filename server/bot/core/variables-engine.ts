@@ -2,10 +2,13 @@ import type { CommandContext } from './types'
 import { getGlobalTemplateVariables } from './templates'
 import { channelVariable } from './variables/channel'
 import { countersVariable } from './variables/counters'
+import { followageVariable } from './variables/followage'
 import { pointsVariable } from './variables/points'
 import { queryVariable } from './variables/query'
+import { randintVariable } from './variables/randint'
 import { senderVariable } from './variables/sender'
 import { touserVariable } from './variables/touser'
+import { uptimeVariable } from './variables/uptime'
 
 export const registeredVariables = [
 	channelVariable,
@@ -14,6 +17,9 @@ export const registeredVariables = [
 	queryVariable,
 	senderVariable,
 	touserVariable,
+	randintVariable,
+	uptimeVariable,
+	followageVariable,
 ]
 
 /**
@@ -25,8 +31,13 @@ export async function renderCustomTemplate(
 	ctx: CommandContext,
 	extraVars?: Record<string, string | number>,
 ): Promise<string> {
+	// Pre-process Phantombot syntax: (#) -> $(randint), (followage) -> $(followage), (uptime) -> $(uptime)
 	let text = template
+		.replace(/(?<!\$)\(#\)/g, '$(randint)')
+		.replace(/(?<!\$)\(followage\)/gi, '$(followage)')
+		.replace(/(?<!\$)\(uptime\)/gi, '$(uptime)')
 	let depth = 0
+
 	const maxDepth = 10
 
 	// Dynamic values state cache per resolution run to avoid redundant queries (e.g. points check)

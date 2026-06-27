@@ -9,6 +9,9 @@ export function mapPhantombotVariables(response: string): string {
 		.replace(/(?<!\$)\(touser\)/gi, () => '$(touser)')
 		.replace(/(?<!\$)\(sender\)/gi, () => '$(sender)')
 		.replace(/(?<!\$)\(username\)/gi, () => '$(sender)')
+		.replace(/(?<!\$)\(#\)/g, () => '$(randint)')
+		.replace(/(?<!\$)\(followage\)/gi, () => '$(followage)')
+		.replace(/(?<!\$)\(uptime\)/gi, () => '$(uptime)')
 }
 
 export function migratePhantombot(dbPath: string): MigrationResult {

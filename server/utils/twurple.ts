@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { ApiClient } from '@twurple/api'
 import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
@@ -15,6 +16,24 @@ let chatClientInstance: ChatClient | null = null
 let cachedStreamerToken: typeof twitchTokens.$inferSelect | null = null
 let cachedBotToken: typeof twitchTokens.$inferSelect | null = null
 
+export async function registerTokenInProvider(token: typeof twitchTokens.$inferSelect) {
+	const provider = getAuthProvider()
+	const tokenData = {
+		accessToken: token.accessToken,
+		refreshToken: token.refreshToken,
+		expiresIn: token.expiresIn,
+		obtainmentTimestamp: token.obtainmentTimestamp,
+		scope: JSON.parse(token.scope),
+	}
+
+	if (token.accountType === 'bot') {
+		await provider.addUserForToken(tokenData, ['chat'])
+	}
+	else {
+		await provider.addUserForToken(tokenData)
+	}
+}
+
 export async function getStreamerToken(forceRefresh = false) {
 	if (!cachedStreamerToken || forceRefresh) {
 		cachedStreamerToken = await db
@@ -22,6 +41,10 @@ export async function getStreamerToken(forceRefresh = false) {
 			.from(twitchTokens)
 			.where(eq(twitchTokens.accountType, 'streamer'))
 			.then(res => res[0]) || null
+
+		if (cachedStreamerToken && !process.env.VITEST) {
+			await registerTokenInProvider(cachedStreamerToken)
+		}
 	}
 	return cachedStreamerToken
 }
@@ -33,6 +56,10 @@ export async function getBotToken(forceRefresh = false) {
 			.from(twitchTokens)
 			.where(eq(twitchTokens.accountType, 'bot'))
 			.then(res => res[0]) || null
+
+		if (cachedBotToken && !process.env.VITEST) {
+			await registerTokenInProvider(cachedBotToken)
+		}
 	}
 	return cachedBotToken
 }
@@ -218,25 +245,38 @@ export async function getTwitchUserRole(userId: string): Promise<UserRoleInfo> {
 	}
 
 	try {
-		const isMod = await api.moderation.checkUserMod(streamerToken.userId, userId)
-		if (isMod)
-			info.role = 'moderator'
-	}
-	catch {}
+		await api.asUser(streamerToken.userId as string, async (ctx) => {
+			try {
+				const isMod = await ctx.moderation.checkUserMod(streamerToken.userId as string, userId)
+				if (isMod)
+					info.role = 'moderator'
+			}
+			catch (err) {
+				botLogger.error(err, 'Failed to check moderator status')
+			}
 
-	try {
-		const vips = await api.channels.getVips(streamerToken.userId as string)
-		if (vips.data.some(v => v.id === userId))
-			info.isVip = true
-	}
-	catch {}
+			try {
+				const vips = await ctx.channels.getVips(streamerToken.userId as string)
+				if (vips.data.some(v => v.id === userId))
+					info.isVip = true
+			}
+			catch (err) {
+				botLogger.error(err, 'Failed to check VIP status')
+			}
 
-	try {
-		const sub = await api.subscriptions.checkUserSubscription(userId, streamerToken.userId as string)
-		if (sub)
-			info.isSubscriber = true
+			try {
+				const sub = await ctx.subscriptions.getSubscriptionForUser(streamerToken.userId as string, userId)
+				if (sub)
+					info.isSubscriber = true
+			}
+			catch (err) {
+				botLogger.error(err, 'Failed to check subscriber status')
+			}
+		})
 	}
-	catch {}
+	catch (err) {
+		botLogger.error(err, 'Failed to execute Twitch API calls under streamer context')
+	}
 
 	return info
 }

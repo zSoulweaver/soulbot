@@ -1,7 +1,6 @@
 import { BOT_OAUTH_VERSION, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
-import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
 import { getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
 
@@ -12,18 +11,25 @@ export default defineEventHandler(async (event) => {
 	const hasStreamer = existingTokens.some(t => t.accountType === 'streamer')
 	const isOnboarded = hasBot && hasStreamer
 
+	const botToken = await getBotToken()
+	const streamerToken = await getStreamerToken()
+
 	if (isOnboarded) {
 		const session = await getUserSession(event)
 		const user = session?.user
-		const botToken = await getBotToken()
 		const isBotAccount = user && botToken && user.id === botToken.userId
-		if (!isBotAccount) {
-			await requireUserRole(event, 'moderator')
+		const isModOrCaster = user && (user.role === 'caster' || user.role === 'moderator')
+
+		if (!isBotAccount && !isModOrCaster) {
+			return {
+				bot: botToken ? { userName: botToken.userName, displayName: botToken.displayName } : null,
+				streamer: streamerToken ? { userName: streamerToken.userName, displayName: streamerToken.displayName } : null,
+				isBotRunning: isBotRunning(),
+				isStreamerTokenOutdated: false,
+				isBotTokenOutdated: false,
+			}
 		}
 	}
-
-	const botToken = await getBotToken()
-	const streamerToken = await getStreamerToken()
 
 	const appSettings = await getAppSettings()
 	const isStreamerTokenOutdated = streamerToken

@@ -8,7 +8,7 @@ import { mockApiClient, mockGetStreamInfo } from '../setup'
 describe('Bot Twitch Commands Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
-		vi.restoreAllMocks()
+		vi.clearAllMocks()
 
 		// Seed a streamer token
 		await db.insert(twitchTokens).values({

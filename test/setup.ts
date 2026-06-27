@@ -59,6 +59,9 @@ export const mockChatClient = {
 }
 
 export const mockApiClient = {
+	asUser: vi.fn(async (_userId: string, runner: (ctx: any) => Promise<any>) => {
+		return runner(mockApiClient)
+	}),
 	users: {
 		getUserByName: vi.fn(async (username: string) => {
 			if (username === 'nonexistent' || username === 'charlie') {
@@ -87,6 +90,18 @@ export const mockApiClient = {
 				total: 0,
 			}
 		}),
+		getVips: vi.fn(async (_broadcasterId: string): Promise<{ data: any[] }> => {
+			return {
+				data: [] as any[],
+			}
+		}),
+	},
+	moderation: {
+		checkUserMod: vi.fn(async () => false),
+	},
+	subscriptions: {
+		checkUserSubscription: vi.fn(async (): Promise<any> => null),
+		getSubscriptionForUser: vi.fn(async (): Promise<any> => null),
 	},
 	whispers: {
 		sendWhisper: vi.fn(async (_fromUserId: string, _toUserId: string, _message: string) => {}),
@@ -97,6 +112,15 @@ export const mockGetStreamInfo = vi.fn(async (): Promise<StreamInfo> => ({ isOnl
 
 vi.mock('~~/server/bot/services/stream', () => ({
 	getStreamInfo: () => mockGetStreamInfo(),
+}))
+
+// Globally mock @twurple/api ApiClient
+vi.mock('@twurple/api', () => ({
+	ApiClient: class {
+		constructor() {
+			return mockApiClient as any
+		}
+	},
 }))
 
 // Globally mock the Twurple utility module

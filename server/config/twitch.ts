@@ -1,4 +1,4 @@
-export const STREAMER_OAUTH_VERSION = 4
+export const STREAMER_OAUTH_VERSION = 5
 export const BOT_OAUTH_VERSION = 1
 
 export const STREAMER_OAUTH_SCOPES = [
@@ -9,6 +9,8 @@ export const STREAMER_OAUTH_SCOPES = [
 	'moderator:read:chatters',
 	'moderator:read:followers', // For following EventSub websocket
 	'bits:read', // For cheer/bits EventSub websocket
+	'channel:read:vips',
+	'channel:manage:vips',
 ]
 
 export const BOT_OAUTH_SCOPES = [

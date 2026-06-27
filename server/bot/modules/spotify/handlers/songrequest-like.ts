@@ -31,7 +31,44 @@ export const handleSongRequestLike: CommandHandler = async (ctx) => {
 			durationMs: currentlyPlaying.durationMs || 0,
 			albumArt: currentlyPlaying.albumArt || null,
 		})
-		return ctx.reply('spotify.playlist.liked')
+
+		const { db } = await import('~~/server/database')
+		const { spotifyQueue } = await import('~~/server/database/schema')
+		const { and, asc, eq, or } = await import('drizzle-orm')
+
+		const activeTrack = await db
+			.select()
+			.from(spotifyQueue)
+			.where(
+				and(
+					eq(spotifyQueue.trackId, currentlyPlaying.id),
+					or(
+						eq(spotifyQueue.status, 'playing'),
+						eq(spotifyQueue.status, 'pending'),
+					),
+				),
+			)
+			.orderBy(asc(spotifyQueue.id))
+			.then(res => res[0])
+
+		const requester = (activeTrack && activeTrack.requestedBy !== 'Fallback Playlist')
+			? activeTrack.requestedBy
+			: null
+
+		const { notifySongSaved } = await import('~~/server/utils/chat')
+		await notifySongSaved(currentlyPlaying.id, currentlyPlaying.title, currentlyPlaying.artist, true)
+
+		if (appSettings.spotifyPlaylistWhisper) {
+			return ctx.reply('Saved track to playlist.')
+		}
+		else {
+			const { getStreamerChannelName } = await import('~~/server/utils/twurple')
+			const caster = (await getStreamerChannelName()) || 'streamer'
+			return ctx.say('spotify.playlist.liked', {
+				caster,
+				requester: requester || caster,
+			})
+		}
 	}
 	else {
 		return ctx.reply('Failed to save track to playlist.')

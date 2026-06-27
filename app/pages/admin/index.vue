@@ -72,6 +72,7 @@ const { data: botStatus, refresh: refreshBotStatus, pending: loadingBotStatus, e
 	streamer: { displayName: string } | null
 	isBotRunning: boolean
 	isStreamerTokenOutdated: boolean
+	isBotTokenOutdated: boolean
 }>('/api/bot/status', {
 	server: false,
 })

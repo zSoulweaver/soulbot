@@ -56,5 +56,8 @@ export default defineEventHandler(async (event) => {
 		albumArt: currentlyPlaying.albumArt || null,
 	})
 
+	const { notifySongSaved } = await import('~~/server/utils/chat')
+	await notifySongSaved(currentlyPlaying.id, currentlyPlaying.title, currentlyPlaying.artist, false)
+
 	return { success: true, alreadyLiked: false, title: currentlyPlaying.title }
 })

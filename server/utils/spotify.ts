@@ -7,6 +7,25 @@ import { getAppSettingsSync } from '~~/server/utils/settings'
 
 let cachedSpotifyToken: typeof spotifyTokens.$inferSelect | null = null
 
+export interface CachedPlaylistTrack {
+	playlistId: string
+	trackId: string
+	uri: string
+	title: string
+	artist: string
+	durationMs: number
+	albumArt: string | null
+}
+
+interface PlaylistCache {
+	playlistId: string
+	tracks: CachedPlaylistTrack[]
+	trackIdsSet: Set<string>
+	timestamp: number
+}
+
+let targetPlaylistCache: PlaylistCache | null = null
+
 export async function getSpotifyToken(forceRefresh = false) {
 	if (!cachedSpotifyToken || forceRefresh) {
 		const res = await db
@@ -183,6 +202,7 @@ export function clearSpotifyTokenCache() {
 	cachedSpotifyToken = null
 	cachedCurrentlyPlaying = null
 	rateLimitResetTime = 0
+	targetPlaylistCache = null
 }
 
 export async function getSpotifyUserId(): Promise<string | null> {
@@ -433,24 +453,6 @@ export async function searchTrack(query: string): Promise<PlaylistTrackInfo | nu
 	}
 }
 
-export interface CachedPlaylistTrack {
-	playlistId: string
-	trackId: string
-	uri: string
-	title: string
-	artist: string
-	durationMs: number
-	albumArt: string | null
-}
-
-interface PlaylistCache {
-	playlistId: string
-	tracks: CachedPlaylistTrack[]
-	trackIdsSet: Set<string>
-	timestamp: number
-}
-
-let targetPlaylistCache: PlaylistCache | null = null
 let isSyncing = false
 
 export async function loadTargetPlaylistCache(playlistId: string): Promise<void> {

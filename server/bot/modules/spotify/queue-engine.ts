@@ -103,6 +103,16 @@ async function tick() {
 			const newUris: string[] = []
 
 			for (const track of fallbackTracks) {
+				const isAlreadyActive = activeTracks.some((t) => {
+					const activeId = t.trackId.includes(':') ? t.trackId.split(':').pop() : t.trackId
+					const fallbackId = track.id.includes(':') ? track.id.split(':').pop() : track.id
+					return activeId === fallbackId
+				})
+
+				if (isAlreadyActive) {
+					continue
+				}
+
 				await db.insert(spotifyQueue).values({
 					trackId: track.id,
 					title: track.title,

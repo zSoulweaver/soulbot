@@ -147,12 +147,16 @@ const form = ref({
 	targetPlaylistName: '',
 	allowModerators: true,
 	whisperNotifications: false,
+	announceDeleteWebui: true,
 })
 
 // Synchronize loaded data
 watch(settingsData, (newData) => {
 	if (newData) {
 		form.value = { ...newData }
+		if (!newData.playlistId) {
+			form.value.active = false
+		}
 	}
 }, { immediate: true })
 
@@ -173,6 +177,7 @@ const isModified = computed(() => {
 		|| form.value.targetPlaylistName !== settingsData.value.targetPlaylistName
 		|| form.value.allowModerators !== settingsData.value.allowModerators
 		|| form.value.whisperNotifications !== settingsData.value.whisperNotifications
+		|| form.value.announceDeleteWebui !== settingsData.value.announceDeleteWebui
 	)
 })
 
@@ -478,7 +483,7 @@ function formatTime(ms?: number) {
 							</ItemContent>
 
 							<ItemActions>
-								<Switch v-model:model-value="form.active" />
+								<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId" />
 							</ItemActions>
 						</Item>
 
@@ -672,7 +677,7 @@ function formatTime(ms?: number) {
 										</SelectContent>
 									</Select>
 								</div>
-								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
+								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
 							</Field>
 						</FieldGroup>
 
@@ -697,6 +702,17 @@ function formatTime(ms?: number) {
 								</SettingsGroupContent>
 								<SettingsGroupAction>
 									<Switch v-model:model-value="form.whisperNotifications" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when a song is removed from the queue via the web admin panel.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.announceDeleteWebui" />
 								</SettingsGroupAction>
 							</SettingsGroupItem>
 						</SettingsGroup>

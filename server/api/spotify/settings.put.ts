@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
+import { getAppSettings, refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveSpotifySettingsSchema = z.object({
 	active: z.boolean(),
@@ -19,6 +19,7 @@ const saveSpotifySettingsSchema = z.object({
 	targetPlaylistName: z.string(),
 	allowModerators: z.boolean(),
 	whisperNotifications: z.boolean(),
+	announceDeleteWebui: z.boolean(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -36,6 +37,14 @@ export default defineEventHandler(async (event) => {
 
 	const d = parsed.data
 
+	const appSettings = await getAppSettings()
+	if (d.active && !appSettings.spotifyRequestPlaylistId) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'Cannot enable song requests without a song request playlist.',
+		})
+	}
+
 	const keysToUpsert = [
 		{ key: 'spotify.sr.enabled', value: String(d.active), updatedAt: new Date() },
 		{ key: 'spotify.sr.points_cost', value: String(d.pointsCost), updatedAt: new Date() },
@@ -50,7 +59,19 @@ export default defineEventHandler(async (event) => {
 		{ key: 'spotify.playlist.target_name', value: d.targetPlaylistName, updatedAt: new Date() },
 		{ key: 'spotify.playlist.allow_mods', value: String(d.allowModerators), updatedAt: new Date() },
 		{ key: 'spotify.playlist.whisper', value: String(d.whisperNotifications), updatedAt: new Date() },
+		{ key: 'spotify.playlist.announce_delete_webui', value: String(d.announceDeleteWebui), updatedAt: new Date() },
 	]
+
+	if (d.targetPlaylist !== appSettings.spotifyPlaylistTargetId) {
+		keysToUpsert.push({
+			key: 'spotify.playlist.cache_synced_at',
+			value: '0',
+			updatedAt: new Date(),
+		})
+
+		const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+		clearSpotifyTokenCache()
+	}
 
 	await db
 		.insert(settings)

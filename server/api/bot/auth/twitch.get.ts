@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import process from 'node:process'
 import { exchangeCode, getTokenInfo } from '@twurple/auth'
-import { BOT_OAUTH_SCOPES, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
+import { BOT_OAUTH_SCOPES, BOT_OAUTH_VERSION, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { settings, twitchTokens, users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
@@ -19,7 +19,13 @@ export default defineEventHandler(async (event) => {
 	const isOnboarded = hasBot && hasStreamer
 
 	if (isOnboarded) {
-		await requireUserRole(event, 'caster')
+		const session = await getUserSession(event)
+		const user = session?.user
+		const botToken = await getBotToken()
+		const isBot = user && botToken && user.id === botToken.userId
+		if (!isBot) {
+			await requireUserRole(event, 'caster')
+		}
 	}
 
 	if (query.code) {
@@ -105,6 +111,63 @@ export default defineEventHandler(async (event) => {
 			// Force refresh the token cache
 			await getStreamerToken(true)
 			await getBotToken(true)
+
+			if (type === 'bot') {
+				const now = new Date()
+				await db.insert(settings)
+					.values({
+						key: 'twitch.bot_token_version',
+						value: String(BOT_OAUTH_VERSION),
+						updatedAt: now,
+					})
+					.onConflictDoUpdate({
+						target: settings.key,
+						set: {
+							value: String(BOT_OAUTH_VERSION),
+							updatedAt: now,
+						},
+					})
+				await refreshAppSettingsCache()
+
+				const results = await db.insert(users)
+					.values({
+						id: userId,
+						username: twitchUser.name,
+						displayName: twitchUser.displayName,
+						image: twitchUser.profilePictureUrl || '',
+						role: 'viewer',
+						isVip: false,
+						isSubscriber: false,
+						createdAt: now,
+						updatedAt: now,
+					})
+					.onConflictDoUpdate({
+						target: users.id,
+						set: {
+							username: twitchUser.name,
+							displayName: twitchUser.displayName,
+							image: twitchUser.profilePictureUrl || '',
+							updatedAt: now,
+						},
+					})
+					.returning()
+
+				const dbUser = results[0]
+				if (dbUser) {
+					await setUserSession(event, {
+						user: {
+							id: dbUser.id,
+							username: dbUser.username,
+							displayName: dbUser.displayName,
+							image: dbUser.image,
+							role: dbUser.role,
+							isVip: dbUser.isVip,
+							isSubscriber: dbUser.isSubscriber,
+						},
+						loggedInAt: now.toISOString(),
+					})
+				}
+			}
 
 			if (type === 'streamer') {
 				const now = new Date()

@@ -11,6 +11,7 @@ export interface AppSettings {
 	payoutAmountOffline: number
 	activeBonus: number
 	streamerTokenVersion: number
+	botTokenVersion: number
 	eventsubAlertFollowEnabled: boolean
 	eventsubAlertSubEnabled: boolean
 	eventsubAlertGiftEnabled: boolean
@@ -45,6 +46,7 @@ export interface AppSettings {
 	spotifyPlaylistAllowMods: boolean
 	spotifyPlaylistWhisper: boolean
 	spotifyRequestPlaylistId: string
+	spotifyPlaylistAnnounceDeleteWebui: boolean
 	botChatMode: 'normal' | 'action'
 	botMuted: boolean
 }
@@ -69,6 +71,7 @@ export function getAppSettingsSync(): AppSettings {
 			payoutAmountOffline: 0,
 			activeBonus: 5,
 			streamerTokenVersion: 1,
+			botTokenVersion: 1,
 			eventsubAlertFollowEnabled: false,
 			eventsubAlertSubEnabled: false,
 			eventsubAlertGiftEnabled: false,
@@ -103,6 +106,7 @@ export function getAppSettingsSync(): AppSettings {
 			spotifyPlaylistAllowMods: true,
 			spotifyPlaylistWhisper: false,
 			spotifyRequestPlaylistId: '',
+			spotifyPlaylistAnnounceDeleteWebui: true,
 			botChatMode: 'action',
 			botMuted: false,
 		}
@@ -124,6 +128,7 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			payoutAmountOffline: Math.max(0, Number(getVal('points.payout_amount_offline', '0'))),
 			activeBonus: Math.max(0, Number(getVal('points.active_bonus', '5'))),
 			streamerTokenVersion: Number(getVal('twitch.streamer_token_version', '1')),
+			botTokenVersion: Number(getVal('twitch.bot_token_version', '1')),
 			eventsubAlertFollowEnabled: getVal('eventsub.alert.follow.enabled', 'false') === 'true',
 			eventsubAlertSubEnabled: getVal('eventsub.alert.sub.enabled', 'false') === 'true',
 			eventsubAlertGiftEnabled: getVal('eventsub.alert.gift.enabled', 'false') === 'true',
@@ -158,6 +163,7 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			spotifyPlaylistAllowMods: getVal('spotify.playlist.allow_mods', 'true') === 'true',
 			spotifyPlaylistWhisper: getVal('spotify.playlist.whisper', 'false') === 'true',
 			spotifyRequestPlaylistId: getVal('spotify.request.playlist_id', ''),
+			spotifyPlaylistAnnounceDeleteWebui: getVal('spotify.playlist.announce_delete_webui', 'true') === 'true',
 			botChatMode: getVal('bot.chat_mode', 'action') as 'normal' | 'action',
 			botMuted: getVal('bot.muted', 'false') === 'true',
 		}

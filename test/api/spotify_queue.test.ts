@@ -12,10 +12,10 @@ import queuePostHandler from '~~/server/api/spotify/queue/index.post'
 import settingsGetHandler from '~~/server/api/spotify/settings.get'
 import settingsPutHandler from '~~/server/api/spotify/settings.put'
 import { db } from '~~/server/database'
-import { settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens, users } from '~~/server/database/schema'
+import { settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase, createTestUser } from '../helpers'
-import { mockGetStreamInfo } from '../setup'
+import { mockApiClient, mockGetStreamInfo, mockSay } from '../setup'
 
 // Mocking Spotify global client fetch requests
 const mockFetch = vi.fn()
@@ -35,6 +35,18 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			obtainmentTimestamp: Date.now(),
 			scope: 'user-read-currently-playing playlist-modify-public playlist-modify-private',
 		})
+		// Insert streamer twitch token into database for getStreamerChannelName
+		await db.insert(twitchTokens).values({
+			userId: 'mock-streamer-id',
+			userName: 'streamerchannel',
+			displayName: 'StreamerChannel',
+			accessToken: 'streamer-access-123',
+			refreshToken: 'streamer-refresh-123',
+			expiresIn: 3600,
+			obtainmentTimestamp: Date.now(),
+			scope: '[]',
+			accountType: 'streamer',
+		})
 		;(globalThis as any).__setMockSpotifyToken__({ id: 'streamer', accessToken: 'access-123', refreshToken: 'refresh-123' })
 		;(globalThis as any).__setMockCurrentlyPlaying__(null)
 		;(globalThis as any).getUserSession.mockResolvedValue({
@@ -44,6 +56,15 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 	})
 
 	describe('Settings Endpoints', () => {
+		beforeEach(async () => {
+			await db.insert(settings).values({
+				key: 'spotify.request.playlist_id',
+				value: 'playlist-123',
+				updatedAt: new Date(),
+			})
+			await refreshAppSettingsCache()
+		})
+
 		it('should retrieve song request settings', async () => {
 			const res = await settingsGetHandler({} as any)
 			expect(res).toBeDefined()
@@ -67,6 +88,7 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 					targetPlaylistName: 'My Likes',
 					allowModerators: false,
 					whisperNotifications: true,
+					announceDeleteWebui: true,
 				},
 			} as any
 			const res = await settingsPutHandler(mockEvent)
@@ -86,6 +108,34 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			expect(updated.targetPlaylistName).toBe('My Likes')
 			expect(updated.allowModerators).toBe(false)
 			expect(updated.whisperNotifications).toBe(true)
+			expect(updated.announceDeleteWebui).toBe(true)
+		})
+
+		it('should block enabling song requests if no song request playlist is configured', async () => {
+			// Delete playlist ID first
+			await db.delete(settings).where(eq(settings.key, 'spotify.request.playlist_id'))
+			await refreshAppSettingsCache()
+
+			const mockEvent = {
+				body: {
+					active: true,
+					pointsCost: 10,
+					maxLength: 8,
+					maxQueue: 50,
+					maxUserRequests: 0,
+					modsBypassLimits: true,
+					followersOnly: false,
+					permitExplicit: true,
+					offlineOverride: false,
+					targetPlaylist: '',
+					targetPlaylistName: '',
+					allowModerators: true,
+					whisperNotifications: false,
+					announceDeleteWebui: false,
+				},
+			} as any
+
+			await expect(settingsPutHandler(mockEvent)).rejects.toThrow('Cannot enable song requests without a song request playlist.')
 		})
 	})
 
@@ -134,6 +184,23 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			} as any
 
 			await expect(queuePostHandler(mockEvent)).rejects.toThrow('You do not have enough points')
+		})
+
+		it('should block song requests if song request playlist is not configured', async () => {
+			// Delete playlist ID
+			await db.delete(settings).where(eq(settings.key, 'spotify.request.playlist_id'))
+			await refreshAppSettingsCache()
+
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'viewer-id', username: 'alice', role: 'viewer', displayName: 'Alice' },
+			})
+			await createTestUser({ id: 'viewer-id', username: 'alice', points: 500 })
+
+			const mockEvent = {
+				body: { link: 'https://open.spotify.com/track/4PTG3Z6ehGkBF3zI7Y17p3' },
+			} as any
+
+			await expect(queuePostHandler(mockEvent)).rejects.toThrow('Song request playlist is not initialized.')
 		})
 
 		it('should reject song requests if viewer exceeds max active user requests limit', async () => {
@@ -460,6 +527,76 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 				} as any),
 			).rejects.toThrow('You do not have permission to remove this item.')
 		})
+
+		it('should skip chat announcement when deleting a fallback playlist song', async () => {
+			const [seeded] = await db.insert(spotifyQueue).values({
+				trackId: 'track-fallback',
+				title: 'Fallback Song',
+				artist: 'Fallback Artist',
+				durationMs: 180000,
+				requestedBy: 'Fallback Playlist',
+				pointsCost: 0,
+				status: 'pending',
+			}).returning()
+
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'caster-id', username: 'streamerchannel', role: 'caster', displayName: 'StreamerChannel' },
+			})
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const res = await queueItemDeleteHandler({
+				context: { params: { id: String(seeded!.id) } },
+			} as any)
+			expect(res.success).toBe(true)
+
+			// Verify that mockSay was not called for this deletion
+			expect(mockSay).not.toHaveBeenCalled()
+		})
+
+		it('should skip chat announcement when announceDeleteWebui is disabled', async () => {
+			// Disable announceDeleteWebui in database settings
+			await db.insert(settings).values([
+				{ key: 'spotify.playlist.announce_delete_webui', value: 'false', updatedAt: new Date() },
+			]).onConflictDoUpdate({
+				target: settings.key,
+				set: { value: 'false', updatedAt: new Date() },
+			})
+			await refreshAppSettingsCache()
+
+			const [seeded] = await db.insert(spotifyQueue).values({
+				trackId: 'track-normal',
+				title: 'Normal Song',
+				artist: 'Normal Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 100,
+				status: 'pending',
+			}).returning()
+
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'caster-id', username: 'streamerchannel', role: 'caster', displayName: 'StreamerChannel' },
+			})
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const res = await queueItemDeleteHandler({
+				context: { params: { id: String(seeded!.id) } },
+			} as any)
+			expect(res.success).toBe(true)
+
+			// Verify that mockSay was not called
+			expect(mockSay).not.toHaveBeenCalled()
+
+			// Restore announceDeleteWebui to true for other tests
+			await db.insert(settings).values([
+				{ key: 'spotify.playlist.announce_delete_webui', value: 'true', updatedAt: new Date() },
+			]).onConflictDoUpdate({
+				target: settings.key,
+				set: { value: 'true', updatedAt: new Date() },
+			})
+			await refreshAppSettingsCache()
+		})
 	})
 
 	describe('Like Song Endpoint', () => {
@@ -579,6 +716,101 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			;(globalThis as any).__setMockCurrentlyPlaying__(null)
 
 			await expect(likePostHandler({} as any)).rejects.toThrow('No song is currently playing')
+		})
+
+		it('should whisper the requester if whisperNotifications is enabled and song has a requester', async () => {
+			// Preset settings with whisper enabled
+			await db.insert(settings).values([
+				{ key: 'spotify.playlist.target_id', value: 'target-123', updatedAt: new Date() },
+				{ key: 'spotify.playlist.whisper', value: 'true', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			// Seed user and queue with a requester
+			await db.insert(users).values({
+				id: 'mock-bob-id',
+				username: 'bob',
+				displayName: 'Bob',
+				points: 100,
+			})
+			await db.insert(spotifyQueue).values({
+				trackId: 'track-123',
+				title: 'Test Song',
+				artist: 'Test Artist',
+				durationMs: 180000,
+				requestedBy: 'Bob',
+				status: 'playing',
+			})
+
+			// Set currently playing
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-123',
+				uri: 'spotify:track:track-123',
+				title: 'Test Song',
+				artist: 'Test Artist',
+				link: 'https://open.spotify.com/track/track-123',
+				isPlaying: true,
+			})
+
+			// Insert bot token into DB
+			await db.insert(twitchTokens).values({
+				userId: 'mock-bot-id',
+				accessToken: 'bot-access-123',
+				refreshToken: 'bot-refresh-123',
+				expiresIn: 3600,
+				obtainmentTimestamp: Date.now(),
+				scope: '["user:manage:whispers"]',
+				accountType: 'bot',
+			})
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const res = await likePostHandler({} as any)
+			expect(res).toEqual({ success: true, alreadyLiked: false, title: 'Test Song' })
+
+			// Check that mockApiClient.whispers.sendWhisper was called!
+			const sendWhisperMock = mockApiClient.whispers.sendWhisper
+			expect(sendWhisperMock).toHaveBeenCalledWith(
+				'mock-bot-id',
+				'mock-bob-id',
+				expect.stringContaining('Your requested song "Test Song" by Test Artist has been saved to the stream\'s Spotify playlist!'),
+			)
+			// Public chat should NOT be called
+			expect(mockSay).not.toHaveBeenCalled()
+		})
+
+		it('should announce in chat if whisperNotifications is disabled', async () => {
+			// Preset settings with whisper disabled
+			await db.insert(settings).values([
+				{ key: 'spotify.playlist.target_id', value: 'target-123', updatedAt: new Date() },
+				{ key: 'spotify.playlist.whisper', value: 'false', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			// Set currently playing
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-123',
+				uri: 'spotify:track:track-123',
+				title: 'Test Song',
+				artist: 'Test Artist',
+				link: 'https://open.spotify.com/track/track-123',
+				isPlaying: true,
+			})
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const res = await likePostHandler({} as any)
+			expect(res).toEqual({ success: true, alreadyLiked: false, title: 'Test Song' })
+
+			// Check that whisper is NOT called
+			const sendWhisperMock = mockApiClient.whispers.sendWhisper
+			expect(sendWhisperMock).not.toHaveBeenCalled()
+
+			// Public chat should have been called
+			expect(mockSay).toHaveBeenCalledWith(
+				expect.any(String),
+				'@streamerchannel, the current track requested by @streamerchannel has been saved to the playlist!',
+			)
 		})
 	})
 

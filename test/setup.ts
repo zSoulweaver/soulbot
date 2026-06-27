@@ -88,6 +88,9 @@ export const mockApiClient = {
 			}
 		}),
 	},
+	whispers: {
+		sendWhisper: vi.fn(async (_fromUserId: string, _toUserId: string, _message: string) => {}),
+	},
 }
 
 export const mockGetStreamInfo = vi.fn(async (): Promise<StreamInfo> => ({ isOnline: false }))
@@ -141,6 +144,7 @@ beforeEach(() => {
 	// Reset the spy so assertions start fresh in every single test case
 	mockSay.mockClear()
 	mockAction.mockClear()
+	mockApiClient.whispers.sendWhisper.mockClear()
 })
 
 let mockSpotifyToken: any

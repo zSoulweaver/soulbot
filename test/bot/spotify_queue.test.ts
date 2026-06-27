@@ -167,6 +167,33 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		expect(dbItem!.status).toBe('removed')
 	})
 
+	it('should output simple confirmation when removing a fallback song', async () => {
+		await db.insert(spotifyQueue).values({
+			trackId: 'track-123',
+			title: 'Song Title',
+			artist: 'Artist Name',
+			durationMs: 180000,
+			requestedBy: 'Fallback Playlist',
+			pointsCost: 0,
+			status: 'pending',
+		})
+
+		mockFetch.mockResolvedValue({ success: true })
+
+		const { replies } = await simulateCommand('!songrequest remove 1', {
+			id: 'mod-123',
+			username: 'bob',
+			displayName: 'Bob',
+			role: 'moderator',
+		})
+
+		expect(replies).toHaveLength(1)
+		expect(replies[0]).toBe('@Bob, Removed autoplay fallback song from the queue.')
+
+		const [dbItem] = await db.select().from(spotifyQueue)
+		expect(dbItem!.status).toBe('removed')
+	})
+
 	it('should allow moderators to skip current song request', async () => {
 		mockFetch.mockResolvedValue({ success: true })
 
@@ -227,7 +254,7 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		})
 
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Bob, Saved currently playing track to Spotify playlist!')
+		expect(replies[0]).toBe('@streamer, the current track requested by @streamer has been saved to the playlist!')
 		expect(mockFetch).toHaveBeenCalledWith(
 			'https://api.spotify.com/v1/playlists/target-123/tracks',
 			expect.objectContaining({

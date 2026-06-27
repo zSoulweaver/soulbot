@@ -55,6 +55,10 @@ export const handleSongRequestRemove: CommandHandler<typeof SongRequestRemoveArg
 		await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
 	}
 
+	if (item.requestedBy === 'Fallback Playlist') {
+		return ctx.reply('Removed autoplay fallback song from the queue.')
+	}
+
 	return ctx.reply('spotify.sr.removed', {
 		track: item.title,
 		user: item.requestedBy,

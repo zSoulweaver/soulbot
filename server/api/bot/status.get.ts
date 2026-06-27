@@ -1,4 +1,4 @@
-import { STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
+import { BOT_OAUTH_VERSION, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
@@ -6,14 +6,20 @@ import { getAppSettings } from '~~/server/utils/settings'
 import { getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
-	// Allow public access to status check during initial onboarding
+	// Allow public access during initial onboarding only
 	const existingTokens = await db.select().from(twitchTokens)
 	const hasBot = existingTokens.some(t => t.accountType === 'bot')
 	const hasStreamer = existingTokens.some(t => t.accountType === 'streamer')
 	const isOnboarded = hasBot && hasStreamer
 
 	if (isOnboarded) {
-		await requireUserRole(event, 'moderator')
+		const session = await getUserSession(event)
+		const user = session?.user
+		const botToken = await getBotToken()
+		const isBotAccount = user && botToken && user.id === botToken.userId
+		if (!isBotAccount) {
+			await requireUserRole(event, 'moderator')
+		}
 	}
 
 	const botToken = await getBotToken()
@@ -22,6 +28,9 @@ export default defineEventHandler(async (event) => {
 	const appSettings = await getAppSettings()
 	const isStreamerTokenOutdated = streamerToken
 		? (appSettings.streamerTokenVersion < STREAMER_OAUTH_VERSION)
+		: false
+	const isBotTokenOutdated = botToken
+		? (appSettings.botTokenVersion < BOT_OAUTH_VERSION)
 		: false
 
 	return {
@@ -41,5 +50,6 @@ export default defineEventHandler(async (event) => {
 			: null,
 		isBotRunning: isBotRunning(),
 		isStreamerTokenOutdated,
+		isBotTokenOutdated,
 	}
 })

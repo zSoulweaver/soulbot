@@ -72,8 +72,8 @@ const definitions = {
 		params: undefined,
 	},
 	'spotify.playlist.liked': {
-		default: 'Saved currently playing track to Spotify playlist!',
-		params: undefined,
+		default: '@$(caster), the current track requested by @$(requester) has been saved to the playlist!',
+		params: { caster: '', requester: '' } as { caster: string, requester: string },
 	},
 	'spotify.playlist.already-liked': {
 		default: 'This song is already saved to the stream Spotify playlist!',

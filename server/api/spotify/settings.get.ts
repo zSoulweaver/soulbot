@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 	const appSettings = await getAppSettings()
 
 	return {
-		active: appSettings.spotifySongRequestEnabled,
+		active: appSettings.spotifyRequestPlaylistId ? appSettings.spotifySongRequestEnabled : false,
 		pointsCost: appSettings.spotifySongRequestPointsCost,
 		maxLength: appSettings.spotifySongRequestMaxLength,
 		maxQueue: appSettings.spotifySongRequestMaxQueue,
@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
 		targetPlaylistName: appSettings.spotifyPlaylistTargetName,
 		allowModerators: appSettings.spotifyPlaylistAllowMods,
 		whisperNotifications: appSettings.spotifyPlaylistWhisper,
+		announceDeleteWebui: appSettings.spotifyPlaylistAnnounceDeleteWebui,
 		playlistId: appSettings.spotifyRequestPlaylistId,
 	}
 })

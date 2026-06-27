@@ -70,10 +70,12 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Notify Twitch chat
-	await sendChannelChatMessage('spotify.sr.removed', {
-		track: item.title,
-		user: item.requestedBy,
-	})
+	if (item.requestedBy !== 'Fallback Playlist' && appSettings.spotifyPlaylistAnnounceDeleteWebui) {
+		await sendChannelChatMessage('spotify.sr.removed', {
+			track: item.title,
+			user: item.requestedBy,
+		})
+	}
 
 	return { success: true }
 })

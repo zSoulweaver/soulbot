@@ -9,7 +9,11 @@ definePageMeta({
 
 const { data: status, refresh } = useFetch('/api/bot/status')
 
-const isComplete = computed(() => status.value?.bot && status.value?.streamer)
+const isComplete = computed(() => {
+	if (!status.value)
+		return false
+	return status.value.bot && !status.value.isBotTokenOutdated && status.value.streamer && !status.value.isStreamerTokenOutdated
+})
 const isLoading = ref(false)
 const isRestarting = ref(false)
 const unknownStatus = ref(false)
@@ -119,14 +123,16 @@ const alertDescription = computed(() => {
 				<!-- Streamer Account -->
 				<div class="flex items-center justify-between rounded-lg border p-4">
 					<div class="flex items-center gap-3">
-						<CheckCircle2 v-if="status?.streamer" class="text-green-500" />
-						<Circle v-else class="text-muted-foreground" />
+						<CheckCircle2 v-if="status?.streamer && !status?.isStreamerTokenOutdated" class="text-green-500" />
+						<Circle v-else-if="!status?.streamer" class="text-muted-foreground" />
+						<CheckCircle2 v-else class="text-yellow-500" />
 						<div>
 							<p class="font-medium">
 								Streamer Account
 							</p>
 							<p v-if="status?.streamer" class="text-sm text-muted-foreground">
 								Connected as {{ status.streamer.displayName || status.streamer.userName }}
+								<span v-if="status?.isStreamerTokenOutdated" class="ml-1 font-semibold text-destructive">(Outdated)</span>
 							</p>
 							<p v-else class="text-sm text-muted-foreground">
 								Not connected
@@ -134,26 +140,28 @@ const alertDescription = computed(() => {
 						</div>
 					</div>
 					<Button
-						variant="outline"
+						:variant="status?.isStreamerTokenOutdated ? 'destructive' : 'outline'"
 						size="sm"
 						as="a"
 						href="/api/bot/auth/twitch?type=streamer"
 					>
-						{{ status?.streamer ? 'Reconnect' : 'Connect' }}
+						{{ status?.isStreamerTokenOutdated ? 'Update' : (status?.streamer ? 'Reconnect' : 'Connect') }}
 					</Button>
 				</div>
 
 				<!-- Bot Account -->
 				<div class="flex items-center justify-between rounded-lg border p-4">
 					<div class="flex items-center gap-3">
-						<CheckCircle2 v-if="status?.bot" class="text-green-500" />
-						<Circle v-else class="text-muted-foreground" />
+						<CheckCircle2 v-if="status?.bot && !status?.isBotTokenOutdated" class="text-green-500" />
+						<Circle v-else-if="!status?.bot" class="text-muted-foreground" />
+						<CheckCircle2 v-else class="text-yellow-500" />
 						<div>
 							<p class="font-medium">
 								Bot Account
 							</p>
 							<p v-if="status?.bot" class="text-sm text-muted-foreground">
 								Connected as {{ status.bot.displayName || status.bot.userName }}
+								<span v-if="status?.isBotTokenOutdated" class="ml-1 font-semibold text-destructive">(Outdated)</span>
 							</p>
 							<p v-else class="text-sm text-muted-foreground">
 								Not connected
@@ -161,12 +169,12 @@ const alertDescription = computed(() => {
 						</div>
 					</div>
 					<Button
-						variant="outline"
+						:variant="status?.isBotTokenOutdated ? 'destructive' : 'outline'"
 						size="sm"
 						as="a"
 						href="/api/bot/auth/twitch?type=bot"
 					>
-						{{ status?.bot ? 'Reconnect' : 'Connect' }}
+						{{ status?.isBotTokenOutdated ? 'Update' : (status?.bot ? 'Reconnect' : 'Connect') }}
 					</Button>
 				</div>
 

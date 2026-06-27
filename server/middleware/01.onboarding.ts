@@ -38,20 +38,26 @@ export default defineEventHandler(async (event) => {
 		return sendRedirect(event, '/setup')
 	}
 
-	// If onboarded, restrict setup and auth endpoints to casters only
+	// If onboarded, restrict setup and auth endpoints to casters and the bot account only
 	if (url.pathname === '/setup' || url.pathname.startsWith('/api/bot/auth')) {
 		const session = await getUserSession(event)
 		const isCaster = session?.user?.role === 'caster'
 
 		if (!isCaster) {
-			if (url.pathname === '/setup') {
-				return sendRedirect(event, '/')
-			}
-			else {
-				throw createError({
-					statusCode: 403,
-					statusMessage: 'Only the caster can modify bot setup.',
-				})
+			const { getBotToken } = await import('~~/server/utils/twurple')
+			const botToken = await getBotToken()
+			const isBotAccount = session?.user && botToken && session.user.id === botToken.userId
+
+			if (!isBotAccount) {
+				if (url.pathname === '/setup') {
+					return sendRedirect(event, '/')
+				}
+				else {
+					throw createError({
+						statusCode: 403,
+						statusMessage: 'Only the caster can modify bot setup.',
+					})
+				}
 			}
 		}
 	}

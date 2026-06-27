@@ -1,8 +1,7 @@
-export const STREAMER_OAUTH_VERSION = 3
+export const STREAMER_OAUTH_VERSION = 4
+export const BOT_OAUTH_VERSION = 1
 
 export const STREAMER_OAUTH_SCOPES = [
-	'chat:read',
-	'chat:edit',
 	'channel:moderate',
 	'moderation:read',
 	'channel:read:subscriptions',
@@ -15,6 +14,5 @@ export const STREAMER_OAUTH_SCOPES = [
 export const BOT_OAUTH_SCOPES = [
 	'chat:read',
 	'chat:edit',
-	'whispers:read',
-	'whispers:edit',
+	'user:manage:whispers',
 ]

@@ -1,15 +1,32 @@
 <script setup lang="ts">
 type BotStatusResponse = Awaited<ReturnType<typeof import('~~/server/api/bot/status.get').default>>
 
-const { user } = useUserSession()
-const isCaster = computed(() => user.value?.role === 'caster')
+const { loggedIn, user } = useUserSession()
 
-// Fetch status only if the user is a caster
 const { data: status } = useFetch<BotStatusResponse>('/api/bot/status', {
-	immediate: isCaster.value,
+	immediate: loggedIn.value,
 })
 
-const showOutdatedAlert = computed(() => isCaster.value && status.value?.isStreamerTokenOutdated)
+const isCasterOrBot = computed(() => {
+	if (!user.value || !status.value)
+		return false
+	return user.value.role === 'caster' || user.value.id === status.value.bot?.userId
+})
+
+const showOutdatedAlert = computed(() => isCasterOrBot.value && (status.value?.isStreamerTokenOutdated || status.value?.isBotTokenOutdated))
+
+const alertDescription = computed(() => {
+	if (status.value?.isStreamerTokenOutdated && status.value?.isBotTokenOutdated) {
+		return 'Soulbot has updated features that require new permissions for both your streamer and bot accounts. Please re-authenticate them now.'
+	}
+	if (status.value?.isStreamerTokenOutdated) {
+		return 'Soulbot has updated features that require new permissions for your streamer account. Please re-authenticate now.'
+	}
+	if (status.value?.isBotTokenOutdated) {
+		return 'Soulbot has updated features that require new permissions for your bot account. Please re-authenticate now.'
+	}
+	return ''
+})
 </script>
 
 <template>
@@ -23,7 +40,7 @@ const showOutdatedAlert = computed(() => isCaster.value && status.value?.isStrea
 				Twitch Permissions Out of Date
 			</AlertTitle>
 			<AlertDescription>
-				Soulbot has new watch-time payout capabilities that require additional broadcaster permissions. Please re-authenticate now.
+				{{ alertDescription }}
 			</AlertDescription>
 		</div>
 		<Button

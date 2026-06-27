@@ -158,7 +158,7 @@ describe('Twitch Authentication & Bot Control API', () => {
 
 			// Mock getUserSession to return a non-caster user (moderator)
 			const mockGetUserSession = (globalThis as any).getUserSession
-			mockGetUserSession.mockResolvedValueOnce({
+			mockGetUserSession.mockResolvedValue({
 				user: { id: 'viewer-user', role: 'viewer' },
 			})
 
@@ -174,6 +174,8 @@ describe('Twitch Authentication & Bot Control API', () => {
 			}
 			finally {
 				process.env.NODE_ENV = originalEnv
+				mockGetUserSession.mockReset()
+				mockGetUserSession.mockResolvedValue({ user: { id: 'mock-user', role: 'caster' } })
 			}
 		})
 	})

@@ -15,12 +15,8 @@ import { checkIsFollowing, parseSpotifyTrackId } from '../utils'
 export const handleSongRequestRoot: CommandHandler<typeof SongRequestArgs> = async (ctx, [spotifyLink]) => {
 	const appSettings = getAppSettingsSync()
 
-	if (!appSettings.spotifySongRequestEnabled) {
+	if (!appSettings.spotifySongRequestEnabled || !appSettings.spotifyRequestPlaylistId) {
 		return ctx.reply('spotify.sr.disabled')
-	}
-
-	if (!appSettings.spotifyRequestPlaylistId) {
-		return ctx.reply('spotify.playlist.no-target')
 	}
 
 	// Check stream online status unless override is active

@@ -1,9 +1,14 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
+import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 
 export const handleSongRequestEnable: CommandHandler = async (ctx) => {
+	const appSettings = getAppSettingsSync()
+	if (!appSettings.spotifyRequestPlaylistId) {
+		return ctx.reply('spotify.playlist.no-target')
+	}
+
 	await db.insert(settings)
 		.values({
 			key: 'spotify.sr.enabled',

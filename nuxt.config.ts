@@ -50,10 +50,10 @@ export default defineNuxtConfig({
 		spotifyClientId: '',
 		spotifyClientSecret: '',
 		spotifyRedirectUri: '',
-		twitchEventSubTransport: 'ws',
-		twitchEventSubSecret: 'default-fixed-secret-change-me',
-		twitchEventSubHost: '',
-		twitchEventSubPort: '8080',
+		twitchEventsubTransport: 'ws',
+		twitchEventsubSecret: 'default-fixed-secret-change-me',
+		twitchEventsubHost: '',
+		twitchEventsubPort: '8080',
 		ngrokAuthtoken: '',
 		oauth: {
 			twitch: {

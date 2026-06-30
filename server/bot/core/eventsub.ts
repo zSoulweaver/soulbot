@@ -41,7 +41,7 @@ class EventSubManager {
 		}
 
 		const config = useRuntimeConfig()
-		const transport = config.twitchEventSubTransport || 'ws'
+		const transport = config.twitchEventsubTransport || 'ws'
 
 		try {
 			if (transport === 'ws') {
@@ -50,19 +50,19 @@ class EventSubManager {
 			else if (transport === 'http') {
 				this.listener = new EventSubMiddleware({
 					apiClient,
-					hostName: config.twitchEventSubHost || '',
+					hostName: config.twitchEventsubHost || '',
 					pathPrefix: '/api/twitch/eventsub',
-					secret: config.twitchEventSubSecret,
+					secret: config.twitchEventsubSecret,
 				})
 			}
 			else if (transport === 'ngrok') {
 				this.listener = new EventSubHttpListener({
 					apiClient,
 					adapter: new NgrokAdapter({
-						port: Number.parseInt(config.twitchEventSubPort, 10) || 8080,
+						port: Number.parseInt(config.twitchEventsubPort, 10) || 8080,
 						ngrokConfig: config.ngrokAuthtoken ? { authtoken: config.ngrokAuthtoken } : undefined,
 					}),
-					secret: config.twitchEventSubSecret,
+					secret: config.twitchEventsubSecret,
 				})
 			}
 			else {

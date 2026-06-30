@@ -39,6 +39,7 @@ export default defineNitroPlugin(() => {
 		try {
 			botLogger.info('Initializing bot (background)...')
 			await initTwurple()
+			await startDiscord()
 
 			const result = await startBot()
 			if (result === 'started') {

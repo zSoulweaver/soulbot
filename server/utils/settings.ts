@@ -49,6 +49,22 @@ export interface AppSettings {
 	spotifyPlaylistAnnounceDeleteWebui: boolean
 	botChatMode: 'normal' | 'action'
 	botMuted: boolean
+	discordEnabled: boolean
+	discordGuildId: string
+	discordRolesAutoBestowEnabled: boolean
+	discordRolesAutoBestowRoles: string
+	discordAlertFollowEnabled: boolean
+	discordAlertFollowChannelId: string
+	discordAlertFollowTemplate: string
+	discordAlertSubEnabled: boolean
+	discordAlertSubChannelId: string
+	discordAlertSubTemplate: string
+	discordAlertGiftEnabled: boolean
+	discordAlertGiftChannelId: string
+	discordAlertGiftTemplate: string
+	discordAlertCheerEnabled: boolean
+	discordAlertCheerChannelId: string
+	discordAlertCheerTemplate: string
 }
 
 let cachedSettings: AppSettings | null = null
@@ -109,6 +125,22 @@ export function getAppSettingsSync(): AppSettings {
 			spotifyPlaylistAnnounceDeleteWebui: true,
 			botChatMode: 'action',
 			botMuted: false,
+			discordEnabled: false,
+			discordGuildId: '',
+			discordRolesAutoBestowEnabled: false,
+			discordRolesAutoBestowRoles: '',
+			discordAlertFollowEnabled: false,
+			discordAlertFollowChannelId: '',
+			discordAlertFollowTemplate: 'Thank you for the follow, $(sender)!',
+			discordAlertSubEnabled: false,
+			discordAlertSubChannelId: '',
+			discordAlertSubTemplate: 'Thank you for subscribing, $(sender)! Welcome to the club!',
+			discordAlertGiftEnabled: false,
+			discordAlertGiftChannelId: '',
+			discordAlertGiftTemplate: 'Thank you @$(sender) for gifting $(giftCount) sub(s) to the community!',
+			discordAlertCheerEnabled: false,
+			discordAlertCheerChannelId: '',
+			discordAlertCheerTemplate: 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)',
 		}
 	}
 	return cachedSettings
@@ -166,6 +198,22 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			spotifyPlaylistAnnounceDeleteWebui: getVal('spotify.playlist.announce_delete_webui', 'true') === 'true',
 			botChatMode: getVal('bot.chat_mode', 'action') as 'normal' | 'action',
 			botMuted: getVal('bot.muted', 'false') === 'true',
+			discordEnabled: getVal('discord.enabled', 'false') === 'true',
+			discordGuildId: getVal('discord.guild_id', ''),
+			discordRolesAutoBestowEnabled: getVal('discord.roles.auto_bestow_enabled', 'false') === 'true',
+			discordRolesAutoBestowRoles: getVal('discord.roles.auto_bestow_roles', ''),
+			discordAlertFollowEnabled: getVal('discord.alerts.follow.enabled', 'false') === 'true',
+			discordAlertFollowChannelId: getVal('discord.alerts.follow.channel_id', ''),
+			discordAlertFollowTemplate: getVal('discord.alerts.follow.template', 'Thank you for the follow, $(sender)!'),
+			discordAlertSubEnabled: getVal('discord.alerts.sub.enabled', 'false') === 'true',
+			discordAlertSubChannelId: getVal('discord.alerts.sub.channel_id', ''),
+			discordAlertSubTemplate: getVal('discord.alerts.sub.template', 'Thank you for subscribing, $(sender)! Welcome to the club!'),
+			discordAlertGiftEnabled: getVal('discord.alerts.gift.enabled', 'false') === 'true',
+			discordAlertGiftChannelId: getVal('discord.alerts.gift.channel_id', ''),
+			discordAlertGiftTemplate: getVal('discord.alerts.gift.template', 'Thank you @$(sender) for gifting $(giftCount) sub(s) to the community!'),
+			discordAlertCheerEnabled: getVal('discord.alerts.cheer.enabled', 'false') === 'true',
+			discordAlertCheerChannelId: getVal('discord.alerts.cheer.channel_id', ''),
+			discordAlertCheerTemplate: getVal('discord.alerts.cheer.template', 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)'),
 		}
 	}
 	catch (err) {

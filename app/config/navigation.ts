@@ -9,6 +9,7 @@ import {
 	Timer,
 	Trophy,
 } from '@lucide/vue'
+import { DiscordIcon } from 'vue3-simple-icons'
 
 export type UserRole = 'viewer' | 'moderator' | 'caster' | 'admin'
 
@@ -78,6 +79,17 @@ export const navigation: NavGroup[] = [
 					{ title: 'Payout Settings', url: '/admin/loyalty' },
 					{ title: 'Payout Exclusions', url: '/admin/loyalty/exclusions' },
 					{ title: 'Gambling', url: '/admin/loyalty/gambling' },
+				],
+			},
+			{
+				title: 'Discord',
+				url: '/admin/discord/settings',
+				icon: DiscordIcon,
+				roles: ['caster', 'moderator'],
+				items: [
+					{ title: 'Settings', url: '/admin/discord/settings', roles: ['caster'] },
+					{ title: 'Alerts', url: '/admin/discord/alerts' },
+					{ title: 'Role Bestow', url: '/admin/discord/roles' },
 				],
 			},
 			{

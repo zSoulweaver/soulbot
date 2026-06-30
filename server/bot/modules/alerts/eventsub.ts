@@ -1,6 +1,7 @@
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { sendRawChatMessage } from '~~/server/utils/chat'
+import { sendDiscordMessage } from '~~/server/utils/discord'
 import { logTwitchEvent } from '~~/server/utils/events-log'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettings } from '~~/server/utils/settings'
@@ -34,6 +35,28 @@ async function renderAndPostAlert(
 	await postAlertToChat(rendered)
 }
 
+async function renderAndPostDiscordAlert(
+	enabled: boolean,
+	channelId: string | undefined,
+	template: string | undefined,
+	eventUser: { id: string, name: string, displayName: string },
+	extraVars?: Record<string, string | number>,
+	logContext?: Record<string, any>,
+) {
+	if (!enabled || !channelId || !template) {
+		return
+	}
+
+	// Defer alert rendering slightly to let other EventSub handlers (e.g. points module) complete their async database writes
+	await new Promise(resolve => setTimeout(resolve, 10))
+
+	const channel = (await getStreamerChannelName()) || 'streamer'
+	const ctx = createTemplateContext(channel, eventUser)
+	const rendered = await renderCustomTemplate(template, ctx, extraVars)
+	botLogger.info({ ...logContext, message: rendered }, '[Discord Alerts] Posting alert')
+	await sendDiscordMessage(channelId, rendered)
+}
+
 export function registerAlertsEventSubHandlers() {
 	eventSubManager.events.on('follow', async (event) => {
 		try {
@@ -45,6 +68,14 @@ export function registerAlertsEventSubHandlers() {
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
 				undefined,
 				{ user: event.userName, type: 'follow' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertFollowEnabled,
+				settings.discordAlertFollowChannelId,
+				settings.discordAlertFollowTemplate,
+				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
+				undefined,
+				{ user: event.userName, type: 'discord-follow' },
 			)
 		}
 		catch (err) {
@@ -62,6 +93,14 @@ export function registerAlertsEventSubHandlers() {
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
 				{ subTier: event.tier },
 				{ user: event.userName, type: 'subscription' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertSubEnabled,
+				settings.discordAlertSubChannelId,
+				settings.discordAlertSubTemplate,
+				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
+				{ subTier: event.tier },
+				{ user: event.userName, type: 'discord-subscription' },
 			)
 		}
 		catch (err) {
@@ -83,6 +122,18 @@ export function registerAlertsEventSubHandlers() {
 				},
 				{ giftCount: event.amount },
 				{ gifter: event.gifterName || 'anonymous', type: 'subscription.gift' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertGiftEnabled,
+				settings.discordAlertGiftChannelId,
+				settings.discordAlertGiftTemplate,
+				{
+					id: event.gifterId || 'anonymous',
+					name: event.gifterName || 'anonymous',
+					displayName: event.gifterDisplayName || 'Anonymous',
+				},
+				{ giftCount: event.amount },
+				{ gifter: event.gifterName || 'anonymous', type: 'discord-subscription.gift' },
 			)
 		}
 		catch (err) {
@@ -110,6 +161,21 @@ export function registerAlertsEventSubHandlers() {
 					cheerMessage: event.message,
 				},
 				{ user: event.userName || 'anonymous', bits: event.bits, type: 'cheer' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertCheerEnabled,
+				settings.discordAlertCheerChannelId,
+				settings.discordAlertCheerTemplate,
+				{
+					id: event.userId || 'anonymous',
+					name: event.userName || 'anonymous',
+					displayName: event.userDisplayName || 'Anonymous',
+				},
+				{
+					bitsCount: event.bits,
+					cheerMessage: event.message,
+				},
+				{ user: event.userName || 'anonymous', bits: event.bits, type: 'discord-cheer' },
 			)
 		}
 		catch (err) {

@@ -52,7 +52,7 @@
 - **Username Cleaning**: Always use the standard `cleanUsername(username)` helper function from `~~/server/bot/core/utils` to standardize user names (removing leading `@` and lowercasing) instead of inline `.replace(...)` or `.toLowerCase()`.
 - **Explicit Imports**: Always explicitly import route authorization helpers like `requireUserRole` from `~~/server/utils/auth` instead of relying on Nitro's virtual auto-imports. This keeps IDE indexers and offline type-checkers accurate.
 - **Minimal Code Comments**: Avoid verbose step-by-step numbering comments (e.g. `// 1. do this`, `// 2. do that`). Write self-documenting code. Keep comments focused only on explaining non-obvious architecture or complex domain rules.
-- **EventSub Parallel Writes**: If an alert handler resolves database variables (such as a user's points balance) inside its template, defer its execution slightly using a brief delay (e.g., `await new Promise(resolve => setTimeout(resolve, 10))`) to allow parallel reward/points write operations from other parallel EventSub listeners to finish settling.
+- **EventSub Sequential Async Emission**: EventSub listeners are executed sequentially and asynchronously via `emitAsync`. Make sure modules that perform database writes (like the points module) register their event handlers _before_ modules that read that data (like the alerts module) to ensure database changes settle before rendering/reading. Do not use arbitrary delays like `setTimeout` to handle timing.
 
 ## Unified Frontend Page & Table Layout Standards
 

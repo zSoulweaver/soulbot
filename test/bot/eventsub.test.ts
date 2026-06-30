@@ -29,14 +29,11 @@ describe('Bot EventSub Integration', () => {
 
 	describe('Follow EventSub Alerts & Rewards', () => {
 		it('should bypass points and alerts when disabled (default state)', async () => {
-			eventSubManager.simulate('follow', {
+			await eventSubManager.simulate('follow', {
 				userId: 'mock-alice-id',
 				userName: 'alice',
 				userDisplayName: 'Alice',
 			} as any)
-
-			// Wait a small tick for promise resolution
-			await new Promise(resolve => setTimeout(resolve, 50))
 
 			// Alice should not have been created or rewarded points
 			const userRecord = await db.select().from(users).where(eq(users.id, 'mock-alice-id')).then(res => res[0])
@@ -56,13 +53,11 @@ describe('Bot EventSub Integration', () => {
 			])
 			await refreshAppSettingsCache()
 
-			eventSubManager.simulate('follow', {
+			await eventSubManager.simulate('follow', {
 				userId: 'mock-alice-id',
 				userName: 'alice',
 				userDisplayName: 'Alice',
 			} as any)
-
-			await new Promise(resolve => setTimeout(resolve, 50))
 
 			// Alice should be created with 150 points
 			const userRecord = await db.select().from(users).where(eq(users.id, 'mock-alice-id')).then(res => res[0])
@@ -86,15 +81,13 @@ describe('Bot EventSub Integration', () => {
 			])
 			await refreshAppSettingsCache()
 
-			eventSubManager.simulate('subscription', {
+			await eventSubManager.simulate('subscription', {
 				userId: 'mock-bob-id',
 				userName: 'bob',
 				userDisplayName: 'Bob',
 				tier: '1000',
 				isGift: false,
 			} as any)
-
-			await new Promise(resolve => setTimeout(resolve, 50))
 
 			const userRecord = await db.select().from(users).where(eq(users.id, 'mock-bob-id')).then(res => res[0])
 			expect(userRecord?.points).toBe(500)
@@ -114,15 +107,13 @@ describe('Bot EventSub Integration', () => {
 			])
 			await refreshAppSettingsCache()
 
-			eventSubManager.simulate('subscription.gift', {
+			await eventSubManager.simulate('subscription.gift', {
 				gifterId: 'mock-gifter-id',
 				gifterName: 'gifter',
 				gifterDisplayName: 'Gifter',
 				tier: '1000',
 				amount: 5,
 			} as any)
-
-			await new Promise(resolve => setTimeout(resolve, 50))
 
 			// Gifter gets rewarded points
 			const userRecord = await db.select().from(users).where(eq(users.id, 'mock-gifter-id')).then(res => res[0])
@@ -143,15 +134,13 @@ describe('Bot EventSub Integration', () => {
 			])
 			await refreshAppSettingsCache()
 
-			eventSubManager.simulate('cheer', {
+			await eventSubManager.simulate('cheer', {
 				userId: 'mock-dan-id',
 				userName: 'dan',
 				userDisplayName: 'Dan',
 				bits: 100,
 				message: 'Keep up the good work!',
 			} as any)
-
-			await new Promise(resolve => setTimeout(resolve, 50))
 
 			// Dan gets 3 * 100 = 300 points
 			const userRecord = await db.select().from(users).where(eq(users.id, 'mock-dan-id')).then(res => res[0])

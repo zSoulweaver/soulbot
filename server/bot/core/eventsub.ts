@@ -27,6 +27,18 @@ export class EventSubEmitter extends EventEmitter {
 	override emit<K extends keyof EventSubMap>(event: K, data: EventSubMap[K]): boolean {
 		return super.emit(event, data)
 	}
+
+	async emitAsync<K extends keyof EventSubMap>(event: K, data: EventSubMap[K]): Promise<void> {
+		const listeners = this.listeners(event) as ((data: EventSubMap[K]) => void | Promise<void>)[]
+		for (const listener of listeners) {
+			try {
+				await listener(data)
+			}
+			catch (err) {
+				botLogger.error({ err, event }, '[EventSubEmitter] Error in event listener')
+			}
+		}
+	}
 }
 
 class EventSubManager {
@@ -71,37 +83,37 @@ class EventSubManager {
 
 			const followSub = this.listener.onChannelFollow(streamerUserId, streamerUserId, (e) => {
 				botLogger.info({ user: e.userName }, '[EventSub] follow received')
-				this.events.emit('follow', e)
+				this.events.emitAsync('follow', e)
 			})
 			this.activeSubscriptions.push(followSub)
 
 			const subSub = this.listener.onChannelSubscription(streamerUserId, (e) => {
 				botLogger.info({ user: e.userName }, '[EventSub] subscription received')
-				this.events.emit('subscription', e)
+				this.events.emitAsync('subscription', e)
 			})
 			this.activeSubscriptions.push(subSub)
 
 			const giftSub = this.listener.onChannelSubscriptionGift(streamerUserId, (e) => {
 				botLogger.info({ gifter: e.gifterName, amount: e.amount }, '[EventSub] subscription gift received')
-				this.events.emit('subscription.gift', e)
+				this.events.emitAsync('subscription.gift', e)
 			})
 			this.activeSubscriptions.push(giftSub)
 
 			const cheerSub = this.listener.onChannelCheer(streamerUserId, (e) => {
 				botLogger.info({ user: e.userName, bits: e.bits }, '[EventSub] cheer received')
-				this.events.emit('cheer', e)
+				this.events.emitAsync('cheer', e)
 			})
 			this.activeSubscriptions.push(cheerSub)
 
 			const onlineSub = this.listener.onStreamOnline(streamerUserId, (e) => {
 				botLogger.info('[EventSub] stream went online')
-				this.events.emit('stream.online', e)
+				this.events.emitAsync('stream.online', e)
 			})
 			this.activeSubscriptions.push(onlineSub)
 
 			const offlineSub = this.listener.onStreamOffline(streamerUserId, (e) => {
 				botLogger.info('[EventSub] stream went offline')
-				this.events.emit('stream.offline', e)
+				this.events.emitAsync('stream.offline', e)
 			})
 			this.activeSubscriptions.push(offlineSub)
 			if (this.listener instanceof EventSubMiddleware) {
@@ -157,9 +169,9 @@ class EventSubManager {
 	 * Process-level simulator helper to trigger mock events inside our server memory.
 	 * Decoupled from any physical socket and primarily used in automated testing and manual diagnostic API calls.
 	 */
-	simulate<K extends keyof EventSubMap>(event: K, data: EventSubMap[K]) {
+	async simulate<K extends keyof EventSubMap>(event: K, data: EventSubMap[K]) {
 		botLogger.info({ event }, '[EventSub] Simulating event')
-		this.events.emit(event, data)
+		await this.events.emitAsync(event, data)
 	}
 }
 

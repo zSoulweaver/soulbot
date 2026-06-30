@@ -25,9 +25,6 @@ async function renderAndPostAlert(
 		return
 	}
 
-	// Defer alert rendering slightly to let other EventSub handlers (e.g. points module) complete their async database writes
-	await new Promise(resolve => setTimeout(resolve, 10))
-
 	const channel = (await getStreamerChannelName()) || 'streamer'
 	const ctx = createTemplateContext(channel, eventUser)
 	const rendered = await renderCustomTemplate(template, ctx, extraVars)
@@ -46,9 +43,6 @@ async function renderAndPostDiscordAlert(
 	if (!enabled || !channelId || !template) {
 		return
 	}
-
-	// Defer alert rendering slightly to let other EventSub handlers (e.g. points module) complete their async database writes
-	await new Promise(resolve => setTimeout(resolve, 10))
 
 	const channel = (await getStreamerChannelName()) || 'streamer'
 	const ctx = createTemplateContext(channel, eventUser)

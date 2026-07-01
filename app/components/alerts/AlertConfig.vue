@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Bell, BellOff, ChevronDown, HelpCircle, MessageSquare, PiggyBank } from '@lucide/vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 const props = withDefaults(
@@ -25,9 +25,98 @@ const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const isExpanded = ref(false)
 
+interface ParsedVariable {
+	token: string
+	label: string
+	description: string
+}
+
+const parsedVariables = computed<ParsedVariable[]>(() => {
+	return props.variables.map((v) => {
+		const match = v.match(/^(\$\([\w.-]+\))\s*\((.+)\)$/)
+		if (match && match[1]) {
+			const token = match[1]
+			const label = match[2] || ''
+			return {
+				token,
+				label,
+				description: getVariableDescription(token, label),
+			}
+		}
+		return {
+			token: v,
+			label: v,
+			description: getVariableDescription(v, ''),
+		}
+	})
+})
+
+function getVariableDescription(token: string, label: string): string {
+	const lowerToken = token.toLowerCase()
+	const lowerLabel = label.toLowerCase()
+
+	if (lowerToken.includes('sender')) {
+		if (lowerToken.endsWith('.name)')) {
+			return 'The sender\'s Twitch username (lowercase, no spaces, e.g. creatorname).'
+		}
+		if (lowerToken.endsWith('.id)')) {
+			return 'The sender\'s unique Twitch user ID.'
+		}
+		// Base sender
+		if (lowerLabel.includes('follower')) {
+			return 'The display name of the user who followed.'
+		}
+		if (lowerLabel.includes('subscriber')) {
+			return 'The display name of the subscriber.'
+		}
+		if (lowerLabel.includes('gifter')) {
+			return 'The display name of the user who gifted the subscription(s).'
+		}
+		if (lowerLabel.includes('cheerer')) {
+			return 'The display name of the user who cheered.'
+		}
+		if (lowerLabel.includes('raider')) {
+			return 'The display name of the raiding broadcaster.'
+		}
+		if (lowerLabel.includes('broadcaster')) {
+			return 'The display name of the broadcaster.'
+		}
+		return 'The display name of the user who triggered the event.'
+	}
+
+	if (lowerToken.includes('points')) {
+		return 'The amount of loyalty points awarded for this event.'
+	}
+	if (lowerToken.includes('channel')) {
+		return 'The Twitch channel name where the event occurred.'
+	}
+	if (lowerToken.includes('subtier')) {
+		return 'The subscription tier (Prime, Tier 1, Tier 2, or Tier 3).'
+	}
+	if (lowerToken.includes('giftcount')) {
+		return 'The number of subscriptions gifted in this event.'
+	}
+	if (lowerToken.includes('bitscount')) {
+		return 'The number of bits cheered.'
+	}
+	if (lowerToken.includes('cheermessage')) {
+		return 'The chat message sent with the cheer.'
+	}
+	if (lowerToken.includes('raidsize')) {
+		return 'The number of viewers joining the raid.'
+	}
+	if (lowerToken.includes('livetitle')) {
+		return 'The title of the live stream.'
+	}
+	if (lowerToken.includes('livegame')) {
+		return 'The category or game being streamed.'
+	}
+
+	return label || 'Dynamic variable.'
+}
+
 // Copies variable to clipboard with quick toast feedback
-function copyVariable(variable: string) {
-	const token = variable.split(' ')[0] || variable
+function copyVariable(token: string) {
 	navigator.clipboard.writeText(token)
 	toast.success(`Copied ${token} to clipboard!`)
 }
@@ -210,18 +299,35 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 							<span>Available dynamic variables (click to copy):</span>
 						</div>
 						<div class="flex flex-wrap gap-1.5 pt-1">
-							<Badge
-								v-for="variable in props.variables"
-								:key="variable"
-								variant="secondary"
-								class="
-									cursor-pointer font-mono transition-all select-none
-									hover:bg-primary hover:text-primary-foreground
-								"
-								@click="copyVariable(variable)"
-							>
-								{{ variable }}
-							</Badge>
+							<TooltipProvider>
+								<Tooltip v-for="variable in parsedVariables" :key="variable.token">
+									<TooltipTrigger as-child>
+										<Badge
+											variant="secondary"
+											class="
+												cursor-pointer font-mono transition-all select-none
+												hover:bg-primary hover:text-primary-foreground
+											"
+											@click="copyVariable(variable.token)"
+										>
+											{{ variable.token }}
+										</Badge>
+									</TooltipTrigger>
+									<TooltipContent class="max-w-xs px-3 py-2">
+										<div class="flex flex-col gap-1 text-left">
+											<div class="border-b border-background/10 pb-1 text-xs font-semibold">
+												{{ variable.label }}
+											</div>
+											<div class="text-xs/relaxed opacity-90">
+												{{ variable.description }}
+											</div>
+											<div class="mt-1 border-t border-background/10 pt-1 text-[10px] opacity-70">
+												Click to copy <code class="rounded-sm bg-background/10 px-1 py-0.5 font-mono text-[9px]">{{ variable.token }}</code>
+											</div>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</div>
 					</div>
 				</div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Bot } from '@lucide/vue'
-import { TwitchIcon } from 'vue3-simple-icons'
+import TwitchIcon from '~/components/icons/TwitchIcon.vue'
 import { navigation } from '~/config/navigation'
 
 const { loggedIn, user } = useUserSession()

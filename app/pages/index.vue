@@ -7,9 +7,9 @@ import {
 	Trophy,
 } from '@lucide/vue'
 import { computed, onMounted } from 'vue'
-import { TwitchIcon } from 'vue3-simple-icons'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
+import TwitchIcon from '~/components/icons/TwitchIcon.vue'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'

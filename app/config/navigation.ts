@@ -9,7 +9,7 @@ import {
 	Timer,
 	Trophy,
 } from '@lucide/vue'
-import { DiscordIcon } from 'vue3-simple-icons'
+import DiscordIcon from '~/components/icons/DiscordIcon.vue'
 
 export type UserRole = 'viewer' | 'moderator' | 'caster' | 'admin'
 

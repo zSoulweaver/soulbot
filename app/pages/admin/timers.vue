@@ -154,8 +154,8 @@ const columns: any[] = [
 			const timer = info.row.original
 			return h('div', { class: 'flex justify-center' }, [
 				h(Switch, {
-					'checked': timer.enabled,
-					'onUpdate:checked': (val: boolean) => {
+					'modelValue': timer.enabled,
+					'onUpdate:modelValue': (val: boolean) => {
 						timer.enabled = val
 						toggleTimerActive(timer)
 					},

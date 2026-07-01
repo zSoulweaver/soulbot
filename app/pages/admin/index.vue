@@ -672,8 +672,8 @@ function formatEventType(type: string) {
 									</div>
 									<Switch
 										v-if="botSettings"
-										:checked="botSettings.muted"
-										@update:checked="toggleMuted"
+										:model-value="botSettings.muted"
+										@update:model-value="toggleMuted"
 									/>
 									<span v-else class="text-xs text-muted-foreground">Loading...</span>
 								</Field>

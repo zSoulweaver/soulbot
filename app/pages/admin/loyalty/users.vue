@@ -71,7 +71,7 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('points', {
 		header: 'Points',
-		cell: info => h('span', { class: 'font-mono font-medium tabular-nums' }, info.getValue().toLocaleString()),
+		cell: info => h('span', { class: 'font-medium tabular-nums' }, info.getValue().toLocaleString()),
 	}),
 	columnHelper.display({
 		id: 'actions',

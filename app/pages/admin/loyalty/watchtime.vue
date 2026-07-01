@@ -74,7 +74,7 @@ const columns: any[] = [
 	columnHelper.accessor('watchTime', {
 		header: 'Watch Time',
 		cell: info => h('div', { class: 'flex flex-col gap-0.5' }, [
-			h('span', { class: 'font-mono font-medium text-foreground tabular-nums text-sm' }, formatWatchTime(info.getValue())),
+			h('span', { class: 'font-medium text-foreground tabular-nums text-sm' }, formatWatchTime(info.getValue())),
 			h('span', { class: 'text-[10px] font-bold text-muted-foreground uppercase tracking-wider' }, `(${info.getValue().toLocaleString()} mins)`),
 		]),
 	}),

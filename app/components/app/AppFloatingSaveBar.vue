@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Save } from '@lucide/vue'
+import { onMounted, ref } from 'vue'
 import { Spinner } from '~/components/ui/spinner'
 
 defineProps<{
@@ -16,6 +17,11 @@ defineEmits<{
 	(e: 'save'): void
 	(e: 'discard'): void
 }>()
+
+const isMounted = ref(false)
+onMounted(() => {
+	isMounted.value = true
+})
 </script>
 
 <template>
@@ -28,7 +34,7 @@ defineEmits<{
 		leave-to-class="transform translate-y-8 opacity-0 scale-95"
 	>
 		<Item
-			v-if="show"
+			v-if="isMounted && show"
 			variant="outline"
 			class="sticky bottom-4 z-40 mt-auto w-full border-border/60 bg-card/80 shadow-lg backdrop-blur-md transition-all duration-200"
 		>

@@ -1,8 +1,9 @@
 import { defineCommand } from '../../core/define-command'
 import { handlePointsAdd } from './handlers/add'
 import { handlePointsGetTop } from './handlers/get-top'
+import { handlePointsGift } from './handlers/gift'
 import { handlePointsRoot } from './handlers/root'
-import { PointsAddArgs, PointsArgs, PointsGetTopArgs } from './schema'
+import { PointsAddArgs, PointsArgs, PointsGetTopArgs, PointsGiftArgs } from './schema'
 import { registerPointsTemplates } from './templates'
 
 registerPointsTemplates()
@@ -29,6 +30,20 @@ export const pointsModule = defineCommand({
 			handler: handlePointsAdd,
 			templates: [
 				'points.add',
+				'points.user-does-not-exist',
+			],
+		},
+		gift: {
+			description: 'Gift points to another user',
+			usage: '!points gift <user> <amount>',
+			permission: 'everyone',
+			args: PointsGiftArgs,
+			handler: handlePointsGift,
+			templates: [
+				'points.gift.success',
+				'points.gift.not-enough-points',
+				'points.gift.invalid-amount',
+				'points.gift.self',
 				'points.user-does-not-exist',
 			],
 		},

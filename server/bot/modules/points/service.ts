@@ -54,3 +54,46 @@ export async function updateUserPointsAndGambleStats(username: string, pointsDif
 		gambleNetPoints: newNet,
 	}
 }
+
+export async function transferPoints(senderUsername: string, targetUsername: string, amount: number) {
+	const dbSender = await getUserRecord(senderUsername)
+	const dbTarget = await getUserRecord(targetUsername)
+
+	if (!dbSender) {
+		return { success: false, error: 'sender-not-found' } as const
+	}
+	if (!dbTarget) {
+		return { success: false, error: 'target-not-found' } as const
+	}
+
+	if (dbSender.points < amount) {
+		return { success: false, error: 'not-enough-points', senderPoints: dbSender.points } as const
+	}
+
+	const newSenderPoints = dbSender.points - amount
+	const newTargetPoints = dbTarget.points + amount
+
+	db.transaction((tx) => {
+		tx.update(users)
+			.set({ points: newSenderPoints })
+			.where(eq(users.id, dbSender.id))
+			.run()
+
+		tx.update(users)
+			.set({ points: newTargetPoints })
+			.where(eq(users.id, dbTarget.id))
+			.run()
+	})
+
+	return {
+		success: true,
+		sender: {
+			...dbSender,
+			points: newSenderPoints,
+		},
+		target: {
+			...dbTarget,
+			points: newTargetPoints,
+		},
+	} as const
+}

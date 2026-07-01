@@ -7,6 +7,13 @@ export const PointsAddArgs = z.tuple([
 	NumberParsed.describe('amount'),
 ])
 
+export const PointsGiftArgs = z.tuple([
+	TwitchUser.describe('user'),
+	NumberParsed.refine(val => Number.isInteger(val) && val > 0, {
+		message: 'must be a positive integer',
+	}).describe('amount'),
+])
+
 export const PointsGetTopArgs = z.tuple([
 	NumberParsed.optional().default(5).describe('count'),
 ])

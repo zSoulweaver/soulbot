@@ -39,6 +39,22 @@ export const definitions = {
 		default: 'The leaderboard is currently empty.',
 		params: undefined,
 	},
+	'points.gift.success': {
+		default: 'Gifted $(amount) $(core.currency) to $(target). You now have $(senderPoints) $(core.currency) and they have $(targetPoints) $(core.currency).',
+		params: { amount: 0, target: '', senderPoints: 0, targetPoints: 0 } as { amount: number, target: string, senderPoints: number, targetPoints: number },
+	},
+	'points.gift.not-enough-points': {
+		default: 'You only have $(current) $(core.currency) (tried to gift: $(amount)).',
+		params: { current: 0, amount: 0 } as { current: number, amount: number },
+	},
+	'points.gift.invalid-amount': {
+		default: 'Invalid gift amount. The amount must be a positive integer.',
+		params: undefined,
+	},
+	'points.gift.self': {
+		default: 'You cannot gift $(core.currency) to yourself!',
+		params: undefined,
+	},
 	'points.gambling.win': {
 		default: 'rolled a $(roll) and won $(winAmount) $(core.currency)! You went from $(oldAmount) to $(newAmount) $(core.currency).',
 		params: { sender: '', roll: 0, winAmount: 0, oldAmount: 0, newAmount: 0 } as { sender: string, roll: number, winAmount: number, oldAmount: number, newAmount: number },

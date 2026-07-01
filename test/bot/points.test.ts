@@ -138,6 +138,136 @@ describe('Bot Points Command Integration', () => {
 		})
 	})
 
+	describe('!points gift <user> <amount> - Gift points to another user', () => {
+		it('should successfully gift points from sender to recipient', async () => {
+			// Seed both sender and target
+			await createTestUser({
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			await createTestUser({
+				id: '67890',
+				username: 'bob',
+				displayName: 'Bob',
+				points: 100,
+			})
+
+			const { replies } = await simulateCommand('!points gift bob 150', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, Gifted 150 points to Bob. You now have 350 points and they have 250 points.')
+
+			// Assert database state updates
+			const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
+			const bobRecord = await db.select().from(users).where(eq(users.id, '67890')).then(res => res[0])
+			expect(aliceRecord?.points).toBe(350)
+			expect(bobRecord?.points).toBe(250)
+		})
+
+		it('should reply with not-enough-points template if sender has insufficient points', async () => {
+			await createTestUser({
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 50,
+			})
+			await createTestUser({
+				id: '67890',
+				username: 'bob',
+				displayName: 'Bob',
+				points: 100,
+			})
+
+			const { replies } = await simulateCommand('!points gift bob 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 50,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, You only have 50 points (tried to gift: 100).')
+
+			// Verify DB remained unchanged
+			const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
+			expect(aliceRecord?.points).toBe(50)
+		})
+
+		it('should reply with self template if trying to gift to oneself', async () => {
+			await createTestUser({
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+
+			const { replies } = await simulateCommand('!points gift alice 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, You cannot gift points to yourself!')
+		})
+
+		it('should reply with invalid-amount template or validation error if amount is invalid', async () => {
+			const { replies: negativeReplies } = await simulateCommand('!points gift bob -50', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			expect(negativeReplies).toHaveLength(1)
+			expect(negativeReplies[0]).toBe('@Alice, Incorrect usage, amount must be a positive integer. | Usage: `!points gift <user> <amount>`')
+
+			const { replies: zeroReplies } = await simulateCommand('!points gift bob 0', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			expect(zeroReplies).toHaveLength(1)
+			expect(zeroReplies[0]).toBe('@Alice, Incorrect usage, amount must be a positive integer. | Usage: `!points gift <user> <amount>`')
+
+			const { replies: stringReplies } = await simulateCommand('!points gift bob abc', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			expect(stringReplies).toHaveLength(1)
+			expect(stringReplies[0]).toBe('@Alice, Incorrect usage, amount must be a number. | Usage: `!points gift <user> <amount>`')
+		})
+
+		it('should reply with does-not-exist template if target user does not exist', async () => {
+			await createTestUser({
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+
+			const { replies } = await simulateCommand('!points gift charlie 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, charlie does not have an account on Twitch.')
+		})
+	})
+
 	describe('!points get top - View leaderboard', () => {
 		it('should return empty template if no users have > 0 points', async () => {
 			const { replies } = await simulateCommand('!points get top', {

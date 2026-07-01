@@ -126,6 +126,7 @@ function copyVariable(variable: string) {
 					</div>
 				</SettingsGroupAction>
 			</SettingsGroupItem>
+			<slot name="extra-options" />
 		</SettingsGroup>
 
 		<!-- Message Template Editor -->

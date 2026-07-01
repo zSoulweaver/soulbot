@@ -3,7 +3,7 @@ import { eventsLog } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 
 export async function logTwitchEvent(
-	type: 'follow' | 'subscription' | 'gift' | 'cheer',
+	type: 'follow' | 'subscription' | 'gift' | 'cheer' | 'raid' | 'live' | 'offline',
 	userName: string,
 	displayName: string,
 	metadata: {
@@ -11,6 +11,7 @@ export async function logTwitchEvent(
 		giftCount?: number
 		bitsCount?: number
 		cheerMessage?: string
+		raidSize?: number
 	} = {},
 ) {
 	try {

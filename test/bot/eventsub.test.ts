@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { db } from '~~/server/database'
 import { settings, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase } from '../helpers'
-import { mockSay } from '../setup'
+import { mockApiClient, mockDeleteDiscordMessage, mockSay, mockSendDiscordMessage } from '../setup'
 
 describe('Bot EventSub Integration', () => {
 	beforeEach(async () => {
@@ -148,6 +148,133 @@ describe('Bot EventSub Integration', () => {
 
 			expect(mockSay).toHaveBeenCalledTimes(1)
 			expect(mockSay.mock.calls[0]?.[1]).toBe('Thank you @Dan for cheering 100 bits! Msg: Keep up the good work!')
+		})
+	})
+
+	describe('Raid EventSub Alerts', () => {
+		it('should post chat and Discord messages on incoming raid', async () => {
+			await db.insert(settings).values([
+				{ key: 'eventsub.alert.raid.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.raid', value: 'Thanks for raiding, $(sender) with $(raidSize) viewers!', updatedAt: new Date() },
+				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.raid.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.raid.channel_id', value: 'ch-raid-123', updatedAt: new Date() },
+				{ key: 'discord.alerts.raid.template', value: '$(sender) raided with $(raidSize) viewers!', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			await eventSubManager.simulate('raid', {
+				raidingBroadcasterId: 'mock-raider-id',
+				raidingBroadcasterName: 'raider',
+				raidingBroadcasterDisplayName: 'Raider',
+				raidedBroadcasterId: 'streamer-id',
+				raidedBroadcasterName: 'streamerchannel',
+				raidedBroadcasterDisplayName: 'StreamerChannel',
+				viewers: 42,
+			} as any)
+
+			// Verify Twitch Chat Alert
+			expect(mockSay).toHaveBeenCalledTimes(1)
+			expect(mockSay.mock.calls[0]?.[1]).toBe('Thanks for raiding, Raider with 42 viewers!')
+
+			// Verify Discord Alert
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[0]).toBe('ch-raid-123')
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[1]).toBe('Raider raided with 42 viewers!')
+		})
+	})
+
+	describe('Stream Live/Offline Alerts', () => {
+		it('should send fancy embed on live and delete it on offline if remove_offline is true', async () => {
+			// Mock Helix API methods on mockApiClient
+			(mockApiClient.users as any).getUserById = vi.fn(async (id: string) => ({
+				id,
+				name: 'streamerchannel',
+				displayName: 'StreamerChannel',
+				profilePictureUrl: 'https://avatar-url.jpg',
+			})) as any
+
+			(mockApiClient.channels as any).getChannelInfoById = vi.fn(async (id: string) => ({
+				id,
+				title: 'Coding some features!',
+				gameName: 'Software and Game Development',
+			})) as any
+
+			await db.insert(settings).values([
+				{ key: 'eventsub.alert.live.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.live', value: 'We are live playing $(liveGame): $(liveTitle)!', updatedAt: new Date() },
+				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.live.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.live.channel_id', value: 'ch-live-123', updatedAt: new Date() },
+				{ key: 'discord.alerts.live.template', value: '@everyone We are now live!', updatedAt: new Date() },
+				{ key: 'discord.alerts.live.remove_offline', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.offline.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.offline', value: 'Stream over!', updatedAt: new Date() },
+				{ key: 'discord.alerts.offline.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.offline.channel_id', value: 'ch-offline-123', updatedAt: new Date() },
+				{ key: 'discord.alerts.offline.template', value: 'Goodbye!', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			// 1. Simulate Stream going Online
+			await eventSubManager.simulate('stream.online', {
+				broadcasterId: 'streamer-id',
+				broadcasterName: 'streamerchannel',
+				broadcasterDisplayName: 'StreamerChannel',
+				id: 'stream-123',
+				type: 'live',
+				startDate: new Date(),
+			} as any)
+
+			// Verify Twitch live alert
+			expect(mockSay).toHaveBeenCalledTimes(1)
+			expect(mockSay.mock.calls[0]?.[1]).toBe('We are live playing Software and Game Development: Coding some features!!')
+
+			// Verify Discord live embed alert
+			expect(mockSendDiscordMessage).toHaveBeenCalledTimes(1)
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[0]).toBe('ch-live-123')
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[1]).toBe('@everyone We are now live!')
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[2]).toEqual({
+				title: 'StreamerChannel just went online on Twitch!',
+				url: 'https://twitch.tv/streamerchannel',
+				thumbnailUrl: 'https://avatar-url.jpg',
+				fields: [
+					{ name: 'Now Playing', value: 'Software and Game Development', inline: true },
+					{ name: 'Stream Status', value: 'Coding some features!', inline: true },
+				],
+				imageUrl: expect.stringContaining('https://static-cdn.jtvnw.net/previews-ttv/live_user_streamerchannel-640x360.jpg'),
+				footerText: 'Twitch',
+				footerIconUrl: 'https://static.twitchcdn.net/assets/favicon-32x32-e29e54a2305db3de7191.png',
+				timestamp: true,
+			})
+
+			// Check that message ID was saved to DB settings
+			const lastMsgSetting = await db.select().from(settings).where(eq(settings.key, 'discord.alerts.live.last_message_id')).then(res => res[0])
+			expect(lastMsgSetting?.value).toBe('mock-msg-123')
+
+			// 2. Simulate Stream going Offline
+			await eventSubManager.simulate('stream.offline', {
+				broadcasterId: 'streamer-id',
+				broadcasterName: 'streamerchannel',
+				broadcasterDisplayName: 'StreamerChannel',
+			} as any)
+
+			// Verify Twitch offline alert
+			expect(mockSay).toHaveBeenCalledTimes(2)
+			expect(mockSay.mock.calls[1]?.[1]).toBe('Stream over!')
+
+			// Verify Discord offline alert message
+			expect(mockSendDiscordMessage).toHaveBeenCalledTimes(2)
+			expect((mockSendDiscordMessage as any).mock.calls[1]?.[0]).toBe('ch-offline-123')
+			expect((mockSendDiscordMessage as any).mock.calls[1]?.[1]).toBe('Goodbye!')
+
+			// Verify Discord live alert message was deleted
+			expect(mockDeleteDiscordMessage).toHaveBeenCalledTimes(1)
+			expect((mockDeleteDiscordMessage as any).mock.calls[0]?.[0]).toBe('mock-channel-123')
+			expect((mockDeleteDiscordMessage as any).mock.calls[0]?.[1]).toBe('mock-msg-123')
+
+			// Check that message ID in DB settings was cleared
+			const clearedMsgSetting = await db.select().from(settings).where(eq(settings.key, 'discord.alerts.live.last_message_id')).then(res => res[0])
+			expect(clearedMsgSetting?.value).toBe('')
 		})
 	})
 })

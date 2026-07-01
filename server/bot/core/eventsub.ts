@@ -1,5 +1,5 @@
 import type { ApiClient } from '@twurple/api'
-import type { EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
+import type { EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
 import { EventEmitter } from 'node:events'
 import { EventSubHttpListener, EventSubMiddleware } from '@twurple/eventsub-http'
 import { NgrokAdapter } from '@twurple/eventsub-ngrok'
@@ -13,6 +13,7 @@ export interface EventSubMap {
 	'cheer': EventSubChannelCheerEvent
 	'stream.online': EventSubStreamOnlineEvent
 	'stream.offline': EventSubStreamOfflineEvent
+	'raid': EventSubChannelRaidEvent
 }
 
 export class EventSubEmitter extends EventEmitter {
@@ -104,6 +105,12 @@ class EventSubManager {
 				this.events.emitAsync('cheer', e)
 			})
 			this.activeSubscriptions.push(cheerSub)
+
+			const raidSub = this.listener.onChannelRaidTo(streamerUserId, (e) => {
+				botLogger.info({ raider: e.raidingBroadcasterName, viewers: e.viewers }, '[EventSub] raid received')
+				this.events.emitAsync('raid', e)
+			})
+			this.activeSubscriptions.push(raidSub)
 
 			const onlineSub = this.listener.onStreamOnline(streamerUserId, (e) => {
 				botLogger.info('[EventSub] stream went online')

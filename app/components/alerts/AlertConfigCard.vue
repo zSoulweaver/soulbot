@@ -3,18 +3,24 @@ import { Bell, HelpCircle, PiggyBank } from '@lucide/vue'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
-const props = defineProps<{
-	title: string
-	description: string
-	variables: string[]
-	pointsLabel?: string
-}>()
+const props = withDefaults(
+	defineProps<{
+		title: string
+		description: string
+		variables: string[]
+		pointsLabel?: string
+		hidePoints?: boolean
+	}>(),
+	{
+		hidePoints: false,
+	},
+)
 
 // Separate v-models for clean bindings
 const alertEnabled = defineModel<boolean>('alertEnabled', { required: true })
 const alertTemplate = defineModel<string>('alertTemplate', { required: true })
-const pointsEnabled = defineModel<boolean>('pointsEnabled', { required: true })
-const pointsReward = defineModel<number>('pointsReward', { required: true })
+const pointsEnabled = defineModel<boolean>('pointsEnabled', { default: false })
+const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
@@ -39,13 +45,12 @@ function copyVariable(variable: string) {
 		</CardHeader>
 
 		<CardContent
-			class="
-				grid grid-cols-1 gap-4
-				md:grid-cols-2
-			"
+			class="grid grid-cols-1 gap-4" :class="[
+				!props.hidePoints ? 'md:grid-cols-2' : '',
+			]"
 		>
 			<!-- Points Reward Settings -->
-			<div class="flex flex-col gap-4">
+			<div v-if="!props.hidePoints" class="flex flex-col gap-4">
 				<Item variant="muted">
 					<ItemContent>
 						<ItemTitle>

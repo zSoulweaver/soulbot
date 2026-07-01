@@ -29,6 +29,19 @@ const form = ref<AlertsSettings>({
 	discordAlertCheerChannelId: '',
 	discordAlertCheerTemplate: '',
 
+	discordAlertRaidEnabled: false,
+	discordAlertRaidChannelId: '',
+	discordAlertRaidTemplate: '',
+
+	discordAlertLiveEnabled: false,
+	discordAlertLiveChannelId: '',
+	discordAlertLiveTemplate: '',
+	discordAlertLiveRemoveOffline: false,
+
+	discordAlertOfflineEnabled: false,
+	discordAlertOfflineChannelId: '',
+	discordAlertOfflineTemplate: '',
+
 	isDiscordConnected: false,
 })
 
@@ -60,6 +73,19 @@ const isModified = computed(() => {
 		|| form.value.discordAlertCheerEnabled !== settingsData.value.discordAlertCheerEnabled
 		|| form.value.discordAlertCheerChannelId !== settingsData.value.discordAlertCheerChannelId
 		|| form.value.discordAlertCheerTemplate !== settingsData.value.discordAlertCheerTemplate
+
+		|| form.value.discordAlertRaidEnabled !== settingsData.value.discordAlertRaidEnabled
+		|| form.value.discordAlertRaidChannelId !== settingsData.value.discordAlertRaidChannelId
+		|| form.value.discordAlertRaidTemplate !== settingsData.value.discordAlertRaidTemplate
+
+		|| form.value.discordAlertLiveEnabled !== settingsData.value.discordAlertLiveEnabled
+		|| form.value.discordAlertLiveChannelId !== settingsData.value.discordAlertLiveChannelId
+		|| form.value.discordAlertLiveTemplate !== settingsData.value.discordAlertLiveTemplate
+		|| form.value.discordAlertLiveRemoveOffline !== settingsData.value.discordAlertLiveRemoveOffline
+
+		|| form.value.discordAlertOfflineEnabled !== settingsData.value.discordAlertOfflineEnabled
+		|| form.value.discordAlertOfflineChannelId !== settingsData.value.discordAlertOfflineChannelId
+		|| form.value.discordAlertOfflineTemplate !== settingsData.value.discordAlertOfflineTemplate
 	)
 })
 
@@ -94,6 +120,19 @@ async function saveSettings() {
 				discordAlertCheerEnabled: form.value.discordAlertCheerEnabled,
 				discordAlertCheerChannelId: form.value.discordAlertCheerChannelId,
 				discordAlertCheerTemplate: form.value.discordAlertCheerTemplate,
+
+				discordAlertRaidEnabled: form.value.discordAlertRaidEnabled,
+				discordAlertRaidChannelId: form.value.discordAlertRaidChannelId,
+				discordAlertRaidTemplate: form.value.discordAlertRaidTemplate,
+
+				discordAlertLiveEnabled: form.value.discordAlertLiveEnabled,
+				discordAlertLiveChannelId: form.value.discordAlertLiveChannelId,
+				discordAlertLiveTemplate: form.value.discordAlertLiveTemplate,
+				discordAlertLiveRemoveOffline: form.value.discordAlertLiveRemoveOffline,
+
+				discordAlertOfflineEnabled: form.value.discordAlertOfflineEnabled,
+				discordAlertOfflineChannelId: form.value.discordAlertOfflineChannelId,
+				discordAlertOfflineTemplate: form.value.discordAlertOfflineTemplate,
 			},
 		})
 		toast.success('Discord alerts configuration updated successfully!')
@@ -202,6 +241,64 @@ async function saveSettings() {
 					title="Cheer Alerts"
 					description="Send a message to a Discord channel when a user cheers bits on your stream."
 					:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)', '$(channel) (Channel)']"
+					:channels="channels"
+					:disabled="!form.isDiscordConnected"
+				/>
+
+				<Separator />
+
+				<!-- Live Announcement Alerts Card -->
+				<DiscordAlertConfigCard
+					v-model:alert-enabled="form.discordAlertLiveEnabled"
+					v-model:alert-channel-id="form.discordAlertLiveChannelId"
+					v-model:alert-template="form.discordAlertLiveTemplate"
+					title="Live Stream Alerts"
+					description="Send a rich embed message with Category, Stream Title, and Preview Image to Discord when your stream goes live."
+					:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+					:channels="channels"
+					:disabled="!form.isDiscordConnected"
+				>
+					<template #extra-options>
+						<SettingsGroupItem v-if="form.discordAlertLiveEnabled && form.isDiscordConnected">
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Remove Post Once Offline</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Delete the Discord live announcement message automatically when the stream goes offline.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch
+									v-model:model-value="form.discordAlertLiveRemoveOffline"
+								/>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</template>
+				</DiscordAlertConfigCard>
+
+				<Separator />
+
+				<!-- Offline Announcement Alerts Card -->
+				<DiscordAlertConfigCard
+					v-model:alert-enabled="form.discordAlertOfflineEnabled"
+					v-model:alert-channel-id="form.discordAlertOfflineChannelId"
+					v-model:alert-template="form.discordAlertOfflineTemplate"
+					title="Stream Offline Alerts"
+					description="Send an announcement message to Discord when your stream goes offline."
+					:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+					:channels="channels"
+					:disabled="!form.isDiscordConnected"
+				/>
+
+				<Separator />
+
+				<!-- Raid Announcement Alerts Card -->
+				<DiscordAlertConfigCard
+					v-model:alert-enabled="form.discordAlertRaidEnabled"
+					v-model:alert-channel-id="form.discordAlertRaidChannelId"
+					v-model:alert-template="form.discordAlertRaidTemplate"
+					title="Raid Alerts"
+					description="Send an announcement message to Discord when another channel raids you."
+					:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
 					:channels="channels"
 					:disabled="!form.isDiscordConnected"
 				/>

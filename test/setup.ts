@@ -110,6 +110,21 @@ export const mockApiClient = {
 
 export const mockGetStreamInfo = vi.fn(async (): Promise<StreamInfo> => ({ isOnline: false }))
 
+export const mockSendDiscordMessage = vi.fn(async (_channelId: string, _content: string, _embed?: any) => ({ id: 'mock-msg-123', channelId: 'mock-channel-123' }))
+export const mockDeleteDiscordMessage = vi.fn(async (_channelId: string, _messageId: string) => true)
+
+vi.mock('~~/server/utils/discord', () => ({
+	sendDiscordMessage: (channelId: string, content: string, embed?: any) => mockSendDiscordMessage(channelId, content, embed),
+	deleteDiscordMessage: (channelId: string, messageId: string) => mockDeleteDiscordMessage(channelId, messageId),
+	isDiscordConnected: vi.fn(() => true),
+	isDiscordTokenConfigured: vi.fn(() => true),
+	startDiscord: vi.fn(async () => {}),
+	stopDiscord: vi.fn(async () => {}),
+	getDiscordChannels: vi.fn(async () => [{ id: '123', name: 'general' }]),
+	getDiscordRoles: vi.fn(async () => [{ id: 'role-123', name: 'Member', color: '#ff0000', isManageable: true }]),
+	getDiscordGuilds: vi.fn(async () => [{ id: 'guild-123', name: 'My Server' }]),
+}))
+
 vi.mock('~~/server/bot/services/stream', () => ({
 	getStreamInfo: () => mockGetStreamInfo(),
 }))
@@ -169,6 +184,8 @@ beforeEach(() => {
 	mockSay.mockClear()
 	mockAction.mockClear()
 	mockApiClient.whispers.sendWhisper.mockClear()
+	mockSendDiscordMessage.mockClear()
+	mockDeleteDiscordMessage.mockClear()
 })
 
 let mockSpotifyToken: any

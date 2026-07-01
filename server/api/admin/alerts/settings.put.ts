@@ -10,6 +10,9 @@ const saveAlertSettingsSchema = z.object({
 	eventsubAlertSubEnabled: z.boolean(),
 	eventsubAlertGiftEnabled: z.boolean(),
 	eventsubAlertCheerEnabled: z.boolean(),
+	eventsubAlertRaidEnabled: z.boolean().optional(),
+	eventsubAlertLiveEnabled: z.boolean().optional(),
+	eventsubAlertOfflineEnabled: z.boolean().optional(),
 	eventsubPointsFollowEnabled: z.boolean(),
 	eventsubPointsSubEnabled: z.boolean(),
 	eventsubPointsGiftEnabled: z.boolean(),
@@ -18,6 +21,9 @@ const saveAlertSettingsSchema = z.object({
 	eventsubAlertSub: z.string().max(500, 'Subscription alert template is too long'),
 	eventsubAlertGift: z.string().max(500, 'Sub-gift alert template is too long'),
 	eventsubAlertCheer: z.string().max(500, 'Cheer alert template is too long'),
+	eventsubAlertRaid: z.string().max(500, 'Raid alert template is too long').optional(),
+	eventsubAlertLive: z.string().max(500, 'Live alert template is too long').optional(),
+	eventsubAlertOffline: z.string().max(500, 'Offline alert template is too long').optional(),
 	eventsubPointsFollow: z.number().int().min(0, 'Follow reward must be non-negative'),
 	eventsubPointsSub: z.number().int().min(0, 'Subscription reward must be non-negative'),
 	eventsubPointsGift: z.number().int().min(0, 'Sub-gift reward must be non-negative'),
@@ -57,6 +63,25 @@ export default defineEventHandler(async (event) => {
 		{ key: 'eventsub.points.gift', value: String(d.eventsubPointsGift), updatedAt: new Date() },
 		{ key: 'eventsub.points.cheer', value: String(d.eventsubPointsCheer), updatedAt: new Date() },
 	]
+
+	if (d.eventsubAlertRaidEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.raid.enabled', value: String(d.eventsubAlertRaidEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertLiveEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.live.enabled', value: String(d.eventsubAlertLiveEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertOfflineEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.offline.enabled', value: String(d.eventsubAlertOfflineEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertRaid !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.raid', value: d.eventsubAlertRaid, updatedAt: new Date() })
+	}
+	if (d.eventsubAlertLive !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.live', value: d.eventsubAlertLive, updatedAt: new Date() })
+	}
+	if (d.eventsubAlertOffline !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.offline', value: d.eventsubAlertOffline, updatedAt: new Date() })
+	}
 
 	await db
 		.insert(settings)

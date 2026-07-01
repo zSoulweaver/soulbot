@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { ChannelType, Client, GatewayIntentBits, PermissionFlagsBits } from 'discord.js'
+import { ChannelType, Client, EmbedBuilder, GatewayIntentBits, PermissionFlagsBits } from 'discord.js'
 import { botLogger } from './logger'
 import { getAppSettings } from './settings'
 
@@ -208,28 +208,89 @@ export async function getDiscordRoles(): Promise<{ id: string, name: string, col
 	}
 }
 
-export async function sendDiscordMessage(channelId: string, content: string): Promise<boolean> {
+export async function sendDiscordMessage(
+	channelId: string,
+	content: string,
+	embed?: {
+		title?: string
+		url?: string
+		description?: string
+		thumbnailUrl?: string
+		imageUrl?: string
+		fields?: { name: string, value: string, inline?: boolean }[]
+		footerText?: string
+		footerIconUrl?: string
+		timestamp?: boolean
+	},
+): Promise<{ id: string, channelId: string } | null> {
 	const settings = await getAppSettings()
 	if (!settings.discordEnabled) {
-		return false
+		return null
 	}
 
 	if (!isDiscordConnected()) {
 		botLogger.warn({ channelId }, '[Discord Bot] Cannot send message: Discord not connected')
-		return false
+		return null
 	}
 
 	try {
 		const channel = await discordClient!.channels.fetch(channelId)
 		if (channel && channel.type === ChannelType.GuildText) {
-			await channel.send(content)
-			return true
+			const options: any = { content }
+			if (embed) {
+				const embedBuilder = new EmbedBuilder()
+				if (embed.title)
+					embedBuilder.setTitle(embed.title)
+				if (embed.url)
+					embedBuilder.setURL(embed.url)
+				if (embed.description)
+					embedBuilder.setDescription(embed.description)
+				if (embed.thumbnailUrl)
+					embedBuilder.setThumbnail(embed.thumbnailUrl)
+				if (embed.imageUrl)
+					embedBuilder.setImage(embed.imageUrl)
+				if (embed.fields)
+					embedBuilder.addFields(embed.fields)
+				if (embed.footerText) {
+					embedBuilder.setFooter({
+						text: embed.footerText,
+						iconURL: embed.footerIconUrl || undefined,
+					})
+				}
+				if (embed.timestamp)
+					embedBuilder.setTimestamp()
+				embedBuilder.setColor(0x9146FF) // Twitch Purple
+				options.embeds = [embedBuilder]
+			}
+			const message = await channel.send(options)
+			return { id: message.id, channelId: message.channelId }
 		}
 		botLogger.warn({ channelId }, '[Discord Bot] Target channel is not a text channel or not found')
-		return false
+		return null
 	}
 	catch (err) {
 		botLogger.error({ err, channelId }, '[Discord Bot] Failed to send message to channel')
+		return null
+	}
+}
+
+export async function deleteDiscordMessage(channelId: string, messageId: string): Promise<boolean> {
+	if (!isDiscordConnected()) {
+		return false
+	}
+	try {
+		const channel = await discordClient!.channels.fetch(channelId)
+		if (channel && channel.type === ChannelType.GuildText) {
+			const message = await channel.messages.fetch(messageId)
+			if (message) {
+				await message.delete()
+				return true
+			}
+		}
+		return false
+	}
+	catch (err) {
+		botLogger.error({ err, channelId, messageId }, '[Discord Bot] Failed to delete message')
 		return false
 	}
 }

@@ -21,6 +21,19 @@ const saveDiscordAlertsSchema = z.object({
 	discordAlertCheerEnabled: z.boolean(),
 	discordAlertCheerChannelId: z.string().max(100, 'Cheer alert channel ID is too long'),
 	discordAlertCheerTemplate: z.string().max(500, 'Cheer alert template is too long'),
+
+	discordAlertRaidEnabled: z.boolean().optional(),
+	discordAlertRaidChannelId: z.string().max(100, 'Raid alert channel ID is too long').optional(),
+	discordAlertRaidTemplate: z.string().max(500, 'Raid alert template is too long').optional(),
+
+	discordAlertLiveEnabled: z.boolean().optional(),
+	discordAlertLiveChannelId: z.string().max(100, 'Live alert channel ID is too long').optional(),
+	discordAlertLiveTemplate: z.string().max(500, 'Live alert template is too long').optional(),
+	discordAlertLiveRemoveOffline: z.boolean().optional(),
+
+	discordAlertOfflineEnabled: z.boolean().optional(),
+	discordAlertOfflineChannelId: z.string().max(100, 'Offline alert channel ID is too long').optional(),
+	discordAlertOfflineTemplate: z.string().max(500, 'Offline alert template is too long').optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -55,6 +68,39 @@ export default defineEventHandler(async (event) => {
 		{ key: 'discord.alerts.cheer.channel_id', value: d.discordAlertCheerChannelId, updatedAt: new Date() },
 		{ key: 'discord.alerts.cheer.template', value: d.discordAlertCheerTemplate, updatedAt: new Date() },
 	]
+
+	if (d.discordAlertRaidEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.raid.enabled', value: String(d.discordAlertRaidEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertRaidChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.raid.channel_id', value: d.discordAlertRaidChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertRaidTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.raid.template', value: d.discordAlertRaidTemplate, updatedAt: new Date() })
+	}
+
+	if (d.discordAlertLiveEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.live.enabled', value: String(d.discordAlertLiveEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertLiveChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.live.channel_id', value: d.discordAlertLiveChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertLiveTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.live.template', value: d.discordAlertLiveTemplate, updatedAt: new Date() })
+	}
+	if (d.discordAlertLiveRemoveOffline !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.live.remove_offline', value: String(d.discordAlertLiveRemoveOffline), updatedAt: new Date() })
+	}
+
+	if (d.discordAlertOfflineEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.offline.enabled', value: String(d.discordAlertOfflineEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertOfflineChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.offline.channel_id', value: d.discordAlertOfflineChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertOfflineTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.offline.template', value: d.discordAlertOfflineTemplate, updatedAt: new Date() })
+	}
 
 	await db
 		.insert(settings)

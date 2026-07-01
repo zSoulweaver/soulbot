@@ -29,6 +29,15 @@ const form = ref<AlertSettings>({
 	eventsubAlertCheer: '',
 	eventsubPointsCheerEnabled: false,
 	eventsubPointsCheer: 0,
+
+	eventsubAlertRaidEnabled: false,
+	eventsubAlertRaid: '',
+
+	eventsubAlertLiveEnabled: false,
+	eventsubAlertLive: '',
+
+	eventsubAlertOfflineEnabled: false,
+	eventsubAlertOffline: '',
 })
 
 const isSaving = ref(false)
@@ -63,6 +72,15 @@ const isModified = computed(() => {
 		|| form.value.eventsubAlertCheer !== settingsData.value.eventsubAlertCheer
 		|| form.value.eventsubPointsCheerEnabled !== settingsData.value.eventsubPointsCheerEnabled
 		|| form.value.eventsubPointsCheer !== settingsData.value.eventsubPointsCheer
+
+		|| form.value.eventsubAlertRaidEnabled !== settingsData.value.eventsubAlertRaidEnabled
+		|| form.value.eventsubAlertRaid !== settingsData.value.eventsubAlertRaid
+
+		|| form.value.eventsubAlertLiveEnabled !== settingsData.value.eventsubAlertLiveEnabled
+		|| form.value.eventsubAlertLive !== settingsData.value.eventsubAlertLive
+
+		|| form.value.eventsubAlertOfflineEnabled !== settingsData.value.eventsubAlertOfflineEnabled
+		|| form.value.eventsubAlertOffline !== settingsData.value.eventsubAlertOffline
 	)
 })
 
@@ -102,6 +120,15 @@ async function saveAlertSettings() {
 				eventsubAlertCheer: form.value.eventsubAlertCheer,
 				eventsubPointsCheerEnabled: form.value.eventsubPointsCheerEnabled,
 				eventsubPointsCheer: Number(form.value.eventsubPointsCheer) || 0,
+
+				eventsubAlertRaidEnabled: form.value.eventsubAlertRaidEnabled,
+				eventsubAlertRaid: form.value.eventsubAlertRaid,
+
+				eventsubAlertLiveEnabled: form.value.eventsubAlertLiveEnabled,
+				eventsubAlertLive: form.value.eventsubAlertLive,
+
+				eventsubAlertOfflineEnabled: form.value.eventsubAlertOfflineEnabled,
+				eventsubAlertOffline: form.value.eventsubAlertOffline,
 			},
 		})
 		toast.success('Alert and reward settings updated successfully!')
@@ -180,6 +207,36 @@ async function saveAlertSettings() {
 				description="Triggers when a chatter cheers bits in your channel."
 				points-label="Loyalty Points per 1 Bit Cheered"
 				:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)']"
+			/>
+
+			<!-- Raid Config Card -->
+			<AlertConfigCard
+				v-model:alert-enabled="form.eventsubAlertRaidEnabled"
+				v-model:alert-template="form.eventsubAlertRaid"
+				title="Raid Alerts"
+				description="Triggers when another broadcaster raids your channel."
+				:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
+				:hide-points="true"
+			/>
+
+			<!-- Live Config Card -->
+			<AlertConfigCard
+				v-model:alert-enabled="form.eventsubAlertLiveEnabled"
+				v-model:alert-template="form.eventsubAlertLive"
+				title="Stream Live Alerts"
+				description="Triggers when your Twitch channel goes live."
+				:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(liveTitle) (Stream Title)', '$(liveGame) (Game Name)', '$(channel) (Channel)']"
+				:hide-points="true"
+			/>
+
+			<!-- Offline Config Card -->
+			<AlertConfigCard
+				v-model:alert-enabled="form.eventsubAlertOfflineEnabled"
+				v-model:alert-template="form.eventsubAlertOffline"
+				title="Stream Offline Alerts"
+				description="Triggers when your Twitch channel goes offline."
+				:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+				:hide-points="true"
 			/>
 		</div>
 

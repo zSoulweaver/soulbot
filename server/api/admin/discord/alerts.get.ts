@@ -28,6 +28,19 @@ export default defineEventHandler(async (event) => {
 		discordAlertCheerChannelId: settings.discordAlertCheerChannelId,
 		discordAlertCheerTemplate: settings.discordAlertCheerTemplate,
 
+		discordAlertRaidEnabled: settings.discordAlertRaidEnabled,
+		discordAlertRaidChannelId: settings.discordAlertRaidChannelId,
+		discordAlertRaidTemplate: settings.discordAlertRaidTemplate,
+
+		discordAlertLiveEnabled: settings.discordAlertLiveEnabled,
+		discordAlertLiveChannelId: settings.discordAlertLiveChannelId,
+		discordAlertLiveTemplate: settings.discordAlertLiveTemplate,
+		discordAlertLiveRemoveOffline: settings.discordAlertLiveRemoveOffline,
+
+		discordAlertOfflineEnabled: settings.discordAlertOfflineEnabled,
+		discordAlertOfflineChannelId: settings.discordAlertOfflineChannelId,
+		discordAlertOfflineTemplate: settings.discordAlertOfflineTemplate,
+
 		isDiscordConnected: isDiscordConnected(),
 	}
 })

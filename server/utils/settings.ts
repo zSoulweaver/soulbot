@@ -16,6 +16,9 @@ export interface AppSettings {
 	eventsubAlertSubEnabled: boolean
 	eventsubAlertGiftEnabled: boolean
 	eventsubAlertCheerEnabled: boolean
+	eventsubAlertRaidEnabled: boolean
+	eventsubAlertLiveEnabled: boolean
+	eventsubAlertOfflineEnabled: boolean
 	eventsubPointsFollowEnabled: boolean
 	eventsubPointsSubEnabled: boolean
 	eventsubPointsGiftEnabled: boolean
@@ -24,6 +27,9 @@ export interface AppSettings {
 	eventsubAlertSub: string
 	eventsubAlertGift: string
 	eventsubAlertCheer: string
+	eventsubAlertRaid: string
+	eventsubAlertLive: string
+	eventsubAlertOffline: string
 	eventsubPointsFollow: number
 	eventsubPointsSub: number
 	eventsubPointsGift: number
@@ -65,6 +71,18 @@ export interface AppSettings {
 	discordAlertCheerEnabled: boolean
 	discordAlertCheerChannelId: string
 	discordAlertCheerTemplate: string
+	discordAlertRaidEnabled: boolean
+	discordAlertRaidChannelId: string
+	discordAlertRaidTemplate: string
+	discordAlertLiveEnabled: boolean
+	discordAlertLiveChannelId: string
+	discordAlertLiveTemplate: string
+	discordAlertLiveRemoveOffline: boolean
+	discordAlertLiveLastMessageId: string
+	discordAlertLiveLastChannelId: string
+	discordAlertOfflineEnabled: boolean
+	discordAlertOfflineChannelId: string
+	discordAlertOfflineTemplate: string
 }
 
 let cachedSettings: AppSettings | null = null
@@ -92,6 +110,9 @@ export function getAppSettingsSync(): AppSettings {
 			eventsubAlertSubEnabled: false,
 			eventsubAlertGiftEnabled: false,
 			eventsubAlertCheerEnabled: false,
+			eventsubAlertRaidEnabled: false,
+			eventsubAlertLiveEnabled: false,
+			eventsubAlertOfflineEnabled: false,
 			eventsubPointsFollowEnabled: false,
 			eventsubPointsSubEnabled: false,
 			eventsubPointsGiftEnabled: false,
@@ -100,6 +121,9 @@ export function getAppSettingsSync(): AppSettings {
 			eventsubAlertSub: 'Thank you for subscribing, $(sender)! Welcome to the club!',
 			eventsubAlertGift: 'Thank you @$(sender) for gifting $(1) sub(s) to the community!',
 			eventsubAlertCheer: 'Thank you @$(sender) for cheering $(1) bits! $(2)',
+			eventsubAlertRaid: 'Thank you for the raid, $(sender) with $(raidSize) viewers!',
+			eventsubAlertLive: 'We are now live playing $(liveGame) - $(liveTitle)!',
+			eventsubAlertOffline: 'Stream has ended. Thanks for hanging out!',
 			eventsubPointsFollow: 100,
 			eventsubPointsSub: 500,
 			eventsubPointsGift: 500,
@@ -141,6 +165,18 @@ export function getAppSettingsSync(): AppSettings {
 			discordAlertCheerEnabled: false,
 			discordAlertCheerChannelId: '',
 			discordAlertCheerTemplate: 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)',
+			discordAlertRaidEnabled: false,
+			discordAlertRaidChannelId: '',
+			discordAlertRaidTemplate: '$(sender) is raiding us with $(raidSize) viewers!',
+			discordAlertLiveEnabled: false,
+			discordAlertLiveChannelId: '',
+			discordAlertLiveTemplate: '@everyone $(sender) is now live on Twitch!',
+			discordAlertLiveRemoveOffline: false,
+			discordAlertLiveLastMessageId: '',
+			discordAlertLiveLastChannelId: '',
+			discordAlertOfflineEnabled: false,
+			discordAlertOfflineChannelId: '',
+			discordAlertOfflineTemplate: 'The stream has ended. Thanks for watching!',
 		}
 	}
 	return cachedSettings
@@ -165,6 +201,9 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			eventsubAlertSubEnabled: getVal('eventsub.alert.sub.enabled', 'false') === 'true',
 			eventsubAlertGiftEnabled: getVal('eventsub.alert.gift.enabled', 'false') === 'true',
 			eventsubAlertCheerEnabled: getVal('eventsub.alert.cheer.enabled', 'false') === 'true',
+			eventsubAlertRaidEnabled: getVal('eventsub.alert.raid.enabled', 'false') === 'true',
+			eventsubAlertLiveEnabled: getVal('eventsub.alert.live.enabled', 'false') === 'true',
+			eventsubAlertOfflineEnabled: getVal('eventsub.alert.offline.enabled', 'false') === 'true',
 			eventsubPointsFollowEnabled: getVal('eventsub.points.follow.enabled', 'false') === 'true',
 			eventsubPointsSubEnabled: getVal('eventsub.points.sub.enabled', 'false') === 'true',
 			eventsubPointsGiftEnabled: getVal('eventsub.points.gift.enabled', 'false') === 'true',
@@ -173,6 +212,9 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			eventsubAlertSub: getVal('eventsub.alert.sub', 'Thank you for subscribing, $(sender)! Welcome to the club!'),
 			eventsubAlertGift: getVal('eventsub.alert.gift', 'Thank you @$(sender) for gifting $(giftCount) sub(s) to the community!'),
 			eventsubAlertCheer: getVal('eventsub.alert.cheer', 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)'),
+			eventsubAlertRaid: getVal('eventsub.alert.raid', 'Thank you for the raid, $(sender) with $(raidSize) viewers!'),
+			eventsubAlertLive: getVal('eventsub.alert.live', 'We are now live playing $(liveGame) - $(liveTitle)!'),
+			eventsubAlertOffline: getVal('eventsub.alert.offline', 'Stream has ended. Thanks for hanging out!'),
 			eventsubPointsFollow: Math.max(0, Number(getVal('eventsub.points.follow', '100'))),
 			eventsubPointsSub: Math.max(0, Number(getVal('eventsub.points.sub', '500'))),
 			eventsubPointsGift: Math.max(0, Number(getVal('eventsub.points.gift', '500'))),
@@ -214,9 +256,35 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			discordAlertCheerEnabled: getVal('discord.alerts.cheer.enabled', 'false') === 'true',
 			discordAlertCheerChannelId: getVal('discord.alerts.cheer.channel_id', ''),
 			discordAlertCheerTemplate: getVal('discord.alerts.cheer.template', 'Thank you @$(sender) for cheering $(bitsCount) bits! $(cheerMessage)'),
+			discordAlertRaidEnabled: getVal('discord.alerts.raid.enabled', 'false') === 'true',
+			discordAlertRaidChannelId: getVal('discord.alerts.raid.channel_id', ''),
+			discordAlertRaidTemplate: getVal('discord.alerts.raid.template', '$(sender) is raiding us with $(raidSize) viewers!'),
+			discordAlertLiveEnabled: getVal('discord.alerts.live.enabled', 'false') === 'true',
+			discordAlertLiveChannelId: getVal('discord.alerts.live.channel_id', ''),
+			discordAlertLiveTemplate: getVal('discord.alerts.live.template', '@everyone $(sender) is now live on Twitch!'),
+			discordAlertLiveRemoveOffline: getVal('discord.alerts.live.remove_offline', 'false') === 'true',
+			discordAlertLiveLastMessageId: getVal('discord.alerts.live.last_message_id', ''),
+			discordAlertLiveLastChannelId: getVal('discord.alerts.live.last_channel_id', ''),
+			discordAlertOfflineEnabled: getVal('discord.alerts.offline.enabled', 'false') === 'true',
+			discordAlertOfflineChannelId: getVal('discord.alerts.offline.channel_id', ''),
+			discordAlertOfflineTemplate: getVal('discord.alerts.offline.template', 'The stream has ended. Thanks for watching!'),
 		}
 	}
 	catch (err) {
 		botLogger.error({ err }, 'Failed to refresh app settings cache')
 	}
+}
+
+export async function updateAppSetting(key: string, value: string): Promise<void> {
+	await db
+		.insert(settings)
+		.values({ key, value, updatedAt: new Date() })
+		.onConflictDoUpdate({
+			target: settings.key,
+			set: {
+				value,
+				updatedAt: new Date(),
+			},
+		})
+	await refreshAppSettingsCache()
 }

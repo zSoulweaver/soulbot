@@ -2,7 +2,7 @@
 import { RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
-import DiscordAlertConfigCard from '~/components/discord/DiscordAlertConfigCard.vue'
+import DiscordAlertConfig from '~/components/discord/DiscordAlertConfig.vue'
 
 type AlertsSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/alerts.get').default>>
 
@@ -192,7 +192,7 @@ async function saveSettings() {
 				</Alert>
 
 				<!-- Follower Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertFollowEnabled"
 					v-model:alert-channel-id="form.discordAlertFollowChannelId"
 					v-model:alert-template="form.discordAlertFollowTemplate"
@@ -206,7 +206,7 @@ async function saveSettings() {
 				<Separator />
 
 				<!-- Subscription Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertSubEnabled"
 					v-model:alert-channel-id="form.discordAlertSubChannelId"
 					v-model:alert-template="form.discordAlertSubTemplate"
@@ -220,7 +220,7 @@ async function saveSettings() {
 				<Separator />
 
 				<!-- Subscription Gift Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertGiftEnabled"
 					v-model:alert-channel-id="form.discordAlertGiftChannelId"
 					v-model:alert-template="form.discordAlertGiftTemplate"
@@ -234,7 +234,7 @@ async function saveSettings() {
 				<Separator />
 
 				<!-- Cheer Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertCheerEnabled"
 					v-model:alert-channel-id="form.discordAlertCheerChannelId"
 					v-model:alert-template="form.discordAlertCheerTemplate"
@@ -248,7 +248,7 @@ async function saveSettings() {
 				<Separator />
 
 				<!-- Live Announcement Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertLiveEnabled"
 					v-model:alert-channel-id="form.discordAlertLiveChannelId"
 					v-model:alert-template="form.discordAlertLiveTemplate"
@@ -273,12 +273,12 @@ async function saveSettings() {
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 					</template>
-				</DiscordAlertConfigCard>
+				</DiscordAlertConfig>
 
 				<Separator />
 
 				<!-- Offline Announcement Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertOfflineEnabled"
 					v-model:alert-channel-id="form.discordAlertOfflineChannelId"
 					v-model:alert-template="form.discordAlertOfflineTemplate"
@@ -292,7 +292,7 @@ async function saveSettings() {
 				<Separator />
 
 				<!-- Raid Announcement Alerts Card -->
-				<DiscordAlertConfigCard
+				<DiscordAlertConfig
 					v-model:alert-enabled="form.discordAlertRaidEnabled"
 					v-model:alert-channel-id="form.discordAlertRaidChannelId"
 					v-model:alert-template="form.discordAlertRaidTemplate"

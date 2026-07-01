@@ -8,6 +8,11 @@ const userCooldowns = new Map<string, Map<string, number>>() // commandId -> (us
  * Validates command global and user cooldowns and updates them upon successful command execution.
  */
 export const cooldownMiddleware: CommandMiddleware = async (ctx, next) => {
+	if ((ctx.raw as any).isTimer) {
+		await next()
+		return
+	}
+
 	const dbCmd = ctx.state.dbCmd
 	const command = ctx.state.command
 	const userId = ctx.user.id

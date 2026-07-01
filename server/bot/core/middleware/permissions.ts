@@ -6,6 +6,11 @@ import { botLogger } from '~~/server/utils/logger'
  * Validates message sender privileges against final command permission requirements.
  */
 export const permissionsMiddleware: CommandMiddleware = async (ctx, next) => {
+	if ((ctx.raw as any).isTimer) {
+		await next()
+		return
+	}
+
 	const requiredPermission = ctx.state.permission as CommandPermission
 
 	if (!hasPermission(ctx.raw, requiredPermission)) {

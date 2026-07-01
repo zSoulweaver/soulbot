@@ -1,11 +1,12 @@
 import { eq } from 'drizzle-orm'
+import { handleCommand } from '~~/server/bot/core/command-dispatcher'
 import { botEventBus } from '~~/server/bot/core/events'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { timers } from '~~/server/database/schema'
 import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
-import { getChatClient, getStreamerChannelName } from '~~/server/utils/twurple'
+import { getBotToken, getChatClient, getStreamerChannelName, getStreamerToken } from '~~/server/utils/twurple'
 
 let globalMessageCount = 0
 export const lastTriggerMessageCountMap = new Map<string, number>()
@@ -97,11 +98,55 @@ export async function executeTimerCheck() {
 
 			const messageToSend = allMessages[foundIndex]!.text
 
-			botLogger.info(
-				{ timerId: timer.id, name: timer.name, message: messageToSend },
-				'[Timer Engine] Sending scheduled message to chat',
-			)
-			await sendRawChatMessage(channelName, messageToSend)
+			if (messageToSend.startsWith('!')) {
+				botLogger.info(
+					{ timerId: timer.id, name: timer.name, command: messageToSend },
+					'[Timer Engine] Executing command silently from timer message',
+				)
+
+				const streamerToken = await getStreamerToken()
+				const botToken = await getBotToken()
+
+				const userId = botToken?.userId || streamerToken?.userId || 'bot_timer'
+				const userName = botToken?.userName || streamerToken?.userName || 'bot'
+				const displayName = botToken?.displayName || streamerToken?.displayName || 'Bot'
+
+				const rawMsg = {
+					userInfo: {
+						userId,
+						userName,
+						displayName,
+						isBroadcaster: true,
+						isMod: true,
+						isVip: false,
+						isSubscriber: false,
+						color: '#FFFFFF',
+						badges: new Map(),
+						badgeInfo: new Map(),
+						userType: '',
+					},
+					id: `timer-msg-${timer.id}-${now}`,
+					date: new Date(now),
+					channelId: streamerToken?.userId || 'channel_id',
+					bits: 0,
+					isCheer: false,
+					isRedemption: false,
+					isFirst: false,
+					isHighlight: false,
+					isReturningChatter: false,
+					tags: new Map(),
+					isTimer: true,
+				} as any
+
+				await handleCommand(channelName, userName, messageToSend, rawMsg)
+			}
+			else {
+				botLogger.info(
+					{ timerId: timer.id, name: timer.name, message: messageToSend },
+					'[Timer Engine] Sending scheduled message to chat',
+				)
+				await sendRawChatMessage(channelName, messageToSend)
+			}
 
 			const nextSentIndex = (foundIndex + 1) % allMessages.length
 			await db

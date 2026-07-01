@@ -18,7 +18,7 @@ export function trackOutboundMessage(): void {
  * Enforces strict minimum spacing and rolling 30-second window rate limit caps.
  */
 export const antiSpamMiddleware: CommandMiddleware = async (ctx, next) => {
-	if (process.env.NODE_ENV === 'test') {
+	if (process.env.NODE_ENV === 'test' || (ctx.raw as any).isTimer) {
 		await next()
 		return
 	}

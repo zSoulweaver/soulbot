@@ -8,6 +8,11 @@ import { botLogger } from '~~/server/utils/logger'
  * Validates that the sender has sufficient points before execution, and deducts them post-execution on success.
  */
 export const pointsCostMiddleware: CommandMiddleware = async (ctx, next) => {
+	if ((ctx.raw as any).isTimer) {
+		await next()
+		return
+	}
+
 	const dbCmd = ctx.state.dbCmd
 	const cost = dbCmd?.cost ?? 0
 

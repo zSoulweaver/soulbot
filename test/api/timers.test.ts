@@ -5,9 +5,10 @@ import getTimersHandler from '~~/server/api/timers/index.get'
 import postTimersHandler from '~~/server/api/timers/index.post'
 import putTimersHandler from '~~/server/api/timers/index.put'
 import { botEventBus } from '~~/server/bot/core/events'
+import { registry } from '~~/server/bot/core/registry'
 import { executeTimerCheck, getGlobalMessageCount, resetGlobalMessageCount } from '~~/server/bot/modules/timers'
 import { db } from '~~/server/database'
-import { timers, twitchTokens } from '~~/server/database/schema'
+import { customCommands, timers, twitchTokens } from '~~/server/database/schema'
 import { clearDatabase } from '../helpers'
 import { mockGetStreamInfo, mockSay } from '../setup'
 
@@ -15,6 +16,7 @@ describe('Timers API and Engine', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 		await db.delete(timers)
+		await db.delete(customCommands)
 		resetGlobalMessageCount()
 		mockGetStreamInfo.mockReset()
 		mockGetStreamInfo.mockResolvedValue({ isOnline: false })
@@ -289,6 +291,56 @@ describe('Timers API and Engine', () => {
 			// Run check again
 			await executeTimerCheck()
 			expect(mockSay).toHaveBeenCalledWith('streamerchannel', 'Threshold Msg')
+		})
+
+		it('should execute command silently from timer message if it starts with !', async () => {
+			// Seed custom command posture
+			await db.insert(customCommands).values({
+				id: 'c-posture',
+				trigger: 'posture',
+				response: 'Sit up straight!',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+			})
+			await registry.syncWithDb()
+
+			// Seed streamer token so it resolves channel
+			await db.insert(twitchTokens).values({
+				accountType: 'streamer',
+				accessToken: 'streamer-token',
+				refreshToken: 'streamer-refresh',
+				scope: '[]',
+				obtainmentTimestamp: Date.now(),
+				userId: 'streamer-id',
+				userName: 'streamerchannel',
+				displayName: 'StreamerChannel',
+			})
+
+			// Create timer with !posture message
+			await db.insert(timers).values({
+				id: 't-posture-timer',
+				name: 'Posture Timer',
+				enabled: true,
+				messages: [{ text: '!posture', enabled: true }],
+				lastSentIndex: 0,
+				intervalOnline: 5,
+				intervalOffline: 10,
+				minMessages: 0,
+				lastTriggeredAt: new Date(Date.now() - 15 * 60 * 1000), // due
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+
+			// Run check
+			await executeTimerCheck()
+
+			// The custom command's response should be sent to chat
+			expect(mockSay).toHaveBeenCalledWith('streamerchannel', 'Sit up straight!')
+			// The trigger command itself should NOT be posted directly
+			expect(mockSay).not.toHaveBeenCalledWith('streamerchannel', '!posture')
 		})
 	})
 })

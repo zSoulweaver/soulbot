@@ -165,7 +165,7 @@ async function saveAlertSettings() {
 		<!-- Main Settings Grid -->
 		<div v-else class="flex flex-col gap-4">
 			<!-- Follower Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertFollowEnabled"
 				v-model:alert-template="form.eventsubAlertFollow"
 				v-model:points-enabled="form.eventsubPointsFollowEnabled"
@@ -175,8 +175,10 @@ async function saveAlertSettings() {
 				:variables="['$(sender) (Follower Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(channel) (Channel)']"
 			/>
 
+			<Separator />
+
 			<!-- Subscription Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertSubEnabled"
 				v-model:alert-template="form.eventsubAlertSub"
 				v-model:points-enabled="form.eventsubPointsSubEnabled"
@@ -186,8 +188,10 @@ async function saveAlertSettings() {
 				:variables="['$(sender) (Subscriber Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(subTier) (Tier)', '$(channel) (Channel)']"
 			/>
 
+			<Separator />
+
 			<!-- Subscription Gift Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertGiftEnabled"
 				v-model:alert-template="form.eventsubAlertGift"
 				v-model:points-enabled="form.eventsubPointsGiftEnabled"
@@ -197,8 +201,10 @@ async function saveAlertSettings() {
 				:variables="['$(sender) (Gifter Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(giftCount) (Gift Count)']"
 			/>
 
+			<Separator />
+
 			<!-- Cheer Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertCheerEnabled"
 				v-model:alert-template="form.eventsubAlertCheer"
 				v-model:points-enabled="form.eventsubPointsCheerEnabled"
@@ -209,8 +215,10 @@ async function saveAlertSettings() {
 				:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)']"
 			/>
 
+			<Separator />
+
 			<!-- Raid Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertRaidEnabled"
 				v-model:alert-template="form.eventsubAlertRaid"
 				title="Raid Alerts"
@@ -219,8 +227,10 @@ async function saveAlertSettings() {
 				:hide-points="true"
 			/>
 
+			<Separator />
+
 			<!-- Live Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertLiveEnabled"
 				v-model:alert-template="form.eventsubAlertLive"
 				title="Stream Live Alerts"
@@ -229,8 +239,10 @@ async function saveAlertSettings() {
 				:hide-points="true"
 			/>
 
+			<Separator />
+
 			<!-- Offline Config Card -->
-			<AlertConfigCard
+			<AlertConfig
 				v-model:alert-enabled="form.eventsubAlertOfflineEnabled"
 				v-model:alert-template="form.eventsubAlertOffline"
 				title="Stream Offline Alerts"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Bell, HelpCircle, PiggyBank } from '@lucide/vue'
-import { ref } from 'vue'
+import { Bell, BellOff, ChevronDown, HelpCircle, MessageSquare, PiggyBank } from '@lucide/vue'
+import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 const props = withDefaults(
@@ -23,6 +23,7 @@ const pointsEnabled = defineModel<boolean>('pointsEnabled', { default: false })
 const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const isExpanded = ref(false)
 
 // Copies variable to clipboard with quick toast feedback
 function copyVariable(variable: string) {
@@ -30,22 +31,112 @@ function copyVariable(variable: string) {
 	navigator.clipboard.writeText(token)
 	toast.success(`Copied ${token} to clipboard!`)
 }
+
+// Auto-expand/collapse accordion logic based on toggles
+watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoints]) => {
+	// Only auto-expand/collapse if there was a real change (not initial load)
+	if (oldAlert !== undefined && oldPoints !== undefined) {
+		if (newAlert || newPoints) {
+			isExpanded.value = true
+		}
+		else if (!newAlert && !newPoints) {
+			isExpanded.value = false
+		}
+	}
+}, { immediate: false })
 </script>
 
 <template>
-	<Card>
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<Bell class="size-4" />
-				{{ props.title }}
-			</CardTitle>
-			<CardDescription>
-				{{ props.description }}
-			</CardDescription>
-		</CardHeader>
+	<Collapsible v-model:open="isExpanded" class="flex flex-col gap-4">
+		<!-- Section Header -->
+		<div class="flex items-start justify-between gap-4">
+			<CollapsibleTrigger class="group flex flex-1 cursor-pointer items-start gap-2 text-left outline-none select-none">
+				<div class="flex flex-col gap-1">
+					<h3
+						class="
+							flex items-center gap-2 text-lg font-semibold transition-colors
+							group-hover:text-primary
+						"
+					>
+						<Bell
+							v-if="alertEnabled || (!props.hidePoints && pointsEnabled)"
+							class="size-5 text-primary transition-colors"
+						/>
+						<BellOff
+							v-else
+							class="
+								size-5 text-muted-foreground transition-colors
+								group-hover:text-primary
+							"
+						/>
+						{{ props.title }}
+						<ChevronDown
+							class="
+								size-4 text-muted-foreground transition-transform duration-200
+								group-hover:text-primary
+							" :class="[
+								isExpanded ? 'rotate-180 text-primary' : '',
+							]"
+						/>
+					</h3>
+					<p class="text-sm text-muted-foreground">
+						{{ props.description }}
+					</p>
+				</div>
+			</CollapsibleTrigger>
 
-		<CardContent
-			class="grid grid-cols-1 gap-4" :class="[
+			<!-- Right-aligned Status Badges -->
+			<div class="flex items-center gap-2 pt-1 select-none">
+				<!-- Points Badge -->
+				<template v-if="!props.hidePoints">
+					<Badge
+						v-if="pointsEnabled"
+						variant="secondary"
+						class="
+							gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600
+							dark:text-emerald-400
+						"
+					>
+						<PiggyBank class="size-3" />
+						+{{ pointsReward }} points
+					</Badge>
+					<Badge
+						v-else
+						variant="secondary"
+						class="gap-1 opacity-40"
+					>
+						<PiggyBank class="size-3" />
+						Points disabled
+					</Badge>
+				</template>
+
+				<!-- Chat Alert Badge -->
+				<Badge
+					v-if="alertEnabled"
+					variant="secondary"
+					class="gap-1 border-primary/20 bg-primary/10 text-primary"
+				>
+					<MessageSquare class="size-3" />
+					Chat alert
+				</Badge>
+				<Badge
+					v-else
+					variant="secondary"
+					class="gap-1 opacity-40"
+				>
+					<MessageSquare class="size-3" />
+					Chat disabled
+				</Badge>
+			</div>
+		</div>
+
+		<!-- Options Content -->
+		<CollapsibleContent
+			class="
+				grid grid-cols-1 gap-6 overflow-hidden
+				data-[state=closed]:animate-collapsible-up
+				data-[state=open]:animate-collapsible-down
+			" :class="[
 				!props.hidePoints ? 'md:grid-cols-2' : '',
 			]"
 		>
@@ -135,6 +226,6 @@ function copyVariable(variable: string) {
 					</div>
 				</div>
 			</div>
-		</CardContent>
-	</Card>
+		</CollapsibleContent>
+	</Collapsible>
 </template>

@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const playlistId = await createQueuePlaylist(spotifyUserId, 'Soulbot Song Requests')
+	const { public: { botName } } = useRuntimeConfig()
+	const playlistId = await createQueuePlaylist(spotifyUserId, `${botName} Song Requests`)
 	if (!playlistId) {
 		throw createError({
 			statusCode: 500,

@@ -52,7 +52,7 @@ const breadcrumbs = computed(() => {
 	}
 
 	// Fallback
-	return [{ title: 'Soulbot', url: '/' }]
+	return [{ title: 'Home', url: '/' }]
 })
 </script>
 

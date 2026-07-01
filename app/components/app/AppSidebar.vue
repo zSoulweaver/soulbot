@@ -4,6 +4,7 @@ import TwitchIcon from '~/components/icons/TwitchIcon.vue'
 import { navigation } from '~/config/navigation'
 
 const { loggedIn, user } = useUserSession()
+const { public: { botName } } = useRuntimeConfig()
 
 const filteredNavigation = computed(() => {
 	const userRole = user.value?.role || 'viewer'
@@ -22,7 +23,14 @@ const filteredNavigation = computed(() => {
 <template>
 	<Sidebar collapsible="icon">
 		<SidebarHeader class="flex h-16 items-center justify-center border-b">
-			<div class="flex items-center gap-2 px-4">
+			<NuxtLink
+				to="/"
+				class="
+					flex items-center gap-2 px-4 transition-opacity
+					hover:opacity-80
+					focus-visible:outline-hidden
+				"
+			>
 				<Bot
 					class="
 						size-6
@@ -34,8 +42,8 @@ const filteredNavigation = computed(() => {
 						truncate text-xl font-bold tracking-tight
 						group-data-[collapsible=icon]:hidden
 					"
-				>Soulbot</span>
-			</div>
+				>{{ botName }}</span>
+			</NuxtLink>
 		</SidebarHeader>
 		<SidebarContent>
 			<AppSidebarNavGroup v-for="group in filteredNavigation" :key="group.label" :group="group" />

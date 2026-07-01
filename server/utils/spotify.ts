@@ -227,6 +227,7 @@ export async function createQueuePlaylist(userId: string, name: string): Promise
 	const token = await getValidSpotifyToken()
 	if (!token)
 		return null
+	const { public: { botName } } = useRuntimeConfig()
 	try {
 		const res = await $fetch<any>(`https://api.spotify.com/v1/users/${userId}/playlists`, {
 			method: 'POST',
@@ -236,7 +237,7 @@ export async function createQueuePlaylist(userId: string, name: string): Promise
 			},
 			body: {
 				name,
-				description: 'Twitch chat song requests managed by Soulbot',
+				description: `Twitch chat song requests managed by ${botName}`,
 				public: false,
 			},
 		})

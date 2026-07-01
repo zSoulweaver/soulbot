@@ -11,6 +11,7 @@ interface Variable {
 }
 
 const { data: apiVariables, pending: loading } = useFetch<Variable[]>('/api/commands/variables')
+const { public: { botName } } = useRuntimeConfig()
 
 // Hardcoded positional variables definition (core aspect of custom commands)
 const positionalVariable: Variable = {
@@ -79,7 +80,7 @@ function toggleRowExpanded(name: string) {
 	<AppPageContainer>
 		<AppPageHeader
 			heading="Command Variables"
-			subheading="Self-documenting reference guide for placeholders, parameters, and database counters supported inside Soulbot custom commands."
+			:subheading="`Self-documenting reference guide for placeholders, parameters, and database counters supported inside ${botName} custom commands.`"
 		/>
 
 		<!-- Loading state -->

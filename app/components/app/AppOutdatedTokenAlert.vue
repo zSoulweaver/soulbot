@@ -2,6 +2,7 @@
 type BotStatusResponse = Awaited<ReturnType<typeof import('~~/server/api/bot/status.get').default>>
 
 const { loggedIn, user } = useUserSession()
+const { public: { botName } } = useRuntimeConfig()
 
 const { data: status } = useFetch<BotStatusResponse>('/api/bot/status', {
 	immediate: loggedIn.value,
@@ -17,13 +18,13 @@ const showOutdatedAlert = computed(() => isCasterOrBot.value && (status.value?.i
 
 const alertDescription = computed(() => {
 	if (status.value?.isStreamerTokenOutdated && status.value?.isBotTokenOutdated) {
-		return 'Soulbot has updated features that require new permissions for both your streamer and bot accounts. Please re-authenticate them now.'
+		return `${botName} has updated features that require new permissions for both your streamer and bot accounts. Please re-authenticate them now.`
 	}
 	if (status.value?.isStreamerTokenOutdated) {
-		return 'Soulbot has updated features that require new permissions for your streamer account. Please re-authenticate now.'
+		return `${botName} has updated features that require new permissions for your streamer account. Please re-authenticate now.`
 	}
 	if (status.value?.isBotTokenOutdated) {
-		return 'Soulbot has updated features that require new permissions for your bot account. Please re-authenticate now.'
+		return `${botName} has updated features that require new permissions for your bot account. Please re-authenticate now.`
 	}
 	return ''
 })

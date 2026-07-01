@@ -63,7 +63,7 @@ export default defineNuxtConfig({
 			},
 		},
 		public: {
-			// Public variables if needed
+			botName: 'Soulbot',
 		},
 	},
 

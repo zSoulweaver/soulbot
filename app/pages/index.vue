@@ -13,10 +13,11 @@ import TwitchIcon from '~/components/icons/TwitchIcon.vue'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 
 const route = useRoute()
 const { loggedIn, user } = useUserSession()
+const { public: { botName } } = useRuntimeConfig()
 
 const isModeratorOrCaster = computed(() => {
 	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
@@ -51,7 +52,7 @@ onMounted(() => {
 						sm:text-5xl
 					"
 				>
-					Soulbot Chat Bot
+					{{ botName }} Chat Bot
 				</h1>
 				<p class="max-w-xl text-lg text-muted-foreground">
 					Your interactive companion for stream points, loyalty tracking, custom commands, and real-time requests.

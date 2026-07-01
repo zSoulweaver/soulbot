@@ -15,6 +15,7 @@ import {
 } from '~/components/ui/settings-group'
 
 const { loggedIn, user } = useUserSession()
+const { public: { botName } } = useRuntimeConfig()
 
 watchEffect(() => {
 	if (!loggedIn.value || user.value?.role !== 'caster') {
@@ -514,7 +515,7 @@ function formatTime(ms?: number) {
 										@click="handleInitializePlaylist"
 									>
 										<Plus data-icon="inline-start" />
-										Create "Soulbot Song Requests" Playlist
+										Create "{{ botName }} Song Requests" Playlist
 									</Button>
 								</CardContent>
 							</Card>

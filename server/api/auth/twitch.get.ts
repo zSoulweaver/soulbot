@@ -4,6 +4,8 @@ import { getTwitchUserRole } from '~~/server/utils/twurple'
 
 export default defineOAuthTwitchEventHandler({
 	config: {
+		clientId: useRuntimeConfig().twitchClientId,
+		clientSecret: useRuntimeConfig().twitchClientSecret,
 		scope: ['user:read:email'],
 		redirectURL: useRuntimeConfig().twitchRedirectUri,
 	},

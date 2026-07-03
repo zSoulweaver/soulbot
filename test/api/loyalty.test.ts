@@ -4,8 +4,9 @@ import usernameGetHandler from '~~/server/api/loyalty/[username].get'
 import usernamePostHandler from '~~/server/api/loyalty/[username].post'
 import gamblingLeaderboardHandler from '~~/server/api/loyalty/gambling/leaderboard.get'
 import leaderboardHandler from '~~/server/api/loyalty/leaderboard.get'
+import watchtimeLeaderboardHandler from '~~/server/api/loyalty/watchtime/leaderboard.get'
 import { db } from '~~/server/database'
-import { users } from '~~/server/database/schema'
+import { excludedUsers, users } from '~~/server/database/schema'
 import { clearDatabase, createTestUser } from '../helpers'
 
 describe('Loyalty API Routes in-process', () => {
@@ -31,6 +32,31 @@ describe('Loyalty API Routes in-process', () => {
 			expect(res[0]!.points).toBe(500)
 			expect(res[1]!.username).toBe('alice')
 			expect(res[1]!.points).toBe(300)
+		})
+	})
+
+	describe('GET /api/loyalty/watchtime/leaderboard', () => {
+		it('should return sorted watch time leader list excluding caster and excluded users', async () => {
+			// Caster should be ignored
+			await createTestUser({ id: '1', username: 'streamer', displayName: 'Streamer', watchTime: 1000, role: 'caster' })
+			// Excluded user should be ignored
+			await createTestUser({ id: '2', username: 'excludedguy', displayName: 'ExcludedGuy', watchTime: 500 })
+			await db.insert(excludedUsers).values({
+				id: '2',
+				username: 'excludedguy',
+				displayName: 'ExcludedGuy',
+				reason: 'test',
+			})
+			// Valid viewers
+			await createTestUser({ id: '3', username: 'alice', displayName: 'Alice', watchTime: 75 })
+			await createTestUser({ id: '4', username: 'bob', displayName: 'Bob', watchTime: 120 })
+
+			const res = await watchtimeLeaderboardHandler({} as any)
+			expect(res).toHaveLength(2)
+			expect(res[0]!.username).toBe('bob')
+			expect(res[0]!.watchTime).toBe(120)
+			expect(res[1]!.username).toBe('alice')
+			expect(res[1]!.watchTime).toBe(75)
 		})
 	})
 

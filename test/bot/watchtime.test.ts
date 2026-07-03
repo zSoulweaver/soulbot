@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { db } from '~~/server/database'
+import { excludedUsers } from '~~/server/database/schema'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
 describe('Bot Watch Time Command Integration', () => {
@@ -55,6 +57,32 @@ describe('Bot Watch Time Command Integration', () => {
 			expect(replies).toHaveLength(1)
 			// Bob (120m) is #1, Alice (75m) is #2, Charlie (45m) is #3
 			expect(replies[0]).toBe('@Alice, you have spent 1 hour 15 minutes hanging out in chat and are rank #2 on the leaderboard.')
+		})
+
+		it('should exclude caster and excluded users from rank calculation', async () => {
+			// Caster should be ignored
+			await createTestUser({ id: '10', username: 'streamer', displayName: 'Streamer', watchTime: 1000, role: 'caster' })
+			// Excluded user should be ignored
+			await createTestUser({ id: '11', username: 'excludedguy', displayName: 'ExcludedGuy', watchTime: 500 })
+			await db.insert(excludedUsers).values({
+				id: '11',
+				username: 'excludedguy',
+				displayName: 'ExcludedGuy',
+				reason: 'test',
+			})
+			// Alice
+			await createTestUser({ id: '3', username: 'alice', displayName: 'Alice', watchTime: 100 })
+
+			const { replies } = await simulateCommand('!time', {
+				id: '3',
+				username: 'alice',
+				displayName: 'Alice',
+				watchTime: 100,
+			})
+
+			expect(replies).toHaveLength(1)
+			// Since streamer (1000m) and excludedguy (500m) are ignored, Alice is rank #1!
+			expect(replies[0]).toBe('@Alice, you have spent 1 hour 40 minutes hanging out in chat and are rank #1 on the leaderboard.')
 		})
 	})
 

@@ -2,7 +2,7 @@
 import type { Template } from '~/types/commands'
 import { ChevronRight, HelpCircle, RefreshCw } from '@lucide/vue'
 import { useClipboard } from '@vueuse/core'
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 
 import { toast } from 'vue-sonner'
 
@@ -15,10 +15,33 @@ const templateText = defineModel<string | undefined>({ required: true })
 const isExpanded = defineModel<boolean>('isExpanded', { default: false })
 
 const { copy } = useClipboard()
+const textareaRef = ref<any | null>(null)
 
-function copyToClipboard(param: string) {
-	copy(`\${${param}}`)
-	toast.success(`Copied '\${${param}}' to clipboard!`)
+function handleParamClick(paramName: string) {
+	const token = `$(${paramName})`
+
+	// Copy to clipboard as requested
+	copy(token)
+
+	// Insert at textarea cursor position
+	const el = textareaRef.value?.$el?.querySelector('textarea') || textareaRef.value?.$el || textareaRef.value
+	if (el && typeof el.selectionStart === 'number') {
+		const start = el.selectionStart
+		const end = el.selectionEnd
+		const text = templateText.value || ''
+		templateText.value = text.substring(0, start) + token + text.substring(end)
+
+		nextTick(() => {
+			if (el) {
+				el.focus()
+				el.setSelectionRange(start + token.length, start + token.length)
+			}
+		})
+		toast.success(`Copied & inserted '${token}' at cursor!`)
+	}
+	else {
+		toast.success(`Copied '${token}' to clipboard!`)
+	}
 }
 
 function getTemplateSummary() {
@@ -100,14 +123,14 @@ const borderClass = computed(() => {
 							Default
 						</Badge>
 
-						<!-- Revert to Default Action (when collapsed) -->
+						<!-- Revert to Default Action (always visible in header when modified) -->
 						<Button
-							v-if="!isExpanded && (templateText ?? '') !== props.template.default"
-							variant="destructive"
+							v-if="(templateText ?? '') !== props.template.default"
+							variant="ghostDestructive"
 							size="sm"
 							@click.stop="handleReset"
 						>
-							<RefreshCw data-icon="inline-start" />
+							<RefreshCw class="size-3.5 shrink-0" data-icon="inline-start" />
 							Reset
 						</Button>
 					</div>
@@ -120,50 +143,39 @@ const borderClass = computed(() => {
 				>
 					<!-- Textarea Input Editor -->
 					<Textarea
+						ref="textareaRef"
 						v-model="templateText"
 						rows="3"
 					/>
 
-					<!-- Action and Helper variables grid -->
-					<div
-						class="
-							flex flex-col gap-4
-							sm:flex-row sm:items-center sm:justify-between
-						"
-					>
-						<!-- Variables Helper Badges -->
-						<div class="flex flex-1 flex-col gap-1.5 rounded-lg bg-muted p-3">
-							<div class="flex items-center gap-1 text-xs font-semibold text-muted-foreground select-none">
-								<HelpCircle class="size-3.5" />
-								Available Parameters (Click to Copy):
-							</div>
-							<div class="mt-0.5 flex flex-wrap gap-1.5">
-								<span v-if="props.template.params.length === 0" class="text-xs text-muted-foreground italic select-none">None defined (Static text output)</span>
-								<Badge
-									v-for="param in props.template.params"
-									:key="param"
-									class="
-										cursor-pointer transition-colors
-										hover:bg-primary/85
-									"
-									title="Click to copy variable trigger format"
-									@click="copyToClipboard(param)"
-								>
-									{{ `\${${param}\}` }}
-								</Badge>
-							</div>
+					<!-- Available parameters helper box (takes full width) -->
+					<div class="flex flex-col gap-1.5 rounded-lg bg-muted p-3">
+						<div class="flex items-center gap-1 text-xs font-semibold text-muted-foreground select-none">
+							<HelpCircle class="size-3.5" />
+							Available Parameters (Click to Copy & Insert):
 						</div>
-
-						<!-- Pinned Revert Action inside Card -->
-						<div class="flex items-center justify-end">
-							<Button
-								variant="destructive"
-								:disabled="(templateText ?? '') === props.template.default"
-								@click="handleReset"
-							>
-								<RefreshCw data-icon="inline-start" />
-								Reset to Default Value
-							</Button>
+						<div class="mt-1 flex flex-col gap-2">
+							<span v-if="props.template.params.length === 0" class="text-xs text-muted-foreground italic select-none">None defined (Static text output)</span>
+							<template v-else>
+								<div
+									v-for="param in props.template.params"
+									:key="param.name"
+									class="flex items-start gap-2.5 text-xs text-muted-foreground"
+								>
+									<Badge
+										variant="outline"
+										class="
+											cursor-pointer font-mono font-bold transition-colors select-none
+											hover:bg-primary hover:text-primary-foreground
+										"
+										title="Click to copy parameter and insert at cursor"
+										@click="handleParamClick(param.name)"
+									>
+										{{ `$(${param.name})` }}
+									</Badge>
+									<span class="pt-0.5 leading-normal">{{ param.description || 'Dynamic parameter for this template.' }}</span>
+								</div>
+							</template>
 						</div>
 					</div>
 				</CardContent>

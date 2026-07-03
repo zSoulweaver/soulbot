@@ -13,6 +13,7 @@ export type MapTemplates<TemplatesMap extends Record<string, any>> = {
 export interface TemplateSource {
 	default: string
 	params?: Record<string, any> | undefined
+	paramDescriptions?: Record<string, string> | undefined
 }
 
 export type TemplateSourceMap = Record<string, TemplateSource>
@@ -23,10 +24,15 @@ export type TemplateSourceMap = Record<string, TemplateSource>
  */
 export interface CommandTemplates {}
 
+export interface TemplateParamDefinition {
+	name: string
+	description?: string
+}
+
 export interface TemplateDefinition {
 	id: string
 	default: string
-	params?: readonly string[]
+	params?: readonly TemplateParamDefinition[]
 }
 
 export function getGlobalTemplateVariables(data: Record<string, string | number>): Record<string, string | number> {

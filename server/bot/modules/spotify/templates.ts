@@ -6,6 +6,11 @@ const definitions = {
 	'spotify.song.playing': {
 		default: 'Now playing: "$(track) by $(artist)" - $(link)',
 		params: { track: '', artist: '', link: '' } as { track: string, artist: string, link: string },
+		paramDescriptions: {
+			track: 'The title of the playing song.',
+			artist: 'The artist of the song.',
+			link: 'The Spotify URL to listen to the song.',
+		},
 	},
 	'spotify.song.not-playing': {
 		default: 'No song is currently playing on Spotify.',
@@ -30,10 +35,18 @@ const definitions = {
 	'spotify.sr.removed': {
 		default: 'Removed $(track) requested by $(user) from the queue.',
 		params: { track: '', user: '' } as { track: string, user: string },
+		paramDescriptions: {
+			track: 'The title of the removed song.',
+			user: 'The Twitch username of the user who requested it.',
+		},
 	},
 	'spotify.sr.wrongsong': {
 		default: 'Removed your last request $(track) from the queue and refunded $(points) $(core.currency).',
 		params: { track: '', points: 0 } as { track: string, points: number },
+		paramDescriptions: {
+			track: 'The title of the removed song.',
+			points: 'The number of currency points refunded.',
+		},
 	},
 	'spotify.sr.no-request': {
 		default: 'You have no pending requests in the queue.',
@@ -42,6 +55,11 @@ const definitions = {
 	'spotify.sr.requested': {
 		default: '"$(track) by $(artist)" has been added to the queue (Position #$(position)).',
 		params: { track: '', artist: '', position: 0 } as { track: string, artist: string, position: number },
+		paramDescriptions: {
+			track: 'The title of the requested song.',
+			artist: 'The artist of the song.',
+			position: 'The song\'s numerical position in the queue.',
+		},
 	},
 	'spotify.sr.not-found': {
 		default: 'Could not find track on Spotify.',
@@ -50,10 +68,16 @@ const definitions = {
 	'spotify.sr.limit-reached': {
 		default: 'The song request queue is full ($(max) songs).',
 		params: { max: 0 } as { max: number },
+		paramDescriptions: {
+			max: 'The maximum capacity limit of the queue.',
+		},
 	},
 	'spotify.sr.too-long': {
 		default: 'That song is too long. The maximum allowed length is $(max) minutes.',
 		params: { max: 0 } as { max: number },
+		paramDescriptions: {
+			max: 'The maximum allowed duration in minutes.',
+		},
 	},
 	'spotify.sr.explicit-blocked': {
 		default: 'Explicit songs are not allowed on this stream.',
@@ -66,6 +90,9 @@ const definitions = {
 	'spotify.sr.no-points': {
 		default: 'You do not have enough points. Cost: $(cost) $(core.currency).',
 		params: { cost: 0 } as { cost: number },
+		paramDescriptions: {
+			cost: 'The points cost required to request a song.',
+		},
 	},
 	'spotify.sr.offline': {
 		default: 'Song requests are only available when the stream is live.',
@@ -74,6 +101,10 @@ const definitions = {
 	'spotify.playlist.liked': {
 		default: '@$(caster), the current track requested by @$(requester) has been saved to the playlist!',
 		params: { caster: '', requester: '' } as { caster: string, requester: string },
+		paramDescriptions: {
+			caster: 'The broadcaster\'s Twitch username.',
+			requester: 'The Twitch username of the user who requested the song.',
+		},
 	},
 	'spotify.playlist.already-liked': {
 		default: 'This song is already saved to the stream Spotify playlist!',
@@ -90,6 +121,9 @@ const definitions = {
 	'spotify.sr.user-limit-reached': {
 		default: 'You have reached your limit of active song requests ($(max) songs).',
 		params: { max: 0 } as { max: number },
+		paramDescriptions: {
+			max: 'The maximum requests allowed per user at any one time.',
+		},
 	},
 } as const satisfies TemplateSourceMap
 
@@ -97,10 +131,16 @@ export function registerSpotifyTemplates() {
 	botLogger.info('Registering spotify templates...')
 
 	for (const [id, def] of Object.entries(definitions)) {
+		const paramDescriptions = (def as any).paramDescriptions || {}
 		templateRegistry.register({
 			id,
 			default: def.default,
-			params: def.params ? Object.keys(def.params) : [],
+			params: def.params
+				? Object.keys(def.params).map(key => ({
+						name: key,
+						description: paramDescriptions[key] || '',
+					}))
+				: [],
 		})
 	}
 }

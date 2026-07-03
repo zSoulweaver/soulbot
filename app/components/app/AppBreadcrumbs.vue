@@ -11,7 +11,13 @@ const breadcrumbs = computed(() => {
 	const matches: { group: any, item: any }[] = []
 	for (const group of navigation) {
 		for (const item of group.items) {
-			const matchesUrl = path === item.url || path.startsWith(`${item.url}/`)
+			const segments = item.url.split('/')
+			const basePrefix = segments.length > 3 ? segments.slice(0, 3).join('/') : item.url
+
+			const matchesUrl = path === item.url
+				|| path.startsWith(`${item.url}/`)
+				|| (basePrefix !== '/admin' && path.startsWith(`${basePrefix}/`))
+
 			const matchesSub = item.items?.some((subItem: any) => path === subItem.url || path.startsWith(`${subItem.url}/`))
 			if (matchesUrl || matchesSub) {
 				matches.push({ group, item })

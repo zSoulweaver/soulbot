@@ -74,10 +74,10 @@ export const navigation: NavGroup[] = [
 				icon: PiggyBank,
 				roles: ['caster', 'moderator'],
 				items: [
-					{ title: 'Point Balances', url: '/admin/loyalty/users' },
-					{ title: 'Watch Time Balances', url: '/admin/loyalty/watchtime' },
 					{ title: 'Payout Settings', url: '/admin/loyalty' },
 					{ title: 'Payout Exclusions', url: '/admin/loyalty/exclusions' },
+					{ title: 'Point Balances', url: '/admin/loyalty/users' },
+					{ title: 'Watch Time Balances', url: '/admin/loyalty/watchtime' },
 					{ title: 'Gambling', url: '/admin/loyalty/gambling' },
 				],
 			},

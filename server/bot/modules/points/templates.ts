@@ -140,6 +140,25 @@ export const definitions = {
 		default: 'Invalid gamble amount. Please use !gamble <amount|all|half>',
 		params: undefined,
 	},
+	'points.gambling.stats': {
+		default: '$(target) has $(wins) wins and $(losses) losses, with a net total of $(netAmount) $(core.currency) from gambling.',
+		params: { target: '', wins: 0, losses: 0, netAmount: 0 } as { target: string, wins: number, losses: number, netAmount: number },
+		paramDescriptions: {
+			target: 'The Twitch username of the user whose stats are being displayed.',
+			wins: 'The user\'s total gambling wins count.',
+			losses: 'The user\'s total gambling losses count.',
+			netAmount: 'The user\'s net points won or lost from gambling.',
+		},
+	},
+	'points.gambling.stats-self': {
+		default: 'you have $(wins) wins and $(losses) losses, with a net total of $(netAmount) $(core.currency) from gambling.',
+		params: { wins: 0, losses: 0, netAmount: 0 } as { wins: number, losses: number, netAmount: number },
+		paramDescriptions: {
+			wins: 'Your total gambling wins count.',
+			losses: 'Your total gambling losses count.',
+			netAmount: 'Your net points won or lost from gambling.',
+		},
+	},
 } as const satisfies TemplateSourceMap
 
 export function registerPointsTemplates() {

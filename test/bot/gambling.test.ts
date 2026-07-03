@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
-import { clearDatabase, simulateCommand } from '../helpers'
+import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
 describe('Bot Gamble Command Integration', () => {
 	beforeEach(async () => {
@@ -145,5 +145,54 @@ describe('Bot Gamble Command Integration', () => {
 		expect(aliceRecord?.gambleWins).toBe(0)
 		expect(aliceRecord?.gambleLosses).toBe(1)
 		expect(aliceRecord?.gambleNetPoints).toBe(-250)
+	})
+
+	describe('!gamble stats', () => {
+		it('should show user\'s own gamble stats', async () => {
+			const { replies } = await simulateCommand('!gamble stats', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+				gambleWins: 5,
+				gambleLosses: 3,
+				gambleNetPoints: 200,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, you have 5 wins and 3 losses, with a net total of 200 points from gambling.')
+		})
+
+		it('should show another user\'s gamble stats', async () => {
+			await createTestUser({
+				id: '67890',
+				username: 'bob',
+				displayName: 'Bob',
+				points: 100,
+				gambleWins: 2,
+				gambleLosses: 8,
+				gambleNetPoints: -300,
+			})
+
+			const { replies } = await simulateCommand('!gamble stats bob', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, Bob has 2 wins and 8 losses, with a net total of -300 points from gambling.')
+		})
+
+		it('should reply with user-not-found if target does not exist', async () => {
+			const { replies } = await simulateCommand('!gamble stats nonexistent', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, User nonexistent hasn\'t been seen by the bot yet.')
+		})
 	})
 })

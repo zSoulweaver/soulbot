@@ -101,7 +101,7 @@ describe('Bot Middleware Core Execution Pipeline', () => {
 
 			expect(replies).toHaveLength(1)
 			// Alice starts with 100, is fetched during handlePointsRoot (before points-cost middleware runs deduction)
-			expect(replies[0]).toBe('@Alice, you have have 100 points.')
+			expect(replies[0]).toBe('@Alice, you have 100 points. Rank #1')
 
 			// Verify points were deducted post-execution
 			const user = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])

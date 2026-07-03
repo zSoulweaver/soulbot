@@ -72,7 +72,7 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 				points: 50,
 			})
 			expect(newResult.replies).toHaveLength(1)
-			expect(newResult.replies[0]).toBe('@Alice, you have have 50 points.')
+			expect(newResult.replies[0]).toBe('@Alice, you have 50 points. Rank #1')
 		})
 
 		it('should dynamically silence the bot if a command is disabled in DB', async () => {
@@ -114,7 +114,7 @@ describe('Bot Dynamic Command Management & Aliases Integration', () => {
 				points: 75,
 			})
 			expect(rootRes.replies).toHaveLength(1)
-			expect(rootRes.replies[0]).toBe('@Alice, you have have 75 points.')
+			expect(rootRes.replies[0]).toBe('@Alice, you have 75 points. Rank #1')
 
 			// B. Test that nested subcommands resolve correctly through the root alias
 			await createTestUser({ id: '2', username: 'u2', displayName: 'User2', points: 90 })

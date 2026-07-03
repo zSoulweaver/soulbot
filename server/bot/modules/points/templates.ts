@@ -13,18 +13,20 @@ export const definitions = {
 		},
 	},
 	'points.show': {
-		default: '$(target) has $(amount) $(core.currency).',
-		params: { target: '', amount: 0 } as { target: string, amount: number },
+		default: '$(target) has $(amount) $(core.currency). Rank #$(leaderboardRank)',
+		params: { target: '', amount: 0, leaderboardRank: 0 } as { target: string, amount: number, leaderboardRank: number },
 		paramDescriptions: {
 			target: 'The Twitch username of the user whose balance is being displayed.',
 			amount: 'The user\'s current points balance.',
+			leaderboardRank: 'The user\'s position on the points leaderboard.',
 		},
 	},
 	'points.show-self': {
-		default: 'you have have $(amount) $(core.currency).',
-		params: { amount: 0 } as { amount: number },
+		default: 'you have $(amount) $(core.currency). Rank #$(leaderboardRank)',
+		params: { amount: 0, leaderboardRank: 0 } as { amount: number, leaderboardRank: number },
 		paramDescriptions: {
 			amount: 'Your current points balance.',
+			leaderboardRank: 'Your position on the points leaderboard.',
 		},
 	},
 	'points.user-not-found': {

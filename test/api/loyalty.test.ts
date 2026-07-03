@@ -33,6 +33,27 @@ describe('Loyalty API Routes in-process', () => {
 			expect(res[1]!.username).toBe('alice')
 			expect(res[1]!.points).toBe(300)
 		})
+
+		it('should return sorted points leaders list excluding bot and excluded users', async () => {
+			// Excluded user
+			await createTestUser({ id: '99', username: 'excluded', displayName: 'Excluded', points: 1000 })
+			await db.insert(excludedUsers).values({
+				id: '99',
+				username: 'excluded',
+				displayName: 'Excluded',
+				reason: 'test',
+			})
+			// Valid users
+			await createTestUser({ id: '1', username: 'alice', displayName: 'Alice', points: 300 })
+			await createTestUser({ id: '2', username: 'bob', displayName: 'Bob', points: 500 })
+
+			const res = await leaderboardHandler({} as any)
+			expect(res).toHaveLength(2)
+			expect(res[0]!.username).toBe('bob')
+			expect(res[0]!.points).toBe(500)
+			expect(res[1]!.username).toBe('alice')
+			expect(res[1]!.points).toBe(300)
+		})
 	})
 
 	describe('GET /api/loyalty/watchtime/leaderboard', () => {

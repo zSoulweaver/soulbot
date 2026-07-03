@@ -19,7 +19,7 @@ describe('Bot Points Command Integration', () => {
 			})
 
 			expect(replies).toHaveLength(1)
-			expect(replies[0]).toBe('@Alice, you have have 0 points.')
+			expect(replies[0]).toBe('@Alice, you have 0 points. Rank #1')
 		})
 
 		it('should reply with show-self template when user has points', async () => {
@@ -31,7 +31,29 @@ describe('Bot Points Command Integration', () => {
 			})
 
 			expect(replies).toHaveLength(1)
-			expect(replies[0]).toBe('@Alice, you have have 150 points.')
+			expect(replies[0]).toBe('@Alice, you have 150 points. Rank #1')
+		})
+
+		it('should calculate points rank excluding bot and excluded users', async () => {
+			const { excludedUsers } = await import('~~/server/database/schema')
+			// Excluded user should be ignored
+			await createTestUser({ id: '99', username: 'excluded', displayName: 'Excluded', points: 1000 })
+			await db.insert(excludedUsers).values({
+				id: '99',
+				username: 'excluded',
+				displayName: 'Excluded',
+				reason: 'test',
+			})
+			// Alice
+			const { replies } = await simulateCommand('!points', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 150,
+			})
+
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, you have 150 points. Rank #1')
 		})
 	})
 
@@ -63,7 +85,7 @@ describe('Bot Points Command Integration', () => {
 			})
 
 			expect(replies).toHaveLength(1)
-			expect(replies[0]).toBe('@Alice, bob has 500 points.')
+			expect(replies[0]).toBe('@Alice, bob has 500 points. Rank #1')
 		})
 	})
 
@@ -122,7 +144,7 @@ describe('Bot Points Command Integration', () => {
 				username: 'alice',
 				displayName: 'Alice',
 			})
-			expect(checkResult.replies[0]).toBe('@Alice, bob has 150 points.')
+			expect(checkResult.replies[0]).toBe('@Alice, bob has 150 points. Rank #1')
 		})
 
 		it('should reply with does-not-exist template if trying to add points to non-existent user', async () => {

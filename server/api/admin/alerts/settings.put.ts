@@ -28,6 +28,8 @@ const saveAlertSettingsSchema = z.object({
 	eventsubPointsSub: z.number().int().min(0, 'Subscription reward must be non-negative'),
 	eventsubPointsGift: z.number().int().min(0, 'Sub-gift reward must be non-negative'),
 	eventsubPointsCheer: z.number().int().min(0, 'Cheer multiplier must be non-negative'),
+	eventsubAlertAdBreakEnabled: z.boolean(),
+	eventsubAlertAdBreak: z.string().max(500, 'Ad break alert template is too long'),
 })
 
 export default defineEventHandler(async (event) => {
@@ -62,6 +64,8 @@ export default defineEventHandler(async (event) => {
 		{ key: 'eventsub.points.sub', value: String(d.eventsubPointsSub), updatedAt: new Date() },
 		{ key: 'eventsub.points.gift', value: String(d.eventsubPointsGift), updatedAt: new Date() },
 		{ key: 'eventsub.points.cheer', value: String(d.eventsubPointsCheer), updatedAt: new Date() },
+		{ key: 'eventsub.alert.adbreak.enabled', value: String(d.eventsubAlertAdBreakEnabled), updatedAt: new Date() },
+		{ key: 'eventsub.alert.adbreak', value: d.eventsubAlertAdBreak, updatedAt: new Date() },
 	]
 
 	if (d.eventsubAlertRaidEnabled !== undefined) {

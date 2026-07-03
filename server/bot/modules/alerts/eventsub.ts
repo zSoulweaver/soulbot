@@ -305,4 +305,27 @@ export function registerAlertsEventSubHandlers() {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle offline alert')
 		}
 	})
+
+	eventSubManager.events.on('ad.break.begin', async (event) => {
+		try {
+			await logTwitchEvent('ad_break', event.broadcasterName, event.broadcasterDisplayName, {
+				duration: event.durationSeconds,
+				requester: event.requesterDisplayName || event.requesterName,
+			})
+			const settings = await getAppSettings()
+			await renderAndPostAlert(
+				settings.eventsubAlertAdBreakEnabled,
+				settings.eventsubAlertAdBreak,
+				{ id: event.broadcasterId, name: event.broadcasterName, displayName: event.broadcasterDisplayName },
+				{
+					duration: event.durationSeconds,
+					requester: event.requesterDisplayName || event.requesterName,
+				},
+				{ duration: event.durationSeconds, type: 'ad.break.begin' },
+			)
+		}
+		catch (err) {
+			botLogger.error({ err }, '[EventSub Alerts] Failed to handle ad break alert')
+		}
+	})
 }

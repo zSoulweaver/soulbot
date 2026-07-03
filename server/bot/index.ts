@@ -6,6 +6,8 @@ import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
 import { registry } from './core/registry'
 import { templateRegistry } from './core/templates'
+import { adsModule } from './modules/advertisements'
+import { startAdsEngine } from './modules/advertisements/engine'
 import { registerAlertsEventSubHandlers } from './modules/alerts/eventsub'
 import { commandsModule } from './modules/commands'
 import { pointsModule } from './modules/points'
@@ -30,6 +32,7 @@ export function initRegistry() {
 	registry.register(twitchModule)
 	registry.register(spotifyModule)
 	registry.register(watchtimeModule)
+	registry.register(adsModule)
 	isRegistryInitialized = true
 }
 
@@ -62,6 +65,7 @@ export function initBot() {
 		activityTracker.start()
 		startTimerEngine()
 		startSpotifyQueueEngine()
+		startAdsEngine()
 	}
 }
 

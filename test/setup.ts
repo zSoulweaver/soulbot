@@ -95,6 +95,24 @@ export const mockApiClient = {
 				data: [] as any[],
 			}
 		}),
+		getAdSchedule: vi.fn(async (_broadcasterId: string): Promise<any> => {
+			return {
+				snoozeCount: 3,
+				snoozeRefreshDate: new Date(Date.now() + 3600000),
+				nextAdDate: new Date(Date.now() + 1800000),
+				duration: 90,
+				lastAdDate: new Date(Date.now() - 3600000),
+				prerollFreeTime: 0,
+			}
+		}),
+		snoozeNextAd: vi.fn(async (_broadcasterId: string): Promise<any> => {
+			return {
+				snoozeCount: 2,
+				snoozeRefreshDate: new Date(Date.now() + 7200000),
+				nextAdDate: new Date(Date.now() + 3600000),
+			}
+		}),
+		startChannelCommercial: vi.fn(async (_broadcasterId: string, _length: number): Promise<void> => {}),
 	},
 	moderation: {
 		checkUserMod: vi.fn(async () => false),

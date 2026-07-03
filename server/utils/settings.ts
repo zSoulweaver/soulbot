@@ -83,6 +83,13 @@ export interface AppSettings {
 	discordAlertOfflineEnabled: boolean
 	discordAlertOfflineChannelId: string
 	discordAlertOfflineTemplate: string
+	adsAlertsEnabled: boolean
+	adsAlert5mEnabled: boolean
+	adsAlert3mEnabled: boolean
+	adsAlert1mEnabled: boolean
+	adsAlertTemplate: string
+	eventsubAlertAdBreakEnabled: boolean
+	eventsubAlertAdBreak: string
 }
 
 let cachedSettings: AppSettings | null = null
@@ -177,6 +184,13 @@ export function getAppSettingsSync(): AppSettings {
 			discordAlertOfflineEnabled: false,
 			discordAlertOfflineChannelId: '',
 			discordAlertOfflineTemplate: 'The stream has ended. Thanks for watching!',
+			adsAlertsEnabled: false,
+			adsAlert5mEnabled: false,
+			adsAlert3mEnabled: false,
+			adsAlert1mEnabled: false,
+			adsAlertTemplate: 'Ad break of $(duration) seconds is starting in $(time)!',
+			eventsubAlertAdBreakEnabled: false,
+			eventsubAlertAdBreak: 'An ad break of $(duration) seconds has started!',
 		}
 	}
 	return cachedSettings
@@ -268,6 +282,13 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			discordAlertOfflineEnabled: getVal('discord.alerts.offline.enabled', 'false') === 'true',
 			discordAlertOfflineChannelId: getVal('discord.alerts.offline.channel_id', ''),
 			discordAlertOfflineTemplate: getVal('discord.alerts.offline.template', 'The stream has ended. Thanks for watching!'),
+			adsAlertsEnabled: getVal('ads.alerts.enabled', 'false') === 'true',
+			adsAlert5mEnabled: getVal('ads.alerts.5m.enabled', 'false') === 'true',
+			adsAlert3mEnabled: getVal('ads.alerts.3m.enabled', 'false') === 'true',
+			adsAlert1mEnabled: getVal('ads.alerts.1m.enabled', 'false') === 'true',
+			adsAlertTemplate: getVal('ads.alerts.template', 'Ad break of $(duration) seconds is starting in $(time)!'),
+			eventsubAlertAdBreakEnabled: getVal('eventsub.alert.adbreak.enabled', 'false') === 'true',
+			eventsubAlertAdBreak: getVal('eventsub.alert.adbreak', 'An ad break of $(duration) seconds has started!'),
 		}
 	}
 	catch (err) {

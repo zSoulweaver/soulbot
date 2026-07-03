@@ -1,5 +1,5 @@
 import type { ApiClient } from '@twurple/api'
-import type { EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
+import type { EventSubChannelAdBreakBeginEvent, EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
 import { EventEmitter } from 'node:events'
 import { EventSubHttpListener, EventSubMiddleware } from '@twurple/eventsub-http'
 import { NgrokAdapter } from '@twurple/eventsub-ngrok'
@@ -14,6 +14,7 @@ export interface EventSubMap {
 	'stream.online': EventSubStreamOnlineEvent
 	'stream.offline': EventSubStreamOfflineEvent
 	'raid': EventSubChannelRaidEvent
+	'ad.break.begin': EventSubChannelAdBreakBeginEvent
 }
 
 export class EventSubEmitter extends EventEmitter {
@@ -123,6 +124,12 @@ class EventSubManager {
 				this.events.emitAsync('stream.offline', e)
 			})
 			this.activeSubscriptions.push(offlineSub)
+
+			const adBreakSub = this.listener.onChannelAdBreakBegin(streamerUserId, (e) => {
+				botLogger.info({ duration: e.durationSeconds }, '[EventSub] ad break begin received')
+				this.events.emitAsync('ad.break.begin', e)
+			})
+			this.activeSubscriptions.push(adBreakSub)
 			if (this.listener instanceof EventSubMiddleware) {
 				await this.listener.markAsReady()
 			}

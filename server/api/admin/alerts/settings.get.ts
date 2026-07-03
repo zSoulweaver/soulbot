@@ -28,5 +28,7 @@ export default defineEventHandler(async (event) => {
 		eventsubPointsSub: appSettings.eventsubPointsSub,
 		eventsubPointsGift: appSettings.eventsubPointsGift,
 		eventsubPointsCheer: appSettings.eventsubPointsCheer,
+		eventsubAlertAdBreakEnabled: appSettings.eventsubAlertAdBreakEnabled,
+		eventsubAlertAdBreak: appSettings.eventsubAlertAdBreak,
 	}
 })

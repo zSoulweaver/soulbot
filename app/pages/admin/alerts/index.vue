@@ -38,6 +38,8 @@ const form = ref<AlertSettings>({
 
 	eventsubAlertOfflineEnabled: false,
 	eventsubAlertOffline: '',
+	eventsubAlertAdBreakEnabled: false,
+	eventsubAlertAdBreak: '',
 })
 
 const isSaving = ref(false)
@@ -81,6 +83,8 @@ const isModified = computed(() => {
 
 		|| form.value.eventsubAlertOfflineEnabled !== settingsData.value.eventsubAlertOfflineEnabled
 		|| form.value.eventsubAlertOffline !== settingsData.value.eventsubAlertOffline
+		|| form.value.eventsubAlertAdBreakEnabled !== settingsData.value.eventsubAlertAdBreakEnabled
+		|| form.value.eventsubAlertAdBreak !== settingsData.value.eventsubAlertAdBreak
 	)
 })
 
@@ -129,6 +133,8 @@ async function saveAlertSettings() {
 
 				eventsubAlertOfflineEnabled: form.value.eventsubAlertOfflineEnabled,
 				eventsubAlertOffline: form.value.eventsubAlertOffline,
+				eventsubAlertAdBreakEnabled: form.value.eventsubAlertAdBreakEnabled,
+				eventsubAlertAdBreak: form.value.eventsubAlertAdBreak,
 			},
 		})
 		toast.success('Alert and reward settings updated successfully!')
@@ -248,6 +254,18 @@ async function saveAlertSettings() {
 				title="Stream Offline Alerts"
 				description="Triggers when your Twitch channel goes offline."
 				:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+				:hide-points="true"
+			/>
+
+			<Separator />
+
+			<!-- Ad Break Config Card -->
+			<AlertConfig
+				v-model:alert-enabled="form.eventsubAlertAdBreakEnabled"
+				v-model:alert-template="form.eventsubAlertAdBreak"
+				title="Ad Break Start Alerts"
+				description="Triggers when an advertisement break starts on your channel."
+				:variables="['$(duration) (Ad break duration in seconds)', '$(requester) (User who triggered ad break)']"
 				:hide-points="true"
 			/>
 		</div>

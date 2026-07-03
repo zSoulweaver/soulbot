@@ -3,6 +3,7 @@ import {
 	Bot,
 	Clock,
 	LayoutDashboard,
+	Megaphone,
 	Music,
 	PiggyBank,
 	Terminal,
@@ -45,6 +46,7 @@ export const navigation: NavGroup[] = [
 		items: [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
 			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
+			{ title: 'Advertisements', url: '/admin/advertisements', icon: Megaphone, roles: ['caster', 'moderator'] },
 			{
 				title: 'Commands',
 				url: '/admin/commands/core',

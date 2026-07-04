@@ -67,6 +67,8 @@ describe('Alerts & EventSub Settings API Routes', () => {
 						eventsubPointsSub: 500,
 						eventsubPointsGift: 500,
 						eventsubPointsCheer: 1,
+						eventsubAlertAdBreakEnabled: false,
+						eventsubAlertAdBreak: 'Ad break alert!',
 					},
 				} as any)
 				expect.fail('Validation should have blocked negative points')
@@ -96,6 +98,8 @@ describe('Alerts & EventSub Settings API Routes', () => {
 					eventsubPointsSub: 1000,
 					eventsubPointsGift: 500,
 					eventsubPointsCheer: 2,
+					eventsubAlertAdBreakEnabled: false,
+					eventsubAlertAdBreak: 'Ad break alert!',
 				},
 			} as any)
 
@@ -115,6 +119,8 @@ describe('Alerts & EventSub Settings API Routes', () => {
 			expect(cached.eventsubAlertFollow).toBe('Custom follow alert text')
 			expect(cached.eventsubPointsFollow).toBe(400)
 			expect(cached.eventsubPointsSub).toBe(1000)
+			expect(cached.eventsubAlertAdBreakEnabled).toBe(false)
+			expect(cached.eventsubAlertAdBreak).toBe('Ad break alert!')
 		})
 	})
 })

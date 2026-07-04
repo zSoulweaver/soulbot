@@ -7,6 +7,13 @@ import { getAppSettingsSync } from '~~/server/utils/settings'
 
 let cachedSpotifyToken: typeof spotifyTokens.$inferSelect | null = null
 
+export interface SpotifyUserProfile {
+	displayName: string
+	username: string
+}
+
+let cachedSpotifyProfile: SpotifyUserProfile | null = null
+
 export interface CachedPlaylistTrack {
 	playlistId: string
 	trackId: string
@@ -200,27 +207,42 @@ export async function getCurrentlyPlaying(forceRefresh = false): Promise<Current
 
 export function clearSpotifyTokenCache() {
 	cachedSpotifyToken = null
+	cachedSpotifyProfile = null
 	cachedCurrentlyPlaying = null
 	rateLimitResetTime = 0
 	targetPlaylistCache = null
 }
 
-export async function getSpotifyUserId(): Promise<string | null> {
+export async function getSpotifyUserProfile(forceRefresh = false): Promise<SpotifyUserProfile | null> {
+	if (!forceRefresh && cachedSpotifyProfile) {
+		return cachedSpotifyProfile
+	}
+
 	const token = await getValidSpotifyToken()
 	if (!token)
 		return null
+
 	try {
 		const res = await $fetch<any>('https://api.spotify.com/v1/me', {
 			headers: {
 				Authorization: `Bearer ${token.accessToken}`,
 			},
 		})
-		return res.id
+		cachedSpotifyProfile = {
+			displayName: res.display_name || res.id,
+			username: res.id,
+		}
+		return cachedSpotifyProfile
 	}
 	catch (err) {
 		botLogger.error({ err }, '[Spotify] Failed to fetch Spotify user profile')
 		return null
 	}
+}
+
+export async function getSpotifyUserId(): Promise<string | null> {
+	const profile = await getSpotifyUserProfile()
+	return profile ? profile.username : null
 }
 
 export async function createQueuePlaylist(userId: string, name: string): Promise<string | null> {

@@ -354,7 +354,7 @@ function formatTime(ms?: number) {
 									Spotify Connected
 								</ItemTitle>
 								<ItemDescription>
-									Linked account: {{ user?.displayName || 'unknown username' }}
+									Linked account: {{ status?.profile ? `${status.profile.displayName} (${status.profile.username})` : (user?.displayName || 'unknown username') }}
 								</ItemDescription>
 							</div>
 						</div>

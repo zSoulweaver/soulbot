@@ -11,6 +11,7 @@ describe('Spotify API Endpoints', () => {
 		vi.clearAllMocks()
 		;(globalThis as any).__setMockSpotifyToken__(undefined)
 		;(globalThis as any).__setMockCurrentlyPlaying__(undefined)
+		;(globalThis as any).__setMockSpotifyUserProfile__(undefined)
 	})
 
 	describe('GET /api/spotify/status', () => {
@@ -19,6 +20,7 @@ describe('Spotify API Endpoints', () => {
 			expect(res).toEqual({
 				connected: false,
 				currentlyPlaying: null,
+				profile: null,
 				rateLimited: false,
 				retryAfter: 0,
 			})
@@ -44,12 +46,18 @@ describe('Spotify API Endpoints', () => {
 				progressMs: 30000,
 				durationMs: 361000,
 			}
+			const mockProfile = {
+				displayName: 'Spotify User',
+				username: 'spotify-user-123',
+			}
 			;(globalThis as any).__setMockCurrentlyPlaying__(mockTrack)
+			;(globalThis as any).__setMockSpotifyUserProfile__(mockProfile)
 
 			const res = await spotifyStatusHandler({} as any)
 			expect(res).toEqual({
 				connected: true,
 				currentlyPlaying: mockTrack,
+				profile: mockProfile,
 				rateLimited: false,
 				retryAfter: 0,
 			})

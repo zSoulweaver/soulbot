@@ -208,12 +208,16 @@ beforeEach(() => {
 
 let mockSpotifyToken: any
 let mockCurrentlyPlaying: any
+let mockSpotifyUserProfile: any
 
 ;(globalThis as any).__setMockSpotifyToken__ = (val: any) => {
 	mockSpotifyToken = val
 }
 ;(globalThis as any).__setMockCurrentlyPlaying__ = (val: any) => {
 	mockCurrentlyPlaying = val
+}
+;(globalThis as any).__setMockSpotifyUserProfile__ = (val: any) => {
+	mockSpotifyUserProfile = val
 }
 
 vi.mock('~~/server/utils/spotify', async (importOriginal) => {
@@ -231,6 +235,12 @@ vi.mock('~~/server/utils/spotify', async (importOriginal) => {
 				return mockCurrentlyPlaying
 			}
 			return original.getCurrentlyPlaying()
+		}),
+		getSpotifyUserProfile: vi.fn(async (forceRefresh?: boolean) => {
+			if (mockSpotifyUserProfile !== undefined) {
+				return mockSpotifyUserProfile
+			}
+			return original.getSpotifyUserProfile(forceRefresh)
 		}),
 		clearSpotifyTokenCache: vi.fn(() => {
 			return original.clearSpotifyTokenCache()

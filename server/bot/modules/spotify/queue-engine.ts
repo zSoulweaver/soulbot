@@ -3,9 +3,10 @@ import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getValidSpotifyToken, removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, removeTrackFromPlaylist } from '~~/server/utils/spotify'
 
 let intervalId: any = null
+let lastPlaylistSyncTime = 0
 
 export function startSpotifyQueueEngine() {
 	if (intervalId)
@@ -77,6 +78,37 @@ async function tick() {
 		const token = await getValidSpotifyToken()
 		if (!token)
 			return
+
+		// Sync the database queue with the Spotify playlist every 60 seconds
+		const now = Date.now()
+		if (now - lastPlaylistSyncTime > 60000) {
+			lastPlaylistSyncTime = now
+			const playlistTracks = await getPlaylistTracks(appSettings.spotifyRequestPlaylistId)
+			if (playlistTracks) {
+				const spotifyTrackIds = new Set(playlistTracks.map(t => t.id))
+				const dbActiveTracks = await db
+					.select()
+					.from(spotifyQueue)
+					.where(
+						or(
+							eq(spotifyQueue.status, 'playing'),
+							eq(spotifyQueue.status, 'pending'),
+						),
+					)
+
+				const toRemove = dbActiveTracks.filter((t) => {
+					const trackIdStr = t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop() : t.trackId
+					return !spotifyTrackIds.has(trackIdStr!)
+				})
+
+				for (const item of toRemove) {
+					await db.update(spotifyQueue)
+						.set({ status: 'played' })
+						.where(eq(spotifyQueue.id, item.id))
+					botLogger.info(`[Spotify Queue] Cleaned up stale DB track not in Spotify playlist: ${item.title}`)
+				}
+			}
+		}
 
 		// Get active queue items (statuses 'pending' or 'playing') ordered by ID (insertion order)
 		const activeTracks = await db

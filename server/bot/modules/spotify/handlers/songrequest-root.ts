@@ -7,7 +7,7 @@ import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
 import { getStreamerToken } from '~~/server/utils/twurple'
 import { getUserPoints, updateUserPoints } from '../../points/service'
 import { checkIsFollowing, parseSpotifyTrackId } from '../utils'
@@ -171,6 +171,13 @@ export const handleSongRequestRoot: CommandHandler<typeof SongRequestArgs> = asy
 	)
 	if (firstPendingFallbackIndex !== -1) {
 		insertPosition = firstPendingFallbackIndex
+	}
+
+	// Get current Spotify playlist size to prevent Index out of bounds
+	const playlistTracks = await getPlaylistTracks(appSettings.spotifyRequestPlaylistId)
+	const playlistSize = playlistTracks ? playlistTracks.length : 0
+	if (insertPosition > playlistSize) {
+		insertPosition = playlistSize
 	}
 
 	// Insert into DB queue

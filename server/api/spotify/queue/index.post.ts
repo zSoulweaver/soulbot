@@ -7,7 +7,7 @@ import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getTrackDetails, resumePlaylistWithOffset, searchTrack } from '~~/server/utils/spotify'
 import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
 
 const submitRequestSchema = z.object({
@@ -246,6 +246,13 @@ export default defineEventHandler(async (event) => {
 	)
 	if (firstPendingFallbackIndex !== -1) {
 		insertPosition = firstPendingFallbackIndex
+	}
+
+	// Get current Spotify playlist size to prevent Index out of bounds
+	const playlistTracks = await getPlaylistTracks(appSettings.spotifyRequestPlaylistId)
+	const playlistSize = playlistTracks ? playlistTracks.length : 0
+	if (insertPosition > playlistSize) {
+		insertPosition = playlistSize
 	}
 
 	// Insert into DB

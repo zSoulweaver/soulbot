@@ -89,6 +89,7 @@ export default defineCachedEventHandler(async () => {
 	}
 }, {
 	maxAge: 60, // cache for 60 seconds (1 minute)
+	swr: false,
 	name: 'gambling-leaderboard',
 	getKey: () => 'default',
 })

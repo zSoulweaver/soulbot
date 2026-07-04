@@ -330,57 +330,47 @@ function formatEventType(type: string) {
 				"
 			>
 				<!-- PANEL 1: BROADCAST INFORMATION -->
-				<Card
-					class="flex flex-col justify-between transition-all duration-300"
-					:class="streamStatus?.isOnline
-						? 'border-destructive/30 bg-destructive/5 shadow-[0_0_15px_rgba(239,68,68,0.02)]'
-						: 'border-muted bg-card'"
-				>
-					<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<Card class="flex flex-col justify-between transition-all duration-300">
+					<CardHeader class="flex flex-row items-center justify-between space-y-0">
 						<CardTitle class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
 							Current Broadcast
 						</CardTitle>
 						<!-- Live Status indicator -->
 						<Badge
 							:variant="streamStatus?.isOnline ? 'destructive' : 'secondary'"
-							class="px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase select-none"
+							class="text-xs font-semibold tracking-wider uppercase select-none"
 						>
 							<Radio />
 							{{ streamStatus?.isOnline ? 'Live' : 'Offline' }}
 						</Badge>
 					</CardHeader>
-					<CardContent class="flex flex-1 flex-col justify-end gap-1 pt-2">
+					<CardContent class="flex flex-col gap-2">
 						<div class="truncate text-base font-semibold text-foreground">
 							{{ streamStatus?.title || 'Loading channel status...' }}
 						</div>
 						<div class="text-xs text-muted-foreground">
 							{{ streamStatus?.gameName || 'Twitch Stream' }}
 						</div>
-					</CardContent>
-					<CardFooter
-						v-if="streamStatus?.tags && streamStatus.tags.length > 0"
-						class="mt-4 flex flex-wrap gap-1 border-t bg-muted/20 px-6 py-2"
-					>
 						<Badge
-							v-for="tag in streamStatus.tags"
+							v-for="tag in streamStatus?.tags"
 							:key="tag"
 							variant="outline"
-							class="bg-background/50 px-1.5 py-0 text-[10px] text-muted-foreground"
+							class="text-xs text-muted-foreground"
 						>
 							{{ tag }}
 						</Badge>
-					</CardFooter>
+					</CardContent>
 				</Card>
 
 				<!-- PANEL 2: VIEWERS -->
-				<Card class="border-muted bg-card">
-					<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<Card class="flex flex-col justify-between">
+					<CardHeader class="flex flex-row items-center justify-between space-y-0">
 						<CardTitle class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
 							Live Viewers
 						</CardTitle>
 						<Users class="size-4 text-muted-foreground" />
 					</CardHeader>
-					<CardContent class="flex flex-col gap-1 pt-4">
+					<CardContent class="flex flex-col gap-2">
 						<div class="font-mono text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
 							{{ streamStatus?.isOnline ? streamStatus.viewers.toLocaleString() : '0' }}
 						</div>
@@ -391,8 +381,8 @@ function formatEventType(type: string) {
 				</Card>
 
 				<!-- PANEL 3: UPTIME -->
-				<Card class="border-muted bg-card">
-					<CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+				<Card class="flex flex-col justify-between">
+					<CardHeader class="flex flex-row items-center justify-between space-y-0">
 						<CardTitle class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
 							Uptime
 						</CardTitle>

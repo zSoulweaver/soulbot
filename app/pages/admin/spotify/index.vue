@@ -1,8 +1,21 @@
 <script setup lang="ts">
-import { Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
+import { Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
+import {
+	Combobox,
+	ComboboxAnchor,
+	ComboboxEmpty,
+	ComboboxGroup,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxItemIndicator,
+	ComboboxList,
+	ComboboxTrigger,
+	ComboboxViewport,
+} from '~/components/ui/combobox'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Progress } from '~/components/ui/progress'
 import {
@@ -209,14 +222,20 @@ function discardChanges() {
 	}
 }
 
-const playlists = ref<{ id: string, name: string }[]>([])
+type SpotifyPlaylist = Awaited<ReturnType<typeof import('~~/server/api/spotify/playlists.get').default>>[number]
+
+const playlists = ref<SpotifyPlaylist[]>([])
 const loadingPlaylists = ref(false)
+const playlistSearchQuery = ref('')
 
 async function onPlaylistSelectOpen(isOpen: boolean) {
+	if (isOpen) {
+		playlistSearchQuery.value = ''
+	}
 	if (isOpen && playlists.value.length <= 1) {
 		loadingPlaylists.value = true
 		try {
-			const data = await $fetch<{ id: string, name: string }[]>('/api/spotify/playlists')
+			const data = await $fetch<SpotifyPlaylist[]>('/api/spotify/playlists')
 			playlists.value = data
 		}
 		catch (err: any) {
@@ -235,6 +254,7 @@ watch(() => form.value.targetPlaylist, (newVal) => {
 		playlists.value.push({
 			id: newVal,
 			name: form.value.targetPlaylistName || `Playlist (${newVal})`,
+			image: null,
 		})
 	}
 }, { immediate: true })
@@ -248,6 +268,8 @@ watch(() => form.value.targetPlaylist, (newVal) => {
 		}
 	}
 })
+
+const selectedPlaylist = computed(() => playlists.value.find(p => p.id === form.value.targetPlaylist))
 
 const isInitializingPlaylist = ref(false)
 
@@ -664,19 +686,58 @@ function formatTime(ms?: number) {
 									Target Spotify Playlist
 								</FieldLabel>
 								<div class="w-full">
-									<Select v-model="form.targetPlaylist" @update:open="onPlaylistSelectOpen">
-										<SelectTrigger
-											class="w-full"
-											:disabled="loadingPlaylists"
-										>
-											<SelectValue :placeholder="loadingPlaylists ? 'Loading playlists...' : 'Select target playlist'" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem v-for="pl in playlists" :key="pl.id" :value="pl.id">
-												{{ pl.name }}
-											</SelectItem>
-										</SelectContent>
-									</Select>
+									<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" @update:open="onPlaylistSelectOpen">
+										<ComboboxAnchor as-child>
+											<ComboboxTrigger as-child>
+												<Button
+													variant="outline"
+													class="w-full justify-between font-normal"
+													:disabled="loadingPlaylists"
+												>
+													<template v-if="form.targetPlaylist">
+														<div class="flex items-center gap-2 overflow-hidden">
+															<Avatar class="size-5 shrink-0 overflow-hidden rounded-md">
+																<AvatarImage v-if="selectedPlaylist?.image" :src="selectedPlaylist.image!" />
+																<AvatarFallback class="bg-emerald-500/10 text-[9px] text-emerald-500">
+																	{{ selectedPlaylist?.name?.[0]?.toUpperCase() || 'P' }}
+																</AvatarFallback>
+															</Avatar>
+															<span class="truncate">{{ selectedPlaylist?.name || form.targetPlaylistName || 'Selected Playlist' }}</span>
+														</div>
+													</template>
+													<template v-else>
+														Select target playlist...
+													</template>
+													<ChevronsUpDown class="size-4 shrink-0 opacity-50" />
+												</Button>
+											</ComboboxTrigger>
+										</ComboboxAnchor>
+
+										<ComboboxList style="width: var(--reka-combobox-trigger-width)">
+											<ComboboxInput :display-value="() => ''" placeholder="Search playlist..." />
+											<ComboboxEmpty>No playlist found.</ComboboxEmpty>
+											<ComboboxViewport>
+												<ComboboxGroup>
+													<ComboboxItem
+														v-for="pl in playlists"
+														:key="pl.id"
+														:value="pl.id"
+													>
+														<Avatar class="size-5 shrink-0 overflow-hidden rounded-md">
+															<AvatarImage v-if="pl.image" :src="pl.image" />
+															<AvatarFallback class="bg-emerald-500/10 text-[9px] text-emerald-500">
+																{{ pl.name?.[0]?.toUpperCase() || 'P' }}
+															</AvatarFallback>
+														</Avatar>
+														<span class="truncate pr-6">{{ pl.name }}</span>
+														<ComboboxItemIndicator class="absolute right-2 flex items-center justify-center">
+															<Check class="size-4" />
+														</ComboboxItemIndicator>
+													</ComboboxItem>
+												</ComboboxGroup>
+											</ComboboxViewport>
+										</ComboboxList>
+									</Combobox>
 								</div>
 								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
 							</Field>

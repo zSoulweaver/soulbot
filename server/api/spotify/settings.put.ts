@@ -45,6 +45,13 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
+	if (appSettings.spotifyRequestPlaylistId && d.targetPlaylist === appSettings.spotifyRequestPlaylistId) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'Cannot set target playlist to the song request/bot playlist.',
+		})
+	}
+
 	const keysToUpsert = [
 		{ key: 'spotify.sr.enabled', value: String(d.active), updatedAt: new Date() },
 		{ key: 'spotify.sr.points_cost', value: String(d.pointsCost), updatedAt: new Date() },

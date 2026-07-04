@@ -137,6 +137,29 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 
 			await expect(settingsPutHandler(mockEvent)).rejects.toThrow('Cannot enable song requests without a song request playlist.')
 		})
+
+		it('should block setting target playlist to the song request/bot playlist', async () => {
+			const mockEvent = {
+				body: {
+					active: false,
+					pointsCost: 10,
+					maxLength: 8,
+					maxQueue: 50,
+					maxUserRequests: 0,
+					modsBypassLimits: true,
+					followersOnly: false,
+					permitExplicit: true,
+					offlineOverride: false,
+					targetPlaylist: 'playlist-123',
+					targetPlaylistName: 'Bot Playlist',
+					allowModerators: true,
+					whisperNotifications: false,
+					announceDeleteWebui: false,
+				},
+			} as any
+
+			await expect(settingsPutHandler(mockEvent)).rejects.toThrow('Cannot set target playlist to the song request/bot playlist.')
+		})
 	})
 
 	describe('Playlist Init Endpoints', () => {

@@ -1,4 +1,4 @@
-import { asc, eq, or, sql } from 'drizzle-orm'
+import { and, asc, eq, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
@@ -7,6 +7,9 @@ import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSp
 
 let intervalId: any = null
 let lastPlaylistSyncTime = 0
+let lastUserQueueCount: number | null = null
+let lastTrackId: string | null = null
+let lastTrackProgress = 0
 
 export function startSpotifyQueueEngine() {
 	if (intervalId)
@@ -203,73 +206,146 @@ async function tick() {
 			}
 		}
 
-		// If queue is empty, exit early
-		if (activeTracks.length === 0) {
-			return
+		if (activeTracks.length > 0) {
+			const playingItem = activeTracks.find(t => t.status === 'playing')
+
+			// Context Guard: only synchronize/advance if the player is actively playing the request playlist
+			// (Or if the context is missing, since some Spotify Connect devices don't report context URIs)
+			const expectedPlaylistUri = `spotify:playlist:${appSettings.spotifyRequestPlaylistId}`
+			const isPlayingRequestContext = !currentTrack || !currentTrack.contextUri || currentTrack.contextUri === expectedPlaylistUri
+
+			if (currentTrack && isPlayingRequestContext) {
+				lastTrackId = currentTrack.id
+				lastTrackProgress = currentTrack.progressMs || 0
+			}
+
+			if (currentTrack && currentTrack.isPlaying) {
+				if (isPlayingRequestContext) {
+					// Find the index of the currently playing track in our active queue
+					const matchedIndex = activeTracks.findIndex((t) => {
+						const trackIdStr = t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop() : t.trackId
+						const currentIdStr = currentTrack.id
+						return trackIdStr === currentIdStr
+					})
+
+					if (matchedIndex !== -1) {
+						const matchedItem = activeTracks[matchedIndex]
+
+						if (matchedItem) {
+							// Transition to 'playing'
+							if (matchedItem.status !== 'playing') {
+								await db.update(spotifyQueue)
+									.set({ status: 'playing', playedAt: Date.now() })
+									.where(eq(spotifyQueue.id, matchedItem.id))
+								botLogger.info(`[Spotify Queue] Active track transitioned to playing: ${matchedItem.title}`)
+							}
+
+							// Any items before the matched item have completed or been skipped!
+							for (let i = 0; i < matchedIndex; i++) {
+								const prevItem = activeTracks[i]
+								if (prevItem) {
+									await db.update(spotifyQueue)
+										.set({ status: 'played' })
+										.where(eq(spotifyQueue.id, prevItem.id))
+
+									const trackUri = prevItem.trackId.startsWith('spotify:track:') ? prevItem.trackId : `spotify:track:${prevItem.trackId}`
+									const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+									if (!removed) {
+										await handlePlaylistError()
+									}
+									else {
+										botLogger.info(`[Spotify Queue] Cleaned up played song from playlist: ${prevItem.title}`)
+									}
+								}
+							}
+						}
+					}
+					else {
+						// Current song is not in our queue.
+						// Self-heal: if a song was playing but has run past its duration + buffer, mark it played and remove it.
+						if (playingItem) {
+							const durationBuffer = playingItem.durationMs + 60000
+							const elapsed = Date.now() - (playingItem.playedAt || playingItem.createdAt.getTime())
+							if (elapsed > durationBuffer) {
+								botLogger.warn(`[Spotify Queue] Track "${playingItem.title}" playing duration exceeded. Advancing queue.`)
+								await db.update(spotifyQueue)
+									.set({ status: 'played' })
+									.where(eq(spotifyQueue.id, playingItem.id))
+
+								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
+								const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+								if (!removed) {
+									await handlePlaylistError()
+								}
+							}
+						}
+					}
+				}
+				else {
+					// We are playing a different context (e.g. streamer switched playlist, or queue ended and autoplay started)
+					// If we have an active playing item, and the player is playing a different track, we check if the song played to near completion.
+					if (playingItem) {
+						const playingItemCleanId = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId.split(':').pop() : playingItem.trackId
+						if (currentTrack.id !== playingItemCleanId) {
+							const progress = lastTrackId === playingItemCleanId ? lastTrackProgress : 0
+							const playCompletionThreshold = playingItem.durationMs * 0.8 // 80% completion threshold
+
+							if (progress > playCompletionThreshold) {
+								botLogger.info(`[Spotify Queue] Player switched context and track completed. Marking "${playingItem.title}" as played.`)
+								await db.update(spotifyQueue)
+									.set({ status: 'played' })
+									.where(eq(spotifyQueue.id, playingItem.id))
+
+								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
+								const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+								if (!removed) {
+									await handlePlaylistError()
+								}
+								else {
+									botLogger.info(`[Spotify Queue] Cleaned up completed song: ${playingItem.title}`)
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
-		const playingItem = activeTracks.find(t => t.status === 'playing')
+		// Alert state transitions check for user-requested tracks
+		const userTracks = await db
+			.select()
+			.from(spotifyQueue)
+			.where(
+				and(
+					or(
+						eq(spotifyQueue.status, 'playing'),
+						eq(spotifyQueue.status, 'pending'),
+					),
+					sql`${spotifyQueue.requestedBy} != 'Fallback Playlist'`,
+				),
+			)
+		const currentUserTracksCount = userTracks.length
 
-		if (currentTrack && currentTrack.isPlaying) {
-			// Find the index of the currently playing track in our active queue
-			const matchedIndex = activeTracks.findIndex((t) => {
-				const trackIdStr = t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop() : t.trackId
-				const currentIdStr = currentTrack.id
-				return trackIdStr === currentIdStr
-			})
+		if (lastUserQueueCount === null) {
+			lastUserQueueCount = currentUserTracksCount
+		}
+		else {
+			if (currentUserTracksCount < lastUserQueueCount) {
+				const { sendChannelChatMessage } = await import('~~/server/utils/chat')
 
-			if (matchedIndex !== -1) {
-				const matchedItem = activeTracks[matchedIndex]
-
-				if (matchedItem) {
-					// Transition to 'playing'
-					if (matchedItem.status !== 'playing') {
-						await db.update(spotifyQueue)
-							.set({ status: 'playing', playedAt: Date.now() })
-							.where(eq(spotifyQueue.id, matchedItem.id))
-						botLogger.info(`[Spotify Queue] Active track transitioned to playing: ${matchedItem.title}`)
+				if (currentUserTracksCount === 5 && appSettings.spotifySongRequestAlertQueueLowEnabled) {
+					await sendChannelChatMessage('spotify.sr.queue-low')
+				}
+				else if (currentUserTracksCount === 0 && appSettings.spotifySongRequestAlertQueueEmptyEnabled) {
+					if (appSettings.spotifyPlaylistTargetId) {
+						await sendChannelChatMessage('spotify.sr.queue-empty-autoplay')
 					}
-
-					// Any items before the matched item have completed or been skipped!
-					for (let i = 0; i < matchedIndex; i++) {
-						const prevItem = activeTracks[i]
-						if (prevItem) {
-							await db.update(spotifyQueue)
-								.set({ status: 'played' })
-								.where(eq(spotifyQueue.id, prevItem.id))
-
-							const trackUri = prevItem.trackId.startsWith('spotify:track:') ? prevItem.trackId : `spotify:track:${prevItem.trackId}`
-							const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
-							if (!removed) {
-								await handlePlaylistError()
-							}
-							else {
-								botLogger.info(`[Spotify Queue] Cleaned up played song from playlist: ${prevItem.title}`)
-							}
-						}
+					else {
+						await sendChannelChatMessage('spotify.sr.queue-empty-no-autoplay')
 					}
 				}
 			}
-			else {
-				// Current song is not in our queue.
-				// Self-heal: if a song was playing but has run past its duration + buffer, mark it played and remove it.
-				if (playingItem) {
-					const durationBuffer = playingItem.durationMs + 60000
-					const elapsed = Date.now() - (playingItem.playedAt || playingItem.createdAt.getTime())
-					if (elapsed > durationBuffer) {
-						botLogger.warn(`[Spotify Queue] Track "${playingItem.title}" playing duration exceeded. Advancing queue.`)
-						await db.update(spotifyQueue)
-							.set({ status: 'played' })
-							.where(eq(spotifyQueue.id, playingItem.id))
-
-						const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
-						const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
-						if (!removed) {
-							await handlePlaylistError()
-						}
-					}
-				}
-			}
+			lastUserQueueCount = currentUserTracksCount
 		}
 	}
 	catch (err: any) {

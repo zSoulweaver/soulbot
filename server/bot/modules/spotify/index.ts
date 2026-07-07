@@ -4,6 +4,7 @@ import { handleSongRequestBlacklist } from './handlers/songrequest-blacklist'
 import { handleSongRequestDisable } from './handlers/songrequest-disable'
 import { handleSongRequestEnable } from './handlers/songrequest-enable'
 import { handleSongRequestLike } from './handlers/songrequest-like'
+import { handleSongRequestPlay } from './handlers/songrequest-play'
 import { handleSongRequestRemove } from './handlers/songrequest-remove'
 import { handleSongRequestRoot } from './handlers/songrequest-root'
 import { handleSongRequestSkip } from './handlers/songrequest-skip'
@@ -53,6 +54,9 @@ export const songrequestModule = defineCommand({
 		'spotify.playlist.no-target',
 		'spotify.sr.blacklisted',
 		'spotify.sr.user-limit-reached',
+		'spotify.sr.queue-low',
+		'spotify.sr.queue-empty-autoplay',
+		'spotify.sr.queue-empty-no-autoplay',
 	],
 	handler: handleSongRequestRoot,
 	subcommands: {
@@ -92,6 +96,11 @@ export const songrequestModule = defineCommand({
 			description: 'Disable Twitch song requests',
 			permission: 'broadcaster',
 			handler: handleSongRequestDisable,
+		},
+		play: {
+			description: 'Start playback of the song request playlist on the streamer\'s Spotify player',
+			permission: 'moderator',
+			handler: handleSongRequestPlay,
 		},
 	},
 })

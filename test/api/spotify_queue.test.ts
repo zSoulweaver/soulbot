@@ -231,11 +231,11 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 	describe('Playlist Init Endpoints', () => {
 		it('should initialize dedicated song request playlist', async () => {
 			mockFetch.mockImplementation(async (url: string, _opts: any) => {
-				if (url.includes('/me')) {
-					return { id: 'spotify-user-123' }
-				}
 				if (url.includes('/playlists')) {
 					return { id: 'new-playlist-789' }
+				}
+				if (url.includes('/me')) {
+					return { id: 'spotify-user-123' }
 				}
 				return {}
 			})

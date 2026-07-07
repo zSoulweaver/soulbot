@@ -53,6 +53,8 @@ export interface AppSettings {
 	spotifyPlaylistWhisper: boolean
 	spotifyRequestPlaylistId: string
 	spotifyPlaylistAnnounceDeleteWebui: boolean
+	spotifySongRequestAlertQueueLowEnabled: boolean
+	spotifySongRequestAlertQueueEmptyEnabled: boolean
 	botChatMode: 'normal' | 'action'
 	botMuted: boolean
 	discordEnabled: boolean
@@ -154,6 +156,8 @@ export function getAppSettingsSync(): AppSettings {
 			spotifyPlaylistWhisper: false,
 			spotifyRequestPlaylistId: '',
 			spotifyPlaylistAnnounceDeleteWebui: true,
+			spotifySongRequestAlertQueueLowEnabled: false,
+			spotifySongRequestAlertQueueEmptyEnabled: false,
 			botChatMode: 'action',
 			botMuted: false,
 			discordEnabled: false,
@@ -252,6 +256,8 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			spotifyPlaylistWhisper: getVal('spotify.playlist.whisper', 'false') === 'true',
 			spotifyRequestPlaylistId: getVal('spotify.request.playlist_id', ''),
 			spotifyPlaylistAnnounceDeleteWebui: getVal('spotify.playlist.announce_delete_webui', 'true') === 'true',
+			spotifySongRequestAlertQueueLowEnabled: getVal('spotify.sr.alert_queue_low_enabled', 'false') === 'true',
+			spotifySongRequestAlertQueueEmptyEnabled: getVal('spotify.sr.alert_queue_empty_enabled', 'false') === 'true',
 			botChatMode: getVal('bot.chat_mode', 'action') as 'normal' | 'action',
 			botMuted: getVal('bot.muted', 'false') === 'true',
 			discordEnabled: getVal('discord.enabled', 'false') === 'true',

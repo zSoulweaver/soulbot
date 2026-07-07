@@ -125,6 +125,18 @@ const definitions = {
 			max: 'The maximum requests allowed per user at any one time.',
 		},
 	},
+	'spotify.sr.queue-low': {
+		default: 'The song request queue is running low (5 songs remaining).',
+		params: undefined,
+	},
+	'spotify.sr.queue-empty-autoplay': {
+		default: 'The song request queue has finished! Autoplay songs have been added to keep the music going.',
+		params: undefined,
+	},
+	'spotify.sr.queue-empty-no-autoplay': {
+		default: 'The song request queue has finished! There are no autoplay songs configured.',
+		params: undefined,
+	},
 } as const satisfies TemplateSourceMap
 
 export function registerSpotifyTemplates() {

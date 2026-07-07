@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
+import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw, X } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
@@ -162,6 +162,8 @@ const form = ref({
 	allowModerators: true,
 	whisperNotifications: false,
 	announceDeleteWebui: true,
+	alertQueueLowEnabled: false,
+	alertQueueEmptyEnabled: false,
 })
 
 // Synchronize loaded data
@@ -192,6 +194,8 @@ const isModified = computed(() => {
 		|| form.value.allowModerators !== settingsData.value.allowModerators
 		|| form.value.whisperNotifications !== settingsData.value.whisperNotifications
 		|| form.value.announceDeleteWebui !== settingsData.value.announceDeleteWebui
+		|| form.value.alertQueueLowEnabled !== settingsData.value.alertQueueLowEnabled
+		|| form.value.alertQueueEmptyEnabled !== settingsData.value.alertQueueEmptyEnabled
 	)
 })
 
@@ -220,6 +224,11 @@ function discardChanges() {
 		form.value = { ...settingsData.value }
 		toast.info('Discarded unsaved changes')
 	}
+}
+
+function clearTargetPlaylist() {
+	form.value.targetPlaylist = ''
+	form.value.targetPlaylistName = ''
 }
 
 type SpotifyPlaylist = Awaited<ReturnType<typeof import('~~/server/api/spotify/playlists.get').default>>[number]
@@ -685,6 +694,28 @@ function formatTime(ms?: number) {
 									<Switch v-model:model-value="form.modsBypassLimits" />
 								</SettingsGroupAction>
 							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Low Queue in Chat</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when there are exactly 5 user-requested songs remaining in the queue.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.alertQueueLowEnabled" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Queue Finished in Chat</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when the last user-requested song in the queue finishes.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.alertQueueEmptyEnabled" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
 						</SettingsGroup>
 					</div>
 
@@ -702,8 +733,8 @@ function formatTime(ms?: number) {
 								<FieldLabel for="targetPlaylist">
 									Target Spotify Playlist
 								</FieldLabel>
-								<div class="w-full">
-									<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" @update:open="onPlaylistSelectOpen">
+								<div class="flex items-center gap-2">
+									<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" class="w-full grow" @update:open="onPlaylistSelectOpen">
 										<ComboboxAnchor as-child>
 											<ComboboxTrigger as-child>
 												<Button
@@ -755,6 +786,16 @@ function formatTime(ms?: number) {
 											</ComboboxViewport>
 										</ComboboxList>
 									</Combobox>
+									<Button
+										v-if="form.targetPlaylist"
+										variant="outline"
+										size="icon"
+										class="shrink-0 animate-in duration-200 fade-in zoom-in"
+										title="Clear target playlist"
+										@click="clearTargetPlaylist"
+									>
+										<X class="size-4 text-muted-foreground" />
+									</Button>
 								</div>
 								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
 							</Field>

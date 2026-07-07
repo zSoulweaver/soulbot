@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '~~/server/database'
-import { settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens } from '~~/server/database/schema'
+import { settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens, twitchTokens } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase, simulateCommand } from '../helpers'
 import { mockGetStreamInfo } from '../setup'
@@ -228,6 +228,29 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		expect(enableRes.replies[0]).toBe('@Streamer, Spotify song requests have been enabled.')
 	})
 
+	it('should allow moderator to start playback of the song request playlist', async () => {
+		mockFetch.mockResolvedValue({ success: true })
+
+		const { replies } = await simulateCommand('!songrequest play', {
+			id: 'mod-123',
+			username: 'bob',
+			displayName: 'Bob',
+			role: 'moderator',
+		})
+
+		expect(replies).toHaveLength(1)
+		expect(replies[0]).toBe('@Bob, Started playing the song request playlist.')
+		expect(mockFetch).toHaveBeenCalledWith(
+			'https://api.spotify.com/v1/me/player/play',
+			expect.objectContaining({
+				method: 'PUT',
+				body: expect.objectContaining({
+					context_uri: 'spotify:playlist:playlist-123',
+				}),
+			}),
+		)
+	})
+
 	it('should allow moderator to like the currently playing song', async () => {
 		// Preset target playlist
 		await db.insert(settings).values([
@@ -377,5 +400,214 @@ describe('Bot Spotify Queue Commands Integration', () => {
 
 		expect(replies).toHaveLength(1)
 		expect(replies[0]).toBe('@Alice, You have reached your limit of active song requests (1 songs).')
+	})
+
+	describe('Spotify Queue Engine Tick and Alerts', () => {
+		beforeEach(async () => {
+			await clearDatabase()
+			await db.insert(spotifyTokens).values({
+				id: 'streamer',
+				accessToken: 'access-123',
+				refreshToken: 'refresh-123',
+				expiresIn: 3600,
+				obtainmentTimestamp: Date.now(),
+				scope: 'user-read-currently-playing playlist-modify-public playlist-modify-private',
+			})
+			await db.insert(twitchTokens).values({
+				accountType: 'streamer',
+				userId: 'streamer-id-123',
+				userName: 'streamer',
+				displayName: 'Streamer',
+				accessToken: 'twitch-access-token',
+				refreshToken: 'twitch-refresh-token',
+				obtainmentTimestamp: Date.now(),
+				scope: 'chat:read chat:edit',
+			})
+			;(globalThis as any).__setMockSpotifyToken__({ id: 'streamer', accessToken: 'access-123', refreshToken: 'refresh-123' })
+			;(globalThis as any).__setMockCurrentlyPlaying__(null)
+		})
+
+		it('should NOT advance the queue if contextUri does not match request playlist (Context Guard)', async () => {
+			await db.insert(settings).values([
+				{ key: 'spotify.sr.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'spotify.request.playlist_id', value: 'playlist-123', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			await db.insert(spotifyQueue).values({
+				trackId: 'track-abc',
+				title: 'Active Song',
+				artist: 'Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 10,
+				status: 'pending',
+			})
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-abc',
+				uri: 'spotify:track:track-abc',
+				title: 'Active Song',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/track-abc',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:different-playlist-id',
+			})
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const { triggerQueueEngineTick } = await import('~~/server/bot/modules/spotify/queue-engine')
+			await triggerQueueEngineTick()
+
+			const [dbItem] = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-abc'))
+			expect(dbItem!.status).toBe('pending')
+		})
+
+		it('should trigger low queue and empty queue alerts on downward transitions when enabled', async () => {
+			const { mockSay } = await import('../setup')
+			const { triggerQueueEngineTick } = await import('~~/server/bot/modules/spotify/queue-engine')
+
+			await db.insert(settings).values([
+				{ key: 'spotify.sr.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'spotify.request.playlist_id', value: 'playlist-123', updatedAt: new Date() },
+				{ key: 'spotify.sr.alert_queue_low_enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'spotify.sr.alert_queue_empty_enabled', value: 'true', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			const tracksToInsert = Array.from({ length: 6 }).map((_, i) => ({
+				trackId: `track-${i}`,
+				title: `Song ${i}`,
+				artist: 'Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 10,
+				status: 'pending' as const,
+			}))
+			await db.insert(spotifyQueue).values(tracksToInsert)
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-0',
+				uri: 'spotify:track:track-0',
+				title: 'Song 0',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/track-0',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:playlist-123',
+			})
+			mockFetch.mockResolvedValue({ success: true })
+			await triggerQueueEngineTick()
+
+			const dbItem = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-0')).then(r => r[0])
+			expect(dbItem!.status).toBe('playing')
+			expect(mockSay).not.toHaveBeenCalled()
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-1',
+				uri: 'spotify:track:track-1',
+				title: 'Song 1',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/track-1',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:playlist-123',
+			})
+			await triggerQueueEngineTick()
+
+			const dbTrack0 = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-0')).then(r => r[0])
+			const dbTrack1 = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-1')).then(r => r[0])
+			expect(dbTrack0!.status).toBe('played')
+			expect(dbTrack1!.status).toBe('playing')
+
+			expect(mockSay).toHaveBeenCalledWith(expect.any(String), 'The song request queue is running low (5 songs remaining).')
+			mockSay.mockClear()
+
+			await db.update(spotifyQueue).set({ status: 'played' }).where(
+				and(
+					eq(spotifyQueue.status, 'pending'),
+					sql`${spotifyQueue.trackId} != 'track-5'`,
+				),
+			)
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-5',
+				uri: 'spotify:track:track-5',
+				title: 'Song 5',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/track-5',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:playlist-123',
+				progressMs: 170000,
+			})
+			await triggerQueueEngineTick()
+
+			let dbTrack5 = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-5')).then(r => r[0])
+			expect(dbTrack5!.status).toBe('playing')
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'autoplay-track',
+				uri: 'spotify:track:autoplay-track',
+				title: 'Autoplay Track',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/autoplay-track',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:autoplay-playlist',
+			})
+
+			await triggerQueueEngineTick()
+
+			dbTrack5 = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-5')).then(r => r[0])
+			expect(dbTrack5!.status).toBe('played')
+
+			expect(mockSay).toHaveBeenCalledWith(expect.any(String), 'The song request queue has finished! There are no autoplay songs configured.')
+		})
+
+		it('should NOT transition playing track to played if context switches before completion threshold (skipped early)', async () => {
+			const { triggerQueueEngineTick } = await import('~~/server/bot/modules/spotify/queue-engine')
+
+			await db.insert(settings).values([
+				{ key: 'spotify.sr.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'spotify.request.playlist_id', value: 'playlist-123', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			await db.insert(spotifyQueue).values({
+				trackId: 'track-abc',
+				title: 'Active Song',
+				artist: 'Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 10,
+				status: 'pending',
+			})
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'track-abc',
+				uri: 'spotify:track:track-abc',
+				title: 'Active Song',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/track-abc',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:playlist-123',
+			})
+			mockFetch.mockResolvedValue({ success: true })
+			await triggerQueueEngineTick()
+
+			let dbItem = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-abc')).then(r => r[0])
+			expect(dbItem!.status).toBe('playing')
+
+			;(globalThis as any).__setMockCurrentlyPlaying__({
+				id: 'other-track',
+				uri: 'spotify:track:other-track',
+				title: 'Other Song',
+				artist: 'Artist',
+				link: 'https://open.spotify.com/track/other-track',
+				isPlaying: true,
+				contextUri: 'spotify:playlist:other-playlist',
+			})
+			await triggerQueueEngineTick()
+
+			dbItem = await db.select().from(spotifyQueue).where(eq(spotifyQueue.trackId, 'track-abc')).then(r => r[0])
+			expect(dbItem!.status).toBe('playing')
+		})
 	})
 })

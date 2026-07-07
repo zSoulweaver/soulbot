@@ -30,6 +30,8 @@ export default defineEventHandler(async (event) => {
 		allowModerators: appSettings.spotifyPlaylistAllowMods,
 		whisperNotifications: appSettings.spotifyPlaylistWhisper,
 		announceDeleteWebui: appSettings.spotifyPlaylistAnnounceDeleteWebui,
+		alertQueueLowEnabled: appSettings.spotifySongRequestAlertQueueLowEnabled,
+		alertQueueEmptyEnabled: appSettings.spotifySongRequestAlertQueueEmptyEnabled,
 		playlistId,
 		playlistExists: playlistExistsVal,
 	}

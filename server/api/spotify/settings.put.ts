@@ -20,6 +20,8 @@ const saveSpotifySettingsSchema = z.object({
 	allowModerators: z.boolean(),
 	whisperNotifications: z.boolean(),
 	announceDeleteWebui: z.boolean(),
+	alertQueueLowEnabled: z.boolean().default(false),
+	alertQueueEmptyEnabled: z.boolean().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -67,6 +69,8 @@ export default defineEventHandler(async (event) => {
 		{ key: 'spotify.playlist.allow_mods', value: String(d.allowModerators), updatedAt: new Date() },
 		{ key: 'spotify.playlist.whisper', value: String(d.whisperNotifications), updatedAt: new Date() },
 		{ key: 'spotify.playlist.announce_delete_webui', value: String(d.announceDeleteWebui), updatedAt: new Date() },
+		{ key: 'spotify.sr.alert_queue_low_enabled', value: String(d.alertQueueLowEnabled), updatedAt: new Date() },
+		{ key: 'spotify.sr.alert_queue_empty_enabled', value: String(d.alertQueueEmptyEnabled), updatedAt: new Date() },
 	]
 
 	if (d.targetPlaylist !== appSettings.spotifyPlaylistTargetId) {

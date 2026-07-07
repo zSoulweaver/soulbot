@@ -25,3 +25,5 @@ logs
 
 # Database files
 *.db
+*.db-journal
+*.db-wal

@@ -385,6 +385,35 @@ export async function resumePlaylistWithOffset(trackUri: string): Promise<boolea
 	}
 }
 
+export async function playQueuePlaylist(): Promise<boolean> {
+	const appSettings = getAppSettingsSync()
+	if (!appSettings.spotifyRequestPlaylistId)
+		return false
+
+	const token = await getValidSpotifyToken()
+	if (!token)
+		return false
+
+	try {
+		await $fetch('https://api.spotify.com/v1/me/player/play', {
+			method: 'PUT',
+			headers: {
+				'Authorization': `Bearer ${token.accessToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: {
+				context_uri: `spotify:playlist:${appSettings.spotifyRequestPlaylistId}`,
+			},
+		})
+		botLogger.info(`[Spotify Queue] Started play context for playlist: ${appSettings.spotifyRequestPlaylistId}`)
+		return true
+	}
+	catch (err: any) {
+		botLogger.error({ err: err?.data || err }, `[Spotify Queue] Failed to start play context`)
+		return false
+	}
+}
+
 export async function removeTrackFromPlaylist(playlistId: string, trackUri: string): Promise<boolean> {
 	const token = await getValidSpotifyToken()
 	if (!token)

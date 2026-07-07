@@ -281,6 +281,15 @@ async function handleStartPlayback() {
 	}
 }
 
+function isCurrentlyPlaying(item: { trackId: string }) {
+	if (!queueData.value?.currentlyPlaying)
+		return false
+	if (!queueData.value.currentlyPlaying.isPlaying)
+		return false
+	const cleanTrackId = item.trackId.startsWith('spotify:track:') ? item.trackId.split(':').pop() : item.trackId
+	return queueData.value.currentlyPlaying.id === cleanTrackId
+}
+
 async function handleLikeSong() {
 	if (isLiking.value)
 		return
@@ -506,7 +515,7 @@ function formatTimeAgo(timestamp?: number | null) {
 										<TableCell class="text-center text-xs font-semibold text-muted-foreground select-none">
 											<template v-if="item.status === 'playing'">
 												<Badge
-													v-if="queueData?.currentlyPlaying?.isPlaying"
+													v-if="isCurrentlyPlaying(item)"
 													variant="default"
 													class="
 														bg-emerald-600 px-1 py-0.5 text-[9px] text-white

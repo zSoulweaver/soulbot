@@ -33,6 +33,12 @@ interface PlaylistCache {
 
 let targetPlaylistCache: PlaylistCache | null = null
 
+let cachedPlaylistExists: {
+	playlistId: string
+	exists: boolean
+	timestamp: number
+} | null = null
+
 export async function getSpotifyToken(forceRefresh = false) {
 	if (!cachedSpotifyToken || forceRefresh) {
 		const res = await db
@@ -211,6 +217,7 @@ export function clearSpotifyTokenCache() {
 	cachedCurrentlyPlaying = null
 	rateLimitResetTime = 0
 	targetPlaylistCache = null
+	cachedPlaylistExists = null
 }
 
 export async function getSpotifyUserProfile(forceRefresh = false): Promise<SpotifyUserProfile | null> {
@@ -243,6 +250,55 @@ export async function getSpotifyUserProfile(forceRefresh = false): Promise<Spoti
 export async function getSpotifyUserId(): Promise<string | null> {
 	const profile = await getSpotifyUserProfile()
 	return profile ? profile.username : null
+}
+
+export async function playlistExists(playlistId: string): Promise<boolean> {
+	if (!playlistId)
+		return false
+
+	if (
+		cachedPlaylistExists
+		&& cachedPlaylistExists.playlistId === playlistId
+		&& Date.now() - cachedPlaylistExists.timestamp < 60000
+	) {
+		return cachedPlaylistExists.exists
+	}
+
+	const token = await getValidSpotifyToken()
+	if (!token)
+		return false
+
+	const userId = await getSpotifyUserId()
+	if (!userId)
+		return false
+
+	try {
+		const res = await $fetch<boolean[]>(`https://api.spotify.com/v1/playlists/${playlistId}/followers/contains?ids=${userId}`, {
+			headers: {
+				Authorization: `Bearer ${token.accessToken}`,
+			},
+		})
+
+		const exists = Array.isArray(res) && res[0] === true
+		cachedPlaylistExists = {
+			playlistId,
+			exists,
+			timestamp: Date.now(),
+		}
+		return exists
+	}
+	catch (err: any) {
+		if (err.response?.status === 404) {
+			cachedPlaylistExists = {
+				playlistId,
+				exists: false,
+				timestamp: Date.now(),
+			}
+			return false
+		}
+		botLogger.error({ err, playlistId }, `[Spotify] Failed to verify if playlist is in user library`)
+		return true
+	}
 }
 
 export async function createQueuePlaylist(userId: string, name: string): Promise<string | null> {

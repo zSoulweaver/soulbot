@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import blacklistDeleteHandler from '~~/server/api/spotify/blacklist/[id].delete'
 import blacklistGetHandler from '~~/server/api/spotify/blacklist/index.get'
@@ -70,6 +70,72 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			expect(res).toBeDefined()
 			expect(res.active).toBe(true)
 			expect(res.pointsCost).toBe(10)
+		})
+
+		it('should report playlistExists as true if Spotify API call succeeds and user follows it', async () => {
+			const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+			clearSpotifyTokenCache()
+
+			mockFetch.mockImplementation(async (url: string) => {
+				if (url.includes('/v1/me')) {
+					return { id: 'spotify-user-123', display_name: 'Spotify User' }
+				}
+				if (url.includes('/followers/contains')) {
+					return [true]
+				}
+				return {}
+			})
+
+			const res = await settingsGetHandler({} as any)
+			expect(res).toBeDefined()
+			expect(res.playlistExists).toBe(true)
+			expect(mockFetch).toHaveBeenCalledWith(
+				expect.stringContaining('/v1/playlists/playlist-123/followers/contains?ids=spotify-user-123'),
+				expect.objectContaining({
+					headers: expect.objectContaining({
+						Authorization: 'Bearer access-123',
+					}),
+				}),
+			)
+		})
+
+		it('should report playlistExists as false if user does not follow playlist', async () => {
+			const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+			clearSpotifyTokenCache()
+
+			mockFetch.mockImplementation(async (url: string) => {
+				if (url.includes('/v1/me')) {
+					return { id: 'spotify-user-123', display_name: 'Spotify User' }
+				}
+				if (url.includes('/followers/contains')) {
+					return [false]
+				}
+				return {}
+			})
+
+			const res = await settingsGetHandler({} as any)
+			expect(res).toBeDefined()
+			expect(res.playlistExists).toBe(false)
+		})
+
+		it('should report playlistExists as false if Spotify API call returns 404', async () => {
+			const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+			clearSpotifyTokenCache()
+
+			mockFetch.mockImplementation(async (url: string) => {
+				if (url.includes('/v1/me')) {
+					return { id: 'spotify-user-123', display_name: 'Spotify User' }
+				}
+				if (url.includes('/followers/contains')) {
+					const error = new Error('Playlist not found')
+					;(error as any).response = { status: 404 }
+					throw error
+				}
+				return {}
+			})
+			const res = await settingsGetHandler({} as any)
+			expect(res).toBeDefined()
+			expect(res.playlistExists).toBe(false)
 		})
 
 		it('should update song request settings', async () => {
@@ -948,6 +1014,27 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			// Check queue item removed status
 			const [dbItem] = await db.select().from(spotifyQueue).where(eq(spotifyQueue.id, pendingItem!.id))
 			expect(dbItem!.status).toBe('removed')
+		})
+	})
+
+	describe('Queue Engine Helper Functions', () => {
+		it('clearRequestPlaylistId should clear playlist ID and forcefully disable song requests', async () => {
+			// Preset settings to active and with playlist-123
+			await db.insert(settings).values([
+				{ key: 'spotify.sr.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'spotify.request.playlist_id', value: 'playlist-123', updatedAt: new Date() },
+			]).onConflictDoUpdate({
+				target: settings.key,
+				set: { value: sql`excluded.value` },
+			})
+			await refreshAppSettingsCache()
+
+			const { clearRequestPlaylistId } = await import('~~/server/bot/modules/spotify/queue-engine')
+			await clearRequestPlaylistId()
+
+			const settingsRes = await settingsGetHandler({} as any)
+			expect(settingsRes.playlistId).toBe('')
+			expect(settingsRes.active).toBe(false)
 		})
 	})
 })

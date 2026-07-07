@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
+import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
@@ -168,7 +168,7 @@ const form = ref({
 watch(settingsData, (newData) => {
 	if (newData) {
 		form.value = { ...newData }
-		if (!newData.playlistId) {
+		if (!newData.playlistId || newData.playlistExists === false) {
 			form.value.active = false
 		}
 	}
@@ -506,7 +506,7 @@ function formatTime(ms?: number) {
 							</ItemContent>
 
 							<ItemActions>
-								<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId" />
+								<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId || settingsData?.playlistExists === false" />
 							</ItemActions>
 						</Item>
 
@@ -541,6 +541,26 @@ function formatTime(ms?: number) {
 									</Button>
 								</CardContent>
 							</Card>
+							<div v-else-if="settingsData?.playlistExists === false" class="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+								<div class="flex items-start gap-3">
+									<div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+										<AlertTriangle class="size-5" />
+									</div>
+									<div class="flex flex-col gap-0.5">
+										<p
+											class="text-sm font-semibold text-destructive"
+										>
+											Linked Playlist Not Found
+										</p>
+										<p class="text-xs text-muted-foreground">
+											The configured Spotify playlist (<code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>) no longer exists on Spotify.
+										</p>
+									</div>
+								</div>
+								<Button variant="destructive" size="sm" :disabled="isInitializingPlaylist" @click="handleInitializePlaylist">
+									Re-initialize Playlist
+								</Button>
+							</div>
 							<div v-else class="flex items-center justify-between rounded-lg border bg-emerald-500/5 p-4">
 								<div class="flex flex-col gap-0.5">
 									<p
@@ -555,9 +575,6 @@ function formatTime(ms?: number) {
 										Linked Playlist ID: <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>
 									</p>
 								</div>
-								<Button variant="outline" size="sm" :disabled="isInitializingPlaylist" @click="handleInitializePlaylist">
-									Re-initialize Playlist
-								</Button>
 							</div>
 						</div>
 						<FieldGroup

@@ -1,12 +1,22 @@
 import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
+import { getSpotifyToken, playlistExists } from '~~/server/utils/spotify'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'caster')
 	const appSettings = await getAppSettings()
 
+	const playlistId = appSettings.spotifyRequestPlaylistId
+	const token = await getSpotifyToken()
+	const connected = !!token
+
+	let playlistExistsVal: boolean | null = null
+	if (playlistId) {
+		playlistExistsVal = connected ? await playlistExists(playlistId) : null
+	}
+
 	return {
-		active: appSettings.spotifyRequestPlaylistId ? appSettings.spotifySongRequestEnabled : false,
+		active: playlistId ? appSettings.spotifySongRequestEnabled : false,
 		pointsCost: appSettings.spotifySongRequestPointsCost,
 		maxLength: appSettings.spotifySongRequestMaxLength,
 		maxQueue: appSettings.spotifySongRequestMaxQueue,
@@ -20,6 +30,7 @@ export default defineEventHandler(async (event) => {
 		allowModerators: appSettings.spotifyPlaylistAllowMods,
 		whisperNotifications: appSettings.spotifyPlaylistWhisper,
 		announceDeleteWebui: appSettings.spotifyPlaylistAnnounceDeleteWebui,
-		playlistId: appSettings.spotifyRequestPlaylistId,
+		playlistId,
+		playlistExists: playlistExistsVal,
 	}
 })

@@ -3,7 +3,7 @@ import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTrackFromPlaylist } from '~~/server/utils/spotify'
 
 let intervalId: any = null
 let lastPlaylistSyncTime = 0
@@ -43,11 +43,24 @@ export async function clearRequestPlaylistId() {
 					updatedAt: new Date(),
 				},
 			})
+		await db.insert(settings)
+			.values({
+				key: 'spotify.sr.enabled',
+				value: 'false',
+				updatedAt: new Date(),
+			})
+			.onConflictDoUpdate({
+				target: settings.key,
+				set: {
+					value: 'false',
+					updatedAt: new Date(),
+				},
+			})
 		await refreshAppSettingsCache()
-		botLogger.warn('[Spotify Queue] Cleared invalid/deleted request playlist ID from settings')
+		botLogger.warn('[Spotify Queue] Cleared invalid/deleted request playlist ID and forcefully disabled song requests')
 	}
 	catch (err) {
-		botLogger.error({ err }, '[Spotify Queue] Failed to clear invalid playlist ID')
+		botLogger.error({ err }, '[Spotify Queue] Failed to clear invalid playlist ID and disable song requests')
 	}
 }
 
@@ -131,6 +144,12 @@ async function tick() {
 		// Proactively queue fallback songs if active fallbacks count <= 1
 		const activeFallbacksCount = activeTracks.filter(t => t.requestedBy === 'Fallback Playlist').length
 		if (activeFallbacksCount <= 1 && appSettings.spotifyPlaylistTargetId) {
+			const exists = await playlistExists(appSettings.spotifyRequestPlaylistId)
+			if (!exists) {
+				await clearRequestPlaylistId()
+				return
+			}
+
 			const fallbackTracks = await getRandomTracksFromPlaylist(appSettings.spotifyPlaylistTargetId, 5)
 			const newUris: string[] = []
 
@@ -268,17 +287,13 @@ async function handlePlaylistError() {
 		return
 
 	try {
-		// Attempt to fetch the playlist metadata. If it throws a 404, it was deleted.
-		await $fetch(`https://api.spotify.com/v1/playlists/${appSettings.spotifyRequestPlaylistId}`, {
-			headers: {
-				Authorization: `Bearer ${token.accessToken}`,
-			},
-		})
-	}
-	catch (err: any) {
-		if (err.status === 404 || err.response?.status === 404) {
+		const exists = await playlistExists(appSettings.spotifyRequestPlaylistId)
+		if (!exists) {
 			await clearRequestPlaylistId()
 		}
+	}
+	catch (err: any) {
+		botLogger.error({ err }, '[Spotify Queue] Error checking playlist existence in handlePlaylistError')
 	}
 }
 

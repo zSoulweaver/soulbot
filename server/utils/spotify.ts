@@ -307,7 +307,7 @@ export async function createQueuePlaylist(userId: string, name: string): Promise
 		return null
 	const { public: { botName } } = useRuntimeConfig()
 	try {
-		const res = await $fetch<any>(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+		const res = await $fetch<any>('https://api.spotify.com/v1/me/playlists', {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${token.accessToken}`,

@@ -2,9 +2,12 @@ import { BOT_OAUTH_VERSION, STREAMER_OAUTH_VERSION } from '~~/server/config/twit
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
+import { getBotModeratorStatus, getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
+	const query = getQuery(event) || {}
+	const force = query.force === 'true' || query.refresh === 'true'
+
 	// Allow public access during initial onboarding only
 	const existingTokens = await db.select().from(twitchTokens)
 	const hasBot = existingTokens.some(t => t.accountType === 'bot')
@@ -27,6 +30,7 @@ export default defineEventHandler(async (event) => {
 				isBotRunning: isBotRunning(),
 				isStreamerTokenOutdated: false,
 				isBotTokenOutdated: false,
+				isBotModerator: false,
 			}
 		}
 	}
@@ -38,6 +42,8 @@ export default defineEventHandler(async (event) => {
 	const isBotTokenOutdated = botToken
 		? (appSettings.botTokenVersion < BOT_OAUTH_VERSION)
 		: false
+
+	const isBotModerator = await getBotModeratorStatus(force)
 
 	return {
 		bot: botToken
@@ -57,5 +63,6 @@ export default defineEventHandler(async (event) => {
 		isBotRunning: isBotRunning(),
 		isStreamerTokenOutdated,
 		isBotTokenOutdated,
+		isBotModerator,
 	}
 })

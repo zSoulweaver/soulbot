@@ -171,6 +171,7 @@ export async function getChatClient() {
 		authProvider: getAuthProvider(),
 		channels: [streamerToken.userName],
 		authIntents: ['chat'],
+		isAlwaysMod: true,
 	})
 
 	return chatClientInstance
@@ -285,7 +286,40 @@ export function isBotRunning() {
 	return chatClientInstance?.isConnected ?? false
 }
 
+let cachedIsBotMod: boolean | null = null
+let lastModCheckTime = 0
+const MOD_CHECK_CACHE_MS = 5 * 60 * 1000 // 5 minutes
+
+export async function getBotModeratorStatus(forceRefresh = false): Promise<boolean> {
+	const botToken = await getBotToken()
+	const streamerToken = await getStreamerToken()
+	if (!botToken || !botToken.userId || !streamerToken || !streamerToken.userId) {
+		return false
+	}
+
+	const now = Date.now()
+	if (!forceRefresh && cachedIsBotMod !== null && (now - lastModCheckTime) < MOD_CHECK_CACHE_MS) {
+		return cachedIsBotMod
+	}
+
+	try {
+		const api = getApiClient()
+		await api.asUser(streamerToken.userId, async (ctx) => {
+			cachedIsBotMod = await ctx.moderation.checkUserMod(streamerToken.userId as string, botToken.userId as string)
+		})
+		lastModCheckTime = now
+	}
+	catch (err) {
+		botLogger.error(err, 'Failed to check if bot is moderator')
+		return cachedIsBotMod ?? true
+	}
+
+	return cachedIsBotMod ?? false
+}
+
 export function clearTwitchTokenCache() {
 	cachedStreamerToken = null
 	cachedBotToken = null
+	cachedIsBotMod = null
+	lastModCheckTime = 0
 }

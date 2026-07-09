@@ -52,7 +52,8 @@ class CommandRegistry {
 				handler: async (ctx) => {
 					const response = await renderCustomTemplate(custom.response, ctx)
 					if (response) {
-						await ctx.say(response)
+						const lines = response.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+						await Promise.all(lines.map(line => ctx.say(line)))
 					}
 				},
 			})

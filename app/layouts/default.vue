@@ -25,7 +25,15 @@ const isModeratorOrCaster = computed(() => {
 				</div>
 			</header>
 			<main class="flex flex-1 flex-col gap-4 p-8">
-				<AppOutdatedTokenAlert />
+				<div
+					class="
+						mb-4 hidden animate-in flex-col gap-2 duration-300 fade-in slide-in-from-top
+						has-[*]:flex
+					"
+				>
+					<AppOutdatedTokenAlert />
+					<AppBotModeratorAlert />
+				</div>
 				<slot />
 			</main>
 		</SidebarInset>

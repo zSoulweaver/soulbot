@@ -26,6 +26,16 @@ const isEditMode = computed(() => {
 	return props.command !== null && props.command !== undefined && props.command.id !== undefined
 })
 
+const responseLines = computed(() => {
+	if (!responseTemplate.value)
+		return []
+	return responseTemplate.value.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+})
+
+const lineCount = computed(() => responseLines.value.length)
+
+const isMultiLine = computed(() => lineCount.value > 1)
+
 // Populate fields on open or change
 watch(() => props.open, (isOpen) => {
 	if (isOpen) {
@@ -170,6 +180,12 @@ async function saveConfig() {
 							placeholder="Hello $(sender)! You have $(count wins) wins in $(channel)."
 							rows="4"
 						/>
+						<Alert v-if="isMultiLine" variant="warning" class="mt-2">
+							<AlertTitle>Multi-Line Template Detected</AlertTitle>
+							<AlertDescription>
+								We've detected a multi-line template. This will be sent as {{ lineCount }} separate messages.
+							</AlertDescription>
+						</Alert>
 						<FieldDescription>The message output to chat. Dynamic template variables will resolve dynamically.</FieldDescription>
 					</Field>
 

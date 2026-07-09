@@ -466,4 +466,28 @@ describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 			expect(replies[0]).toMatch(/turned \d+ years old/)
 		})
 	})
+
+	describe('Multi-Line Output Support', () => {
+		it('should send multi-line responses as separate chat messages, filtering empty lines', async () => {
+			await db.insert(customCommands).values({
+				id: 'multiline-test',
+				trigger: 'rules',
+				response: 'Rule 1: Be nice!\n\nRule 2: Have fun, $(sender)!\r\n\r\n   \nRule 3: Enjoy the stream.',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 0,
+				userCooldown: 0,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			await registry.syncWithDb()
+
+			const { replies } = await simulateCommand('!rules', { id: '1', username: 'alice', displayName: 'Alice' })
+			expect(replies).toHaveLength(3)
+			expect(replies[0]).toBe('Rule 1: Be nice!')
+			expect(replies[1]).toBe('Rule 2: Have fun, Alice!')
+			expect(replies[2]).toBe('Rule 3: Enjoy the stream.')
+		})
+	})
 })

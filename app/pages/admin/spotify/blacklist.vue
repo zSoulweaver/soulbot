@@ -19,6 +19,10 @@ import { usePagination } from '~/composables/usePagination'
 
 const { loggedIn, user } = useUserSession()
 
+useHead({
+	title: 'Spotify Blacklist',
+})
+
 watchEffect(() => {
 	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'moderator')) {
 		navigateTo('/')

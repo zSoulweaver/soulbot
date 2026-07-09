@@ -30,6 +30,10 @@ import {
 const { loggedIn, user } = useUserSession()
 const { public: { botName } } = useRuntimeConfig()
 
+useHead({
+	title: 'Spotify Integration',
+})
+
 watchEffect(() => {
 	if (!loggedIn.value || user.value?.role !== 'caster') {
 		navigateTo('/')

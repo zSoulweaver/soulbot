@@ -7,6 +7,10 @@ import CommandEditSheet from '~/components/commands/CommandEditSheet.vue'
 
 const { data: commandsList, refresh: refreshCommands, pending: loading } = useFetch<Command[]>('/api/commands')
 
+useHead({
+	title: 'Command Management',
+})
+
 // Expandable subcommands state mapping
 const expandedCommands = ref<Record<string, boolean>>({})
 

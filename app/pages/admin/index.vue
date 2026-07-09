@@ -23,6 +23,10 @@ import { Textarea } from '~/components/ui/textarea'
 
 // User session for caster validation
 const { user } = useUserSession()
+
+useHead({
+	title: 'Dashboard',
+})
 const isCaster = computed(() => user.value?.role === 'caster')
 
 // Loading states for service actions

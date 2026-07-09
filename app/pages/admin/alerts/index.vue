@@ -9,6 +9,10 @@ type AlertSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/alert
 // Fetch active settings using non-blocking useFetch
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<AlertSettings>('/api/admin/alerts/settings')
 
+useHead({
+	title: 'Event Alerts & Rewards',
+})
+
 const form = ref<AlertSettings>({
 	eventsubAlertFollowEnabled: false,
 	eventsubAlertFollow: '',

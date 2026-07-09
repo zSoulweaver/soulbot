@@ -24,6 +24,10 @@ const command = computed(() => {
 	return commands.value.find(cmd => cmd.id === route.params.id) || null
 })
 
+useHead({
+	title: () => command.value ? `Response Customizer - !${command.value.activeTrigger}` : 'Response Customizer',
+})
+
 // Sub-navigation filter selection ('root' or subcommand name)
 const activePathFilter = ref('root')
 

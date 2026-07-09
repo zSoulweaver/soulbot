@@ -21,6 +21,10 @@ interface BotSettings {
 
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<BotSettings>('/api/bot/settings')
 
+useHead({
+	title: 'Bot Settings',
+})
+
 const form = ref<BotSettings>({
 	chatMode: 'action',
 	muted: false,

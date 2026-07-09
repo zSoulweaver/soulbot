@@ -13,6 +13,10 @@ interface Variable {
 const { data: apiVariables, pending: loading } = useFetch<Variable[]>('/api/commands/variables')
 const { public: { botName } } = useRuntimeConfig()
 
+useHead({
+	title: 'Command Variables',
+})
+
 // Hardcoded positional variables definition (core aspect of custom commands)
 const positionalVariable: Variable = {
 	name: '1...n',

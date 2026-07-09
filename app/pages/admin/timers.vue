@@ -11,6 +11,10 @@ import { Button } from '~/components/ui/button'
 import { Switch } from '~/components/ui/switch'
 import { usePagination } from '~/composables/usePagination'
 
+useHead({
+	title: 'Message Timers',
+})
+
 const {
 	page: currentPage,
 	limit: itemsPerPage,

@@ -31,6 +31,10 @@ import { usePagination } from '~/composables/usePagination'
 
 const { loggedIn, user } = useUserSession()
 
+useHead({
+	title: 'Song Queue',
+})
+
 // Fetch queue and currently playing details
 const { data: queueData, refresh: originalRefresh, pending } = useFetch<any>('/api/spotify/queue')
 

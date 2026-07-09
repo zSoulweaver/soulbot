@@ -25,6 +25,10 @@ const {
 	defaultParams: { sortBy: 'watchTime' },
 })
 
+useHead({
+	title: 'Watch Time Balances',
+})
+
 const paginatedUsers = computed(() => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.meta?.total || 0)
 

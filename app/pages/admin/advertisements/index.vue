@@ -13,6 +13,10 @@ const { data: scheduleData, refresh: refreshSchedule, pending: scheduleLoading }
 
 const loading = computed(() => settingsLoading.value || scheduleLoading.value)
 
+useHead({
+	title: 'Advertisements Management',
+})
+
 const form = ref<AdSettings>({
 	adsAlertsEnabled: false,
 	adsAlert5mEnabled: false,

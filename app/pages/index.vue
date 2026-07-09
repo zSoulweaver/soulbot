@@ -19,6 +19,10 @@ const route = useRoute()
 const { loggedIn, user } = useUserSession()
 const { public: { botName } } = useRuntimeConfig()
 
+useHead({
+	title: 'Home',
+})
+
 const isModeratorOrCaster = computed(() => {
 	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
 })

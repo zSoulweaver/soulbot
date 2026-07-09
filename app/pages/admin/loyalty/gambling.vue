@@ -9,6 +9,10 @@ type GamblingSettings = Awaited<ReturnType<typeof import('~~/server/api/loyalty/
 
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<GamblingSettings>('/api/loyalty/gambling')
 
+useHead({
+	title: 'Gambling Settings',
+})
+
 const form = ref<GamblingSettings>({
 	minBet: 10,
 	maxBet: 100000,

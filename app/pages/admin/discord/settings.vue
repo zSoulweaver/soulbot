@@ -18,6 +18,10 @@ const { data: guildsResponse, refresh: refreshGuilds } = useFetch<{ id: string, 
 
 const guilds = computed(() => guildsResponse.value || [])
 
+useHead({
+	title: 'Discord Settings',
+})
+
 const form = ref<DiscordSettings>({
 	discordEnabled: false,
 	discordGuildId: '',

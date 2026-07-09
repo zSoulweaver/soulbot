@@ -10,6 +10,10 @@ import {
 } from '@lucide/vue'
 import { computed } from 'vue'
 
+useHead({
+	title: 'Points Leaderboard',
+})
+
 // Non-blocking parallel data fetches
 const { data: leaderboard, pending: pendingLeaderboard } = useFetch<any[]>('/api/loyalty/leaderboard')
 const { data: gamblingData, pending: pendingGambling } = useFetch<GamblingLeaderboardResponse>('/api/loyalty/gambling/leaderboard')

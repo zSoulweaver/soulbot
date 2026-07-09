@@ -17,6 +17,10 @@ const {
 	loading: loadingTable,
 } = usePagination<{ manualExclusions: { data: ExcludedUser[], meta: any }, autoExclusions: AutoExclusion[] }>('/api/loyalty/exclusions')
 
+useHead({
+	title: 'Payout Exclusions',
+})
+
 const isDeleting = ref<string | null>(null)
 const isAddSheetOpen = ref(false)
 

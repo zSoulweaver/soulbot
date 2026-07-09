@@ -23,6 +23,10 @@ const {
 	loading: loadingTable,
 } = usePagination<{ data: User[], meta: any }>('/api/users')
 
+useHead({
+	title: 'Points Balances',
+})
+
 const paginatedUsers = computed(() => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.meta?.total || 0)
 

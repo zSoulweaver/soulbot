@@ -20,6 +20,10 @@ const { data: guildRolesResponse } = useFetch<GuildRoles>('/api/admin/discord/gu
 
 const guildRoles = computed(() => guildRolesResponse.value || [])
 
+useHead({
+	title: 'Discord Role Bestowing',
+})
+
 const form = ref<RolesSettings>({
 	discordRolesAutoBestowEnabled: false,
 	discordRolesAutoBestowRoles: '',

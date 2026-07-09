@@ -7,6 +7,10 @@ import CustomCommandEditSheet from '~/components/commands/CustomCommandEditSheet
 // Fetch custom commands
 const { data: customCommandsList, refresh: refreshCustomCommands, pending: loading } = useFetch<any[]>('/api/commands/custom')
 
+useHead({
+	title: 'Custom Commands',
+})
+
 // Search & Filter state
 const searchFilter = ref('')
 

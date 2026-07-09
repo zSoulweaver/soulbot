@@ -12,6 +12,10 @@ const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/ap
 
 const channels = computed(() => channelsResponse.value || [])
 
+useHead({
+	title: 'Discord Event Alerts',
+})
+
 const form = ref<AlertsSettings>({
 	discordAlertFollowEnabled: false,
 	discordAlertFollowChannelId: '',

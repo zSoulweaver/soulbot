@@ -19,6 +19,10 @@ interface PointsSettings {
 // Fetch active settings
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<PointsSettings>('/api/loyalty/settings')
 
+useHead({
+	title: 'Points Settings',
+})
+
 const form = ref<PointsSettings>({
 	currencyName: 'point',
 	currencyNamePlural: 'points',

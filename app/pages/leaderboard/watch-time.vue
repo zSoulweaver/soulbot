@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { MedalIcon, TrophyIcon } from '@lucide/vue'
 
+useHead({
+	title: 'Watch Time Leaderboard',
+})
+
 const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/leaderboard')
 </script>
 

@@ -9,6 +9,11 @@ import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 
 const botType = ref('phantombot')
+
+useHead({
+	title: 'Database Migration',
+})
+
 const override = ref(false)
 const file = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)

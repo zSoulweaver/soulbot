@@ -7,6 +7,10 @@ definePageMeta({
 	layout: 'blank',
 })
 
+useHead({
+	title: 'Twitch Connection Onboarding',
+})
+
 const { data: status, refresh } = useFetch('/api/bot/status')
 
 const isComplete = computed(() => {

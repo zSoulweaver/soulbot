@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import 'vue-sonner/style.css'
 
+const { public: { botName } } = useRuntimeConfig()
+
 useHead({
+	titleTemplate: titleChunk => titleChunk ? `${titleChunk} - ${botName}` : botName,
 	meta: [{ name: 'darkreader-lock', content: 'true' }],
 })
 </script>

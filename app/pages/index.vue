@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-	Bot,
 	Clock,
 	LayoutDashboard,
 	Music,
@@ -47,9 +46,7 @@ onMounted(() => {
 			<div class="absolute -right-24 -bottom-24 size-48 rounded-full bg-twitch/15 blur-3xl" />
 
 			<div class="relative flex flex-col items-center gap-4">
-				<div class="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-					<Bot class="size-10" />
-				</div>
+				<img src="/soulfella.svg" alt="Mascot" class="mb-8 size-50 object-contain">
 				<h1
 					class="
 						bg-linear-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-4xl font-extrabold tracking-tight text-transparent uppercase

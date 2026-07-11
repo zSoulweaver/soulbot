@@ -190,274 +190,271 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div>
-		<AppPageHeader
-			heading="Points Settings"
-			subheading="Configure currency customization, online/offline payout cycles, and active chatter bonuses."
-		>
+	<AppSettingsPage
+		heading="Points Settings"
+		subheading="Configure currency customization, online/offline payout cycles, and active chatter bonuses."
+	>
+		<template #header-actions>
 			<Button variant="ghost" :disabled="loading" @click="refreshSettings">
 				<RefreshCcw :class="{ 'animate-spin': loading }" />
 			</Button>
-		</AppPageHeader>
+		</template>
+		<!-- Loading state -->
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8 text-primary" />
+			<span class="text-sm text-muted-foreground">Loading active configurations...</span>
+		</div>
 
-		<AppPageContainer>
-			<!-- Loading state -->
-			<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
-				<Spinner class="size-8 text-primary" />
-				<span class="text-sm text-muted-foreground">Loading active configurations...</span>
-			</div>
+		<div
+			v-else
+			class="
+				grid grid-cols-1 gap-6
+				lg:grid-cols-3
+			"
+		>
+			<!-- Settings Editor Panel -->
+			<div class="lg:col-span-2">
+				<div class="flex flex-col gap-8">
+					<!-- Section 1: Currency Configuration -->
+					<div class="flex flex-col gap-4">
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<Landmark class="size-5 text-muted-foreground" />
+							Currency Customization
+						</h3>
+						<FieldGroup
+							class="
+								grid grid-cols-1 gap-4
+								sm:grid-cols-2
+							"
+						>
+							<Field>
+								<FieldLabel for="currencyName">
+									Singular Name
+								</FieldLabel>
+								<Input
+									id="currencyName"
+									v-model="form.currencyName"
+									type="text"
+									placeholder="e.g. coin"
+								/>
+								<FieldDescription>
+									Used for single values (e.g. 1 coin).
+								</FieldDescription>
+							</Field>
+							<Field>
+								<FieldLabel for="currencyNamePlural">
+									Plural Name
+								</FieldLabel>
+								<Input
+									id="currencyNamePlural"
+									v-model="form.currencyNamePlural"
+									type="text"
+									placeholder="e.g. coins"
+								/>
+								<FieldDescription>
+									Used for multi or default values (e.g. 50 coins).
+								</FieldDescription>
+							</Field>
+						</FieldGroup>
+					</div>
 
-			<div
-				v-else
-				class="
-					grid grid-cols-1 gap-6
-					lg:grid-cols-3
-				"
-			>
-				<!-- Settings Editor Panel -->
-				<div class="lg:col-span-2">
-					<div class="flex flex-col gap-8">
-						<!-- Section 1: Currency Configuration -->
-						<div class="flex flex-col gap-4">
-							<h3 class="flex items-center gap-2 text-lg font-semibold">
-								<Landmark class="size-5 text-muted-foreground" />
-								Currency Customization
-							</h3>
-							<FieldGroup
-								class="
-									grid grid-cols-1 gap-4
-									sm:grid-cols-2
-								"
-							>
-								<Field>
-									<FieldLabel for="currencyName">
-										Singular Name
-									</FieldLabel>
-									<Input
-										id="currencyName"
-										v-model="form.currencyName"
-										type="text"
-										placeholder="e.g. coin"
-									/>
-									<FieldDescription>
-										Used for single values (e.g. 1 coin).
-									</FieldDescription>
-								</Field>
-								<Field>
-									<FieldLabel for="currencyNamePlural">
-										Plural Name
-									</FieldLabel>
-									<Input
-										id="currencyNamePlural"
-										v-model="form.currencyNamePlural"
-										type="text"
-										placeholder="e.g. coins"
-									/>
-									<FieldDescription>
-										Used for multi or default values (e.g. 50 coins).
-									</FieldDescription>
-								</Field>
-							</FieldGroup>
-						</div>
+					<Separator />
 
-						<Separator />
+					<!-- Section 2: Online Payout Settings -->
+					<div class="flex flex-col gap-4">
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<span class="relative flex size-2">
+								<span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
+								<span class="relative inline-flex size-2 rounded-full bg-green-500" />
+							</span>
+							Online Payout Schedule
+						</h3>
+						<FieldGroup
+							class="
+								grid grid-cols-1 gap-4
+								sm:grid-cols-3
+							"
+						>
+							<Field>
+								<FieldLabel for="payoutInterval">
+									Interval (Minutes)
+								</FieldLabel>
+								<NumberField id="payoutInterval" v-model="form.payoutInterval" :min="1" :default-value="1">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>
+									Time frequency of payout checks when stream is live.
+								</FieldDescription>
+							</Field>
+							<Field>
+								<FieldLabel for="payoutAmount">
+									Base Payout
+								</FieldLabel>
+								<NumberField id="payoutAmount" v-model="form.payoutAmount" :min="0" :default-value="0">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>
+									Points awarded to all chatters on each cycle.
+								</FieldDescription>
+							</Field>
+							<Field>
+								<FieldLabel for="activeBonus">
+									Active Chat Bonus
+								</FieldLabel>
+								<NumberField id="activeBonus" v-model="form.activeBonus" :min="0" :default-value="0">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>
+									Additional bonus points awarded to chatters who sent a message.
+								</FieldDescription>
+							</Field>
+						</FieldGroup>
+					</div>
 
-						<!-- Section 2: Online Payout Settings -->
-						<div class="flex flex-col gap-4">
-							<h3 class="flex items-center gap-2 text-lg font-semibold">
-								<span class="relative flex size-2">
-									<span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
-									<span class="relative inline-flex size-2 rounded-full bg-green-500" />
-								</span>
-								Online Payout Schedule
-							</h3>
-							<FieldGroup
-								class="
-									grid grid-cols-1 gap-4
-									sm:grid-cols-3
-								"
-							>
-								<Field>
-									<FieldLabel for="payoutInterval">
-										Interval (Minutes)
-									</FieldLabel>
-									<NumberField id="payoutInterval" v-model="form.payoutInterval" :min="1" :default-value="1">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>
-										Time frequency of payout checks when stream is live.
-									</FieldDescription>
-								</Field>
-								<Field>
-									<FieldLabel for="payoutAmount">
-										Base Payout
-									</FieldLabel>
-									<NumberField id="payoutAmount" v-model="form.payoutAmount" :min="0" :default-value="0">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>
-										Points awarded to all chatters on each cycle.
-									</FieldDescription>
-								</Field>
-								<Field>
-									<FieldLabel for="activeBonus">
-										Active Chat Bonus
-									</FieldLabel>
-									<NumberField id="activeBonus" v-model="form.activeBonus" :min="0" :default-value="0">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>
-										Additional bonus points awarded to chatters who sent a message.
-									</FieldDescription>
-								</Field>
-							</FieldGroup>
-						</div>
+					<Separator />
 
-						<Separator />
-
-						<!-- Section 3: Offline Payout Settings -->
-						<div class="flex flex-col gap-4">
-							<h3 class="flex items-center gap-2 text-lg font-semibold">
-								<span class="inline-flex size-2 rounded-full bg-muted-foreground" />
-								Offline Payout Schedule
-							</h3>
-							<FieldGroup
-								class="
-									grid grid-cols-1 gap-4
-									sm:grid-cols-2
-								"
-							>
-								<Field>
-									<FieldLabel for="payoutIntervalOffline">
-										Interval (Minutes)
-									</FieldLabel>
-									<NumberField id="payoutIntervalOffline" v-model="form.payoutIntervalOffline" :min="1" :default-value="1">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>
-										Time frequency of payout checks when offline.
-									</FieldDescription>
-								</Field>
-								<Field>
-									<FieldLabel for="payoutAmountOffline">
-										Base Payout
-									</FieldLabel>
-									<NumberField id="payoutAmountOffline" v-model="form.payoutAmountOffline" :default-value="0">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>
-										Points awarded to all chatters when offline (0 disables).
-									</FieldDescription>
-								</Field>
-							</FieldGroup>
-						</div>
+					<!-- Section 3: Offline Payout Settings -->
+					<div class="flex flex-col gap-4">
+						<h3 class="flex items-center gap-2 text-lg font-semibold">
+							<span class="inline-flex size-2 rounded-full bg-muted-foreground" />
+							Offline Payout Schedule
+						</h3>
+						<FieldGroup
+							class="
+								grid grid-cols-1 gap-4
+								sm:grid-cols-2
+							"
+						>
+							<Field>
+								<FieldLabel for="payoutIntervalOffline">
+									Interval (Minutes)
+								</FieldLabel>
+								<NumberField id="payoutIntervalOffline" v-model="form.payoutIntervalOffline" :min="1" :default-value="1">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>
+									Time frequency of payout checks when offline.
+								</FieldDescription>
+							</Field>
+							<Field>
+								<FieldLabel for="payoutAmountOffline">
+									Base Payout
+								</FieldLabel>
+								<NumberField id="payoutAmountOffline" v-model="form.payoutAmountOffline" :default-value="0">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>
+									Points awarded to all chatters when offline (0 disables).
+								</FieldDescription>
+							</Field>
+						</FieldGroup>
 					</div>
 				</div>
-
-				<!-- Help / Mechanics Panel -->
-				<div class="flex flex-col gap-6">
-					<!-- Live Payout Engine Monitor -->
-					<Card>
-						<CardHeader>
-							<CardTitle class="flex items-center gap-2">
-								<Clock class="size-4" />
-								Point Payout Engine Status
-							</CardTitle>
-							<CardDescription>
-								Real-time monitoring and manual execution controls.
-							</CardDescription>
-						</CardHeader>
-						<CardContent class="flex flex-col gap-4">
-							<div class="flex items-center justify-between text-xs">
-								<span class="font-semibold text-muted-foreground uppercase">Stream Status</span>
-								<Badge :variant="isOnline ? 'default' : 'secondary'">
-									{{ isOnline ? 'Online' : 'Offline' }}
-								</Badge>
-							</div>
-
-							<Separator />
-
-							<div class="flex flex-col gap-2">
-								<div class="flex items-center justify-between text-xs">
-									<span class="font-medium text-muted-foreground">Next Payout Cycle</span>
-									<span class="font-mono font-bold text-foreground">{{ formattedCountdown }}</span>
-								</div>
-								<Progress :model-value="progressPercent" />
-								<p class="text-xs text-muted-foreground/80">
-									Running checks every {{ isOnline ? settingsData?.payoutInterval : settingsData?.payoutIntervalOffline }} minutes.
-								</p>
-							</div>
-
-							<Button
-								size="sm"
-								variant="outline"
-								:disabled="isPayoutNowLoading"
-								@click="triggerPayoutNow"
-							>
-								<Spinner v-if="isPayoutNowLoading" data-icon="inline-start" />
-								<Sparkles v-else data-icon="inline-start" />
-								Payout Now
-							</Button>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle class="flex items-center gap-2">
-								<HelpCircle class="size-4 text-muted-foreground" />
-								How Payouts Work
-							</CardTitle>
-						</CardHeader>
-						<CardContent class="flex flex-col gap-3 text-sm/relaxed text-muted-foreground">
-							<p>
-								The bot runs a background payout engine that queries the Twitch API to fetch all chatters currently connected to your channel.
-							</p>
-							<p>
-								Every chatter in the list is awarded the base payout amount (online or offline). If a chatter has sent a message during the current interval, they are also awarded the active chatter bonus!
-							</p>
-							<p>
-								If the channel is offline and the offline payout amount is configured to 0, the engine will skip that payout.
-							</p>
-							<Alert variant="warning">
-								<AlertDescription>
-									Updates to the payout interval take effect from the next payout run. Updates to the payout amounts will take take effect on the upcoming payout run.
-								</AlertDescription>
-							</Alert>
-						</CardContent>
-					</Card>
-				</div>
 			</div>
-			<AppFloatingSaveBar
-				:show="isModified"
-				:is-saving="isSaving"
-				title="Unsaved Payout Settings"
-				description="You have modified points settings. Save to instantly update the Twitch chat payout schedules."
-				save-text="Save Settings"
-				saving-text="Saving Settings..."
-				discard-text="Discard Changes"
-				@save="saveSettings"
-				@discard="discardChanges"
-			/>
-		</AppPageContainer>
-	</div>
+
+			<!-- Help / Mechanics Panel -->
+			<div class="flex flex-col gap-6">
+				<!-- Live Payout Engine Monitor -->
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<Clock class="size-4" />
+							Point Payout Engine Status
+						</CardTitle>
+						<CardDescription>
+							Real-time monitoring and manual execution controls.
+						</CardDescription>
+					</CardHeader>
+					<CardContent class="flex flex-col gap-4">
+						<div class="flex items-center justify-between text-xs">
+							<span class="font-semibold text-muted-foreground uppercase">Stream Status</span>
+							<Badge :variant="isOnline ? 'default' : 'secondary'">
+								{{ isOnline ? 'Online' : 'Offline' }}
+							</Badge>
+						</div>
+
+						<Separator />
+
+						<div class="flex flex-col gap-2">
+							<div class="flex items-center justify-between text-xs">
+								<span class="font-medium text-muted-foreground">Next Payout Cycle</span>
+								<span class="font-mono font-bold text-foreground">{{ formattedCountdown }}</span>
+							</div>
+							<Progress :model-value="progressPercent" />
+							<p class="text-xs text-muted-foreground/80">
+								Running checks every {{ isOnline ? settingsData?.payoutInterval : settingsData?.payoutIntervalOffline }} minutes.
+							</p>
+						</div>
+
+						<Button
+							size="sm"
+							variant="outline"
+							:disabled="isPayoutNowLoading"
+							@click="triggerPayoutNow"
+						>
+							<Spinner v-if="isPayoutNowLoading" data-icon="inline-start" />
+							<Sparkles v-else data-icon="inline-start" />
+							Payout Now
+						</Button>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<HelpCircle class="size-4 text-muted-foreground" />
+							How Payouts Work
+						</CardTitle>
+					</CardHeader>
+					<CardContent class="flex flex-col gap-3 text-sm/relaxed text-muted-foreground">
+						<p>
+							The bot runs a background payout engine that queries the Twitch API to fetch all chatters currently connected to your channel.
+						</p>
+						<p>
+							Every chatter in the list is awarded the base payout amount (online or offline). If a chatter has sent a message during the current interval, they are also awarded the active chatter bonus!
+						</p>
+						<p>
+							If the channel is offline and the offline payout amount is configured to 0, the engine will skip that payout.
+						</p>
+						<Alert variant="warning">
+							<AlertDescription>
+								Updates to the payout interval take effect from the next payout run. Updates to the payout amounts will take take effect on the upcoming payout run.
+							</AlertDescription>
+						</Alert>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+		<AppFloatingSaveBar
+			:show="isModified"
+			:is-saving="isSaving"
+			title="Unsaved Payout Settings"
+			description="You have modified points settings. Save to instantly update the Twitch chat payout schedules."
+			save-text="Save Settings"
+			saving-text="Saving Settings..."
+			discard-text="Discard Changes"
+			@save="saveSettings"
+			@discard="discardChanges"
+		/>
+	</AppSettingsPage>
 </template>

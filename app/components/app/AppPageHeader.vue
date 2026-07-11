@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
 	heading: string
-	subheading: string
+	subheading?: string
 }>()
 </script>
 
@@ -29,6 +29,7 @@ defineProps<{
 					{{ heading }}
 				</h1>
 				<p
+					v-if="subheading"
 					class="
 						mt-2 max-w-3xl font-sans text-sm text-muted-foreground
 						sm:text-base

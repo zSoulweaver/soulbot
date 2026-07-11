@@ -206,307 +206,303 @@ async function refreshAll() {
 </script>
 
 <template>
-	<div>
-		<!-- Header Actions -->
-		<AppPageHeader
-			heading="Advertisements Management"
-			subheading="Monitor the upcoming commercial schedule, configure chat warning alerts, and trigger manual ad breaks."
-		>
+	<AppSettingsPage
+		heading="Advertisements Management"
+		subheading="Monitor the upcoming commercial schedule, configure chat warning alerts, and trigger manual ad breaks."
+	>
+		<template #header-actions>
 			<Button variant="ghost" :disabled="loading" @click="refreshAll">
 				<RefreshCcw :class="{ 'animate-spin': loading }" />
 			</Button>
-		</AppPageHeader>
+		</template>
+		<!-- Full Page Loader -->
+		<div v-if="loading && !settingsData" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8 text-primary" />
+			<span class="text-sm text-muted-foreground">Retrieving channel ad schedule configurations...</span>
+		</div>
 
-		<AppPageContainer>
-			<!-- Full Page Loader -->
-			<div v-if="loading && !settingsData" class="flex flex-col items-center justify-center gap-2 py-20">
-				<Spinner class="size-8 text-primary" />
-				<span class="text-sm text-muted-foreground">Retrieving channel ad schedule configurations...</span>
-			</div>
-
+		<div
+			v-else
+			class="
+				grid grid-cols-1 gap-6
+				lg:grid-cols-3
+			"
+		>
+			<!-- Left Column: Settings & Manual Controls -->
 			<div
-				v-else
 				class="
-					grid grid-cols-1 gap-6
-					lg:grid-cols-3
+					flex flex-col gap-6
+					lg:col-span-2
 				"
 			>
-				<!-- Left Column: Settings & Manual Controls -->
-				<div
-					class="
-						flex flex-col gap-6
-						lg:col-span-2
-					"
-				>
-					<SettingsGroup>
-						<SettingsGroupItem :class="{ 'border-0': !form.adsAlertsEnabled }">
+				<SettingsGroup>
+					<SettingsGroupItem :class="{ 'border-0': !form.adsAlertsEnabled }">
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Enable Chat Alerts</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Enable or disable warning alerts for scheduled ads.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<Switch v-model="form.adsAlertsEnabled" />
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+
+					<template v-if="form.adsAlertsEnabled">
+						<!-- Milestone 5m -->
+						<SettingsGroupItem>
 							<SettingsGroupContent>
-								<SettingsGroupLabel>Enable Chat Alerts</SettingsGroupLabel>
+								<SettingsGroupLabel>5 Minutes Warning Milestone</SettingsGroupLabel>
 								<SettingsGroupDescription>
-									Enable or disable warning alerts for scheduled ads.
+									Post warning alert 5 minutes before scheduled ad breaks.
 								</SettingsGroupDescription>
 							</SettingsGroupContent>
 							<SettingsGroupAction>
-								<Switch v-model="form.adsAlertsEnabled" />
+								<Switch v-model="form.adsAlert5mEnabled" />
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 
-						<template v-if="form.adsAlertsEnabled">
-							<!-- Milestone 5m -->
-							<SettingsGroupItem>
-								<SettingsGroupContent>
-									<SettingsGroupLabel>5 Minutes Warning Milestone</SettingsGroupLabel>
-									<SettingsGroupDescription>
-										Post warning alert 5 minutes before scheduled ad breaks.
-									</SettingsGroupDescription>
-								</SettingsGroupContent>
-								<SettingsGroupAction>
-									<Switch v-model="form.adsAlert5mEnabled" />
-								</SettingsGroupAction>
-							</SettingsGroupItem>
+						<!-- Milestone 3m -->
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>3 Minutes Warning Milestone</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Post warning alert 3 minutes before scheduled ad breaks.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch v-model="form.adsAlert3mEnabled" />
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-							<!-- Milestone 3m -->
-							<SettingsGroupItem>
-								<SettingsGroupContent>
-									<SettingsGroupLabel>3 Minutes Warning Milestone</SettingsGroupLabel>
-									<SettingsGroupDescription>
-										Post warning alert 3 minutes before scheduled ad breaks.
-									</SettingsGroupDescription>
-								</SettingsGroupContent>
-								<SettingsGroupAction>
-									<Switch v-model="form.adsAlert3mEnabled" />
-								</SettingsGroupAction>
-							</SettingsGroupItem>
+						<!-- Milestone 1m -->
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>1 Minute Warning Milestone</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Post warning alert 1 minute before scheduled ad breaks.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch v-model="form.adsAlert1mEnabled" />
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-							<!-- Milestone 1m -->
-							<SettingsGroupItem>
-								<SettingsGroupContent>
-									<SettingsGroupLabel>1 Minute Warning Milestone</SettingsGroupLabel>
-									<SettingsGroupDescription>
-										Post warning alert 1 minute before scheduled ad breaks.
-									</SettingsGroupDescription>
-								</SettingsGroupContent>
-								<SettingsGroupAction>
-									<Switch v-model="form.adsAlert1mEnabled" />
-								</SettingsGroupAction>
-							</SettingsGroupItem>
-
-							<!-- Info note about ad start event -->
-							<div class="px-4 py-2 text-xs text-muted-foreground">
-								Note: The final alert shown when the commercial break officially starts is managed on the
-								<NuxtLink
-									to="/admin/alerts" class="
-										font-medium text-primary
-										hover:underline
-									"
-								>
-									Alerts & Events
-								</NuxtLink>
-								page.
-							</div>
-						</template>
-					</SettingsGroup>
-
-					<FieldGroup v-if="form.adsAlertsEnabled" class="flex flex-col gap-4">
-						<Field>
-							<FieldLabel for="adsAlertTemplate">
-								Warning Message Template
-							</FieldLabel>
-							<Textarea
-								id="adsAlertTemplate"
-								v-model="form.adsAlertTemplate"
-								placeholder="e.g. Ad break of $(duration) seconds is starting in $(time)!"
-								rows="3"
-								class="w-full"
-							/>
-							<FieldDescription>
-								Customize the text posted to chat when an ad warning is triggered.
-							</FieldDescription>
-							<div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground select-none">
-								<span>Variables:</span>
-								<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(time)</code>
-								<span>(Milestone time e.g. "5 minutes")</span>
-								<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(duration)</code>
-								<span>(Break length in seconds)</span>
-							</div>
-						</Field>
-					</FieldGroup>
-				</div>
-
-				<!-- Right Column: Status & Widget Panel -->
-				<div class="flex flex-col gap-6">
-					<!-- Live Schedule Status Card -->
-					<Card>
-						<CardHeader>
-							<CardTitle class="flex items-center gap-2">
-								<Megaphone class="size-4" />
-								Ad Schedule Status
-							</CardTitle>
-							<CardDescription>
-								Real-time countdown and Twitch ad slots monitor.
-							</CardDescription>
-						</CardHeader>
-						<CardContent class="flex flex-col gap-4">
-							<div class="flex items-center justify-between text-xs">
-								<span class="font-semibold text-muted-foreground uppercase">Stream Status</span>
-								<Badge :variant="scheduleData?.isOnline ? 'default' : 'secondary'">
-									{{ scheduleData?.isOnline ? 'Online' : 'Offline' }}
-								</Badge>
-							</div>
-
-							<Separator />
-
-							<!-- Countdown block -->
-							<div class="flex flex-col gap-2">
-								<div class="flex items-center justify-between text-xs">
-									<span class="font-medium text-muted-foreground">Next Scheduled Ad break</span>
-									<span class="font-mono font-bold text-foreground">
-										{{ scheduleData?.nextAdAt ? formattedCountdown : '--:--' }}
-									</span>
-								</div>
-								<Progress :model-value="scheduleData?.nextAdAt ? Math.min(100, Math.max(0, (remainingSeconds / 1800) * 100)) : 0" class="rotate-180" />
-								<p class="text-xs text-muted-foreground/80">
-									{{ scheduleData?.nextAdAt ? `Scheduled at ${formatDate(scheduleData.nextAdAt)}` : 'No upcoming ad scheduled or stream is offline.' }}
-								</p>
-							</div>
-
-							<Separator />
-
-							<!-- Schedule statistics -->
-							<div class="grid grid-cols-2 gap-4 text-sm">
-								<div class="flex flex-col gap-1 border-r pr-2">
-									<span class="text-xs text-muted-foreground">Last Ad Break</span>
-									<span class="truncate font-semibold text-foreground">
-										{{ scheduleData?.lastAdAt ? formatDate(scheduleData.lastAdAt) : 'None' }}
-									</span>
-								</div>
-								<div class="flex flex-col gap-1 pl-2">
-									<span class="text-xs text-muted-foreground">Pre-roll Free Time</span>
-									<span class="truncate font-semibold text-foreground">
-										{{ scheduleData?.prerollFreeTime ? formatSeconds(scheduleData.prerollFreeTime) : 'None' }}
-									</span>
-								</div>
-							</div>
-
-							<Separator />
-
-							<div class="flex flex-col gap-3">
-								<div class="flex items-center justify-between text-xs">
-									<span class="font-medium text-muted-foreground">Snoozes Available</span>
-									<Badge variant="outline" class="font-mono font-semibold">
-										{{ scheduleData?.snoozeCount ?? 0 }}
-									</Badge>
-								</div>
-								<div class="flex items-center justify-between text-xs">
-									<span class="font-medium text-muted-foreground">Snooze Refresh At</span>
-									<span class="font-mono text-muted-foreground">
-										{{ scheduleData?.snoozeRefreshAt ? formatSnoozeRefresh(scheduleData.snoozeRefreshAt) : 'Ready' }}
-									</span>
-								</div>
-							</div>
-
-							<Button
-								size="sm"
-								variant="outline"
-								:disabled="isMutating || !scheduleData?.isOnline || !scheduleData?.nextAdAt || !scheduleData?.snoozeCount"
-								class="mt-2"
-								@click="snoozeAd"
-							>
-								<Spinner v-if="isMutating" data-icon="inline-start" />
-								<Timer v-else class="size-4" data-icon="inline-start" />
-								Snooze Next Ad
-							</Button>
-						</CardContent>
-					</Card>
-
-					<!-- Manual Commercial Trigger Card -->
-					<Card>
-						<CardHeader>
-							<CardTitle class="flex items-center gap-2">
-								<Play class="size-5 text-muted-foreground" />
-								Trigger Commercial
-							</CardTitle>
-							<CardDescription>
-								Manually start an ad break on your channel.
-							</CardDescription>
-						</CardHeader>
-						<CardContent class="flex flex-col gap-4">
-							<p class="text-sm text-muted-foreground">
-								Manually running a commercial break will disable pre-roll advertisements on your stream. The length must be selected in seconds.
-							</p>
-							<div
-								class="
-									flex flex-col gap-4
-									sm:flex-row sm:items-center
+						<!-- Info note about ad start event -->
+						<div class="px-4 py-2 text-xs text-muted-foreground">
+							Note: The final alert shown when the commercial break officially starts is managed on the
+							<NuxtLink
+								to="/admin/alerts" class="
+									font-medium text-primary
+									hover:underline
 								"
 							>
-								<div
-									class="
-										w-full
-										sm:w-48
-									"
-								>
-									<Select v-model="commercialLength">
-										<SelectTrigger class="w-full">
-											<SelectValue placeholder="Duration" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="30">
-												30 seconds
-											</SelectItem>
-											<SelectItem value="60">
-												60 seconds
-											</SelectItem>
-											<SelectItem value="90">
-												90 seconds
-											</SelectItem>
-											<SelectItem value="120">
-												120 seconds
-											</SelectItem>
-											<SelectItem value="150">
-												150 seconds
-											</SelectItem>
-											<SelectItem value="180">
-												180 seconds
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-								<Button
-									:disabled="isMutating || !scheduleData?.isOnline"
-									variant="default"
-									class="
-										w-full
-										sm:w-auto
-									"
-									@click="triggerCommercial"
-								>
-									<Spinner v-if="isMutating" data-icon="inline-start" />
-									<Play v-else class="size-4" data-icon="inline-start" />
-									Trigger Ad Break
-								</Button>
-							</div>
-							<div v-if="scheduleData && !scheduleData.isOnline" class="flex items-center gap-2 text-xs text-amber-500">
-								<AlertCircle class="size-4" />
-								Stream must be live to trigger manual commercials.
-							</div>
-						</CardContent>
-					</Card>
-				</div>
+								Alerts & Events
+							</NuxtLink>
+							page.
+						</div>
+					</template>
+				</SettingsGroup>
+
+				<FieldGroup v-if="form.adsAlertsEnabled" class="flex flex-col gap-4">
+					<Field>
+						<FieldLabel for="adsAlertTemplate">
+							Warning Message Template
+						</FieldLabel>
+						<Textarea
+							id="adsAlertTemplate"
+							v-model="form.adsAlertTemplate"
+							placeholder="e.g. Ad break of $(duration) seconds is starting in $(time)!"
+							rows="3"
+							class="w-full"
+						/>
+						<FieldDescription>
+							Customize the text posted to chat when an ad warning is triggered.
+						</FieldDescription>
+						<div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground select-none">
+							<span>Variables:</span>
+							<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(time)</code>
+							<span>(Milestone time e.g. "5 minutes")</span>
+							<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(duration)</code>
+							<span>(Break length in seconds)</span>
+						</div>
+					</Field>
+				</FieldGroup>
 			</div>
 
-			<!-- Save bar -->
-			<AppFloatingSaveBar
-				:show="isModified"
-				:is-saving="isSaving"
-				title="Unsaved Advertisement Settings"
-				description="You have modified warning chat alerts. Save to instantly update the bot alerts."
-				save-text="Save Settings"
-				saving-text="Saving Settings..."
-				discard-text="Discard Changes"
-				@save="saveAdSettings"
-				@discard="discardChanges"
-			/>
-		</AppPageContainer>
-	</div>
+			<!-- Right Column: Status & Widget Panel -->
+			<div class="flex flex-col gap-6">
+				<!-- Live Schedule Status Card -->
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<Megaphone class="size-4" />
+							Ad Schedule Status
+						</CardTitle>
+						<CardDescription>
+							Real-time countdown and Twitch ad slots monitor.
+						</CardDescription>
+					</CardHeader>
+					<CardContent class="flex flex-col gap-4">
+						<div class="flex items-center justify-between text-xs">
+							<span class="font-semibold text-muted-foreground uppercase">Stream Status</span>
+							<Badge :variant="scheduleData?.isOnline ? 'default' : 'secondary'">
+								{{ scheduleData?.isOnline ? 'Online' : 'Offline' }}
+							</Badge>
+						</div>
+
+						<Separator />
+
+						<!-- Countdown block -->
+						<div class="flex flex-col gap-2">
+							<div class="flex items-center justify-between text-xs">
+								<span class="font-medium text-muted-foreground">Next Scheduled Ad break</span>
+								<span class="font-mono font-bold text-foreground">
+									{{ scheduleData?.nextAdAt ? formattedCountdown : '--:--' }}
+								</span>
+							</div>
+							<Progress :model-value="scheduleData?.nextAdAt ? Math.min(100, Math.max(0, (remainingSeconds / 1800) * 100)) : 0" class="rotate-180" />
+							<p class="text-xs text-muted-foreground/80">
+								{{ scheduleData?.nextAdAt ? `Scheduled at ${formatDate(scheduleData.nextAdAt)}` : 'No upcoming ad scheduled or stream is offline.' }}
+							</p>
+						</div>
+
+						<Separator />
+
+						<!-- Schedule statistics -->
+						<div class="grid grid-cols-2 gap-4 text-sm">
+							<div class="flex flex-col gap-1 border-r pr-2">
+								<span class="text-xs text-muted-foreground">Last Ad Break</span>
+								<span class="truncate font-semibold text-foreground">
+									{{ scheduleData?.lastAdAt ? formatDate(scheduleData.lastAdAt) : 'None' }}
+								</span>
+							</div>
+							<div class="flex flex-col gap-1 pl-2">
+								<span class="text-xs text-muted-foreground">Pre-roll Free Time</span>
+								<span class="truncate font-semibold text-foreground">
+									{{ scheduleData?.prerollFreeTime ? formatSeconds(scheduleData.prerollFreeTime) : 'None' }}
+								</span>
+							</div>
+						</div>
+
+						<Separator />
+
+						<div class="flex flex-col gap-3">
+							<div class="flex items-center justify-between text-xs">
+								<span class="font-medium text-muted-foreground">Snoozes Available</span>
+								<Badge variant="outline" class="font-mono font-semibold">
+									{{ scheduleData?.snoozeCount ?? 0 }}
+								</Badge>
+							</div>
+							<div class="flex items-center justify-between text-xs">
+								<span class="font-medium text-muted-foreground">Snooze Refresh At</span>
+								<span class="font-mono text-muted-foreground">
+									{{ scheduleData?.snoozeRefreshAt ? formatSnoozeRefresh(scheduleData.snoozeRefreshAt) : 'Ready' }}
+								</span>
+							</div>
+						</div>
+
+						<Button
+							size="sm"
+							variant="outline"
+							:disabled="isMutating || !scheduleData?.isOnline || !scheduleData?.nextAdAt || !scheduleData?.snoozeCount"
+							class="mt-2"
+							@click="snoozeAd"
+						>
+							<Spinner v-if="isMutating" data-icon="inline-start" />
+							<Timer v-else class="size-4" data-icon="inline-start" />
+							Snooze Next Ad
+						</Button>
+					</CardContent>
+				</Card>
+
+				<!-- Manual Commercial Trigger Card -->
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<Play class="size-5 text-muted-foreground" />
+							Trigger Commercial
+						</CardTitle>
+						<CardDescription>
+							Manually start an ad break on your channel.
+						</CardDescription>
+					</CardHeader>
+					<CardContent class="flex flex-col gap-4">
+						<p class="text-sm text-muted-foreground">
+							Manually running a commercial break will disable pre-roll advertisements on your stream. The length must be selected in seconds.
+						</p>
+						<div
+							class="
+								flex flex-col gap-4
+								sm:flex-row sm:items-center
+							"
+						>
+							<div
+								class="
+									w-full
+									sm:w-48
+								"
+							>
+								<Select v-model="commercialLength">
+									<SelectTrigger class="w-full">
+										<SelectValue placeholder="Duration" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="30">
+											30 seconds
+										</SelectItem>
+										<SelectItem value="60">
+											60 seconds
+										</SelectItem>
+										<SelectItem value="90">
+											90 seconds
+										</SelectItem>
+										<SelectItem value="120">
+											120 seconds
+										</SelectItem>
+										<SelectItem value="150">
+											150 seconds
+										</SelectItem>
+										<SelectItem value="180">
+											180 seconds
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<Button
+								:disabled="isMutating || !scheduleData?.isOnline"
+								variant="default"
+								class="
+									w-full
+									sm:w-auto
+								"
+								@click="triggerCommercial"
+							>
+								<Spinner v-if="isMutating" data-icon="inline-start" />
+								<Play v-else class="size-4" data-icon="inline-start" />
+								Trigger Ad Break
+							</Button>
+						</div>
+						<div v-if="scheduleData && !scheduleData.isOnline" class="flex items-center gap-2 text-xs text-amber-500">
+							<AlertCircle class="size-4" />
+							Stream must be live to trigger manual commercials.
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+
+		<!-- Save bar -->
+		<AppFloatingSaveBar
+			:show="isModified"
+			:is-saving="isSaving"
+			title="Unsaved Advertisement Settings"
+			description="You have modified warning chat alerts. Save to instantly update the bot alerts."
+			save-text="Save Settings"
+			saving-text="Saving Settings..."
+			discard-text="Discard Changes"
+			@save="saveAdSettings"
+			@discard="discardChanges"
+		/>
+	</AppSettingsPage>
 </template>

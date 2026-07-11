@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Bell, BellOff, ChevronDown, Hash, HelpCircle, Keyboard } from '@lucide/vue'
+import { Bell, BellOff, Hash, HelpCircle, Keyboard } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import { ConfigAccordion } from '~/components/ui/config-accordion'
 import {
 	SettingsGroup,
 	SettingsGroupAction,
@@ -129,64 +130,43 @@ function onToggleAlert(val: boolean) {
 </script>
 
 <template>
-	<Collapsible v-model:open="isExpanded" class="flex flex-col gap-4">
-		<!-- Section Header -->
-		<div class="flex items-start justify-between gap-4">
-			<CollapsibleTrigger class="group flex flex-1 cursor-pointer items-start gap-2 text-left outline-none select-none">
-				<div class="flex flex-col gap-1">
-					<h3
-						class="
-							flex items-center gap-2 text-lg font-semibold transition-colors
-							group-hover:text-primary
-						"
-					>
-						<Bell
-							v-if="alertEnabled"
-							class="size-5 text-primary transition-colors"
-						/>
-						<BellOff
-							v-else
-							class="
-								size-5 text-muted-foreground transition-colors
-								group-hover:text-primary
-							"
-						/>
-						{{ props.title }}
-						<ChevronDown
-							class="
-								size-4 text-muted-foreground transition-transform duration-200
-								group-hover:text-primary
-							" :class="[
-								isExpanded ? 'rotate-180 text-primary' : '',
-							]"
-						/>
-					</h3>
-					<p class="text-sm text-muted-foreground">
-						{{ props.description }}
-					</p>
-				</div>
-			</CollapsibleTrigger>
+	<ConfigAccordion
+		v-model="isExpanded"
+		:title="props.title"
+		:description="props.description"
+	>
+		<template #icon>
+			<Bell
+				v-if="alertEnabled"
+				class="size-5 text-primary transition-colors"
+			/>
+			<BellOff
+				v-else
+				class="
+					size-5 text-muted-foreground transition-colors
+					group-hover:text-primary
+				"
+			/>
+		</template>
 
+		<template #header-action>
 			<Switch
 				v-model:model-value="alertEnabled"
 				:disabled="props.disabled"
-				size="lg"
 				@update:model-value="onToggleAlert"
 			/>
-		</div>
+		</template>
 
-		<!-- Options Content -->
-		<CollapsibleContent
-			class="
-				flex flex-col gap-4 overflow-hidden
-				data-[state=closed]:animate-collapsible-up
-				data-[state=open]:animate-collapsible-down
-			"
-		>
+		<div class="flex flex-col gap-6">
 			<!-- Options Group -->
-			<SettingsGroup>
+			<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
 				<!-- Target Channel selector -->
-				<SettingsGroupItem>
+				<SettingsGroupItem
+					class="
+						border-b border-border/30 px-0 py-5
+						last:border-b-0
+					"
+				>
 					<SettingsGroupContent>
 						<SettingsGroupLabel>Target Channel</SettingsGroupLabel>
 						<SettingsGroupDescription>
@@ -305,6 +285,6 @@ function onToggleAlert(val: boolean) {
 					</Field>
 				</FieldGroup>
 			</div>
-		</CollapsibleContent>
-	</Collapsible>
+		</div>
+	</ConfigAccordion>
 </template>

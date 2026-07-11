@@ -81,157 +81,153 @@ function toggleRowExpanded(name: string) {
 </script>
 
 <template>
-	<div>
-		<AppPageHeader
-			heading="Command Variables"
-			:subheading="`Self-documenting reference guide for placeholders, parameters, and database counters supported inside ${botName} custom commands.`"
-		/>
+	<AppSettingsPage
+		heading="Command Variables"
+		:subheading="`Self-documenting reference guide for placeholders, parameters, and database counters supported inside ${botName} custom commands.`"
+	>
+		<!-- Loading state -->
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
+			<Spinner class="size-8" />
+			<span class="text-sm text-muted-foreground">
+				Loading variable documentation registry...
+			</span>
+		</div>
 
-		<AppPageContainer>
-			<!-- Loading state -->
-			<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
-				<Spinner class="size-8" />
-				<span class="text-sm text-muted-foreground">
-					Loading variable documentation registry...
-				</span>
-			</div>
+		<div v-else class="flex flex-col gap-4">
+			<!-- Pro Tip Helper alert box -->
+			<Alert variant="info">
+				<AlertTitle>
+					Pro Tip: Innermost Expression Parsing
+				</AlertTitle>
+				<AlertDescription>
+					The bot processes nested placeholder variables from the **inside out**.
+					For example, if you write <code>$(count $(1) +1)</code> and trigger the command via <code>!score bob</code>,
+					the bot will first resolve the positional variable <code>$(1)</code> to <code>bob</code>, resulting in <code>$(count bob +1)</code>,
+					and then increment/evaluate the named persistent counter <code>bob</code>.
+				</AlertDescription>
+			</Alert>
 
-			<div v-else class="flex flex-col gap-4">
-				<!-- Pro Tip Helper alert box -->
-				<Alert variant="info">
-					<AlertTitle>
-						Pro Tip: Innermost Expression Parsing
-					</AlertTitle>
-					<AlertDescription>
-						The bot processes nested placeholder variables from the **inside out**.
-						For example, if you write <code>$(count $(1) +1)</code> and trigger the command via <code>!score bob</code>,
-						the bot will first resolve the positional variable <code>$(1)</code> to <code>bob</code>, resulting in <code>$(count bob +1)</code>,
-						and then increment/evaluate the named persistent counter <code>bob</code>.
-					</AlertDescription>
-				</Alert>
+			<!-- Search & Filtration Row -->
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<Search class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search variables, aliases or behavior..."
+				/>
+			</InputGroup>
 
-				<!-- Search & Filtration Row -->
-				<InputGroup class="w-full max-w-sm">
-					<InputGroupAddon>
-						<Search class="text-muted-foreground" />
-					</InputGroupAddon>
-					<InputGroupInput
-						v-model="searchQuery"
-						type="search"
-						placeholder="Search variables, aliases or behavior..."
-					/>
-				</InputGroup>
+			<!-- Unified Data Table of Variables -->
+			<div class="relative overflow-hidden rounded-xl border">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead class="w-10" />
+							<TableHead class="w-1/4">
+								Variable Trigger
+							</TableHead>
+							<TableHead class="w-1/6">
+								Aliases
+							</TableHead>
+							<TableHead>
+								Description
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						<TableRow v-if="filteredVariables.length === 0">
+							<TableCell colspan="4" class="py-12 text-center text-muted-foreground">
+								No variables found matching your search.
+							</TableCell>
+						</TableRow>
+						<template v-for="variable in filteredVariables" v-else :key="variable.name">
+							<!-- Primary Row -->
+							<TableRow
+								class="cursor-pointer transition-colors"
+								:class="{ 'border-b-0': expandedRows[variable.name] }"
+								@click="toggleRowExpanded(variable.name)"
+							>
+								<!-- Expand chevron button -->
+								<TableCell class="text-center">
+									<div class="flex items-center justify-center">
+										<ChevronRight
+											class="size-4 text-muted-foreground transition-transform duration-200"
+											:class="{ 'rotate-90 text-primary': expandedRows[variable.name] }"
+										/>
+									</div>
+								</TableCell>
 
-				<!-- Unified Data Table of Variables -->
-				<div class="relative overflow-hidden rounded-xl border">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead class="w-10" />
-								<TableHead class="w-1/4">
-									Variable Trigger
-								</TableHead>
-								<TableHead class="w-1/6">
-									Aliases
-								</TableHead>
-								<TableHead>
-									Description
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<TableRow v-if="filteredVariables.length === 0">
-								<TableCell colspan="4" class="py-12 text-center text-muted-foreground">
-									No variables found matching your search.
+								<!-- Variable placeholder tag -->
+								<TableCell class="font-mono">
+									$({{ variable.name }})
+								</TableCell>
+
+								<!-- Alternate aliases -->
+								<TableCell>
+									<div class="flex flex-wrap gap-1">
+										<Badge
+											v-for="alias in variable.aliases"
+											:key="alias"
+											variant="secondary"
+											class="font-mono text-xs"
+										>
+											$({{ alias }})
+										</Badge>
+										<span v-if="!variable.aliases?.length" class="text-xs text-muted-foreground/40 italic select-none">
+											None
+										</span>
+									</div>
+								</TableCell>
+
+								<!-- Primary description -->
+								<TableCell class="whitespace-normal text-muted-foreground">
+									{{ variable.description }}
 								</TableCell>
 							</TableRow>
-							<template v-for="variable in filteredVariables" v-else :key="variable.name">
-								<!-- Primary Row -->
-								<TableRow
-									class="cursor-pointer transition-colors"
-									:class="{ 'border-b-0': expandedRows[variable.name] }"
-									@click="toggleRowExpanded(variable.name)"
+
+							<!-- Secondary Collapsible Examples Row -->
+							<TableRow
+								v-if="expandedRows[variable.name]"
+							>
+								<TableCell
+									colspan="4" class="bg-background! p-2"
 								>
-									<!-- Expand chevron button -->
-									<TableCell class="text-center">
-										<div class="flex items-center justify-center">
-											<ChevronRight
-												class="size-4 text-muted-foreground transition-transform duration-200"
-												:class="{ 'rotate-90 text-primary': expandedRows[variable.name] }"
-											/>
+									<div class="ml-10 flex flex-col gap-2 border-l border-border py-1.5 pl-4">
+										<div class="overflow-hidden rounded-lg border">
+											<Table class="w-full">
+												<TableBody>
+													<TableRow
+														v-for="example in variable.examples"
+														:key="example.syntax"
+														class="
+															border-border/30
+															last:border-none
+														"
+													>
+														<!-- Code syntax badge -->
+														<TableCell class="w-1/3 px-4">
+															<Badge variant="secondary" class="font-mono text-xs font-bold">
+																{{ example.syntax }}
+															</Badge>
+														</TableCell>
+
+														<!-- Example Description -->
+														<TableCell class="w-2/3 px-4 text-xs whitespace-normal text-muted-foreground">
+															{{ example.description }}
+														</TableCell>
+													</TableRow>
+												</TableBody>
+											</Table>
 										</div>
-									</TableCell>
-
-									<!-- Variable placeholder tag -->
-									<TableCell class="font-mono">
-										$({{ variable.name }})
-									</TableCell>
-
-									<!-- Alternate aliases -->
-									<TableCell>
-										<div class="flex flex-wrap gap-1">
-											<Badge
-												v-for="alias in variable.aliases"
-												:key="alias"
-												variant="secondary"
-												class="font-mono text-xs"
-											>
-												$({{ alias }})
-											</Badge>
-											<span v-if="!variable.aliases?.length" class="text-xs text-muted-foreground/40 italic select-none">
-												None
-											</span>
-										</div>
-									</TableCell>
-
-									<!-- Primary description -->
-									<TableCell class="whitespace-normal text-muted-foreground">
-										{{ variable.description }}
-									</TableCell>
-								</TableRow>
-
-								<!-- Secondary Collapsible Examples Row -->
-								<TableRow
-									v-if="expandedRows[variable.name]"
-								>
-									<TableCell
-										colspan="4" class="bg-background! p-2"
-									>
-										<div class="ml-10 flex flex-col gap-2 border-l border-border py-1.5 pl-4">
-											<div class="overflow-hidden rounded-lg border">
-												<Table class="w-full">
-													<TableBody>
-														<TableRow
-															v-for="example in variable.examples"
-															:key="example.syntax"
-															class="
-																border-border/30
-																last:border-none
-															"
-														>
-															<!-- Code syntax badge -->
-															<TableCell class="w-1/3 px-4">
-																<Badge variant="secondary" class="font-mono text-xs font-bold">
-																	{{ example.syntax }}
-																</Badge>
-															</TableCell>
-
-															<!-- Example Description -->
-															<TableCell class="w-2/3 px-4 text-xs whitespace-normal text-muted-foreground">
-																{{ example.description }}
-															</TableCell>
-														</TableRow>
-													</TableBody>
-												</Table>
-											</div>
-										</div>
-									</TableCell>
-								</TableRow>
-							</template>
-						</TableBody>
-					</Table>
-				</div>
+									</div>
+								</TableCell>
+							</TableRow>
+						</template>
+					</TableBody>
+				</Table>
 			</div>
-		</AppPageContainer>
-	</div>
+		</div>
+	</AppSettingsPage>
 </template>

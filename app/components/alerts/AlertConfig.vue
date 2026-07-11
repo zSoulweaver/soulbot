@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Bell, BellOff, ChevronDown, HelpCircle, MessageSquare, PiggyBank } from '@lucide/vue'
+import { Bell, BellOff, HelpCircle, MessageSquare, PiggyBank } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import { ConfigAccordion } from '~/components/ui/config-accordion'
 
 const props = withDefaults(
 	defineProps<{
@@ -136,46 +137,28 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 </script>
 
 <template>
-	<Collapsible v-model:open="isExpanded" class="flex flex-col gap-4">
-		<!-- Section Header -->
-		<div class="flex items-start justify-between gap-4">
-			<CollapsibleTrigger class="group flex flex-1 cursor-pointer items-start gap-2 text-left outline-none select-none">
-				<div class="flex flex-col gap-1">
-					<h3
-						class="
-							flex items-center gap-2 text-lg font-semibold transition-colors
-							group-hover:text-primary
-						"
-					>
-						<Bell
-							v-if="alertEnabled || (!props.hidePoints && pointsEnabled)"
-							class="size-5 text-primary transition-colors"
-						/>
-						<BellOff
-							v-else
-							class="
-								size-5 text-muted-foreground transition-colors
-								group-hover:text-primary
-							"
-						/>
-						{{ props.title }}
-						<ChevronDown
-							class="
-								size-4 text-muted-foreground transition-transform duration-200
-								group-hover:text-primary
-							" :class="[
-								isExpanded ? 'rotate-180 text-primary' : '',
-							]"
-						/>
-					</h3>
-					<p class="text-sm text-muted-foreground">
-						{{ props.description }}
-					</p>
-				</div>
-			</CollapsibleTrigger>
+	<ConfigAccordion
+		v-model="isExpanded"
+		:title="props.title"
+		:description="props.description"
+	>
+		<template #icon>
+			<Bell
+				v-if="alertEnabled || (!props.hidePoints && pointsEnabled)"
+				class="size-5 text-primary transition-colors"
+			/>
+			<BellOff
+				v-else
+				class="
+					size-5 text-muted-foreground transition-colors
+					group-hover:text-primary
+				"
+			/>
+		</template>
 
+		<template #header-action>
 			<!-- Right-aligned Status Badges -->
-			<div class="flex items-center gap-2 pt-1 select-none">
+			<div class="flex items-center gap-2 select-none">
 				<!-- Points Badge -->
 				<template v-if="!props.hidePoints">
 					<Badge
@@ -217,24 +200,19 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 					Chat disabled
 				</Badge>
 			</div>
-		</div>
+		</template>
 
-		<!-- Options Content -->
-		<CollapsibleContent
-			class="
-				grid grid-cols-1 gap-6 overflow-hidden
-				data-[state=closed]:animate-collapsible-up
-				data-[state=open]:animate-collapsible-down
-			" :class="[
-				!props.hidePoints ? 'md:grid-cols-2' : '',
-			]"
+		<!-- Two column grid for Points vs Chat configuration (Flattened, no dark backgrounds!) -->
+		<div
+			class="grid grid-cols-1 gap-12"
+			:class="{ 'md:grid-cols-2': !props.hidePoints }"
 		>
 			<!-- Points Reward Settings -->
 			<div v-if="!props.hidePoints" class="flex flex-col gap-4">
-				<Item variant="muted">
+				<Item class="border-none bg-transparent px-0 py-2 shadow-none">
 					<ItemContent>
-						<ItemTitle>
-							<PiggyBank class="size-4" />
+						<ItemTitle class="flex items-center gap-2">
+							<PiggyBank class="size-4 text-muted-foreground" />
 							Reward Points
 						</ItemTitle>
 						<ItemDescription>
@@ -246,7 +224,7 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 					</ItemActions>
 				</Item>
 
-				<div v-if="pointsEnabled" class="flex animate-in flex-col gap-3 duration-200 fade-in slide-in-from-top-2">
+				<div v-if="pointsEnabled" class="flex animate-in flex-col gap-3 pt-2 duration-200 fade-in slide-in-from-top-2">
 					<Label :for="`${props.title}-points`">
 						{{ props.pointsLabel || 'Points Reward Amount' }}
 					</Label>
@@ -265,10 +243,10 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 
 			<!-- Chat Alert Settings -->
 			<div class="flex flex-col gap-4">
-				<Item variant="muted">
+				<Item class="border-none bg-transparent px-0 py-2 shadow-none">
 					<ItemContent>
-						<ItemTitle>
-							<Bell class="size-4" />
+						<ItemTitle class="flex items-center gap-2">
+							<Bell class="size-4 text-muted-foreground" />
 							Chat Message Alert
 						</ItemTitle>
 						<ItemDescription>
@@ -280,7 +258,7 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 					</ItemActions>
 				</Item>
 
-				<div v-if="alertEnabled" class="flex animate-in flex-col gap-3 duration-200 fade-in slide-in-from-top-2">
+				<div v-if="alertEnabled" class="flex animate-in flex-col gap-3 pt-2 duration-200 fade-in slide-in-from-top-2">
 					<Label :for="`${props.title}-template`">
 						Chat Announcement Message
 					</Label>
@@ -332,6 +310,6 @@ watch([alertEnabled, pointsEnabled], ([newAlert, newPoints], [oldAlert, oldPoint
 					</div>
 				</div>
 			</div>
-		</CollapsibleContent>
-	</Collapsible>
+		</div>
+	</ConfigAccordion>
 </template>

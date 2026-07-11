@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, ListMusic, Music, Plus, Radio, RefreshCcw, X } from '@lucide/vue'
+import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, Music, Plus, Radio, RefreshCcw, X } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
@@ -26,6 +26,7 @@ import {
 	SettingsGroupItem,
 	SettingsGroupLabel,
 } from '~/components/ui/settings-group'
+import { SettingsHeading } from '~/components/ui/settings-heading'
 
 const { loggedIn, user } = useUserSession()
 const { public: { botName } } = useRuntimeConfig()
@@ -315,28 +316,30 @@ function formatTime(ms?: number) {
 </script>
 
 <template>
-	<div>
-		<AppPageHeader heading="Spotify Integration" subheading="Manage Spotify authentication, automated queue requests, and saved playlists.">
+	<AppSettingsPage
+		heading="Spotify Integration"
+		subheading="Manage Spotify authentication, automated queue requests, and saved playlists."
+	>
+		<template #header-actions>
 			<Button variant="ghost" :disabled="pending || status?.rateLimited" @click="handleRefresh">
 				<RefreshCcw :class="{ 'animate-spin': pending }" />
 				{{ status?.rateLimited ? 'Rate Limited' : '' }}
 			</Button>
-		</AppPageHeader>
-
-		<AppPageContainer>
-			<!-- Loading State -->
-			<div v-if="(pending && !status) || (loadingSettings && !settingsData)" class="flex items-center justify-center p-12">
-				<div class="flex flex-col items-center gap-2">
-					<Spinner class="size-8" />
-					<p class="text-muted-foreground">
-						Loading Spotify status...
-					</p>
-				</div>
+		</template>
+		<!-- Loading State -->
+		<div v-if="(pending && !status) || (loadingSettings && !settingsData)" class="flex items-center justify-center p-12">
+			<div class="flex flex-col items-center gap-2">
+				<Spinner class="size-8" />
+				<p class="text-muted-foreground">
+					Loading Spotify status...
+				</p>
 			</div>
+		</div>
 
-			<template v-else-if="status">
+		<template v-else-if="status">
+			<div class="flex w-full flex-col gap-6">
 				<!-- Disconnected / Connect Action Card -->
-				<div v-if="!status.connected">
+				<div v-if="!status.connected" class="w-full max-w-3xl">
 					<Item variant="outline" class="justify-between gap-4">
 						<div class="flex items-center gap-3">
 							<div class="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -365,20 +368,15 @@ function formatTime(ms?: number) {
 					</Item>
 				</div>
 
-				<!-- Connected State Grid Layout -->
+				<!-- Connected State Flex Layout -->
 				<div
 					v-else class="
-						grid grid-cols-1 gap-6
-						xl:grid-cols-3
+						flex flex-col gap-8
+						xl:flex-row xl:items-start
 					"
 				>
 					<!-- Left Column -->
-					<div
-						class="
-							flex flex-col gap-8
-							xl:col-span-2
-						"
-					>
+					<div class="flex w-full max-w-3xl flex-col gap-8">
 						<!-- Spotify Connection Info Item -->
 						<Item variant="outline" class="justify-between gap-4">
 							<div class="flex items-center gap-3">
@@ -504,10 +502,9 @@ function formatTime(ms?: number) {
 
 						<!-- Settings Section 1: Song Request Settings -->
 						<div class="flex flex-col gap-4">
-							<h3 class="flex items-center gap-2 text-lg font-semibold">
-								<Radio class="size-5 text-muted-foreground" />
+							<SettingsHeading>
 								Song Request Settings
-							</h3>
+							</SettingsHeading>
 
 							<Item variant="outline">
 								<ItemContent>
@@ -593,7 +590,7 @@ function formatTime(ms?: number) {
 							</div>
 							<FieldGroup
 								class="
-									grid grid-cols-1 gap-4
+									grid grid-cols-1 gap-x-8 gap-y-6
 									md:grid-cols-2
 								"
 							>
@@ -654,8 +651,13 @@ function formatTime(ms?: number) {
 								</Field>
 							</FieldGroup>
 
-							<SettingsGroup>
-								<SettingsGroupItem>
+							<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Restrict to Followers Only</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -666,7 +668,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.followersOnly" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Permit Explicit Tracks</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -677,7 +684,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.permitExplicit" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Allow Offline Song Requests</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -688,7 +700,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.offlineOverride" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Moderators Limit Bypass</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -699,7 +716,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.modsBypassLimits" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Announce Low Queue in Chat</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -710,7 +732,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.alertQueueLowEnabled" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Announce Queue Finished in Chat</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -724,14 +751,11 @@ function formatTime(ms?: number) {
 							</SettingsGroup>
 						</div>
 
-						<Separator />
-
 						<!-- Settings Section 2: Save-to-Playlist Integration -->
 						<div class="flex flex-col gap-4">
-							<h3 class="flex items-center gap-2 text-lg font-semibold">
-								<ListMusic class="size-5 text-muted-foreground" />
+							<SettingsHeading>
 								Save-to-Playlist Integration
-							</h3>
+							</SettingsHeading>
 
 							<FieldGroup class="grid grid-cols-1 gap-4">
 								<Field>
@@ -806,8 +830,13 @@ function formatTime(ms?: number) {
 								</Field>
 							</FieldGroup>
 
-							<SettingsGroup>
-								<SettingsGroupItem>
+							<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Allow Moderators to Like Songs</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -818,7 +847,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.allowModerators" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Whisper Save Notifications</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -829,7 +863,12 @@ function formatTime(ms?: number) {
 										<Switch v-model:model-value="form.whisperNotifications" />
 									</SettingsGroupAction>
 								</SettingsGroupItem>
-								<SettingsGroupItem>
+								<SettingsGroupItem
+									class="
+										border-b border-border/30 px-0 py-5
+										last:border-b-0
+									"
+								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
 										<SettingsGroupDescription>
@@ -847,7 +886,7 @@ function formatTime(ms?: number) {
 					<div
 						class="
 							hidden
-							xl:col-span-1 xl:block
+							xl:block xl:w-lg xl:shrink-0
 						"
 					>
 						<SpotifyPlayer
@@ -858,20 +897,20 @@ function formatTime(ms?: number) {
 						/>
 					</div>
 				</div>
-			</template>
+			</div>
+		</template>
 
-			<!-- Unsaved settings floating save bar -->
-			<AppFloatingSaveBar
-				:show="isModified"
-				:is-saving="isSaving"
-				title="Unsaved Spotify Settings"
-				description="You have modified Spotify settings. Save to update configurations."
-				save-text="Save Settings"
-				saving-text="Saving Settings..."
-				discard-text="Discard Changes"
-				@save="saveSettings"
-				@discard="discardChanges"
-			/>
-		</AppPageContainer>
-	</div>
+		<!-- Unsaved settings floating save bar -->
+		<AppFloatingSaveBar
+			:show="isModified"
+			:is-saving="isSaving"
+			title="Unsaved Spotify Settings"
+			description="You have modified Spotify settings. Save to update configurations."
+			save-text="Save Settings"
+			saving-text="Saving Settings..."
+			discard-text="Discard Changes"
+			@save="saveSettings"
+			@discard="discardChanges"
+		/>
+	</AppSettingsPage>
 </template>

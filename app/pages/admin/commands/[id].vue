@@ -261,268 +261,265 @@ async function saveTemplates() {
 			Command not found in registry.
 		</div>
 
-		<div v-else class="flex flex-1 flex-col gap-6">
-			<!-- Header Block -->
-			<AppPageHeader
-				:heading="`Response Customizer - !${command.activeTrigger}`"
-				subheading="Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly."
-			>
+		<AppSettingsPage
+			v-else
+			:heading="`Response Customizer - !${command.activeTrigger}`"
+			subheading="Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly."
+		>
+			<template #header-actions>
 				<Button variant="ghost" :disabled="loading" @click="refreshCommands">
 					<RefreshCcw :class="{ 'animate-spin': loading }" />
 				</Button>
-			</AppPageHeader>
+			</template>
+			<ClientOnly>
+				<!-- Dynamic Left-Right Sidebar Workspace -->
+				<div
+					class="
+						grid flex-1 grid-cols-1 items-start gap-6
+						xl:grid-cols-4
+					"
+				>
+					<!-- Left Sidebar: Triggers & Global Variables -->
+					<div
+						class="
+							flex flex-col gap-6
+							xl:col-span-1
+						"
+					>
+						<!-- Sidebar: Execution Path Selectors -->
+						<div class="flex flex-col gap-3">
+							<h2 class="px-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+								Command & Subcommand Triggers
+							</h2>
+							<div
+								class="
+									flex flex-col gap-1 overflow-x-auto
+									xl:overflow-x-visible
+								"
+							>
+								<!-- Root Option -->
+								<Button
+									class="w-full justify-between gap-2 transition-all duration-200"
+									:variant="activePathFilter === 'root' ? 'secondary' : 'ghost'"
+									:class="{ 'bg-secondary/80 font-bold': activePathFilter === 'root' }"
+									style="padding-left: 12px;"
+									@click="activePathFilter = 'root'"
+								>
+									<div class="flex min-w-0 items-center gap-2">
+										<Terminal class="size-3.5 shrink-0 text-muted-foreground/60" />
+										<span class="truncate text-left font-mono text-xs">Root (!{{ command.activeTrigger }})</span>
+									</div>
+									<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
+										{{ command.templates?.length || 0 }}
+									</Badge>
+								</Button>
 
-			<AppPageContainer>
-				<ClientOnly>
-					<!-- Dynamic Left-Right Sidebar Workspace -->
+								<!-- Subcommands options -->
+								<template v-if="flatSubcommands.length > 0">
+									<template v-for="sub in flatSubcommands" :key="sub.key">
+										<!-- Route group header (no handler) -->
+										<div
+											v-if="!sub.hasHandler"
+											class="flex w-full items-center justify-between gap-2 py-1.5 pr-4 text-muted-foreground/80 select-none"
+											:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
+										>
+											<div class="flex min-w-0 items-center gap-2">
+												<Folder class="size-3.5 shrink-0 text-muted-foreground/60" />
+												<span class="truncate text-left font-mono text-xs font-semibold">{{ sub.name }}</span>
+											</div>
+											<span class="shrink-0 text-[9px] font-bold tracking-wider text-muted-foreground/40 uppercase">Group</span>
+										</div>
+
+										<!-- Actual command option (has handler) -->
+										<Button
+											v-else
+											class="w-full justify-between gap-2 transition-all duration-200"
+											:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
+											:class="{ 'bg-secondary/80 font-bold': activePathFilter === sub.key }"
+											:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
+											@click="activePathFilter = sub.key"
+										>
+											<div class="flex min-w-0 items-center gap-2">
+												<CornerDownRight class="size-3.5 shrink-0 text-muted-foreground/60" />
+												<span class="truncate text-left font-mono text-xs">{{ sub.name }}</span>
+											</div>
+											<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
+												{{ sub.templates?.length || 0 }}
+											</Badge>
+										</Button>
+									</template>
+								</template>
+							</div>
+						</div>
+
+						<!-- Left Sidebar: Global & Custom Variables -->
+						<Card class="flex flex-col">
+							<CardHeader>
+								<CardTitle class="text-sm font-bold">
+									Global Variables
+								</CardTitle>
+								<CardDescription class="text-xs">
+									Global and utility variables that can be resolved in any command response. Click to copy.
+								</CardDescription>
+							</CardHeader>
+							<CardContent class="flex flex-col gap-3">
+								<!-- Search Input -->
+								<div class="relative w-full items-center">
+									<Input
+										v-model="varSearch"
+										placeholder="Search variables..."
+										class="h-9 pl-9 text-xs"
+									/>
+									<span class="absolute inset-y-0 inset-s-0 flex items-center justify-center px-3">
+										<Search class="size-3.5 text-muted-foreground" />
+									</span>
+								</div>
+
+								<!-- Scrollable List -->
+								<ScrollArea class="max-h-125 overflow-y-auto">
+									<div class="flex flex-col gap-2.5">
+										<div v-if="filteredVariables.length === 0" class="py-6 text-center text-muted-foreground italic select-none">
+											No matching variables found
+										</div>
+										<div
+											v-for="v in filteredVariables"
+											:key="v.name"
+											class="
+												flex flex-col gap-1.5 rounded-md border p-2 transition-colors
+												hover:bg-accent/40
+											"
+										>
+											<div class="flex flex-wrap items-center justify-between gap-2">
+												<Badge
+													variant="secondary"
+													class="
+														cursor-pointer font-mono text-xs font-bold transition-colors select-none
+														hover:bg-primary hover:text-primary-foreground
+													"
+													title="Click to copy variable"
+													@click="copyVariable(`$(${v.name})`)"
+												>
+													{{ `$(${v.name})` }}
+												</Badge>
+												<span v-if="v.aliases?.length" class="font-mono text-xs text-muted-foreground">
+													Alias: {{ v.aliases.map((a: string) => `$(${a})`).join(', ') }}
+												</span>
+											</div>
+											<p class="text-xs text-muted-foreground">
+												{{ v.description }}
+											</p>
+										</div>
+									</div>
+								</ScrollArea>
+							</CardContent>
+						</Card>
+					</div>
+
+					<!-- Workspace: Active Path Templates Editors -->
+					<div
+						class="
+							flex flex-col gap-4
+							xl:col-span-3
+						"
+					>
+						<!-- Path Header details -->
+						<div>
+							<p class="text-sm font-bold tracking-wider uppercase">
+								Active Path - {{ activePathFilter === 'root' ? `!${command.activeTrigger}` : `!${command.activeTrigger} ${activeSubcommandDetail?.triggerPath}` }}
+							</p>
+							<p class="text-xs text-muted-foreground">
+								{{ activePathFilter === 'root' ? command.description : activeSubcommandDetail?.description }}
+							</p>
+						</div>
+
+						<div class="flex flex-col gap-4">
+							<!-- Individual Template Card Editors -->
+							<TemplateEditorCard
+								v-for="template in activeTemplatesToDisplay"
+								:key="template.id"
+								v-model="editableTemplates[template.id]"
+								v-model:is-expanded="expandedTemplates[template.id]"
+								:template="template"
+								@reset="resetTemplateToDefault(template)"
+							/>
+						</div>
+					</div>
+				</div>
+				<template #fallback>
+					<!-- Skeleton loaders matching page layout -->
 					<div
 						class="
 							grid flex-1 grid-cols-1 items-start gap-6
 							xl:grid-cols-4
 						"
 					>
-						<!-- Left Sidebar: Triggers & Global Variables -->
+						<!-- Left Sidebar Skeletons -->
 						<div
 							class="
 								flex flex-col gap-6
 								xl:col-span-1
 							"
 						>
-							<!-- Sidebar: Execution Path Selectors -->
+							<!-- Triggers List Skeleton -->
 							<div class="flex flex-col gap-3">
-								<h2 class="px-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-									Command & Subcommand Triggers
-								</h2>
-								<div
-									class="
-										flex flex-col gap-1 overflow-x-auto
-										xl:overflow-x-visible
-									"
-								>
-									<!-- Root Option -->
-									<Button
-										class="w-full justify-between gap-2 transition-all duration-200"
-										:variant="activePathFilter === 'root' ? 'secondary' : 'ghost'"
-										:class="{ 'bg-secondary/80 font-bold': activePathFilter === 'root' }"
-										style="padding-left: 12px;"
-										@click="activePathFilter = 'root'"
-									>
-										<div class="flex min-w-0 items-center gap-2">
-											<Terminal class="size-3.5 shrink-0 text-muted-foreground/60" />
-											<span class="truncate text-left font-mono text-xs">Root (!{{ command.activeTrigger }})</span>
-										</div>
-										<Badge :variant="activePathFilter === 'root' ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
-											{{ command.templates?.length || 0 }}
-										</Badge>
-									</Button>
-
-									<!-- Subcommands options -->
-									<template v-if="flatSubcommands.length > 0">
-										<template v-for="sub in flatSubcommands" :key="sub.key">
-											<!-- Route group header (no handler) -->
-											<div
-												v-if="!sub.hasHandler"
-												class="flex w-full items-center justify-between gap-2 py-1.5 pr-4 text-muted-foreground/80 select-none"
-												:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
-											>
-												<div class="flex min-w-0 items-center gap-2">
-													<Folder class="size-3.5 shrink-0 text-muted-foreground/60" />
-													<span class="truncate text-left font-mono text-xs font-semibold">{{ sub.name }}</span>
-												</div>
-												<span class="shrink-0 text-[9px] font-bold tracking-wider text-muted-foreground/40 uppercase">Group</span>
-											</div>
-
-											<!-- Actual command option (has handler) -->
-											<Button
-												v-else
-												class="w-full justify-between gap-2 transition-all duration-200"
-												:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
-												:class="{ 'bg-secondary/80 font-bold': activePathFilter === sub.key }"
-												:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
-												@click="activePathFilter = sub.key"
-											>
-												<div class="flex min-w-0 items-center gap-2">
-													<CornerDownRight class="size-3.5 shrink-0 text-muted-foreground/60" />
-													<span class="truncate text-left font-mono text-xs">{{ sub.name }}</span>
-												</div>
-												<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
-													{{ sub.templates?.length || 0 }}
-												</Badge>
-											</Button>
-										</template>
-									</template>
+								<Skeleton class="h-4 w-36 px-2" />
+								<div class="flex flex-col gap-1.5">
+									<Skeleton v-for="i in 5" :key="i" class="h-9 w-full" />
 								</div>
 							</div>
 
-							<!-- Left Sidebar: Global & Custom Variables -->
+							<!-- Global Variables Skeleton -->
 							<Card class="flex flex-col">
 								<CardHeader>
-									<CardTitle class="text-sm font-bold">
-										Global Variables
-									</CardTitle>
-									<CardDescription class="text-xs">
-										Global and utility variables that can be resolved in any command response. Click to copy.
-									</CardDescription>
+									<Skeleton class="mb-1 h-5 w-28" />
+									<Skeleton class="h-3 w-full" />
 								</CardHeader>
 								<CardContent class="flex flex-col gap-3">
-									<!-- Search Input -->
-									<div class="relative w-full items-center">
-										<Input
-											v-model="varSearch"
-											placeholder="Search variables..."
-											class="h-9 pl-9 text-xs"
-										/>
-										<span class="absolute inset-y-0 inset-s-0 flex items-center justify-center px-3">
-											<Search class="size-3.5 text-muted-foreground" />
-										</span>
+									<Skeleton class="h-9 w-full" />
+									<div class="flex flex-col gap-2.5">
+										<Skeleton v-for="i in 3" :key="i" class="h-14 w-full" />
 									</div>
-
-									<!-- Scrollable List -->
-									<ScrollArea class="max-h-125 overflow-y-auto">
-										<div class="flex flex-col gap-2.5">
-											<div v-if="filteredVariables.length === 0" class="py-6 text-center text-muted-foreground italic select-none">
-												No matching variables found
-											</div>
-											<div
-												v-for="v in filteredVariables"
-												:key="v.name"
-												class="
-													flex flex-col gap-1.5 rounded-md border p-2 transition-colors
-													hover:bg-accent/40
-												"
-											>
-												<div class="flex flex-wrap items-center justify-between gap-2">
-													<Badge
-														variant="secondary"
-														class="
-															cursor-pointer font-mono text-xs font-bold transition-colors select-none
-															hover:bg-primary hover:text-primary-foreground
-														"
-														title="Click to copy variable"
-														@click="copyVariable(`$(${v.name})`)"
-													>
-														{{ `$(${v.name})` }}
-													</Badge>
-													<span v-if="v.aliases?.length" class="font-mono text-xs text-muted-foreground">
-														Alias: {{ v.aliases.map((a: string) => `$(${a})`).join(', ') }}
-													</span>
-												</div>
-												<p class="text-xs text-muted-foreground">
-													{{ v.description }}
-												</p>
-											</div>
-										</div>
-									</ScrollArea>
 								</CardContent>
 							</Card>
 						</div>
 
-						<!-- Workspace: Active Path Templates Editors -->
+						<!-- Workspace Skeletons -->
 						<div
 							class="
 								flex flex-col gap-4
 								xl:col-span-3
 							"
 						>
-							<!-- Path Header details -->
-							<div>
-								<p class="text-sm font-bold tracking-wider uppercase">
-									Active Path - {{ activePathFilter === 'root' ? `!${command.activeTrigger}` : `!${command.activeTrigger} ${activeSubcommandDetail?.triggerPath}` }}
-								</p>
-								<p class="text-xs text-muted-foreground">
-									{{ activePathFilter === 'root' ? command.description : activeSubcommandDetail?.description }}
-								</p>
+							<div class="flex flex-col gap-2">
+								<Skeleton class="h-5 w-48" />
+								<Skeleton class="h-3 w-80" />
 							</div>
-
 							<div class="flex flex-col gap-4">
-								<!-- Individual Template Card Editors -->
-								<TemplateEditorCard
-									v-for="template in activeTemplatesToDisplay"
-									:key="template.id"
-									v-model="editableTemplates[template.id]"
-									v-model:is-expanded="expandedTemplates[template.id]"
-									:template="template"
-									@reset="resetTemplateToDefault(template)"
-								/>
+								<Card v-for="i in 2" :key="i" class="flex flex-col gap-4 p-6">
+									<div class="flex items-center justify-between">
+										<Skeleton class="h-5 w-40" />
+										<Skeleton class="h-5 w-16 rounded-full" />
+									</div>
+									<Skeleton class="h-10 w-full" />
+								</Card>
 							</div>
 						</div>
 					</div>
-					<template #fallback>
-						<!-- Skeleton loaders matching page layout -->
-						<div
-							class="
-								grid flex-1 grid-cols-1 items-start gap-6
-								xl:grid-cols-4
-							"
-						>
-							<!-- Left Sidebar Skeletons -->
-							<div
-								class="
-									flex flex-col gap-6
-									xl:col-span-1
-								"
-							>
-								<!-- Triggers List Skeleton -->
-								<div class="flex flex-col gap-3">
-									<Skeleton class="h-4 w-36 px-2" />
-									<div class="flex flex-col gap-1.5">
-										<Skeleton v-for="i in 5" :key="i" class="h-9 w-full" />
-									</div>
-								</div>
+				</template>
+			</ClientOnly>
 
-								<!-- Global Variables Skeleton -->
-								<Card class="flex flex-col">
-									<CardHeader>
-										<Skeleton class="mb-1 h-5 w-28" />
-										<Skeleton class="h-3 w-full" />
-									</CardHeader>
-									<CardContent class="flex flex-col gap-3">
-										<Skeleton class="h-9 w-full" />
-										<div class="flex flex-col gap-2.5">
-											<Skeleton v-for="i in 3" :key="i" class="h-14 w-full" />
-										</div>
-									</CardContent>
-								</Card>
-							</div>
-
-							<!-- Workspace Skeletons -->
-							<div
-								class="
-									flex flex-col gap-4
-									xl:col-span-3
-								"
-							>
-								<div class="flex flex-col gap-2">
-									<Skeleton class="h-5 w-48" />
-									<Skeleton class="h-3 w-80" />
-								</div>
-								<div class="flex flex-col gap-4">
-									<Card v-for="i in 2" :key="i" class="flex flex-col gap-4 p-6">
-										<div class="flex items-center justify-between">
-											<Skeleton class="h-5 w-40" />
-											<Skeleton class="h-5 w-16 rounded-full" />
-										</div>
-										<Skeleton class="h-10 w-full" />
-									</Card>
-								</div>
-							</div>
-						</div>
-					</template>
-				</ClientOnly>
-
-				<!-- Workspace Floating Action save bar (shown conditionally) -->
-				<AppFloatingSaveBar
-					:show="isAnyTemplateModified"
-					:is-saving="isSaving"
-					title="Unsaved Template Overrides"
-					description="You have modified message templates. Save to instantly update Twitch chat triggers."
-					save-text="Save Templates"
-					saving-text="Saving Overrides..."
-					discard-text="Discard Changes"
-					@save="saveTemplates"
-					@discard="refreshCommands"
-				/>
-			</AppPageContainer>
-		</div>
+			<!-- Workspace Floating Action save bar (shown conditionally) -->
+			<AppFloatingSaveBar
+				:show="isAnyTemplateModified"
+				:is-saving="isSaving"
+				title="Unsaved Template Overrides"
+				description="You have modified message templates. Save to instantly update Twitch chat triggers."
+				save-text="Save Templates"
+				saving-text="Saving Overrides..."
+				discard-text="Discard Changes"
+				@save="saveTemplates"
+				@discard="refreshCommands"
+			/>
+		</AppSettingsPage>
 	</div>
 </template>

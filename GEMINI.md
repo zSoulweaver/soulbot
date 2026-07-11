@@ -92,3 +92,10 @@ To guarantee a clean, predictability-driven, and highly professional layout acro
    - **Button Component Click Events and Disabled Guards**:
      - **No Redundant Click Guards in Templates**: The custom `<Button>` component (`app/components/ui/button/Button.vue`) has a built-in capture-phase listener that automatically intercepts click events and calls `stopImmediatePropagation()` if `:disabled="true"` is passed. Therefore, you must NOT write inline checks in templates like `@click="!loading && action()"` or `@click="() => action()"`. Bind handlers directly as `@click="action"`.
      - **Maintain Defensive JavaScript Guards**: Keep defensive early-return checks (e.g. `if (isSaving.value) return`) inside the JavaScript functions that perform mutations (saving, deleting, submitting) to ensure API call double-execution is blocked under all circumstances (such as keyboard `enter` key submissions).
+
+8. **Standardized Settings Page Component (`AppSettingsPage`)**:
+   - All settings, configuration, and admin panel page files under `app/pages/admin/` MUST use the `<AppSettingsPage>` layout component as their root template element to standardize the layout structure.
+   - Pass the `heading` and `subheading` props directly to the component.
+   - Use the `#header-actions` slot for any header controls (e.g., refresh buttons, save triggers, or action triggers).
+   - The default slot content is automatically wrapped inside `<AppPageContainer class="flex-1">`. This guarantees that the page container stretches to fill the vertical viewport height, allowing components with `mt-auto` (like `AppFloatingSaveBar`) to cleanly stick or float at the bottom of the page.
+   - Customize container classes if necessary by passing them via the `containerClass` prop (e.g., `containerClass="p-4 flex flex-col"`).

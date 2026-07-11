@@ -36,7 +36,7 @@ onMounted(() => {
 		<Item
 			v-if="isMounted && show"
 			variant="outline"
-			class="sticky bottom-4 z-40 mt-auto w-full border-border/60 bg-card/80 shadow-lg backdrop-blur-md transition-all duration-200"
+			class="sticky bottom-8 z-40 mt-auto w-full border-border/60 bg-card/80 shadow-lg backdrop-blur-md transition-all duration-200"
 		>
 			<ItemContent>
 				<slot name="content">

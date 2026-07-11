@@ -95,11 +95,11 @@ const columns: any[] = [
 </script>
 
 <template>
-	<div>
-		<AppPageHeader
-			heading="Payout Exclusions"
-			subheading="Manage accounts that are excluded from watch time & points payouts."
-		>
+	<AppSettingsPage
+		heading="Payout Exclusions"
+		subheading="Manage accounts that are excluded from watch time & points payouts."
+	>
+		<template #header-actions>
 			<Button size="sm" class="h-9 shrink-0 gap-1.5" @click="isAddSheetOpen = true">
 				<PlusIcon data-icon="inline-start" />
 				Add Exclusion
@@ -107,78 +107,75 @@ const columns: any[] = [
 			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
 				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 			</Button>
-		</AppPageHeader>
+		</template>
+		<!-- System Exclusions Callout -->
+		<Alert
+			variant="info"
+		>
+			<AlertTitle>
+				System Exclusions
+			</AlertTitle>
+			<AlertDescription>
+				The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
+			</AlertDescription>
+		</Alert>
 
-		<AppPageContainer>
-			<!-- System Exclusions Callout -->
-			<Alert
-				variant="info"
+		<div class="flex flex-col gap-4">
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<SearchIcon class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search username or reason..."
+				/>
+			</InputGroup>
+
+			<DataTable
+				:columns="columns"
+				:data="paginatedExclusions"
+				:loading="loadingTable"
+				loading-text="Loading exclusions..."
 			>
-				<AlertTitle>
-					System Exclusions
-				</AlertTitle>
-				<AlertDescription>
-					The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
-				</AlertDescription>
-			</Alert>
+				<template #empty>
+					No excluded users found.
+				</template>
+			</DataTable>
 
-			<div class="flex flex-col gap-4">
-				<InputGroup class="w-full max-w-sm">
-					<InputGroupAddon>
-						<SearchIcon class="text-muted-foreground" />
-					</InputGroupAddon>
-					<InputGroupInput
-						v-model="searchQuery"
-						type="search"
-						placeholder="Search username or reason..."
-					/>
-				</InputGroup>
+			<!-- Bottom Pagination Row -->
+			<div
+				v-if="filteredTotal > 0" class="
+					flex flex-col items-center justify-between gap-4 select-none
+					sm:flex-row
+				"
+			>
+				<span class="text-xs text-muted-foreground">
+					Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} exclusions
+				</span>
 
-				<DataTable
-					:columns="columns"
-					:data="paginatedExclusions"
-					:loading="loadingTable"
-					loading-text="Loading exclusions..."
+				<Pagination
+					v-model:page="currentPage"
+					:total="filteredTotal"
+					:sibling-count="1"
+					:items-per-page="itemsPerPage"
+					class="mx-0 w-auto"
 				>
-					<template #empty>
-						No excluded users found.
-					</template>
-				</DataTable>
-
-				<!-- Bottom Pagination Row -->
-				<div
-					v-if="filteredTotal > 0" class="
-						flex flex-col items-center justify-between gap-4 select-none
-						sm:flex-row
-					"
-				>
-					<span class="text-xs text-muted-foreground">
-						Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} exclusions
-					</span>
-
-					<Pagination
-						v-model:page="currentPage"
-						:total="filteredTotal"
-						:sibling-count="1"
-						:items-per-page="itemsPerPage"
-						class="mx-0 w-auto"
-					>
-						<PaginationContent>
-							<PaginationFirst />
-							<PaginationPrevious />
-							<PaginationNext />
-							<PaginationLast />
-						</PaginationContent>
-					</Pagination>
-				</div>
+					<PaginationContent>
+						<PaginationFirst />
+						<PaginationPrevious />
+						<PaginationNext />
+						<PaginationLast />
+					</PaginationContent>
+				</Pagination>
 			</div>
+		</div>
 
-			<!-- Add Exclusion Slide-over Sheet Component -->
-			<ExclusionAddSheet
-				v-model:open="isAddSheetOpen"
-				:default-username="searchQuery"
-				@added="refresh"
-			/>
-		</AppPageContainer>
-	</div>
+		<!-- Add Exclusion Slide-over Sheet Component -->
+		<ExclusionAddSheet
+			v-model:open="isAddSheetOpen"
+			:default-username="searchQuery"
+			@added="refresh"
+		/>
+	</AppSettingsPage>
 </template>

@@ -144,11 +144,11 @@ const columns: any[] = [
 </script>
 
 <template>
-	<div>
-		<AppPageHeader
-			heading="Spotify Blacklist"
-			subheading="Prevent specific tracks from being requested via chat commands or the queue page."
-		>
+	<AppSettingsPage
+		heading="Spotify Blacklist"
+		subheading="Prevent specific tracks from being requested via chat commands or the queue page."
+	>
+		<template #header-actions>
 			<Button @click="isAddDialogOpen = true">
 				<PlusIcon data-icon="inline-start" />
 				Add to Blacklist
@@ -156,85 +156,82 @@ const columns: any[] = [
 			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
 				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 			</Button>
-		</AppPageHeader>
-
-		<AppPageContainer>
-			<div class="flex flex-col gap-4">
-				<InputGroup class="w-full max-w-sm">
-					<InputGroupAddon>
-						<SearchIcon class="text-muted-foreground" />
-					</InputGroupAddon>
-					<InputGroupInput
-						v-model="searchQuery"
-						type="search"
-						placeholder="Search track title or artist..."
-					/>
-				</InputGroup>
-
-				<DataTable
-					:columns="columns"
-					:data="blacklistItems"
-					:loading="loadingTable"
-					loading-text="Loading blacklist..."
-				>
-					<template #empty>
-						No blacklisted tracks found.
-					</template>
-				</DataTable>
-
-				<!-- Bottom Pagination Row -->
-				<div
-					v-if="filteredTotal > 0" class="
-						flex flex-col items-center justify-between gap-4 select-none
-						sm:flex-row
-					"
-				>
-					<span class="text-xs text-muted-foreground">
-						Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} blacklisted tracks
-					</span>
-
-					<Pagination
-						v-model:page="currentPage"
-						:total="filteredTotal"
-						:sibling-count="1"
-						:items-per-page="itemsPerPage"
-						class="mx-0 w-auto"
-					>
-						<PaginationContent>
-							<PaginationFirst />
-							<PaginationPrevious />
-							<PaginationNext />
-							<PaginationLast />
-						</PaginationContent>
-					</Pagination>
-				</div>
-
-				<!-- Add Blacklist Modal Dialog Component -->
-				<BlacklistAddDialog
-					v-model:open="isAddDialogOpen"
-					@added="refresh"
+		</template>
+		<div class="flex flex-col gap-4">
+			<InputGroup class="w-full max-w-sm">
+				<InputGroupAddon>
+					<SearchIcon class="text-muted-foreground" />
+				</InputGroupAddon>
+				<InputGroupInput
+					v-model="searchQuery"
+					type="search"
+					placeholder="Search track title or artist..."
 				/>
+			</InputGroup>
 
-				<!-- Confirm Remove Blacklist Dialog -->
-				<AlertDialog v-model:open="isRemoveDialogOpen">
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>Remove from Blacklist?</AlertDialogTitle>
-							<AlertDialogDescription v-if="trackToRemove">
-								Are you sure you want to remove <strong>{{ trackToRemove.title }}</strong> by <strong>{{ trackToRemove.artist }}</strong> from the blacklist? Users will be able to request this song again.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel @click="trackToRemove = null">
-								Cancel
-							</AlertDialogCancel>
-							<AlertDialogAction @click="confirmRemoveTrack">
-								Confirm
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
+			<DataTable
+				:columns="columns"
+				:data="blacklistItems"
+				:loading="loadingTable"
+				loading-text="Loading blacklist..."
+			>
+				<template #empty>
+					No blacklisted tracks found.
+				</template>
+			</DataTable>
+
+			<!-- Bottom Pagination Row -->
+			<div
+				v-if="filteredTotal > 0" class="
+					flex flex-col items-center justify-between gap-4 select-none
+					sm:flex-row
+				"
+			>
+				<span class="text-xs text-muted-foreground">
+					Showing {{ startIndex }}-{{ endIndex }} of {{ filteredTotal }} blacklisted tracks
+				</span>
+
+				<Pagination
+					v-model:page="currentPage"
+					:total="filteredTotal"
+					:sibling-count="1"
+					:items-per-page="itemsPerPage"
+					class="mx-0 w-auto"
+				>
+					<PaginationContent>
+						<PaginationFirst />
+						<PaginationPrevious />
+						<PaginationNext />
+						<PaginationLast />
+					</PaginationContent>
+				</Pagination>
 			</div>
-		</AppPageContainer>
-	</div>
+
+			<!-- Add Blacklist Modal Dialog Component -->
+			<BlacklistAddDialog
+				v-model:open="isAddDialogOpen"
+				@added="refresh"
+			/>
+
+			<!-- Confirm Remove Blacklist Dialog -->
+			<AlertDialog v-model:open="isRemoveDialogOpen">
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Remove from Blacklist?</AlertDialogTitle>
+						<AlertDialogDescription v-if="trackToRemove">
+							Are you sure you want to remove <strong>{{ trackToRemove.title }}</strong> by <strong>{{ trackToRemove.artist }}</strong> from the blacklist? Users will be able to request this song again.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel @click="trackToRemove = null">
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction @click="confirmRemoveTrack">
+							Confirm
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</div>
+	</AppSettingsPage>
 </template>

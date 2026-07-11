@@ -100,81 +100,83 @@ const columns: any[] = [
 </script>
 
 <template>
-	<AppPageContainer>
+	<div>
 		<AppPageHeader heading="Watch Time Balances" subheading="Manage viewer watch times and search the viewer loyalty database.">
 			<Button variant="ghost" :disabled="loadingTable" @click="refreshUsers">
 				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
 			</Button>
 		</AppPageHeader>
 
-		<div class="flex flex-col gap-4">
-			<InputGroup class="w-full max-w-sm">
-				<InputGroupAddon>
-					<SearchIcon class="text-muted-foreground" />
-				</InputGroupAddon>
-				<InputGroupInput
-					v-model="searchQuery"
-					type="search"
-					placeholder="Search username..."
-				/>
-			</InputGroup>
+		<AppPageContainer>
+			<div class="flex flex-col gap-4">
+				<InputGroup class="w-full max-w-sm">
+					<InputGroupAddon>
+						<SearchIcon class="text-muted-foreground" />
+					</InputGroupAddon>
+					<InputGroupInput
+						v-model="searchQuery"
+						type="search"
+						placeholder="Search username..."
+					/>
+				</InputGroup>
 
-			<div class="overflow-hidden rounded-lg border">
-				<DataTable
-					:columns="columns"
-					:data="paginatedUsers"
-					:loading="loadingTable"
-					loading-text="Loading users..."
+				<div class="overflow-hidden rounded-lg border">
+					<DataTable
+						:columns="columns"
+						:data="paginatedUsers"
+						:loading="loadingTable"
+						loading-text="Loading users..."
+					>
+						<template #empty>
+							<div class="flex flex-col items-center justify-center gap-3 py-6 text-center">
+								<span>No users found matching your search.</span>
+								<Button
+									v-if="searchQuery.trim()"
+									size="sm"
+									@click="openAdjustSheetForNewUser"
+								>
+									<PlusIcon data-icon="inline-start" />
+									Add "{{ searchQuery.trim() }}" & Set Watch Time
+								</Button>
+							</div>
+						</template>
+					</DataTable>
+				</div>
+
+				<!-- Bottom Pagination Row -->
+				<div
+					v-if="totalUsers > 0" class="
+						flex flex-col items-center justify-between gap-4 select-none
+						sm:flex-row
+					"
 				>
-					<template #empty>
-						<div class="flex flex-col items-center justify-center gap-3 py-6 text-center">
-							<span>No users found matching your search.</span>
-							<Button
-								v-if="searchQuery.trim()"
-								size="sm"
-								@click="openAdjustSheetForNewUser"
-							>
-								<PlusIcon data-icon="inline-start" />
-								Add "{{ searchQuery.trim() }}" & Set Watch Time
-							</Button>
-						</div>
-					</template>
-				</DataTable>
+					<span class="text-xs text-muted-foreground">
+						Showing {{ startIndex }}-{{ endIndex }} of {{ totalUsers }} users
+					</span>
+
+					<Pagination
+						v-model:page="currentPage"
+						:total="totalUsers"
+						:sibling-count="1"
+						:items-per-page="itemsPerPage"
+						class="mx-0 w-auto"
+					>
+						<PaginationContent>
+							<PaginationFirst />
+							<PaginationPrevious />
+							<PaginationNext />
+							<PaginationLast />
+						</PaginationContent>
+					</Pagination>
+				</div>
 			</div>
 
-			<!-- Bottom Pagination Row -->
-			<div
-				v-if="totalUsers > 0" class="
-					flex flex-col items-center justify-between gap-4 select-none
-					sm:flex-row
-				"
-			>
-				<span class="text-xs text-muted-foreground">
-					Showing {{ startIndex }}-{{ endIndex }} of {{ totalUsers }} users
-				</span>
-
-				<Pagination
-					v-model:page="currentPage"
-					:total="totalUsers"
-					:sibling-count="1"
-					:items-per-page="itemsPerPage"
-					class="mx-0 w-auto"
-				>
-					<PaginationContent>
-						<PaginationFirst />
-						<PaginationPrevious />
-						<PaginationNext />
-						<PaginationLast />
-					</PaginationContent>
-				</Pagination>
-			</div>
-		</div>
-
-		<!-- Watch Time Adjust Sheet Slide-over -->
-		<UserWatchTimeEditSheet
-			v-model:open="isAdjustSheetOpen"
-			:user="selectedUserForAdjustment"
-			@saved="refreshUsers"
-		/>
-	</AppPageContainer>
+			<!-- Watch Time Adjust Sheet Slide-over -->
+			<UserWatchTimeEditSheet
+				v-model:open="isAdjustSheetOpen"
+				:user="selectedUserForAdjustment"
+				@saved="refreshUsers"
+			/>
+		</AppPageContainer>
+	</div>
 </template>

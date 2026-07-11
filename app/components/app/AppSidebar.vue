@@ -33,13 +33,13 @@ const filteredNavigation = computed(() => {
 			>
 				<Bot
 					class="
-						size-6
+						hidden size-6
 						group-data-[collapsible=icon]:block
 					"
 				/>
 				<span
 					class="
-						truncate text-xl font-bold tracking-tight
+						truncate font-serif text-3xl font-bold
 						group-data-[collapsible=icon]:hidden
 					"
 				>{{ botName }}</span>

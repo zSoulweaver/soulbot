@@ -196,7 +196,7 @@ const columns: any[] = [
 </script>
 
 <template>
-	<AppPageContainer>
+	<div>
 		<AppPageHeader
 			heading="Message Timers"
 			subheading="Set up automated, rotating chat announcements to be sent to Twitch chat at specified time intervals."
@@ -212,86 +212,88 @@ const columns: any[] = [
 			</div>
 		</AppPageHeader>
 
-		<div class="flex flex-col gap-4">
-			<!-- Search & Count Control Row -->
-			<InputGroup class="w-full max-w-sm">
-				<InputGroupAddon>
-					<Search class="text-muted-foreground" />
-				</InputGroupAddon>
-				<InputGroupInput
-					v-model="searchQuery"
-					type="search"
-					placeholder="Search timers..."
-				/>
-			</InputGroup>
+		<AppPageContainer>
+			<div class="flex flex-col gap-4">
+				<!-- Search & Count Control Row -->
+				<InputGroup class="w-full max-w-sm">
+					<InputGroupAddon>
+						<Search class="text-muted-foreground" />
+					</InputGroupAddon>
+					<InputGroupInput
+						v-model="searchQuery"
+						type="search"
+						placeholder="Search timers..."
+					/>
+				</InputGroup>
 
-			<DataTable
-				:columns="columns"
-				:data="paginatedTimers"
-				:loading="loadingTable"
-				loading-text="Loading timers..."
-			>
-				<template #empty>
-					<span>No timers found matching your search.</span>
-				</template>
-			</DataTable>
-
-			<div
-				v-if="totalTimers > 0"
-				class="
-					flex flex-col items-center justify-between gap-4 py-2 select-none
-					sm:flex-row
-				"
-			>
-				<span class="text-xs text-muted-foreground">
-					Showing {{ startIndex }}-{{ endIndex }} of {{ totalTimers }} timers
-				</span>
-
-				<Pagination
-					v-model:page="currentPage"
-					:total="totalTimers"
-					:sibling-count="1"
-					:items-per-page="itemsPerPage"
-					class="mx-0 w-auto"
+				<DataTable
+					:columns="columns"
+					:data="paginatedTimers"
+					:loading="loadingTable"
+					loading-text="Loading timers..."
 				>
-					<PaginationContent>
-						<PaginationFirst />
-						<PaginationPrevious />
-						<PaginationNext />
-						<PaginationLast />
-					</PaginationContent>
-				</Pagination>
+					<template #empty>
+						<span>No timers found matching your search.</span>
+					</template>
+				</DataTable>
+
+				<div
+					v-if="totalTimers > 0"
+					class="
+						flex flex-col items-center justify-between gap-4 py-2 select-none
+						sm:flex-row
+					"
+				>
+					<span class="text-xs text-muted-foreground">
+						Showing {{ startIndex }}-{{ endIndex }} of {{ totalTimers }} timers
+					</span>
+
+					<Pagination
+						v-model:page="currentPage"
+						:total="totalTimers"
+						:sibling-count="1"
+						:items-per-page="itemsPerPage"
+						class="mx-0 w-auto"
+					>
+						<PaginationContent>
+							<PaginationFirst />
+							<PaginationPrevious />
+							<PaginationNext />
+							<PaginationLast />
+						</PaginationContent>
+					</Pagination>
+				</div>
 			</div>
-		</div>
 
-		<!-- Timer Edit Sheet -->
-		<TimerEditSheet
-			:timer="selectedTimer"
-			:open="isSheetOpen"
-			@update:open="isSheetOpen = $event"
-			@saved="refreshTimers"
-		/>
+			<!-- Timer Edit Sheet -->
+			<TimerEditSheet
+				:timer="selectedTimer"
+				:open="isSheetOpen"
+				@update:open="isSheetOpen = $event"
+				@saved="refreshTimers"
+			/>
 
-		<!-- Deletion confirmation alert dialog -->
-		<AlertDialog :open="isDeleteDialogOpen" @update:open="isDeleteDialogOpen = $event">
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-					<AlertDialogDescription>
-						This will permanently delete the timer
-						<span class="font-bold text-foreground">{{ timerToDelete?.name }}</span>.
-						This action cannot be undone.
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel @click="timerToDelete = null">
-						Cancel
-					</AlertDialogCancel>
-					<AlertDialogAction @click="confirmDelete">
-						Delete Timer
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	</AppPageContainer>
+			<!-- Deletion confirmation alert dialog -->
+			<AlertDialog :open="isDeleteDialogOpen" @update:open="isDeleteDialogOpen = $event">
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+						<AlertDialogDescription>
+							This will permanently delete the timer
+							<span class="font-bold text-foreground">{{ timerToDelete?.name }}</span>.
+							This action cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel @click="timerToDelete = null">
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction @click="confirmDelete">
+							Delete Timer
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</AppPageContainer>
+	</div>
 </template>

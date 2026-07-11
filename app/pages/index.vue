@@ -36,8 +36,8 @@ onMounted(() => {
 <template>
 	<div
 		class="
-			mx-auto flex max-w-4xl flex-col gap-8 py-8
-			md:py-16
+			mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8
+			md:px-8 md:py-16
 		"
 	>
 		<!-- Hero Section -->

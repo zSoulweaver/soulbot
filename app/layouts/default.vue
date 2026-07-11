@@ -10,7 +10,7 @@ const isModeratorOrCaster = computed(() => {
 		<AppSidebar />
 		<SidebarInset>
 			<header
-				class="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear"
+				class="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/40 px-4 backdrop-blur-md transition-[width,height] ease-linear"
 			>
 				<div class="flex w-full items-center gap-2">
 					<SidebarTrigger class="-ml-1" />
@@ -24,10 +24,10 @@ const isModeratorOrCaster = computed(() => {
 					</div>
 				</div>
 			</header>
-			<main class="flex flex-1 flex-col gap-4 p-8">
+			<main class="flex flex-1 flex-col gap-4">
 				<div
 					class="
-						mb-4 hidden animate-in flex-col gap-2 duration-300 fade-in slide-in-from-top
+						mx-8 mt-6 hidden animate-in flex-col gap-2 duration-300 fade-in slide-in-from-top
 						has-[*]:flex
 					"
 				>

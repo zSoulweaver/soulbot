@@ -6,6 +6,13 @@ export default defineNuxtConfig({
 	compatibilityDate: '2025-07-15',
 	devtools: { enabled: true },
 
+	app: {
+		pageTransition: {
+			name: 'page',
+			mode: 'out-in',
+		},
+	},
+
 	devServer: {
 		host: '127.0.0.1',
 		https: true,

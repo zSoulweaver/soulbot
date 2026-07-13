@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MessageSquare, RefreshCcw } from '@lucide/vue'
+import { RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
@@ -11,6 +11,7 @@ import {
 	SettingsGroupItem,
 	SettingsGroupLabel,
 } from '~/components/ui/settings-group'
+import { SettingsHeading } from '~/components/ui/settings-heading'
 import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 
@@ -95,59 +96,52 @@ async function saveSettings() {
 			<span class="text-sm text-muted-foreground">Loading bot configurations...</span>
 		</div>
 
-		<div v-else class="flex w-full max-w-3xl flex-col gap-6">
+		<AppSettingsGrid v-else>
 			<!-- Settings Editor Panel -->
 			<div class="flex flex-col gap-6">
 				<!-- Section 1: Chat Output Style & Mute Side-by-Side -->
 				<div class="flex flex-col gap-4">
-					<h3 class="flex items-center gap-2 text-lg font-semibold">
-						<MessageSquare class="size-5 text-muted-foreground" />
+					<SettingsHeading>
 						Chat Output
-					</h3>
-					<FieldGroup
-						class="grid grid-cols-1 gap-6"
-					>
-						<!-- Right column: Mute Switch in SettingsGroup -->
-						<Field>
-							<SettingsGroup>
-								<SettingsGroupItem class="border-0">
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Twitch Chat Mode</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Action Mode formats all bot responses in italics using Twitch's /me IRC action format.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Select id="chatMode" v-model="form.chatMode">
-											<SelectTrigger class="w-full">
-												<SelectValue placeholder="Select chat mode" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="action">
-													Action Mode (/me)
-												</SelectItem>
-												<SelectItem value="normal">
-													Normal Chat Mode
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</SettingsGroupAction>
-								</SettingsGroupItem>
+					</SettingsHeading>
 
-								<SettingsGroupItem class="border-0">
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Mute Twitch Chat Messages</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Suppress all outbound Twitch chat replies. The bot will still run actions in the background.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.muted" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-							</SettingsGroup>
-						</Field>
-					</FieldGroup>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Twitch Chat Mode</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Action Mode formats all bot responses in italics using Twitch's /me IRC action format.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Select id="chatMode" v-model="form.chatMode">
+									<SelectTrigger class="w-full">
+										<SelectValue placeholder="Select chat mode" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="action">
+											Action Mode (/me)
+										</SelectItem>
+										<SelectItem value="normal">
+											Normal Chat Mode
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Mute Twitch Chat Messages</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Suppress all outbound Twitch chat replies. The bot will still run actions in the background.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch v-model:model-value="form.muted" />
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
 				</div>
 
 				<!-- Warning Alert -->
@@ -157,7 +151,7 @@ async function saveSettings() {
 					</AlertDescription>
 				</Alert>
 			</div>
-		</div>
+		</AppSettingsGrid>
 
 		<AppFloatingSaveBar
 			:show="isModified"

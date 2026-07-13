@@ -221,117 +221,103 @@ async function refreshAll() {
 			<span class="text-sm text-muted-foreground">Retrieving channel ad schedule configurations...</span>
 		</div>
 
-		<div
-			v-else
-			class="
-				grid grid-cols-1 gap-6
-				lg:grid-cols-3
-			"
-		>
-			<!-- Left Column: Settings & Manual Controls -->
-			<div
-				class="
-					flex flex-col gap-6
-					lg:col-span-2
-				"
-			>
-				<SettingsGroup>
-					<SettingsGroupItem :class="{ 'border-0': !form.adsAlertsEnabled }">
-						<SettingsGroupContent>
-							<SettingsGroupLabel>Enable Chat Alerts</SettingsGroupLabel>
-							<SettingsGroupDescription>
-								Enable or disable warning alerts for scheduled ads.
-							</SettingsGroupDescription>
-						</SettingsGroupContent>
-						<SettingsGroupAction>
-							<Switch v-model="form.adsAlertsEnabled" />
-						</SettingsGroupAction>
-					</SettingsGroupItem>
+		<AppSettingsGrid v-else>
+			<!-- Left Column: Settings Controls -->
+			<SettingsGroup>
+				<SettingsGroupItem>
+					<SettingsGroupContent>
+						<SettingsGroupLabel>Enable Chat Alerts</SettingsGroupLabel>
+						<SettingsGroupDescription>
+							Enable or disable warning alerts for scheduled ads.
+						</SettingsGroupDescription>
+					</SettingsGroupContent>
+					<SettingsGroupAction>
+						<Switch v-model="form.adsAlertsEnabled" />
+					</SettingsGroupAction>
+				</SettingsGroupItem>
 
-					<template v-if="form.adsAlertsEnabled">
-						<!-- Milestone 5m -->
-						<SettingsGroupItem>
-							<SettingsGroupContent>
-								<SettingsGroupLabel>5 Minutes Warning Milestone</SettingsGroupLabel>
-								<SettingsGroupDescription>
-									Post warning alert 5 minutes before scheduled ad breaks.
-								</SettingsGroupDescription>
-							</SettingsGroupContent>
-							<SettingsGroupAction>
-								<Switch v-model="form.adsAlert5mEnabled" />
-							</SettingsGroupAction>
-						</SettingsGroupItem>
+				<!-- Milestone 5m -->
+				<SettingsGroupItem :class="{ 'opacity-50': !form.adsAlertsEnabled }">
+					<SettingsGroupContent>
+						<SettingsGroupLabel>5 Minutes Warning Milestone</SettingsGroupLabel>
+						<SettingsGroupDescription>
+							Post warning alert 5 minutes before scheduled ad breaks.
+						</SettingsGroupDescription>
+					</SettingsGroupContent>
+					<SettingsGroupAction>
+						<Switch v-model="form.adsAlert5mEnabled" :disabled="!form.adsAlertsEnabled" />
+					</SettingsGroupAction>
+				</SettingsGroupItem>
 
-						<!-- Milestone 3m -->
-						<SettingsGroupItem>
-							<SettingsGroupContent>
-								<SettingsGroupLabel>3 Minutes Warning Milestone</SettingsGroupLabel>
-								<SettingsGroupDescription>
-									Post warning alert 3 minutes before scheduled ad breaks.
-								</SettingsGroupDescription>
-							</SettingsGroupContent>
-							<SettingsGroupAction>
-								<Switch v-model="form.adsAlert3mEnabled" />
-							</SettingsGroupAction>
-						</SettingsGroupItem>
+				<!-- Milestone 3m -->
+				<SettingsGroupItem :class="{ 'opacity-50': !form.adsAlertsEnabled }">
+					<SettingsGroupContent>
+						<SettingsGroupLabel>3 Minutes Warning Milestone</SettingsGroupLabel>
+						<SettingsGroupDescription>
+							Post warning alert 3 minutes before scheduled ad breaks.
+						</SettingsGroupDescription>
+					</SettingsGroupContent>
+					<SettingsGroupAction>
+						<Switch v-model="form.adsAlert3mEnabled" :disabled="!form.adsAlertsEnabled" />
+					</SettingsGroupAction>
+				</SettingsGroupItem>
 
-						<!-- Milestone 1m -->
-						<SettingsGroupItem>
-							<SettingsGroupContent>
-								<SettingsGroupLabel>1 Minute Warning Milestone</SettingsGroupLabel>
-								<SettingsGroupDescription>
-									Post warning alert 1 minute before scheduled ad breaks.
-								</SettingsGroupDescription>
-							</SettingsGroupContent>
-							<SettingsGroupAction>
-								<Switch v-model="form.adsAlert1mEnabled" />
-							</SettingsGroupAction>
-						</SettingsGroupItem>
+				<!-- Milestone 1m -->
+				<SettingsGroupItem :class="{ 'opacity-50': !form.adsAlertsEnabled }">
+					<SettingsGroupContent>
+						<SettingsGroupLabel>1 Minute Warning Milestone</SettingsGroupLabel>
+						<SettingsGroupDescription>
+							Post warning alert 1 minute before scheduled ad breaks.
+						</SettingsGroupDescription>
+					</SettingsGroupContent>
+					<SettingsGroupAction>
+						<Switch v-model="form.adsAlert1mEnabled" :disabled="!form.adsAlertsEnabled" />
+					</SettingsGroupAction>
+				</SettingsGroupItem>
 
-						<!-- Info note about ad start event -->
-						<div class="px-4 py-2 text-xs text-muted-foreground">
-							Note: The final alert shown when the commercial break officially starts is managed on the
-							<NuxtLink
-								to="/admin/alerts" class="
-									font-medium text-primary
-									hover:underline
-								"
-							>
-								Alerts & Events
-							</NuxtLink>
-							page.
-						</div>
-					</template>
-				</SettingsGroup>
+				<!-- Info note about ad start event -->
+				<div class="px-0 py-2 text-xs text-muted-foreground" :class="{ 'opacity-50': !form.adsAlertsEnabled }">
+					Note: The final alert shown when the commercial break officially starts is managed on the
+					<NuxtLink
+						to="/admin/alerts" class="
+							font-medium text-primary
+							hover:underline
+						"
+						:class="{ 'pointer-events-none': !form.adsAlertsEnabled }"
+					>
+						Alerts & Events
+					</NuxtLink>
+					page.
+				</div>
+			</SettingsGroup>
 
-				<FieldGroup v-if="form.adsAlertsEnabled" class="flex flex-col gap-4">
-					<Field>
-						<FieldLabel for="adsAlertTemplate">
-							Warning Message Template
-						</FieldLabel>
-						<Textarea
-							id="adsAlertTemplate"
-							v-model="form.adsAlertTemplate"
-							placeholder="e.g. Ad break of $(duration) seconds is starting in $(time)!"
-							rows="3"
-							class="w-full"
-						/>
-						<FieldDescription>
-							Customize the text posted to chat when an ad warning is triggered.
-						</FieldDescription>
-						<div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground select-none">
-							<span>Variables:</span>
-							<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(time)</code>
-							<span>(Milestone time e.g. "5 minutes")</span>
-							<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(duration)</code>
-							<span>(Break length in seconds)</span>
-						</div>
-					</Field>
-				</FieldGroup>
-			</div>
-
+			<FieldGroup class="flex flex-col gap-4" :class="{ 'opacity-50': !form.adsAlertsEnabled }">
+				<Field>
+					<FieldLabel for="adsAlertTemplate">
+						Warning Message Template
+					</FieldLabel>
+					<Textarea
+						id="adsAlertTemplate"
+						v-model="form.adsAlertTemplate"
+						:disabled="!form.adsAlertsEnabled"
+						placeholder="e.g. Ad break of $(duration) seconds is starting in $(time)!"
+						rows="3"
+						class="w-full"
+					/>
+					<FieldDescription>
+						Customize the text posted to chat when an ad warning is triggered.
+					</FieldDescription>
+					<div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground select-none">
+						<span>Variables:</span>
+						<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(time)</code>
+						<span>(Milestone time e.g. "5 minutes")</span>
+						<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(duration)</code>
+						<span>(Break length in seconds)</span>
+					</div>
+				</Field>
+			</FieldGroup>
 			<!-- Right Column: Status & Widget Panel -->
-			<div class="flex flex-col gap-6">
+			<template #sidebar>
 				<!-- Live Schedule Status Card -->
 				<Card>
 					<CardHeader>
@@ -437,12 +423,7 @@ async function refreshAll() {
 								sm:flex-row sm:items-center
 							"
 						>
-							<div
-								class="
-									w-full
-									sm:w-48
-								"
-							>
+							<div class="w-full">
 								<Select v-model="commercialLength">
 									<SelectTrigger class="w-full">
 										<SelectValue placeholder="Duration" />
@@ -489,8 +470,8 @@ async function refreshAll() {
 						</div>
 					</CardContent>
 				</Card>
-			</div>
-		</div>
+			</template>
+		</AppSettingsGrid>
 
 		<!-- Save bar -->
 		<AppFloatingSaveBar

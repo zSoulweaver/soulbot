@@ -117,115 +117,104 @@ async function saveSettings() {
 			<span class="text-sm text-muted-foreground">Loading gambling configuration...</span>
 		</div>
 
-		<div
-			v-else
-			class="
-				grid grid-cols-1 gap-6
-				lg:grid-cols-3
-			"
-		>
-			<!-- Config Editor Column -->
-			<div class="lg:col-span-2">
-				<div class="flex flex-col gap-8">
-					<!-- Section 1: Bet Constraints -->
-					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 text-lg font-semibold">
-							<Coins class="size-5 text-muted-foreground" />
-							Bet Limits & Constraints
-						</h3>
-						<FieldGroup
-							class="
-								grid grid-cols-1 gap-4
-								sm:grid-cols-2
-							"
-						>
-							<Field>
-								<FieldLabel for="minBet">
-									Minimum Bet
-								</FieldLabel>
-								<NumberField id="minBet" v-model="form.minBet" :min="1" :default-value="10">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>
-									The minimum points required to initiate a gamble.
-								</FieldDescription>
-							</Field>
+		<AppSettingsGrid v-else>
+			<!-- Section 1: Bet Constraints -->
+			<div class="flex flex-col gap-4">
+				<h3 class="flex items-center gap-2 text-lg font-semibold">
+					<Coins class="size-5 text-muted-foreground" />
+					Bet Limits & Constraints
+				</h3>
+				<FieldGroup
+					class="
+						grid grid-cols-1 gap-4
+						sm:grid-cols-2
+					"
+				>
+					<Field>
+						<FieldLabel for="minBet">
+							Minimum Bet
+						</FieldLabel>
+						<NumberField id="minBet" v-model="form.minBet" :min="1" :default-value="10">
+							<NumberFieldContent>
+								<NumberFieldDecrement />
+								<NumberFieldInput />
+								<NumberFieldIncrement />
+							</NumberFieldContent>
+						</NumberField>
+						<FieldDescription>
+							The minimum points required to initiate a gamble.
+						</FieldDescription>
+					</Field>
 
-							<Field>
-								<FieldLabel for="maxBet">
-									Maximum Bet
-								</FieldLabel>
-								<NumberField id="maxBet" v-model="form.maxBet" :min="1" :default-value="100000">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>
-									The maximum points a user can risk in a single bet.
-								</FieldDescription>
-							</Field>
-						</FieldGroup>
-					</div>
+					<Field>
+						<FieldLabel for="maxBet">
+							Maximum Bet
+						</FieldLabel>
+						<NumberField id="maxBet" v-model="form.maxBet" :min="1" :default-value="100000">
+							<NumberFieldContent>
+								<NumberFieldDecrement />
+								<NumberFieldInput />
+								<NumberFieldIncrement />
+							</NumberFieldContent>
+						</NumberField>
+						<FieldDescription>
+							The maximum points a user can risk in a single bet.
+						</FieldDescription>
+					</Field>
+				</FieldGroup>
+			</div>
 
-					<Separator />
+			<Separator />
 
-					<!-- Section 2: Chance & Payoffs -->
-					<div class="flex flex-col gap-4">
-						<h3 class="flex items-center gap-2 text-lg font-semibold">
-							<Sliders class="size-5 text-muted-foreground" />
-							Odds & Multipliers
-						</h3>
-						<FieldGroup class="flex flex-col gap-6">
-							<Field>
-								<FieldLabel for="winMultiplier">
-									Net Win Gain Multiplier
-								</FieldLabel>
-								<NumberField id="winMultiplier" v-model="form.winMultiplier" :min="0.1" :step="0.1" :default-value="1.0">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>
-									Multiplier for points won. A multiplier of 1.0 means a successful gamble doubles their bet (keeps the bet + wins 100% of it).
-								</FieldDescription>
-							</Field>
+			<!-- Section 2: Chance & Payoffs -->
+			<div class="flex flex-col gap-4">
+				<h3 class="flex items-center gap-2 text-lg font-semibold">
+					<Sliders class="size-5 text-muted-foreground" />
+					Odds & Multipliers
+				</h3>
+				<FieldGroup class="flex flex-col gap-6">
+					<Field>
+						<FieldLabel for="winMultiplier">
+							Net Win Gain Multiplier
+						</FieldLabel>
+						<NumberField id="winMultiplier" v-model="form.winMultiplier" :min="0.1" :step="0.1" :default-value="1.0">
+							<NumberFieldContent>
+								<NumberFieldDecrement />
+								<NumberFieldInput />
+								<NumberFieldIncrement />
+							</NumberFieldContent>
+						</NumberField>
+						<FieldDescription>
+							Multiplier for points won. A multiplier of 1.0 means a successful gamble doubles their bet (keeps the bet + wins 100% of it).
+						</FieldDescription>
+					</Field>
 
-							<Field>
-								<div class="flex items-center justify-between">
-									<FieldLabel>
-										Winning Roll Threshold (Roll >= {{ form.winMinRoll }})
-									</FieldLabel>
-									<span class="text-sm font-semibold text-primary">
-										{{ winChancePercent }}% Win Chance
-									</span>
-								</div>
-								<div class="py-4">
-									<Slider
-										v-model="sliderValue"
-										:min="1"
-										:max="100"
-										:step="1"
-									/>
-								</div>
-								<FieldDescription>
-									Users roll a random number from 1 to 100. They win if the roll is greater than or equal to this threshold.
-								</FieldDescription>
-							</Field>
-						</FieldGroup>
-					</div>
-				</div>
+					<Field>
+						<div class="flex items-center justify-between">
+							<FieldLabel>
+								Winning Roll Threshold (Roll >= {{ form.winMinRoll }})
+							</FieldLabel>
+							<span class="text-sm font-semibold text-primary">
+								{{ winChancePercent }}% Win Chance
+							</span>
+						</div>
+						<div class="py-4">
+							<Slider
+								v-model="sliderValue"
+								:min="1"
+								:max="100"
+								:step="1"
+							/>
+						</div>
+						<FieldDescription>
+							Users roll a random number from 1 to 100. They win if the roll is greater than or equal to this threshold.
+						</FieldDescription>
+					</Field>
+				</FieldGroup>
 			</div>
 
 			<!-- Information / Odds Simulator Column -->
-			<div class="flex flex-col gap-6">
+			<template #sidebar>
 				<!-- Simulator Card -->
 				<Card>
 					<CardHeader>
@@ -293,8 +282,8 @@ async function saveSettings() {
 						</p>
 					</CardContent>
 				</Card>
-			</div>
-		</div>
+			</template>
+		</AppSettingsGrid>
 
 		<AppFloatingSaveBar
 			:show="isModified"

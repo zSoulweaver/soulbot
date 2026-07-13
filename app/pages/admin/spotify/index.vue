@@ -369,534 +369,480 @@ function formatTime(ms?: number) {
 				</div>
 
 				<!-- Connected State Flex Layout -->
-				<div
-					v-else class="
-						flex flex-col gap-8
-						xl:flex-row xl:items-start
-					"
-				>
-					<!-- Left Column -->
-					<div class="flex w-full max-w-3xl flex-col gap-8">
-						<!-- Spotify Connection Info Item -->
-						<Item variant="outline" class="justify-between gap-4">
-							<div class="flex items-center gap-3">
-								<div class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
-									<Music class="size-5" />
+				<AppSettingsGrid v-else>
+					<!-- Spotify Connection Info Item -->
+					<Item variant="outline" class="justify-between gap-4">
+						<div class="flex items-center gap-3">
+							<div class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+								<Music class="size-5" />
+							</div>
+							<div>
+								<ItemTitle>
+									Spotify Connected
+								</ItemTitle>
+								<ItemDescription>
+									Linked account: {{ status?.profile ? `${status.profile.displayName} (${status.profile.username})` : (user?.displayName || 'unknown username') }}
+								</ItemDescription>
+							</div>
+						</div>
+						<ItemActions>
+							<Button
+								variant="ghostDestructive"
+								:disabled="isDisconnecting"
+								@click="handleDisconnect"
+							>
+								<Link2Off data-icon="inline-start" />
+								Disconnect Account
+							</Button>
+						</ItemActions>
+					</Item>
+
+					<!-- Mobile/Tablet Compact Playback Widget (only visible on smaller screens, xl:hidden) -->
+					<Card
+						class="
+							relative z-10
+							xl:hidden
+						"
+					>
+						<img v-if="status.currentlyPlaying?.albumArt" :src="status.currentlyPlaying.albumArt" class="absolute inset-0 -z-1 size-full object-cover opacity-15 blur-2xl">
+						<CardHeader class="flex items-center justify-between">
+							<p class="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+								Live Playback Status
+							</p>
+							<Badge v-if="status.rateLimited" variant="destructive">
+								RATE LIMITED
+							</Badge>
+							<Badge
+								v-else-if="status.currentlyPlaying?.isPlaying" class="
+									border-emerald-500/10 bg-emerald-600/10 text-emerald-600
+									dark:text-emerald-500
+								"
+							>
+								PLAYING
+							</Badge>
+							<Badge
+								v-else-if="status.currentlyPlaying"
+								variant="secondary"
+								class="
+									border-amber-500/10 bg-amber-600/10 text-amber-600
+									dark:text-amber-500
+								"
+							>
+								PAUSED
+							</Badge>
+							<Badge v-else variant="secondary">
+								OFFLINE
+							</Badge>
+						</CardHeader>
+						<CardContent>
+							<div v-if="status.currentlyPlaying" class="flex gap-4">
+								<!-- Album Art / Placeholder -->
+								<div class="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+									<img
+										v-if="status.currentlyPlaying.albumArt"
+										:src="status.currentlyPlaying.albumArt"
+										class="size-full object-cover"
+										alt="Album Art"
+									>
+									<Radio v-else class="size-6 text-muted-foreground" />
 								</div>
-								<div>
-									<ItemTitle>
-										Spotify Connected
-									</ItemTitle>
-									<ItemDescription>
-										Linked account: {{ status?.profile ? `${status.profile.displayName} (${status.profile.username})` : (user?.displayName || 'unknown username') }}
-									</ItemDescription>
+								<div class="flex min-w-0 flex-1 flex-col justify-center">
+									<p class="truncate text-sm font-bold text-foreground">
+										{{ status.currentlyPlaying.title }}
+									</p>
+									<p class="truncate text-xs text-muted-foreground">
+										{{ status.currentlyPlaying.artist }}
+									</p>
+									<p v-if="status.currentlyPlaying.albumName" class="truncate text-xs text-muted-foreground/70 italic">
+										{{ status.currentlyPlaying.albumName }}
+									</p>
+									<!-- Progress bar -->
+									<Progress :model-value="progressPercent" class="mt-2 h-1" />
+									<div class="mt-1 flex justify-between text-xs text-muted-foreground select-none">
+										<span>{{ formatTime(activeProgressMs) }}</span>
+										<span>{{ formatTime(status.currentlyPlaying.durationMs) }}</span>
+									</div>
 								</div>
 							</div>
+							<div v-else class="flex items-center gap-3">
+								<div class="flex size-10 shrink-0 items-center justify-center rounded-sm bg-muted text-muted-foreground">
+									<Radio class="size-5" />
+								</div>
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-medium text-foreground">
+										No active playback
+									</p>
+									<p class="truncate text-xs text-muted-foreground">
+										Start playing music on Spotify to see commands working
+									</p>
+								</div>
+							</div>
+						</CardContent>
+						<CardFooter v-if="status.currentlyPlaying?.link" class="flex justify-center">
+							<Button
+								as="a"
+								:href="status.currentlyPlaying.link"
+								target="_blank"
+								variant="ghost"
+								size="sm"
+								class="w-full gap-1.5"
+							>
+								<Link2 class="size-4" />
+								Open in Spotify
+							</Button>
+						</CardFooter>
+					</Card>
+
+					<!-- Settings Section 1: Song Request Settings -->
+					<div class="flex flex-col gap-4">
+						<SettingsHeading>
+							Song Request Settings
+						</SettingsHeading>
+
+						<Item variant="outline">
+							<ItemContent>
+								<ItemTitle>
+									Enable Song Requests
+								</ItemTitle>
+								<ItemDescription>
+									Allow viewers to request songs using channel points or chat commands.
+								</ItemDescription>
+							</ItemContent>
+
 							<ItemActions>
-								<Button
-									variant="ghostDestructive"
-									:disabled="isDisconnecting"
-									@click="handleDisconnect"
-								>
-									<Link2Off data-icon="inline-start" />
-									Disconnect Account
-								</Button>
+								<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId || settingsData?.playlistExists === false" />
 							</ItemActions>
 						</Item>
 
-						<!-- Mobile/Tablet Compact Playback Widget (only visible on smaller screens, xl:hidden) -->
-						<Card
-							class="
-								relative z-10
-								xl:hidden
-							"
-						>
-							<img v-if="status.currentlyPlaying?.albumArt" :src="status.currentlyPlaying.albumArt" class="absolute inset-0 -z-1 size-full object-cover opacity-15 blur-2xl">
-							<CardHeader class="flex items-center justify-between">
-								<p class="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-									Live Playback Status
-								</p>
-								<Badge v-if="status.rateLimited" variant="destructive">
-									RATE LIMITED
-								</Badge>
-								<Badge
-									v-else-if="status.currentlyPlaying?.isPlaying" class="
-										border-emerald-500/10 bg-emerald-600/10 text-emerald-600
-										dark:text-emerald-500
-									"
-								>
-									PLAYING
-								</Badge>
-								<Badge
-									v-else-if="status.currentlyPlaying"
-									variant="secondary"
-									class="
-										border-amber-500/10 bg-amber-600/10 text-amber-600
-										dark:text-amber-500
-									"
-								>
-									PAUSED
-								</Badge>
-								<Badge v-else variant="secondary">
-									OFFLINE
-								</Badge>
-							</CardHeader>
-							<CardContent>
-								<div v-if="status.currentlyPlaying" class="flex gap-4">
-									<!-- Album Art / Placeholder -->
-									<div class="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
-										<img
-											v-if="status.currentlyPlaying.albumArt"
-											:src="status.currentlyPlaying.albumArt"
-											class="size-full object-cover"
-											alt="Album Art"
-										>
-										<Radio v-else class="size-6 text-muted-foreground" />
-									</div>
-									<div class="flex min-w-0 flex-1 flex-col justify-center">
-										<p class="truncate text-sm font-bold text-foreground">
-											{{ status.currentlyPlaying.title }}
-										</p>
-										<p class="truncate text-xs text-muted-foreground">
-											{{ status.currentlyPlaying.artist }}
-										</p>
-										<p v-if="status.currentlyPlaying.albumName" class="truncate text-xs text-muted-foreground/70 italic">
-											{{ status.currentlyPlaying.albumName }}
-										</p>
-										<!-- Progress bar -->
-										<Progress :model-value="progressPercent" class="mt-2 h-1" />
-										<div class="mt-1 flex justify-between text-xs text-muted-foreground select-none">
-											<span>{{ formatTime(activeProgressMs) }}</span>
-											<span>{{ formatTime(status.currentlyPlaying.durationMs) }}</span>
-										</div>
-									</div>
-								</div>
-								<div v-else class="flex items-center gap-3">
-									<div class="flex size-10 shrink-0 items-center justify-center rounded-sm bg-muted text-muted-foreground">
-										<Radio class="size-5" />
-									</div>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium text-foreground">
-											No active playback
-										</p>
-										<p class="truncate text-xs text-muted-foreground">
-											Start playing music on Spotify to see commands working
-										</p>
-									</div>
-								</div>
-							</CardContent>
-							<CardFooter v-if="status.currentlyPlaying?.link" class="flex justify-center">
-								<Button
-									as="a"
-									:href="status.currentlyPlaying.link"
-									target="_blank"
-									variant="ghost"
-									size="sm"
-									class="w-full gap-1.5"
-								>
-									<Link2 class="size-4" />
-									Open in Spotify
-								</Button>
-							</CardFooter>
-						</Card>
-
-						<!-- Settings Section 1: Song Request Settings -->
-						<div class="flex flex-col gap-4">
-							<SettingsHeading>
-								Song Request Settings
-							</SettingsHeading>
-
-							<Item variant="outline">
-								<ItemContent>
-									<ItemTitle>
-										Enable Song Requests
-									</ItemTitle>
-									<ItemDescription>
-										Allow viewers to request songs using channel points or chat commands.
-									</ItemDescription>
-								</ItemContent>
-
-								<ItemActions>
-									<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId || settingsData?.playlistExists === false" />
-								</ItemActions>
-							</Item>
-
-							<!-- Dedicated Playlist Initialization Card -->
-							<div class="mt-2">
-								<Card v-if="!settingsData?.playlistId" class="border-amber-500/20 bg-amber-500/5">
-									<CardHeader>
-										<CardTitle
-											class="
-												text-sm font-bold text-amber-600
-												dark:text-amber-500
-											"
-										>
-											Song Request Playlist Required
-										</CardTitle>
-										<CardDescription class="text-xs">
-											To enable song requests, the bot needs to create and manage a dedicated Spotify playlist context.
-										</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<Button
-											size="sm"
-											class="
-												bg-amber-600 font-semibold text-white
-												hover:bg-amber-700
-											"
-											:disabled="isInitializingPlaylist"
-											@click="handleInitializePlaylist"
-										>
-											<Plus data-icon="inline-start" />
-											Create "{{ botName }} Song Requests" Playlist
-										</Button>
-									</CardContent>
-								</Card>
-								<div v-else-if="settingsData?.playlistExists === false" class="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-									<div class="flex items-start gap-3">
-										<div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-											<AlertTriangle class="size-5" />
-										</div>
-										<div class="flex flex-col gap-0.5">
-											<p
-												class="text-sm font-semibold text-destructive"
-											>
-												Linked Playlist Not Found
-											</p>
-											<p class="text-xs text-muted-foreground">
-												The configured Spotify playlist (<code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>) no longer exists on Spotify.
-											</p>
-										</div>
-									</div>
-									<Button variant="destructive" size="sm" :disabled="isInitializingPlaylist" @click="handleInitializePlaylist">
-										Re-initialize Playlist
+						<!-- Dedicated Playlist Initialization Card -->
+						<div class="mt-2">
+							<Card v-if="!settingsData?.playlistId" class="border-amber-500/20 bg-amber-500/5">
+								<CardHeader>
+									<CardTitle
+										class="
+											text-sm font-bold text-amber-600
+											dark:text-amber-500
+										"
+									>
+										Song Request Playlist Required
+									</CardTitle>
+									<CardDescription class="text-xs">
+										To enable song requests, the bot needs to create and manage a dedicated Spotify playlist context.
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<Button
+										size="sm"
+										class="
+											bg-amber-600 font-semibold text-white
+											hover:bg-amber-700
+										"
+										:disabled="isInitializingPlaylist"
+										@click="handleInitializePlaylist"
+									>
+										<Plus data-icon="inline-start" />
+										Create "{{ botName }} Song Requests" Playlist
 									</Button>
-								</div>
-								<div v-else class="flex items-center justify-between rounded-lg border bg-emerald-500/5 p-4">
+								</CardContent>
+							</Card>
+							<div v-else-if="settingsData?.playlistExists === false" class="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+								<div class="flex items-start gap-3">
+									<div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+										<AlertTriangle class="size-5" />
+									</div>
 									<div class="flex flex-col gap-0.5">
 										<p
-											class="
-												text-sm font-semibold text-emerald-600
-												dark:text-emerald-500
-											"
+											class="text-sm font-semibold text-destructive"
 										>
-											Spotify Queue Playlist Active
+											Linked Playlist Not Found
 										</p>
 										<p class="text-xs text-muted-foreground">
-											Linked Playlist ID: <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>
+											The configured Spotify playlist (<code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>) no longer exists on Spotify.
 										</p>
 									</div>
 								</div>
+								<Button variant="destructive" size="sm" :disabled="isInitializingPlaylist" @click="handleInitializePlaylist">
+									Re-initialize Playlist
+								</Button>
 							</div>
-							<FieldGroup
-								class="
-									grid grid-cols-1 gap-x-8 gap-y-6
-									md:grid-cols-2
-								"
-							>
-								<Field>
-									<FieldLabel for="pointsCost">
-										Request Channel Points Cost
-									</FieldLabel>
-									<NumberField id="pointsCost" v-model="form.pointsCost" :min="0" :default-value="10">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>Cost to request a song via chat command or Twitch reward.</FieldDescription>
-								</Field>
-
-								<Field>
-									<FieldLabel for="maxLength">
-										Max Song Length (Minutes)
-									</FieldLabel>
-									<NumberField id="maxLength" v-model="form.maxLength" :min="0" :default-value="8">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>Songs longer than this threshold (in minutes) will be blocked. Set to 0 for unlimited length.</FieldDescription>
-								</Field>
-
-								<Field>
-									<FieldLabel for="maxQueue">
-										Max Active Queue Items
-									</FieldLabel>
-									<NumberField id="maxQueue" v-model="form.maxQueue" :min="0" :default-value="50">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>Caps maximum entries in the queue to prevent overrunning the list. Set to 0 for unlimited size.</FieldDescription>
-								</Field>
-
-								<Field>
-									<FieldLabel for="maxUserRequests">
-										Max Songs Per User
-									</FieldLabel>
-									<NumberField id="maxUserRequests" v-model="form.maxUserRequests" :min="0" :default-value="0">
-										<NumberFieldContent>
-											<NumberFieldDecrement />
-											<NumberFieldInput />
-											<NumberFieldIncrement />
-										</NumberFieldContent>
-									</NumberField>
-									<FieldDescription>Caps active requests a viewer can have in the queue at once. Set to 0 for unlimited.</FieldDescription>
-								</Field>
-							</FieldGroup>
-
-							<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Restrict to Followers Only</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Only verified channel followers can issue song requests.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.followersOnly" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Permit Explicit Tracks</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Allows tracks containing explicit content flags in results.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.permitExplicit" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Allow Offline Song Requests</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Allow viewers to queue songs even when the stream is not live.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.offlineOverride" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Moderators Limit Bypass</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Allow moderators and casters to bypass maximum song length and user request limits.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.modsBypassLimits" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Announce Low Queue in Chat</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Post a message to chat when there are exactly 5 user-requested songs remaining in the queue.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.alertQueueLowEnabled" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Announce Queue Finished in Chat</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Post a message to chat when the last user-requested song in the queue finishes.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.alertQueueEmptyEnabled" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-							</SettingsGroup>
+							<div v-else class="flex items-center justify-between rounded-lg border bg-emerald-500/5 p-4">
+								<div class="flex flex-col gap-0.5">
+									<p
+										class="
+											text-sm font-semibold text-emerald-600
+											dark:text-emerald-500
+										"
+									>
+										Spotify Queue Playlist Active
+									</p>
+									<p class="text-xs text-muted-foreground">
+										Linked Playlist ID: <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold select-all">{{ settingsData.playlistId }}</code>
+									</p>
+								</div>
+							</div>
 						</div>
+						<FieldGroup
+							class="
+								grid grid-cols-1 gap-x-8 gap-y-6
+								md:grid-cols-2
+							"
+						>
+							<Field>
+								<FieldLabel for="pointsCost">
+									Request Channel Points Cost
+								</FieldLabel>
+								<NumberField id="pointsCost" v-model="form.pointsCost" :min="0" :default-value="10">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>Cost to request a song via chat command or Twitch reward.</FieldDescription>
+							</Field>
 
-						<!-- Settings Section 2: Save-to-Playlist Integration -->
-						<div class="flex flex-col gap-4">
-							<SettingsHeading>
-								Save-to-Playlist Integration
-							</SettingsHeading>
+							<Field>
+								<FieldLabel for="maxLength">
+									Max Song Length (Minutes)
+								</FieldLabel>
+								<NumberField id="maxLength" v-model="form.maxLength" :min="0" :default-value="8">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>Songs longer than this threshold (in minutes) will be blocked. Set to 0 for unlimited length.</FieldDescription>
+							</Field>
 
-							<FieldGroup class="grid grid-cols-1 gap-4">
-								<Field>
-									<FieldLabel for="targetPlaylist">
-										Target Spotify Playlist
-									</FieldLabel>
-									<div class="flex items-center gap-2">
-										<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" class="w-full grow" @update:open="onPlaylistSelectOpen">
-											<ComboboxAnchor as-child>
-												<ComboboxTrigger as-child>
-													<Button
-														variant="outline"
-														class="w-full justify-between font-normal"
-														:disabled="loadingPlaylists"
-													>
-														<template v-if="form.targetPlaylist">
-															<div class="flex items-center gap-2 overflow-hidden">
-																<Avatar class="size-5 shrink-0 overflow-hidden rounded-md">
-																	<AvatarImage v-if="selectedPlaylist?.image" :src="selectedPlaylist.image!" />
-																	<AvatarFallback class="bg-emerald-500/10 text-[9px] text-emerald-500">
-																		{{ selectedPlaylist?.name?.[0]?.toUpperCase() || 'P' }}
-																	</AvatarFallback>
-																</Avatar>
-																<span class="truncate">{{ selectedPlaylist?.name || form.targetPlaylistName || 'Selected Playlist' }}</span>
-															</div>
-														</template>
-														<template v-else>
-															Select target playlist...
-														</template>
-														<ChevronsUpDown class="size-4 shrink-0 opacity-50" />
-													</Button>
-												</ComboboxTrigger>
-											</ComboboxAnchor>
+							<Field>
+								<FieldLabel for="maxQueue">
+									Max Active Queue Items
+								</FieldLabel>
+								<NumberField id="maxQueue" v-model="form.maxQueue" :min="0" :default-value="50">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>Caps maximum entries in the queue to prevent overrunning the list. Set to 0 for unlimited size.</FieldDescription>
+							</Field>
 
-											<ComboboxList style="width: var(--reka-combobox-trigger-width)">
-												<ComboboxInput :display-value="() => ''" placeholder="Search playlist..." />
-												<ComboboxEmpty>No playlist found.</ComboboxEmpty>
-												<ComboboxViewport>
-													<ComboboxGroup>
-														<ComboboxItem
-															v-for="pl in playlists"
-															:key="pl.id"
-															:value="pl.id"
-														>
+							<Field>
+								<FieldLabel for="maxUserRequests">
+									Max Songs Per User
+								</FieldLabel>
+								<NumberField id="maxUserRequests" v-model="form.maxUserRequests" :min="0" :default-value="0">
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+								<FieldDescription>Caps active requests a viewer can have in the queue at once. Set to 0 for unlimited.</FieldDescription>
+							</Field>
+						</FieldGroup>
+
+						<SettingsGroup>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Restrict to Followers Only</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Only verified channel followers can issue song requests.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.followersOnly" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Permit Explicit Tracks</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Allows tracks containing explicit content flags in results.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.permitExplicit" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Allow Offline Song Requests</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Allow viewers to queue songs even when the stream is not live.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.offlineOverride" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Moderators Limit Bypass</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Allow moderators and casters to bypass maximum song length and user request limits.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.modsBypassLimits" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Low Queue in Chat</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when there are exactly 5 user-requested songs remaining in the queue.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.alertQueueLowEnabled" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Queue Finished in Chat</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when the last user-requested song in the queue finishes.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.alertQueueEmptyEnabled" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+						</SettingsGroup>
+					</div>
+
+					<!-- Settings Section 2: Save-to-Playlist Integration -->
+					<div class="flex flex-col gap-4">
+						<SettingsHeading>
+							Save-to-Playlist Integration
+						</SettingsHeading>
+
+						<FieldGroup class="grid grid-cols-1 gap-4">
+							<Field>
+								<FieldLabel for="targetPlaylist">
+									Target Spotify Playlist
+								</FieldLabel>
+								<div class="flex items-center gap-2">
+									<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" class="w-full grow" @update:open="onPlaylistSelectOpen">
+										<ComboboxAnchor as-child>
+											<ComboboxTrigger as-child>
+												<Button
+													variant="outline"
+													class="w-full justify-between font-normal"
+													:disabled="loadingPlaylists"
+												>
+													<template v-if="form.targetPlaylist">
+														<div class="flex items-center gap-2 overflow-hidden">
 															<Avatar class="size-5 shrink-0 overflow-hidden rounded-md">
-																<AvatarImage v-if="pl.image" :src="pl.image" />
+																<AvatarImage v-if="selectedPlaylist?.image" :src="selectedPlaylist.image!" />
 																<AvatarFallback class="bg-emerald-500/10 text-[9px] text-emerald-500">
-																	{{ pl.name?.[0]?.toUpperCase() || 'P' }}
+																	{{ selectedPlaylist?.name?.[0]?.toUpperCase() || 'P' }}
 																</AvatarFallback>
 															</Avatar>
-															<span class="truncate pr-6">{{ pl.name }}</span>
-															<ComboboxItemIndicator class="absolute right-2 flex items-center justify-center">
-																<Check class="size-4" />
-															</ComboboxItemIndicator>
-														</ComboboxItem>
-													</ComboboxGroup>
-												</ComboboxViewport>
-											</ComboboxList>
-										</Combobox>
-										<Button
-											v-if="form.targetPlaylist"
-											variant="outline"
-											size="icon"
-											class="shrink-0 animate-in duration-200 fade-in zoom-in"
-											title="Clear target playlist"
-											@click="clearTargetPlaylist"
-										>
-											<X class="size-4 text-muted-foreground" />
-										</Button>
-									</div>
-									<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
-								</Field>
-							</FieldGroup>
+															<span class="truncate">{{ selectedPlaylist?.name || form.targetPlaylistName || 'Selected Playlist' }}</span>
+														</div>
+													</template>
+													<template v-else>
+														Select target playlist...
+													</template>
+													<ChevronsUpDown class="size-4 shrink-0 opacity-50" />
+												</Button>
+											</ComboboxTrigger>
+										</ComboboxAnchor>
 
-							<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Allow Moderators to Like Songs</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Grants like access to active stream mods. If toggled off, only you can trigger saves.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.allowModerators" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Whisper Save Notifications</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Quietly whisper users when their song is officially saved to your playlist instead of shouting in chat.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.whisperNotifications" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-								<SettingsGroupItem
-									class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
-								>
-									<SettingsGroupContent>
-										<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
-										<SettingsGroupDescription>
-											Post a message to chat when a song is removed from the queue via the web admin panel.
-										</SettingsGroupDescription>
-									</SettingsGroupContent>
-									<SettingsGroupAction>
-										<Switch v-model:model-value="form.announceDeleteWebui" />
-									</SettingsGroupAction>
-								</SettingsGroupItem>
-							</SettingsGroup>
-						</div>
+										<ComboboxList style="width: var(--reka-combobox-trigger-width)">
+											<ComboboxInput :display-value="() => ''" placeholder="Search playlist..." />
+											<ComboboxEmpty>No playlist found.</ComboboxEmpty>
+											<ComboboxViewport>
+												<ComboboxGroup>
+													<ComboboxItem
+														v-for="pl in playlists"
+														:key="pl.id"
+														:value="pl.id"
+													>
+														<Avatar class="size-5 shrink-0 overflow-hidden rounded-md">
+															<AvatarImage v-if="pl.image" :src="pl.image" />
+															<AvatarFallback class="bg-emerald-500/10 text-[9px] text-emerald-500">
+																{{ pl.name?.[0]?.toUpperCase() || 'P' }}
+															</AvatarFallback>
+														</Avatar>
+														<span class="truncate pr-6">{{ pl.name }}</span>
+														<ComboboxItemIndicator class="absolute right-2 flex items-center justify-center">
+															<Check class="size-4" />
+														</ComboboxItemIndicator>
+													</ComboboxItem>
+												</ComboboxGroup>
+											</ComboboxViewport>
+										</ComboboxList>
+									</Combobox>
+									<Button
+										v-if="form.targetPlaylist"
+										variant="outline"
+										size="icon"
+										class="shrink-0 animate-in duration-200 fade-in zoom-in"
+										title="Clear target playlist"
+										@click="clearTargetPlaylist"
+									>
+										<X class="size-4 text-muted-foreground" />
+									</Button>
+								</div>
+								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
+							</Field>
+						</FieldGroup>
+
+						<SettingsGroup>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Allow Moderators to Like Songs</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Grants like access to active stream mods. If toggled off, only you can trigger saves.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.allowModerators" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Whisper Save Notifications</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Quietly whisper users when their song is officially saved to your playlist instead of shouting in chat.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.whisperNotifications" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when a song is removed from the queue via the web admin panel.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.announceDeleteWebui" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+						</SettingsGroup>
 					</div>
+
 					<!-- Right Column (Desktop only widget) -->
-					<div
-						class="
-							hidden
-							xl:block xl:w-lg xl:shrink-0
-						"
-					>
+					<template #sidebar>
 						<SpotifyPlayer
-							class="sticky top-6 h-fit"
+							class="
+								sticky top-22 hidden h-fit
+								xl:flex
+							"
 							:currently-playing="status.currentlyPlaying"
 							:rate-limited="status.rateLimited"
 							:active-progress-ms="activeProgressMs"
 						/>
-					</div>
-				</div>
+					</template>
+				</AppSettingsGrid>
 			</div>
 		</template>
 

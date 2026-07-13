@@ -123,7 +123,7 @@ async function saveSettings() {
 			</div>
 
 			<!-- Roles Content -->
-			<div v-else class="flex w-full max-w-3xl flex-col gap-6">
+			<AppSettingsGrid v-else>
 				<!-- Alert banner if Discord Bot is not connected -->
 				<Alert v-if="!form.isDiscordConnected" variant="warning" class="border-amber-500/50 bg-amber-500/10">
 					<AlertTitle
@@ -149,7 +149,7 @@ async function saveSettings() {
 				</Alert>
 
 				<!-- Auto-Bestow Accordion Wrapper -->
-				<ConfigAccordionGroup constrained>
+				<ConfigAccordionGroup>
 					<ConfigAccordion
 						v-model="form.discordRolesAutoBestowEnabled"
 						title="Discord Role Bestowing"
@@ -168,12 +168,9 @@ async function saveSettings() {
 
 						<!-- Dynamic Roles Select Group -->
 						<div v-if="guildRoles.length > 0" class="flex flex-col gap-6">
-							<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
+							<SettingsGroup>
 								<SettingsGroupItem
-									v-for="role in guildRoles" :key="role.id" class="
-										border-b border-border/30 px-0 py-5
-										last:border-b-0
-									"
+									v-for="role in guildRoles" :key="role.id"
 								>
 									<SettingsGroupContent>
 										<SettingsGroupLabel class="flex items-center gap-2">
@@ -200,7 +197,7 @@ async function saveSettings() {
 						</div>
 					</ConfigAccordion>
 				</ConfigAccordionGroup>
-			</div>
+			</AppSettingsGrid>
 
 			<template #fallback>
 				<div class="flex flex-col items-center justify-center gap-2 py-20">

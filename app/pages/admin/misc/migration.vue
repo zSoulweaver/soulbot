@@ -157,7 +157,7 @@ async function runMigration() {
 		</Alert>
 
 		<!-- Main migration form (Directly on background, full width design) -->
-		<div class="flex w-full max-w-3xl flex-col gap-8">
+		<AppSettingsGrid>
 			<!-- Configuration Section -->
 			<div class="flex flex-col gap-4">
 				<h3 class="flex items-center gap-2 text-lg font-semibold">
@@ -273,6 +273,6 @@ async function runMigration() {
 					{{ migrating ? 'Migrating Database...' : 'Start Migration' }}
 				</Button>
 			</div>
-		</div>
+		</AppSettingsGrid>
 	</AppSettingsPage>
 </template>

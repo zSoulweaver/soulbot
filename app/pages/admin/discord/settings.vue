@@ -10,6 +10,7 @@ import {
 	SettingsGroupItem,
 	SettingsGroupLabel,
 } from '~/components/ui/settings-group'
+import { SettingsHeading } from '~/components/ui/settings-heading'
 
 type DiscordSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/settings.get').default>>
 
@@ -107,7 +108,7 @@ async function refreshAll() {
 			</div>
 
 			<!-- Settings Content -->
-			<div v-else class="flex w-full max-w-3xl flex-col gap-4">
+			<AppSettingsGrid v-else>
 				<!-- Warning Alert if Bot Token is not configured in environment -->
 				<Alert v-if="!form.isTokenConfigured" variant="destructive" class="border-destructive/50 bg-destructive/10">
 					<AlertTitle class="font-bold">
@@ -140,6 +141,10 @@ async function refreshAll() {
 					</AlertDescription>
 				</Alert>
 
+				<SettingsHeading>
+					Server Configuration
+				</SettingsHeading>
+
 				<SettingsGroup>
 					<!-- Target Discord Server Selection -->
 					<SettingsGroupItem>
@@ -149,12 +154,7 @@ async function refreshAll() {
 								Select the server (guild) the bot will mirror alerts to and manage roles in.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full
-								sm:w-80
-							"
-						>
+						<SettingsGroupAction>
 							<Select
 								v-if="form.isDiscordConnected && guilds.length > 0"
 								v-model="form.discordGuildId"
@@ -202,7 +202,7 @@ async function refreshAll() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 				</SettingsGroup>
-			</div>
+			</AppSettingsGrid>
 
 			<template #fallback>
 				<div class="flex flex-col items-center justify-center gap-2 py-20">

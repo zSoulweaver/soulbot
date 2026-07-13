@@ -159,26 +159,16 @@ function onToggleAlert(val: boolean) {
 
 		<div class="flex flex-col gap-6">
 			<!-- Options Group -->
-			<SettingsGroup class="divide-y-0 border-none bg-transparent shadow-none">
+			<SettingsGroup>
 				<!-- Target Channel selector -->
-				<SettingsGroupItem
-					class="
-						border-b border-border/30 px-0 py-5
-						last:border-b-0
-					"
-				>
+				<SettingsGroupItem>
 					<SettingsGroupContent>
 						<SettingsGroupLabel>Target Channel</SettingsGroupLabel>
 						<SettingsGroupDescription>
 							Select or enter the text channel where the alert will be posted.
 						</SettingsGroupDescription>
 					</SettingsGroupContent>
-					<SettingsGroupAction
-						class="
-							w-full
-							sm:w-80
-						"
-					>
+					<SettingsGroupAction>
 						<div class="flex w-full flex-col gap-2">
 							<div class="flex items-center justify-end">
 								<Button

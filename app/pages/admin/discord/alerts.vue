@@ -171,136 +171,135 @@ async function saveSettings() {
 			</div>
 
 			<!-- Alerts Content -->
-			<ConfigAccordionGroup v-else constrained>
-				<!-- Alert banner if Discord Bot is not connected -->
-				<Alert v-if="!form.isDiscordConnected" variant="warning" class="border-amber-500/50 bg-amber-500/10">
-					<AlertTitle
-						class="
-							font-bold text-amber-600
-							dark:text-amber-400
-						"
-					>
-						Discord Bot Offline
-					</AlertTitle>
-					<AlertDescription
-						class="
-							text-sm/relaxed text-amber-600/90
-							dark:text-amber-400/90
-						"
-					>
-						The Discord bot integration is currently disabled or disconnected.
-						You can still modify and save message templates, but sending alerts is inactive and toggles are locked.
-						Ensure Discord is enabled and configured correctly in <NuxtLink to="/admin/discord/settings" class="font-semibold underline">
-							Settings
-						</NuxtLink>.
-					</AlertDescription>
-				</Alert>
-
-				<!-- Follower Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertFollowEnabled"
-					v-model:alert-channel-id="form.discordAlertFollowChannelId"
-					v-model:alert-template="form.discordAlertFollowTemplate"
-					title="Follower Alerts"
-					description="Send a message to a Discord channel when a user follows your Twitch stream."
-					:variables="['$(sender) (Follower Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
-
-				<!-- Subscription Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertSubEnabled"
-					v-model:alert-channel-id="form.discordAlertSubChannelId"
-					v-model:alert-template="form.discordAlertSubTemplate"
-					title="Subscription Alerts"
-					description="Send a message to a Discord channel when a viewer subscribes or resubscribes."
-					:variables="['$(sender) (Subscriber Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(subTier) (Tier)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
-
-				<!-- Subscription Gift Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertGiftEnabled"
-					v-model:alert-channel-id="form.discordAlertGiftChannelId"
-					v-model:alert-template="form.discordAlertGiftTemplate"
-					title="Subscription Gift Alerts"
-					description="Send a message to a Discord channel when a viewer gifts subs to the community."
-					:variables="['$(sender) (Gifter Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(giftCount) (Gift Count)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
-
-				<!-- Cheer Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertCheerEnabled"
-					v-model:alert-channel-id="form.discordAlertCheerChannelId"
-					v-model:alert-template="form.discordAlertCheerTemplate"
-					title="Cheer Alerts"
-					description="Send a message to a Discord channel when a user cheers bits on your stream."
-					:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
-
-				<!-- Live Announcement Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertLiveEnabled"
-					v-model:alert-channel-id="form.discordAlertLiveChannelId"
-					v-model:alert-template="form.discordAlertLiveTemplate"
-					title="Live Stream Alerts"
-					description="Send a rich embed message with Category, Stream Title, and Preview Image to Discord when your stream goes live."
-					:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				>
-					<template #extra-options>
-						<SettingsGroupItem
-							v-if="form.discordAlertLiveEnabled && form.isDiscordConnected" class="
-								border-b border-border/30 px-0 py-5
-								last:border-b-0
+			<AppSettingsGrid v-else>
+				<ConfigAccordionGroup>
+					<!-- Alert banner if Discord Bot is not connected -->
+					<Alert v-if="!form.isDiscordConnected" variant="warning" class="border-amber-500/50 bg-amber-500/10">
+						<AlertTitle
+							class="
+								font-bold text-amber-600
+								dark:text-amber-400
 							"
 						>
-							<SettingsGroupContent>
-								<SettingsGroupLabel>Remove Post Once Offline</SettingsGroupLabel>
-								<SettingsGroupDescription>
-									Delete the Discord live announcement message automatically when the stream goes offline.
-								</SettingsGroupDescription>
-							</SettingsGroupContent>
-							<SettingsGroupAction>
-								<Switch
-									v-model:model-value="form.discordAlertLiveRemoveOffline"
-								/>
-							</SettingsGroupAction>
-						</SettingsGroupItem>
-					</template>
-				</DiscordAlertConfig>
+							Discord Bot Offline
+						</AlertTitle>
+						<AlertDescription
+							class="
+								text-sm/relaxed text-amber-600/90
+								dark:text-amber-400/90
+							"
+						>
+							The Discord bot integration is currently disabled or disconnected.
+							You can still modify and save message templates, but sending alerts is inactive and toggles are locked.
+							Ensure Discord is enabled and configured correctly in <NuxtLink to="/admin/discord/settings" class="font-semibold underline">
+								Settings
+							</NuxtLink>.
+						</AlertDescription>
+					</Alert>
 
-				<!-- Offline Announcement Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertOfflineEnabled"
-					v-model:alert-channel-id="form.discordAlertOfflineChannelId"
-					v-model:alert-template="form.discordAlertOfflineTemplate"
-					title="Stream Offline Alerts"
-					description="Send an announcement message to Discord when your stream goes offline."
-					:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
+					<!-- Follower Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertFollowEnabled"
+						v-model:alert-channel-id="form.discordAlertFollowChannelId"
+						v-model:alert-template="form.discordAlertFollowTemplate"
+						title="Follower Alerts"
+						description="Send a message to a Discord channel when a user follows your Twitch stream."
+						:variables="['$(sender) (Follower Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
 
-				<!-- Raid Announcement Alerts Card -->
-				<DiscordAlertConfig
-					v-model:alert-enabled="form.discordAlertRaidEnabled"
-					v-model:alert-channel-id="form.discordAlertRaidChannelId"
-					v-model:alert-template="form.discordAlertRaidTemplate"
-					title="Raid Alerts"
-					description="Send an announcement message to Discord when another channel raids you."
-					:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
-					:channels="channels"
-					:disabled="!form.isDiscordConnected"
-				/>
-			</ConfigAccordionGroup>
+					<!-- Subscription Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertSubEnabled"
+						v-model:alert-channel-id="form.discordAlertSubChannelId"
+						v-model:alert-template="form.discordAlertSubTemplate"
+						title="Subscription Alerts"
+						description="Send a message to a Discord channel when a viewer subscribes or resubscribes."
+						:variables="['$(sender) (Subscriber Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(subTier) (Tier)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- Subscription Gift Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertGiftEnabled"
+						v-model:alert-channel-id="form.discordAlertGiftChannelId"
+						v-model:alert-template="form.discordAlertGiftTemplate"
+						title="Subscription Gift Alerts"
+						description="Send a message to a Discord channel when a viewer gifts subs to the community."
+						:variables="['$(sender) (Gifter Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(giftCount) (Gift Count)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- Cheer Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertCheerEnabled"
+						v-model:alert-channel-id="form.discordAlertCheerChannelId"
+						v-model:alert-template="form.discordAlertCheerTemplate"
+						title="Cheer Alerts"
+						description="Send a message to a Discord channel when a user cheers bits on your stream."
+						:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- Live Announcement Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertLiveEnabled"
+						v-model:alert-channel-id="form.discordAlertLiveChannelId"
+						v-model:alert-template="form.discordAlertLiveTemplate"
+						title="Live Stream Alerts"
+						description="Send a rich embed message with Category, Stream Title, and Preview Image to Discord when your stream goes live."
+						:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					>
+						<template #extra-options>
+							<SettingsGroupItem
+								v-if="form.discordAlertLiveEnabled && form.isDiscordConnected"
+							>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Remove Post Once Offline</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Delete the Discord live announcement message automatically when the stream goes offline.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch
+										v-model:model-value="form.discordAlertLiveRemoveOffline"
+									/>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+						</template>
+					</DiscordAlertConfig>
+
+					<!-- Offline Announcement Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertOfflineEnabled"
+						v-model:alert-channel-id="form.discordAlertOfflineChannelId"
+						v-model:alert-template="form.discordAlertOfflineTemplate"
+						title="Stream Offline Alerts"
+						description="Send an announcement message to Discord when your stream goes offline."
+						:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- Raid Announcement Alerts Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertRaidEnabled"
+						v-model:alert-channel-id="form.discordAlertRaidChannelId"
+						v-model:alert-template="form.discordAlertRaidTemplate"
+						title="Raid Alerts"
+						description="Send an announcement message to Discord when another channel raids you."
+						:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+				</ConfigAccordionGroup>
+			</AppSettingsGrid>
 
 			<template #fallback>
 				<div class="flex flex-col items-center justify-center gap-2 py-20">

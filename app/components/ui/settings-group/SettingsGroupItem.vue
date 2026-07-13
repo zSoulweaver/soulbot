@@ -10,8 +10,8 @@ const props = defineProps<{
 <template>
 	<div
 		:class="cn(`
-			flex flex-col justify-between gap-4 px-4 py-3
-			sm:flex-row sm:items-center
+			flex flex-row items-center justify-between gap-4 border-b border-border/20 px-0 py-4
+			last:border-b-0
 		`, props.class)"
 	>
 		<slot />

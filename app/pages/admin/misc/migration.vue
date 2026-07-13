@@ -159,7 +159,7 @@ async function runMigration() {
 		<!-- Main migration form (Directly on background, full width design) -->
 		<AppSettingsGrid>
 			<!-- Configuration Section -->
-			<div class="flex flex-col gap-4">
+			<AppSettingsSection>
 				<SettingsHeading>Migration Configuration</SettingsHeading>
 				<SettingsGroup>
 					<!-- Source Bot -->
@@ -197,10 +197,10 @@ async function runMigration() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 				</SettingsGroup>
-			</div>
+			</AppSettingsSection>
 
 			<!-- Database File Upload -->
-			<div class="flex flex-col gap-4">
+			<AppSettingsSection>
 				<SettingsHeading>Database File Upload</SettingsHeading>
 				<div
 					class="
@@ -240,7 +240,7 @@ async function runMigration() {
 						<span class="text-xs text-muted-foreground">{{ formatBytes(file.size) }}</span>
 					</div>
 				</div>
-			</div>
+			</AppSettingsSection>
 
 			<!-- Action Buttons -->
 			<div class="flex justify-end gap-3">

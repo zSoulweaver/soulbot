@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock, HelpCircle, Landmark, RefreshCcw, Sparkles } from '@lucide/vue'
+import { Clock, HelpCircle, RefreshCcw, Sparkles } from '@lucide/vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
@@ -191,7 +191,7 @@ onUnmounted(() => {
 
 <template>
 	<AppSettingsPage
-		heading="Points Settings"
+		heading="Points & Payout Settings"
 		subheading="Configure currency customization, online/offline payout cycles, and active chatter bonuses."
 	>
 		<template #header-actions>
@@ -207,159 +207,148 @@ onUnmounted(() => {
 
 		<AppSettingsGrid v-else>
 			<!-- Section 1: Currency Configuration -->
-			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<Landmark class="size-5 text-muted-foreground" />
-					Currency Customization
-				</h3>
-				<FieldGroup
-					class="
-						grid grid-cols-1 gap-4
-						sm:grid-cols-2
-					"
-				>
-					<Field>
-						<FieldLabel for="currencyName">
-							Singular Name
-						</FieldLabel>
-						<Input
-							id="currencyName"
-							v-model="form.currencyName"
-							type="text"
-							placeholder="e.g. coin"
-						/>
-						<FieldDescription>
-							Used for single values (e.g. 1 coin).
-						</FieldDescription>
-					</Field>
-					<Field>
-						<FieldLabel for="currencyNamePlural">
-							Plural Name
-						</FieldLabel>
-						<Input
-							id="currencyNamePlural"
-							v-model="form.currencyNamePlural"
-							type="text"
-							placeholder="e.g. coins"
-						/>
-						<FieldDescription>
-							Used for multi or default values (e.g. 50 coins).
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</div>
+			<AppSettingsSection>
+				<SettingsHeading>Currency Customization</SettingsHeading>
+				<SettingsGroup>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Singular Name</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Used for single values (e.g. 1 coin).
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<Input
+								id="currencyName"
+								v-model="form.currencyName"
+								type="text"
+								placeholder="e.g. coin"
+								class="w-full"
+							/>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
 
-			<Separator />
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Plural Name</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Used for multi or default values (e.g. 50 coins).
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<Input
+								id="currencyNamePlural"
+								v-model="form.currencyNamePlural"
+								type="text"
+								placeholder="e.g. coins"
+								class="w-full"
+							/>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
+			</AppSettingsSection>
 
 			<!-- Section 2: Online Payout Settings -->
-			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<span class="relative flex size-2">
-						<span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
-						<span class="relative inline-flex size-2 rounded-full bg-green-500" />
-					</span>
-					Online Payout Schedule
-				</h3>
-				<FieldGroup
-					class="
-						grid grid-cols-1 gap-4
-						sm:grid-cols-3
-					"
-				>
-					<Field>
-						<FieldLabel for="payoutInterval">
-							Interval (Minutes)
-						</FieldLabel>
-						<NumberField id="payoutInterval" v-model="form.payoutInterval" :min="1" :default-value="1">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Time frequency of payout checks when stream is live.
-						</FieldDescription>
-					</Field>
-					<Field>
-						<FieldLabel for="payoutAmount">
-							Base Payout
-						</FieldLabel>
-						<NumberField id="payoutAmount" v-model="form.payoutAmount" :min="0" :default-value="0">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Points awarded to all chatters on each cycle.
-						</FieldDescription>
-					</Field>
-					<Field>
-						<FieldLabel for="activeBonus">
-							Active Chat Bonus
-						</FieldLabel>
-						<NumberField id="activeBonus" v-model="form.activeBonus" :min="0" :default-value="0">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Additional bonus points awarded to chatters who sent a message.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</div>
+			<AppSettingsSection>
+				<SettingsHeading>Online Payout Schedule</SettingsHeading>
+				<SettingsGroup>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Interval (Minutes)</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Time frequency of payout checks when stream is live.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="payoutInterval" v-model="form.payoutInterval" :min="1" :default-value="1" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
 
-			<Separator />
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Base Payout</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Points awarded to all chatters on each cycle.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="payoutAmount" v-model="form.payoutAmount" :min="0" :default-value="0" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Active Chat Bonus</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Additional bonus points awarded to chatters who sent a message.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="activeBonus" v-model="form.activeBonus" :min="0" :default-value="0" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
+			</AppSettingsSection>
 
 			<!-- Section 3: Offline Payout Settings -->
-			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<span class="inline-flex size-2 rounded-full bg-muted-foreground" />
-					Offline Payout Schedule
-				</h3>
-				<FieldGroup
-					class="
-						grid grid-cols-1 gap-4
-						sm:grid-cols-2
-					"
-				>
-					<Field>
-						<FieldLabel for="payoutIntervalOffline">
-							Interval (Minutes)
-						</FieldLabel>
-						<NumberField id="payoutIntervalOffline" v-model="form.payoutIntervalOffline" :min="1" :default-value="1">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Time frequency of payout checks when offline.
-						</FieldDescription>
-					</Field>
-					<Field>
-						<FieldLabel for="payoutAmountOffline">
-							Base Payout
-						</FieldLabel>
-						<NumberField id="payoutAmountOffline" v-model="form.payoutAmountOffline" :default-value="0">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Points awarded to all chatters when offline (0 disables).
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</div>
+			<AppSettingsSection>
+				<SettingsHeading>Offline Payout Schedule</SettingsHeading>
+				<SettingsGroup>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Interval (Minutes)</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Time frequency of payout checks when offline.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="payoutIntervalOffline" v-model="form.payoutIntervalOffline" :min="1" :default-value="1" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Base Payout</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Points awarded to all chatters when offline (0 disables).
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="payoutAmountOffline" v-model="form.payoutAmountOffline" :default-value="0" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
+			</AppSettingsSection>
 
 			<!-- Help / Mechanics Panel -->
 			<template #sidebar>

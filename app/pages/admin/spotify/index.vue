@@ -494,25 +494,24 @@ function formatTime(ms?: number) {
 					</Card>
 
 					<!-- Settings Section 1: Song Request Settings -->
-					<div class="flex flex-col gap-4">
+					<AppSettingsSection>
 						<SettingsHeading>
 							Song Request Settings
 						</SettingsHeading>
 
-						<Item variant="outline">
-							<ItemContent>
-								<ItemTitle>
-									Enable Song Requests
-								</ItemTitle>
-								<ItemDescription>
-									Allow viewers to request songs using channel points or chat commands.
-								</ItemDescription>
-							</ItemContent>
-
-							<ItemActions>
-								<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId || settingsData?.playlistExists === false" />
-							</ItemActions>
-						</Item>
+						<SettingsGroup>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Enable Song Requests</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Allow viewers to request songs using channel points or chat commands.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.active" :disabled="!settingsData?.playlistId || settingsData?.playlistExists === false" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+						</SettingsGroup>
 
 						<!-- Dedicated Playlist Initialization Card -->
 						<div class="mt-2">
@@ -581,70 +580,72 @@ function formatTime(ms?: number) {
 								</div>
 							</div>
 						</div>
-						<FieldGroup
-							class="
-								grid grid-cols-1 gap-x-8 gap-y-6
-								md:grid-cols-2
-							"
-						>
-							<Field>
-								<FieldLabel for="pointsCost">
-									Request Channel Points Cost
-								</FieldLabel>
-								<NumberField id="pointsCost" v-model="form.pointsCost" :min="0" :default-value="10">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>Cost to request a song via chat command or Twitch reward.</FieldDescription>
-							</Field>
-
-							<Field>
-								<FieldLabel for="maxLength">
-									Max Song Length (Minutes)
-								</FieldLabel>
-								<NumberField id="maxLength" v-model="form.maxLength" :min="0" :default-value="8">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>Songs longer than this threshold (in minutes) will be blocked. Set to 0 for unlimited length.</FieldDescription>
-							</Field>
-
-							<Field>
-								<FieldLabel for="maxQueue">
-									Max Active Queue Items
-								</FieldLabel>
-								<NumberField id="maxQueue" v-model="form.maxQueue" :min="0" :default-value="50">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>Caps maximum entries in the queue to prevent overrunning the list. Set to 0 for unlimited size.</FieldDescription>
-							</Field>
-
-							<Field>
-								<FieldLabel for="maxUserRequests">
-									Max Songs Per User
-								</FieldLabel>
-								<NumberField id="maxUserRequests" v-model="form.maxUserRequests" :min="0" :default-value="0">
-									<NumberFieldContent>
-										<NumberFieldDecrement />
-										<NumberFieldInput />
-										<NumberFieldIncrement />
-									</NumberFieldContent>
-								</NumberField>
-								<FieldDescription>Caps active requests a viewer can have in the queue at once. Set to 0 for unlimited.</FieldDescription>
-							</Field>
-						</FieldGroup>
 
 						<SettingsGroup>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Request Channel Points Cost</SettingsGroupLabel>
+									<SettingsGroupDescription>Cost to request a song via chat command or Twitch reward.</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<NumberField id="pointsCost" v-model="form.pointsCost" :min="0" :default-value="10" class="w-full">
+										<NumberFieldContent>
+											<NumberFieldDecrement />
+											<NumberFieldInput />
+											<NumberFieldIncrement />
+										</NumberFieldContent>
+									</NumberField>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Max Song Length (Minutes)</SettingsGroupLabel>
+									<SettingsGroupDescription>Songs longer than this threshold (in minutes) will be blocked. Set to 0 for unlimited length.</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<NumberField id="maxLength" v-model="form.maxLength" :min="0" :default-value="8" class="w-full">
+										<NumberFieldContent>
+											<NumberFieldDecrement />
+											<NumberFieldInput />
+											<NumberFieldIncrement />
+										</NumberFieldContent>
+									</NumberField>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Max Active Queue Items</SettingsGroupLabel>
+									<SettingsGroupDescription>Caps maximum entries in the queue to prevent overrunning the list. Set to 0 for unlimited size.</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<NumberField id="maxQueue" v-model="form.maxQueue" :min="0" :default-value="50" class="w-full">
+										<NumberFieldContent>
+											<NumberFieldDecrement />
+											<NumberFieldInput />
+											<NumberFieldIncrement />
+										</NumberFieldContent>
+									</NumberField>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Max Songs Per User</SettingsGroupLabel>
+									<SettingsGroupDescription>Caps active requests a viewer can have in the queue at once. Set to 0 for unlimited.</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<NumberField id="maxUserRequests" v-model="form.maxUserRequests" :min="0" :default-value="0" class="w-full">
+										<NumberFieldContent>
+											<NumberFieldDecrement />
+											<NumberFieldInput />
+											<NumberFieldIncrement />
+										</NumberFieldContent>
+									</NumberField>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+
 							<SettingsGroupItem>
 								<SettingsGroupContent>
 									<SettingsGroupLabel>Restrict to Followers Only</SettingsGroupLabel>
@@ -712,20 +713,24 @@ function formatTime(ms?: number) {
 								</SettingsGroupAction>
 							</SettingsGroupItem>
 						</SettingsGroup>
-					</div>
+					</AppSettingsSection>
 
 					<!-- Settings Section 2: Save-to-Playlist Integration -->
-					<div class="flex flex-col gap-4">
+					<AppSettingsSection>
 						<SettingsHeading>
 							Save-to-Playlist Integration
 						</SettingsHeading>
 
-						<FieldGroup class="grid grid-cols-1 gap-4">
-							<Field>
-								<FieldLabel for="targetPlaylist">
-									Target Spotify Playlist
-								</FieldLabel>
-								<div class="flex items-center gap-2">
+						<SettingsGroup>
+							<!-- Target Spotify Playlist -->
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Target Spotify Playlist</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction class="flex items-center gap-2">
 									<Combobox v-model="form.targetPlaylist" v-model:search-term="playlistSearchQuery" class="w-full grow" @update:open="onPlaylistSelectOpen">
 										<ComboboxAnchor as-child>
 											<ComboboxTrigger as-child>
@@ -788,12 +793,9 @@ function formatTime(ms?: number) {
 									>
 										<X class="size-4 text-muted-foreground" />
 									</Button>
-								</div>
-								<FieldDescription>When you or qualified moderators type <code class="rounded-sm bg-muted px-1.5 py-0.5 text-xs font-semibold">!songrequest like</code> in Twitch chat, the currently playing track immediately saves to this playlist.</FieldDescription>
-							</Field>
-						</FieldGroup>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
 
-						<SettingsGroup>
 							<SettingsGroupItem>
 								<SettingsGroupContent>
 									<SettingsGroupLabel>Allow Moderators to Like Songs</SettingsGroupLabel>
@@ -828,7 +830,7 @@ function formatTime(ms?: number) {
 								</SettingsGroupAction>
 							</SettingsGroupItem>
 						</SettingsGroup>
-					</div>
+					</AppSettingsSection>
 
 					<!-- Right Column (Desktop only widget) -->
 					<template #sidebar>

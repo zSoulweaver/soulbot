@@ -141,67 +141,69 @@ async function refreshAll() {
 					</AlertDescription>
 				</Alert>
 
-				<SettingsHeading>
-					Server Configuration
-				</SettingsHeading>
+				<div class="flex flex-col gap-1">
+					<SettingsHeading>
+						Server Configuration
+					</SettingsHeading>
 
-				<SettingsGroup>
-					<!-- Target Discord Server Selection -->
-					<SettingsGroupItem>
-						<SettingsGroupContent>
-							<SettingsGroupLabel>Target Discord Server</SettingsGroupLabel>
-							<SettingsGroupDescription>
-								Select the server (guild) the bot will mirror alerts to and manage roles in.
-							</SettingsGroupDescription>
-						</SettingsGroupContent>
-						<SettingsGroupAction>
-							<Select
-								v-if="form.isDiscordConnected && guilds.length > 0"
-								v-model="form.discordGuildId"
-								:disabled="!form.isTokenConfigured"
-							>
-								<SelectTrigger id="discord-guild-id" class="w-full">
-									<SelectValue placeholder="Select a Discord Server..." />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem
-										v-for="g in guilds"
-										:key="g.id"
-										:value="g.id"
-									>
-										{{ g.name }} ({{ g.id }})
-									</SelectItem>
-								</SelectContent>
-							</Select>
-
-							<!-- Empty State / Non-Connected Fallback -->
-							<div v-else class="w-full">
-								<Select disabled>
-									<SelectTrigger class="w-full">
-										<SelectValue placeholder="No servers available (Bot offline or not invited)" />
+					<SettingsGroup>
+						<!-- Target Discord Server Selection -->
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Target Discord Server</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Select the server (guild) the bot will mirror alerts to and manage roles in.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Select
+									v-if="form.isDiscordConnected && guilds.length > 0"
+									v-model="form.discordGuildId"
+									:disabled="!form.isTokenConfigured"
+								>
+									<SelectTrigger id="discord-guild-id" class="w-full">
+										<SelectValue placeholder="Select a Discord Server..." />
 									</SelectTrigger>
+									<SelectContent>
+										<SelectItem
+											v-for="g in guilds"
+											:key="g.id"
+											:value="g.id"
+										>
+											{{ g.name }} ({{ g.id }})
+										</SelectItem>
+									</SelectContent>
 								</Select>
-							</div>
-						</SettingsGroupAction>
-					</SettingsGroupItem>
 
-					<!-- Discord Enabled Toggle -->
-					<SettingsGroupItem>
-						<SettingsGroupContent>
-							<SettingsGroupLabel>Enable Discord Integration</SettingsGroupLabel>
-							<SettingsGroupDescription>
-								Connect to Discord and enable text alerts and auto-bestowing roles.
-								<i>Requires a server to be selected above.</i>
-							</SettingsGroupDescription>
-						</SettingsGroupContent>
-						<SettingsGroupAction>
-							<Switch
-								v-model:model-value="form.discordEnabled"
-								:disabled="!form.isTokenConfigured || !form.discordGuildId"
-							/>
-						</SettingsGroupAction>
-					</SettingsGroupItem>
-				</SettingsGroup>
+								<!-- Empty State / Non-Connected Fallback -->
+								<div v-else class="w-full">
+									<Select disabled>
+										<SelectTrigger class="w-full">
+											<SelectValue placeholder="No servers available (Bot offline or not invited)" />
+										</SelectTrigger>
+									</Select>
+								</div>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<!-- Discord Enabled Toggle -->
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Enable Discord Integration</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Connect to Discord and enable text alerts and auto-bestowing roles.
+									<i>Requires a server to be selected above.</i>
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch
+									v-model:model-value="form.discordEnabled"
+									:disabled="!form.isTokenConfigured || !form.discordGuildId"
+								/>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
 			</AppSettingsGrid>
 
 			<template #fallback>

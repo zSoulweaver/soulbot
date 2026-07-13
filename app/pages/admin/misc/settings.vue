@@ -100,7 +100,7 @@ async function saveSettings() {
 			<!-- Settings Editor Panel -->
 			<div class="flex flex-col gap-6">
 				<!-- Section 1: Chat Output Style & Mute Side-by-Side -->
-				<div class="flex flex-col gap-4">
+				<AppSettingsSection>
 					<SettingsHeading>
 						Chat Output
 					</SettingsHeading>
@@ -142,7 +142,7 @@ async function saveSettings() {
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 					</SettingsGroup>
-				</div>
+				</AppSettingsSection>
 
 				<!-- Warning Alert -->
 				<Alert v-if="form.muted" variant="warning">

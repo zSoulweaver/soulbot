@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Coins, Dices, HelpCircle, RefreshCcw, Sliders } from '@lucide/vue'
+import { Dices, HelpCircle, RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
@@ -119,99 +119,93 @@ async function saveSettings() {
 
 		<AppSettingsGrid v-else>
 			<!-- Section 1: Bet Constraints -->
-			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<Coins class="size-5 text-muted-foreground" />
-					Bet Limits & Constraints
-				</h3>
-				<FieldGroup
-					class="
-						grid grid-cols-1 gap-4
-						sm:grid-cols-2
-					"
-				>
-					<Field>
-						<FieldLabel for="minBet">
-							Minimum Bet
-						</FieldLabel>
-						<NumberField id="minBet" v-model="form.minBet" :min="1" :default-value="10">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							The minimum points required to initiate a gamble.
-						</FieldDescription>
-					</Field>
+			<AppSettingsSection>
+				<SettingsHeading>Bet Limits & Constraints</SettingsHeading>
+				<SettingsGroup>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Minimum Bet</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								The minimum points required to initiate a gamble.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="minBet" v-model="form.minBet" :min="1" :default-value="10" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
 
-					<Field>
-						<FieldLabel for="maxBet">
-							Maximum Bet
-						</FieldLabel>
-						<NumberField id="maxBet" v-model="form.maxBet" :min="1" :default-value="100000">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							The maximum points a user can risk in a single bet.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</div>
-
-			<Separator />
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Maximum Bet</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								The maximum points a user can risk in a single bet.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="maxBet" v-model="form.maxBet" :min="1" :default-value="100000" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
+			</AppSettingsSection>
 
 			<!-- Section 2: Chance & Payoffs -->
-			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<Sliders class="size-5 text-muted-foreground" />
-					Odds & Multipliers
-				</h3>
-				<FieldGroup class="flex flex-col gap-6">
-					<Field>
-						<FieldLabel for="winMultiplier">
-							Net Win Gain Multiplier
-						</FieldLabel>
-						<NumberField id="winMultiplier" v-model="form.winMultiplier" :min="0.1" :step="0.1" :default-value="1.0">
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Multiplier for points won. A multiplier of 1.0 means a successful gamble doubles their bet (keeps the bet + wins 100% of it).
-						</FieldDescription>
-					</Field>
+			<AppSettingsSection>
+				<SettingsHeading>Odds & Multipliers</SettingsHeading>
+				<SettingsGroup>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Net Win Gain Multiplier</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Multiplier for points won. A multiplier of 1.0 means a successful gamble doubles their bet (keeps the bet + wins 100% of it).
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="winMultiplier" v-model="form.winMultiplier" :min="0.1" :step="0.1" :default-value="1.0" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
 
-					<Field>
-						<div class="flex items-center justify-between">
-							<FieldLabel>
-								Winning Roll Threshold (Roll >= {{ form.winMinRoll }})
-							</FieldLabel>
-							<span class="text-sm font-semibold text-primary">
-								{{ winChancePercent }}% Win Chance
-							</span>
-						</div>
-						<div class="py-4">
-							<Slider
-								v-model="sliderValue"
-								:min="1"
-								:max="100"
-								:step="1"
-							/>
-						</div>
-						<FieldDescription>
-							Users roll a random number from 1 to 100. They win if the roll is greater than or equal to this threshold.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</div>
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Winning Roll Threshold</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Users roll a random number from 1 to 100. They win if the roll is greater than or equal to this threshold.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction class="flex-col items-stretch gap-2">
+							<div class="flex items-center justify-between text-xs font-semibold text-primary select-none">
+								<span>Roll >= {{ form.winMinRoll }}</span>
+								<span>{{ winChancePercent }}% Win Chance</span>
+							</div>
+							<div class="py-2">
+								<Slider
+									v-model="sliderValue"
+									:min="1"
+									:max="100"
+									:step="1"
+								/>
+							</div>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
+			</AppSettingsSection>
 
 			<!-- Information / Odds Simulator Column -->
 			<template #sidebar>

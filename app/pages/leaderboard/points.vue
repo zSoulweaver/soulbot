@@ -77,7 +77,12 @@ const sideboards = computed(() => {
 	>
 		<!-- Page Header -->
 		<div class="mb-8 flex flex-col gap-2 text-center">
-			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight text-foreground uppercase">
+			<h1
+				class="
+					font-serif text-4xl font-normal text-foreground
+					md:text-5xl
+				"
+			>
 				Points Leaderboard
 			</h1>
 			<p class="text-lg text-muted-foreground">
@@ -102,9 +107,9 @@ const sideboards = computed(() => {
 				<div
 					v-for="board in sideboards.filter(b => b.col === 'left')"
 					:key="board.title"
-					class="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm backdrop-blur-sm"
+					class="rounded-xl border border-white/5 bg-card p-4 shadow-sm"
 				>
-					<h2 class="mb-4 flex items-center gap-2 text-base font-bold tracking-wider text-muted-foreground uppercase">
+					<h2 class="mb-4 flex items-center gap-2 font-serif text-2xl font-normal text-foreground">
 						<component :is="board.icon" class="size-5" :class="board.iconClass" />
 						{{ board.title }}
 					</h2>
@@ -165,7 +170,7 @@ const sideboards = computed(() => {
 					lg:order-2 lg:col-span-6
 				"
 			>
-				<div class="overflow-hidden rounded-xl border border-border/50 bg-card/10 shadow-sm">
+				<div class="overflow-hidden rounded-xl border border-white/5 bg-card shadow-sm">
 					<Table>
 						<TableHeader class="bg-muted/30">
 							<TableRow>
@@ -192,7 +197,11 @@ const sideboards = computed(() => {
 								<TableRow
 									v-for="(user, index) in leaderboard"
 									:key="user.id"
-									:class="index < 3 ? 'bg-primary/5 font-semibold' : ''"
+									:class="{
+										'bg-yellow-500/10 font-semibold dark:bg-yellow-500/10': index === 0,
+										'bg-slate-500/10 font-semibold dark:bg-slate-400/10': index === 1,
+										'bg-amber-600/10 font-semibold dark:bg-amber-600/10': index === 2,
+									}"
 								>
 									<TableCell class="text-center">
 										<div class="flex items-center justify-center">
@@ -237,9 +246,9 @@ const sideboards = computed(() => {
 				<div
 					v-for="board in sideboards.filter(b => b.col === 'right')"
 					:key="board.title"
-					class="rounded-xl border border-border/50 bg-card/40 p-4 shadow-sm backdrop-blur-sm"
+					class="rounded-xl border border-white/5 bg-card p-4 shadow-sm"
 				>
-					<h2 class="mb-4 flex items-center gap-2 text-base font-bold tracking-wider text-muted-foreground uppercase">
+					<h2 class="mb-4 flex items-center gap-2 font-serif text-2xl font-normal text-foreground">
 						<component :is="board.icon" class="size-5" :class="board.iconClass" />
 						{{ board.title }}
 					</h2>

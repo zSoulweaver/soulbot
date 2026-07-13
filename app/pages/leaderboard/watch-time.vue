@@ -11,7 +11,12 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 <template>
 	<AppPageContainer class="mx-auto max-w-4xl py-8">
 		<div class="mb-8 flex flex-col gap-2 text-center">
-			<h1 class="flex items-center justify-center gap-4 text-4xl font-black tracking-tight text-foreground uppercase">
+			<h1
+				class="
+					font-serif text-4xl font-normal text-foreground
+					md:text-5xl
+				"
+			>
 				Watch Time Leaderboard
 			</h1>
 			<p class="text-lg text-muted-foreground">
@@ -19,7 +24,7 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 			</p>
 		</div>
 
-		<div class="overflow-hidden rounded-xl border border-border/50 bg-card/10 shadow-sm">
+		<div class="overflow-hidden rounded-xl border border-white/5 bg-card shadow-sm">
 			<Table>
 				<TableHeader class="bg-muted/50">
 					<TableRow>
@@ -46,7 +51,11 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 						<TableRow
 							v-for="(user, index) in leaderboard"
 							:key="user.id"
-							:class="index < 3 ? 'bg-primary/5 font-semibold' : ''"
+							:class="{
+								'bg-yellow-500/10 font-semibold dark:bg-yellow-500/10': index === 0,
+								'bg-slate-500/10 font-semibold dark:bg-slate-400/10': index === 1,
+								'bg-amber-600/10 font-semibold dark:bg-amber-600/10': index === 2,
+							}"
 						>
 							<TableCell class="text-center">
 								<div class="flex items-center justify-center">

@@ -160,61 +160,48 @@ async function runMigration() {
 		<AppSettingsGrid>
 			<!-- Configuration Section -->
 			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<Database class="size-5 text-muted-foreground" />
-					Migration Configuration
-				</h3>
-				<FieldGroup
-					class="
-						flex-wrap gap-6
-						sm:flex-row
-					"
-				>
-					<Field
-						class="
-							w-full
-							sm:w-80
-						"
-					>
-						<FieldLabel for="botType">
-							Select Source Bot
-						</FieldLabel>
-						<Select id="botType" v-model="botType" :disabled="migrating">
-							<SelectTrigger class="w-full">
-								<SelectValue placeholder="Select platform" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="phantombot">
-									Phantombot (SQLite)
-								</SelectItem>
-							</SelectContent>
-						</Select>
-						<FieldDescription>Choose the source database platform to migrate from.</FieldDescription>
-					</Field>
+				<SettingsHeading>Migration Configuration</SettingsHeading>
+				<SettingsGroup>
+					<!-- Source Bot -->
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Source Bot</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Choose the source database platform to migrate from.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<Select id="botType" v-model="botType" :disabled="migrating">
+								<SelectTrigger class="w-full">
+									<SelectValue placeholder="Select platform" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="phantombot">
+										Phantombot (SQLite)
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
 
-					<Field
-						class="
-							w-full
-							sm:w-96
-						"
-					>
-						<FieldLabel for="override">
-							Overwrite Existing Data
-						</FieldLabel>
-						<div class="flex h-10 items-center">
+					<!-- Overwrite Existing Data -->
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Overwrite Existing Data</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								Replace existing users' points, watch time, and duplicate commands/timers. Unchecked skips existing records.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
 							<Switch id="override" v-model:model-value="override" :disabled="migrating" />
-						</div>
-						<FieldDescription>Replace existing users' points, watch time, and duplicate commands/timers. Unchecked skips existing records.</FieldDescription>
-					</Field>
-				</FieldGroup>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+				</SettingsGroup>
 			</div>
 
 			<!-- Database File Upload -->
 			<div class="flex flex-col gap-4">
-				<h3 class="flex items-center gap-2 text-lg font-semibold">
-					<UploadCloud class="size-5 text-muted-foreground" />
-					Database File Upload
-				</h3>
+				<SettingsHeading>Database File Upload</SettingsHeading>
 				<div
 					class="
 						relative flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-10 text-center transition-all

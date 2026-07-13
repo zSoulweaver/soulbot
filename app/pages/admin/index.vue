@@ -441,15 +441,15 @@ function formatEventType(type: string) {
 							</Tabs>
 
 							<!-- Primitive Table with custom row formats -->
-							<div class="relative min-h-[300px] overflow-hidden rounded-lg border">
+							<div class="relative min-h-75 overflow-hidden rounded-lg border">
 								<Table>
 									<TableHeader class="bg-muted/40">
 										<TableRow>
-											<TableHead class="w-[120px]">
+											<TableHead class="w-30">
 												Event
 											</TableHead>
 											<TableHead>Details</TableHead>
-											<TableHead class="w-[110px] text-right">
+											<TableHead class="w-27.5 text-right">
 												Time
 											</TableHead>
 										</TableRow>

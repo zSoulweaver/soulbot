@@ -543,7 +543,14 @@ function formatTimeAgo(timestamp?: number | null) {
 												</template>
 												<span v-else>#{{ Number(idx) + 1 }}</span>
 											</TableCell>
-											<TableCell>
+											<TableCell
+												class="
+													max-w-45
+													sm:max-w-xs
+													md:max-w-md
+													lg:max-w-lg
+												"
+											>
 												<div class="flex items-center gap-3">
 													<div class="relative size-9 shrink-0 overflow-hidden rounded-sm bg-muted">
 														<img v-if="item.albumArt" :src="item.albumArt" class="size-full object-cover">
@@ -615,7 +622,14 @@ function formatTimeAgo(timestamp?: number | null) {
 											</TableCell>
 										</TableRow>
 										<TableRow v-for="item in historyData?.data" v-else :key="item.id">
-											<TableCell>
+											<TableCell
+												class="
+													max-w-45
+													sm:max-w-xs
+													md:max-w-md
+													lg:max-w-lg
+												"
+											>
 												<div class="flex items-center gap-3">
 													<div class="relative size-9 shrink-0 overflow-hidden rounded-sm bg-muted">
 														<img v-if="item.albumArt" :src="item.albumArt" class="size-full object-cover">

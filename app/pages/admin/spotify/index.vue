@@ -712,6 +712,17 @@ function formatTime(ms?: number) {
 									<Switch v-model:model-value="form.alertQueueEmptyEnabled" />
 								</SettingsGroupAction>
 							</SettingsGroupItem>
+							<SettingsGroupItem>
+								<SettingsGroupContent>
+									<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
+									<SettingsGroupDescription>
+										Post a message to chat when a song is removed from the queue via the web admin panel.
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Switch v-model:model-value="form.announceDeleteWebui" />
+								</SettingsGroupAction>
+							</SettingsGroupItem>
 						</SettingsGroup>
 					</AppSettingsSection>
 
@@ -816,17 +827,6 @@ function formatTime(ms?: number) {
 								</SettingsGroupContent>
 								<SettingsGroupAction>
 									<Switch v-model:model-value="form.whisperNotifications" />
-								</SettingsGroupAction>
-							</SettingsGroupItem>
-							<SettingsGroupItem>
-								<SettingsGroupContent>
-									<SettingsGroupLabel>Announce Web UI Queue Deletions</SettingsGroupLabel>
-									<SettingsGroupDescription>
-										Post a message to chat when a song is removed from the queue via the web admin panel.
-									</SettingsGroupDescription>
-								</SettingsGroupContent>
-								<SettingsGroupAction>
-									<Switch v-model:model-value="form.announceDeleteWebui" />
 								</SettingsGroupAction>
 							</SettingsGroupItem>
 						</SettingsGroup>

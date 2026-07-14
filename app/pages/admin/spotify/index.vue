@@ -36,7 +36,7 @@ useHead({
 })
 
 watchEffect(() => {
-	if (!loggedIn.value || user.value?.role !== 'caster') {
+	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'admin')) {
 		navigateTo('/')
 	}
 })

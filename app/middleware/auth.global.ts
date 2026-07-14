@@ -5,7 +5,7 @@ export default defineNuxtRouteMiddleware((to) => {
 			return navigateTo('/')
 		}
 		const role = user.value.role
-		if (role !== 'caster' && role !== 'moderator') {
+		if (role !== 'caster' && role !== 'admin' && role !== 'moderator') {
 			return navigateTo('/')
 		}
 	}

@@ -1,4 +1,5 @@
 import type { ChatMiddleware } from '../types'
+import { sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
@@ -58,7 +59,7 @@ export const userTrackingMiddleware: ChatMiddleware = async (event, next) => {
 					set: {
 						username: cleanUsername(event.raw.userInfo.userName),
 						displayName: event.raw.userInfo.displayName,
-						role,
+						role: sql`CASE WHEN ${users.role} = 'admin' AND ${role} = 'moderator' THEN 'admin' ELSE ${role} END`,
 						isVip,
 						isSubscriber,
 						lastSeen: nowTime,

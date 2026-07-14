@@ -101,6 +101,7 @@ export const navigation: NavGroup[] = [
 				roles: ['caster', 'moderator'],
 				items: [
 					{ title: 'Bot Settings', url: '/admin/misc/settings' },
+					{ title: 'Management Roles', url: '/admin/misc/roles', roles: ['caster'] },
 					{ title: 'Migration', url: '/admin/misc/migration', roles: ['caster'] },
 				],
 			},

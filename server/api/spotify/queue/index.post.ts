@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	try {
-		const isModOrAbove = user.role === 'caster' || user.role === 'moderator'
+		const isModOrAbove = user.role === 'caster' || user.role === 'admin' || user.role === 'moderator'
 		const { track } = await requestSong({
 			linkOrQuery: parsed.data.link,
 			user: {

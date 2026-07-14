@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { getTwitchUserRole } from '~~/server/utils/twurple'
@@ -32,7 +33,7 @@ export default defineOAuthTwitchEventHandler({
 					username: twitchUser.login,
 					displayName: twitchUser.display_name,
 					image: twitchUser.profile_image_url,
-					role: roleInfo.role,
+					role: sql`CASE WHEN ${users.role} = 'admin' AND ${roleInfo.role} = 'moderator' THEN 'admin' ELSE ${roleInfo.role} END`,
 					isVip: roleInfo.isVip,
 					isSubscriber: roleInfo.isSubscriber,
 					updatedAt: now,

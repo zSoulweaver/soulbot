@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const isPrivledged = user.role === 'caster' || user.role === 'moderator'
+	const isPrivledged = user.role === 'caster' || user.role === 'admin' || user.role === 'moderator'
 	const isOwner = item.requestedBy.toLowerCase() === user.displayName.toLowerCase()
 	if (!isPrivledged) {
 		if (!isOwner) {

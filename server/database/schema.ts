@@ -46,7 +46,7 @@ export const users = sqliteTable('users', {
 	username: text('username').notNull(),
 	displayName: text('display_name').notNull(),
 	image: text('image'),
-	role: text('role').$type<'viewer' | 'moderator' | 'caster'>().default('viewer').notNull(),
+	role: text('role').$type<'viewer' | 'moderator' | 'admin' | 'caster'>().default('viewer').notNull(),
 	isVip: integer('is_vip', { mode: 'boolean' }).default(false).notNull(),
 	isSubscriber: integer('is_subscriber', { mode: 'boolean' }).default(false).notNull(),
 	points: integer('points').default(0).notNull(),

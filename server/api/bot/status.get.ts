@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 		const session = await getUserSession(event)
 		const user = session?.user
 		const isBotAccount = user && botToken && user.id === botToken.userId
-		const isModOrCaster = user && (user.role === 'caster' || user.role === 'moderator')
+		const isModOrCaster = user && (user.role === 'caster' || user.role === 'admin' || user.role === 'moderator')
 
 		if (!isBotAccount && !isModOrCaster) {
 			return {

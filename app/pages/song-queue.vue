@@ -173,11 +173,11 @@ const isLiking = ref(false)
 const isBlacklisting = ref(false)
 
 const isModeratorOrCaster = computed(() => {
-	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
+	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'admin' || user.value?.role === 'moderator')
 })
 
 const isCaster = computed(() => {
-	return loggedIn.value && user.value?.role === 'caster'
+	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'admin')
 })
 
 const userQueueCount = computed(() => {

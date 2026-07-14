@@ -1,0 +1,97 @@
+import { eq, inArray } from 'drizzle-orm'
+import { db } from '~~/server/database'
+import { users } from '~~/server/database/schema'
+import { requireUserRole } from '~~/server/utils/auth'
+import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
+
+export default defineEventHandler(async (event) => {
+	// Require caster permissions
+	const user = await requireUserRole(event, 'caster')
+
+	// Strict check: only the channel owner (caster) can query/manage roles.
+	if (user.role !== 'caster') {
+		throw createError({
+			statusCode: 403,
+			statusMessage: 'Forbidden: Only the channel broadcaster can manage administrator roles.',
+		})
+	}
+
+	const streamerToken = await getStreamerToken()
+	if (!streamerToken || !streamerToken.userId) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'Broadcaster Twitch account is not configured.',
+		})
+	}
+
+	const twitchMods: { userId: string, userName: string, userDisplayName: string }[] = []
+	try {
+		const api = getApiClient()
+		await api.asUser(streamerToken.userId, async (ctx) => {
+			const paginator = ctx.moderation.getModeratorsPaginated(streamerToken.userId!)
+			let page = await paginator.getNext()
+			while (page.length > 0) {
+				for (const mod of page) {
+					twitchMods.push({
+						userId: mod.userId,
+						userName: mod.userName,
+						userDisplayName: mod.userDisplayName,
+					})
+				}
+				page = await paginator.getNext()
+			}
+		})
+	}
+	catch (err) {
+		console.error('[roles.get] Failed to fetch moderators from Twitch API:', err)
+	}
+
+	// Fetch all database users with 'admin' role
+	const dbAdmins = await db
+		.select()
+		.from(users)
+		.where(eq(users.role, 'admin'))
+
+	// Also fetch database users that correspond to the Twitch moderators
+	const modIds = twitchMods.map(m => m.userId)
+	const dbMods = modIds.length > 0
+		? await db.select().from(users).where(inArray(users.id, modIds))
+		: []
+
+	// Map user details from database
+	const dbUserMap = new Map<string, typeof users.$inferSelect>()
+	for (const u of [...dbAdmins, ...dbMods]) {
+		dbUserMap.set(u.id, u)
+	}
+
+	const results = twitchMods.map((mod) => {
+		const dbUser = dbUserMap.get(mod.userId)
+		return {
+			id: mod.userId,
+			username: mod.userName,
+			displayName: mod.userDisplayName,
+			image: dbUser?.image || null,
+			role: dbUser?.role || 'moderator',
+			isAdmin: dbUser?.role === 'admin',
+			isNotTwitchMod: false,
+		}
+	})
+
+	// Add any DB admins that are no longer Twitch moderators
+	const twitchModIdsSet = new Set(modIds)
+	for (const admin of dbAdmins) {
+		if (!twitchModIdsSet.has(admin.id)) {
+			results.push({
+				id: admin.id,
+				username: admin.username,
+				displayName: admin.displayName,
+				image: admin.image || null,
+				role: 'admin',
+				isAdmin: true,
+				isNotTwitchMod: true,
+			})
+		}
+	}
+
+	return results
+})

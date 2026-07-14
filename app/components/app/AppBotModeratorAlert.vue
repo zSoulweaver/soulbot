@@ -14,7 +14,7 @@ const { data: status } = useFetch<BotStatusResponse>('/api/bot/status', {
 const isCasterOrBot = computed(() => {
 	if (!user.value || !status.value)
 		return false
-	return user.value.role === 'caster' || (!!status.value.bot?.userId && user.value.id === status.value.bot?.userId)
+	return user.value.role === 'caster' || user.value.role === 'admin' || (!!status.value.bot?.userId && user.value.id === status.value.bot?.userId)
 })
 
 const showModeratorAlert = computed(() => {

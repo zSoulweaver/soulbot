@@ -23,7 +23,7 @@ useHead({
 })
 
 const isModeratorOrCaster = computed(() => {
-	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'moderator')
+	return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'admin' || user.value?.role === 'moderator')
 })
 
 onMounted(() => {
@@ -81,6 +81,14 @@ onMounted(() => {
 								"
 							>
 								Caster
+							</Badge>
+							<Badge
+								v-else-if="user.role === 'admin'" variant="default" class="
+									bg-purple-600
+									hover:bg-purple-700
+								"
+							>
+								Admin
 							</Badge>
 							<Badge
 								v-else-if="user.role === 'moderator'" variant="default" class="

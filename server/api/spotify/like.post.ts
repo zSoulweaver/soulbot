@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
 	// Authenticate user session
 	const user = await requireUserRole(event)
-	const isAllowed = user.role === 'caster' || (user.role === 'moderator' && appSettings.spotifyPlaylistAllowMods)
+	const isAllowed = user.role === 'caster' || user.role === 'admin' || (user.role === 'moderator' && appSettings.spotifyPlaylistAllowMods)
 
 	if (!isAllowed) {
 		throw createError({

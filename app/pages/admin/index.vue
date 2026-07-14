@@ -27,7 +27,7 @@ const { user } = useUserSession()
 useHead({
 	title: 'Dashboard',
 })
-const isCaster = computed(() => user.value?.role === 'caster')
+const isCaster = computed(() => user.value?.role === 'caster' || user.value?.role === 'admin')
 
 // Loading states for service actions
 const isServiceActionPending = ref(false)

@@ -4,7 +4,7 @@ declare module '#auth-utils' {
 		username: string
 		displayName: string
 		image: string | null
-		role: 'viewer' | 'moderator' | 'caster'
+		role: 'viewer' | 'moderator' | 'admin' | 'caster'
 		isVip: boolean
 		isSubscriber: boolean
 	}

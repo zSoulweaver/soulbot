@@ -24,7 +24,7 @@ useHead({
 })
 
 watchEffect(() => {
-	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'moderator')) {
+	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'admin' && user.value?.role !== 'moderator')) {
 		navigateTo('/')
 	}
 })

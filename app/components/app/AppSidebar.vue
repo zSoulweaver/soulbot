@@ -8,13 +8,27 @@ const { public: { botName } } = useRuntimeConfig()
 
 const filteredNavigation = computed(() => {
 	const userRole = user.value?.role || 'viewer'
+
+	const isPermitted = (roles?: string[], url?: string) => {
+		if (!roles)
+			return true
+		if (roles.includes(userRole))
+			return true
+
+		// Admin has access to all caster or moderator endpoints except for the admin roles management page
+		if (userRole === 'admin' && (roles.includes('caster') || roles.includes('moderator')) && url !== '/admin/misc/roles') {
+			return true
+		}
+		return false
+	}
+
 	return navigation.map(group => ({
 		...group,
 		items: group.items
-			.filter(item => !item.roles || item.roles.includes(userRole))
+			.filter(item => isPermitted(item.roles, item.url))
 			.map(item => ({
 				...item,
-				items: item.items ? item.items.filter(subItem => !subItem.roles || subItem.roles.includes(userRole)) : undefined,
+				items: item.items ? item.items.filter(subItem => isPermitted(subItem.roles, subItem.url)) : undefined,
 			})),
 	})).filter(group => group.items.length > 0)
 })

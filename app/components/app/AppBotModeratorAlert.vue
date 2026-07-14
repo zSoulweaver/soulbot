@@ -18,7 +18,7 @@ const isCasterOrBot = computed(() => {
 })
 
 const showModeratorAlert = computed(() => {
-	return isCasterOrBot.value && status.value?.isBotModerator === false
+	return isCasterOrBot.value && status.value?.isBotRunning && status.value?.isBotModerator === false
 })
 
 const isRechecking = ref(false)

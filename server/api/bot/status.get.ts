@@ -43,7 +43,9 @@ export default defineEventHandler(async (event) => {
 		? (appSettings.botTokenVersion < BOT_OAUTH_VERSION)
 		: false
 
-	const isBotModerator = await getBotModeratorStatus(force)
+	const isBotModerator = isBotRunning()
+		? await getBotModeratorStatus(force)
+		: false
 
 	return {
 		bot: botToken

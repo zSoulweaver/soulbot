@@ -50,6 +50,16 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
+	const query = getQuery(event) || {}
+	const isSilent = query.silent === 'true'
+
+	if (isSilent && !isPrivledged) {
+		throw createError({
+			statusCode: 403,
+			statusMessage: 'You do not have permission to remove this item silently.',
+		})
+	}
+
 	// Update DB status to removed
 	await db.update(spotifyQueue)
 		.set({ status: 'removed' })
@@ -70,7 +80,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Notify Twitch chat
-	if (item.requestedBy !== 'Fallback Playlist' && appSettings.spotifyPlaylistAnnounceDeleteWebui) {
+	if (item.requestedBy !== 'Fallback Playlist' && appSettings.spotifyPlaylistAnnounceDeleteWebui && !isSilent) {
 		await sendChannelChatMessage('spotify.sr.removed', {
 			track: item.title,
 			user: item.requestedBy,

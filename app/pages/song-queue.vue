@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ban, ChevronDown, Heart, ListMusic, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from '@lucide/vue'
+import { Ban, BellOff, ChevronDown, Heart, ListMusic, Music, Play, Plus, Radio, Shield, SkipForward, Trash2 } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -206,6 +206,7 @@ async function handleToggleQueue() {
 const clearQueueOpen = ref(false)
 const deleteItemOpen = ref(false)
 const itemToDelete = ref<any>(null)
+const deleteSilently = ref(false)
 
 function handleClearQueue() {
 	if (isClearing.value)
@@ -320,6 +321,13 @@ async function handleLikeSong() {
 
 function handleDeleteItem(item: any) {
 	itemToDelete.value = item
+	deleteSilently.value = false
+	deleteItemOpen.value = true
+}
+
+function handleDeleteItemSilently(item: any) {
+	itemToDelete.value = item
+	deleteSilently.value = true
 	deleteItemOpen.value = true
 }
 
@@ -328,8 +336,9 @@ async function confirmDeleteItem() {
 		return
 	const item = itemToDelete.value
 	try {
-		await $fetch(`/api/spotify/queue/${item.id}`, { method: 'DELETE' })
-		toast.success('Song removed successfully.')
+		const silentParam = deleteSilently.value ? '?silent=true' : ''
+		await $fetch(`/api/spotify/queue/${item.id}${silentParam}`, { method: 'DELETE' })
+		toast.success(deleteSilently.value ? 'Song removed silently.' : 'Song removed successfully.')
 		await refresh()
 	}
 	catch {
@@ -337,6 +346,7 @@ async function confirmDeleteItem() {
 	}
 	finally {
 		itemToDelete.value = null
+		deleteSilently.value = false
 		deleteItemOpen.value = false
 	}
 }
@@ -575,15 +585,26 @@ function formatTimeAgo(timestamp?: number | null) {
 												</span>
 											</TableCell>
 											<TableCell v-if="loggedIn" class="text-center">
-												<Button
-													v-if="isModeratorOrCaster || (item.requestedBy.toLowerCase() === user?.displayName?.toLowerCase() && item.status === 'pending')"
-													variant="ghostDestructive"
-													size="icon"
-													class="size-8"
-													@click="handleDeleteItem(item)"
-												>
-													<Trash2 />
-												</Button>
+												<div class="flex items-center justify-center gap-1">
+													<Button
+														v-if="isModeratorOrCaster && queueData?.settings?.announceDeleteWebui"
+														variant="ghostDestructive"
+														size="icon"
+														class="size-8"
+														@click="handleDeleteItemSilently(item)"
+													>
+														<BellOff class="size-4" />
+													</Button>
+													<Button
+														v-if="isModeratorOrCaster || (item.requestedBy.toLowerCase() === user?.displayName?.toLowerCase() && item.status === 'pending')"
+														variant="ghostDestructive"
+														size="icon"
+														class="size-8"
+														@click="handleDeleteItem(item)"
+													>
+														<Trash2 />
+													</Button>
+												</div>
 											</TableCell>
 										</TableRow>
 									</TableBody>
@@ -833,11 +854,14 @@ function formatTimeAgo(timestamp?: number | null) {
 						<AlertDialogTitle>Remove song request?</AlertDialogTitle>
 						<AlertDialogDescription>
 							<template v-if="itemToDelete?.status === 'playing'">
-								Warning: "{{ itemToDelete?.title }}" is currently active on Spotify and cannot be recalled dynamically. If you delete it, it will be removed from our records, but you must skip it manually in Spotify. Continue?
+								Warning: "{{ itemToDelete?.title }}" is currently active on Spotify and cannot be recalled dynamically. If you delete it, it will be removed from our records, but you must skip it manually in Spotify.
 							</template>
 							<template v-else>
 								Are you sure you want to remove "{{ itemToDelete?.title }}"?
 							</template>
+							<span v-if="deleteSilently" class="mt-2 block">
+								Note: This will be done silently (no chat announcement will be sent).
+							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

@@ -686,6 +686,63 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			})
 			await refreshAppSettingsCache()
 		})
+
+		it('should skip chat announcement when silent query parameter is set to true', async () => {
+			const [seeded] = await db.insert(spotifyQueue).values({
+				trackId: 'track-normal',
+				title: 'Normal Song',
+				artist: 'Normal Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 100,
+				status: 'pending',
+			}).returning()
+
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'caster-id', username: 'streamerchannel', role: 'caster', displayName: 'StreamerChannel' },
+			})
+
+			const mockGetQuery = (globalThis as any).getQuery
+			mockGetQuery.mockReturnValueOnce({ silent: 'true' })
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			const res = await queueItemDeleteHandler({
+				context: { params: { id: String(seeded!.id) } },
+			} as any)
+			expect(res.success).toBe(true)
+
+			// Verify that mockSay was not called
+			expect(mockSay).not.toHaveBeenCalled()
+		})
+
+		it('should block non-privileged users from performing a silent deletion', async () => {
+			await createTestUser({ id: 'viewer-id', username: 'alice', points: 50 })
+			const [seeded] = await db.insert(spotifyQueue).values({
+				trackId: 'track-normal',
+				title: 'Normal Song',
+				artist: 'Normal Artist',
+				durationMs: 180000,
+				requestedBy: 'Alice',
+				pointsCost: 100,
+				status: 'pending',
+			}).returning()
+
+			;(globalThis as any).getUserSession.mockResolvedValue({
+				user: { id: 'viewer-id', username: 'alice', role: 'viewer', displayName: 'Alice' },
+			})
+
+			const mockGetQuery = (globalThis as any).getQuery
+			mockGetQuery.mockReturnValueOnce({ silent: 'true' })
+
+			mockFetch.mockResolvedValue({ success: true })
+
+			await expect(
+				queueItemDeleteHandler({
+					context: { params: { id: String(seeded!.id) } },
+				} as any),
+			).rejects.toThrow('You do not have permission to remove this item silently.')
+		})
 	})
 
 	describe('Like Song Endpoint', () => {
@@ -782,6 +839,20 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			const res = await queueGetHandler({} as any)
 			expect(res.currentlyPlaying).toBeDefined()
 			expect(res.currentlyPlaying!.isLiked).toBe(true)
+		})
+
+		it('should include announceDeleteWebui in settings of queue status response', async () => {
+			await db.insert(settings).values([
+				{ key: 'spotify.playlist.announce_delete_webui', value: 'true', updatedAt: new Date() },
+			]).onConflictDoUpdate({
+				target: settings.key,
+				set: { value: 'true', updatedAt: new Date() },
+			})
+			await refreshAppSettingsCache()
+
+			const res = await queueGetHandler({} as any)
+			expect(res.settings).toBeDefined()
+			expect(res.settings.announceDeleteWebui).toBe(true)
 		})
 
 		it('should reject requests from non-admin/moderator users', async () => {

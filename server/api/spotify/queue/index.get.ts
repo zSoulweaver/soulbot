@@ -60,6 +60,7 @@ export default defineEventHandler(async (_event) => {
 			permitExplicit: appSettings.spotifySongRequestPermitExplicit,
 			offlineOverride: appSettings.spotifySongRequestOfflineOverride,
 			playlistId: appSettings.spotifyRequestPlaylistId,
+			announceDeleteWebui: appSettings.spotifyPlaylistAnnounceDeleteWebui,
 		},
 	}
 })

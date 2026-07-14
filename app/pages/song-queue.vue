@@ -496,7 +496,9 @@ function formatTimeAgo(timestamp?: number | null) {
 											<TableHead class="w-12 text-center">
 												#
 											</TableHead>
-											<TableHead>Track Details</TableHead>
+											<TableHead class="w-full min-w-60">
+												Track Details
+											</TableHead>
 											<TableHead>Requested By</TableHead>
 											<TableHead v-if="loggedIn" class="w-16 text-center">
 												Actions
@@ -553,14 +555,7 @@ function formatTimeAgo(timestamp?: number | null) {
 												</template>
 												<span v-else>#{{ Number(idx) + 1 }}</span>
 											</TableCell>
-											<TableCell
-												class="
-													max-w-45
-													sm:max-w-xs
-													md:max-w-md
-													lg:max-w-lg
-												"
-											>
+											<TableCell class="w-full max-w-0 min-w-60">
 												<div class="flex items-center gap-3">
 													<div class="relative size-9 shrink-0 overflow-hidden rounded-sm bg-muted">
 														<img v-if="item.albumArt" :src="item.albumArt" class="size-full object-cover">
@@ -617,7 +612,9 @@ function formatTimeAgo(timestamp?: number | null) {
 								<Table>
 									<TableHeader>
 										<TableRow>
-											<TableHead>Track Details</TableHead>
+											<TableHead class="w-full min-w-60">
+												Track Details
+											</TableHead>
 											<TableHead>Requested By</TableHead>
 											<TableHead class="w-32 text-right">
 												Played At
@@ -643,14 +640,7 @@ function formatTimeAgo(timestamp?: number | null) {
 											</TableCell>
 										</TableRow>
 										<TableRow v-for="item in historyData?.data" v-else :key="item.id">
-											<TableCell
-												class="
-													max-w-45
-													sm:max-w-xs
-													md:max-w-md
-													lg:max-w-lg
-												"
-											>
+											<TableCell class="w-full max-w-0 min-w-60">
 												<div class="flex items-center gap-3">
 													<div class="relative size-9 shrink-0 overflow-hidden rounded-sm bg-muted">
 														<img v-if="item.albumArt" :src="item.albumArt" class="size-full object-cover">
@@ -719,77 +709,79 @@ function formatTimeAgo(timestamp?: number | null) {
 					>
 						<template #controls>
 							<!-- Playback Controls (Caster / Moderator actions) -->
-							<div v-if="isModeratorOrCaster && queueData?.connected && queueData?.settings?.playlistId" class="flex justify-center gap-3 pt-2">
-								<!-- Start Playback (Caster only) -->
-								<Button
-									v-if="isCaster"
-									variant="outline"
-									size="sm"
-									class="flex-1 gap-1.5"
-									:disabled="isPlaying"
-									@click="handleStartPlayback"
-								>
-									<Spinner v-if="isPlaying" data-icon="inline-start" />
-									<Play v-else data-icon="inline-start" />
-									Start Queue
-								</Button>
-								<!-- Skip Song / Button Group (Caster / Mods) -->
-								<div class="flex flex-1">
+							<div class="w-full" data-controls-container>
+								<div v-if="isModeratorOrCaster && queueData?.connected && queueData?.settings?.playlistId" class="flex justify-center gap-3 pt-2">
+									<!-- Start Playback (Caster only) -->
 									<Button
+										v-if="isCaster"
 										variant="outline"
 										size="sm"
-										class="flex-1 gap-1.5 rounded-r-none"
-										:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
-										@click="handleSkipSong"
+										class="flex-1 gap-1.5"
+										:disabled="isPlaying"
+										@click="handleStartPlayback"
 									>
-										<Spinner v-if="isSkipping" data-icon="inline-start" />
-										<SkipForward v-else data-icon="inline-start" />
-										Skip Song
+										<Spinner v-if="isPlaying" data-icon="inline-start" />
+										<Play v-else data-icon="inline-start" />
+										<span data-button-text>Start Queue</span>
 									</Button>
-									<DropdownMenu>
-										<DropdownMenuTrigger as-child>
-											<Button
-												variant="outline"
-												size="sm"
-												class="shrink-0 rounded-l-none border-l-0 px-2"
-												:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
-											>
-												<ChevronDown />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end">
-											<DropdownMenuItem
-												class="
-													cursor-pointer gap-2 text-destructive
-													focus:text-destructive
-												"
-												@click="handleSkipAndBlacklist"
-											>
-												<Spinner v-if="isBlacklisting" />
-												<Ban v-else />
-												<span>Skip & Blacklist Track</span>
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+									<!-- Skip Song / Button Group (Caster / Mods) -->
+									<div class="flex flex-1">
+										<Button
+											variant="outline"
+											size="sm"
+											class="flex-1 gap-1.5 rounded-r-none"
+											:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
+											@click="handleSkipSong"
+										>
+											<Spinner v-if="isSkipping" data-icon="inline-start" />
+											<SkipForward v-else data-icon="inline-start" />
+											<span data-button-text>Skip Song</span>
+										</Button>
+										<DropdownMenu>
+											<DropdownMenuTrigger as-child>
+												<Button
+													variant="outline"
+													size="sm"
+													class="shrink-0 rounded-l-none border-l-0 px-2"
+													:disabled="isSkipping || isBlacklisting || !queueData?.currentlyPlaying"
+												>
+													<ChevronDown />
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuItem
+													class="
+														cursor-pointer gap-2 text-destructive
+														focus:text-destructive
+													"
+													@click="handleSkipAndBlacklist"
+												>
+													<Spinner v-if="isBlacklisting" />
+													<Ban v-else />
+													<span>Skip & Blacklist Track</span>
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+									<!-- Like Song (Caster / Mods) -->
+									<Button
+										variant="outline"
+										size="icon"
+										class="
+											size-9 shrink-0
+											hover:text-red-400
+											hover:[&>svg]:fill-red-500
+										"
+										:disabled="isLiking"
+										:title="queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist'"
+										@click="handleLikeSong"
+									>
+										<Spinner v-if="isLiking" />
+										<Heart
+											v-else class="transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
+										/>
+									</Button>
 								</div>
-								<!-- Like Song (Caster / Mods) -->
-								<Button
-									variant="outline"
-									size="icon"
-									class="
-										size-9 shrink-0
-										hover:text-red-400
-										hover:[&>svg]:fill-red-500
-									"
-									:disabled="isLiking"
-									:title="queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist'"
-									@click="handleLikeSong"
-								>
-									<Spinner v-if="isLiking" />
-									<Heart
-										v-else class="transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
-									/>
-								</Button>
 							</div>
 						</template>
 					</SpotifyPlayer>
@@ -877,3 +869,15 @@ function formatTimeAgo(timestamp?: number | null) {
 		</AppPageContainer>
 	</div>
 </template>
+
+<style scoped>
+[data-controls-container] {
+	container-type: inline-size;
+}
+
+@container (max-width: 340px) {
+	[data-button-text] {
+		display: none;
+	}
+}
+</style>

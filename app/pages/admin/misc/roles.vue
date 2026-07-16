@@ -1,23 +1,16 @@
 <script setup lang="ts">
 import { Check, RefreshCcw, Search, ShieldAlert } from '@lucide/vue'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Switch } from '~/components/ui/switch'
 
-const { loggedIn, user } = useUserSession()
+useRequireUserRole(['caster'])
 
 useHead({
 	title: 'Management Roles',
-})
-
-// Client-side guard for caster role only
-watchEffect(() => {
-	if (!loggedIn.value || user.value?.role !== 'caster') {
-		navigateTo('/')
-	}
 })
 
 // Fetch moderators list

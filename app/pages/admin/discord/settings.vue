@@ -12,6 +12,8 @@ import {
 } from '~/components/ui/settings-group'
 import { SettingsHeading } from '~/components/ui/settings-heading'
 
+useRequireUserRole(['caster'])
+
 type DiscordSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/settings.get').default>>
 
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<DiscordSettings>('/api/admin/discord/settings')

@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { Spinner } from '~/components/ui/spinner'
 import { Switch } from '~/components/ui/switch'
 
+useRequireUserRole(['caster'])
+
 const botType = ref('phantombot')
 
 useHead({

@@ -11,6 +11,8 @@ import { Button } from '~/components/ui/button'
 import { Switch } from '~/components/ui/switch'
 import { usePagination } from '~/composables/usePagination'
 
+useRequireUserRole(['caster'])
+
 useHead({
 	title: 'Message Timers',
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, Music, Plus, Radio, RefreshCcw, X } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import {
@@ -28,17 +28,13 @@ import {
 } from '~/components/ui/settings-group'
 import { SettingsHeading } from '~/components/ui/settings-heading'
 
-const { loggedIn, user } = useUserSession()
 const { public: { botName } } = useRuntimeConfig()
+const { user } = useUserSession()
+
+useRequireUserRole(['caster'])
 
 useHead({
 	title: 'Spotify Integration',
-})
-
-watchEffect(() => {
-	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'admin')) {
-		navigateTo('/')
-	}
 })
 
 const forceRefreshQuery = ref(false)

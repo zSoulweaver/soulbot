@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '~~/server/database'
-import { users } from '~~/server/database/schema'
+import { settings, users } from '~~/server/database/schema'
+import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 
 describe('Bot Gamble Command Integration', () => {
@@ -193,6 +194,84 @@ describe('Bot Gamble Command Integration', () => {
 
 			expect(replies).toHaveLength(1)
 			expect(replies[0]).toBe('@Alice, User nonexistent hasn\'t been seen by the bot yet.')
+		})
+	})
+
+	describe('!gamble bonus subcommand', () => {
+		it('should silently drop if triggered by viewer', async () => {
+			const { replies } = await simulateCommand('!gamble bonus', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				role: 'viewer',
+			})
+			expect(replies).toHaveLength(0)
+		})
+
+		it('should trigger bonus and broadcast chat message if executed by moderator', async () => {
+			const { replies } = await simulateCommand('!gamble bonus', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				role: 'moderator',
+			})
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toContain('A limited-time gambling bonus event is now active!')
+
+			const settingsObj = getAppSettingsSync()
+			expect(settingsObj.pointsGamblingBonusEndTime).toBeGreaterThan(Date.now())
+		})
+
+		it('should fail to trigger if another bonus event is already active', async () => {
+			// Trigger first
+			await simulateCommand('!gamble bonus', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				role: 'moderator',
+			})
+			// Try to trigger second
+			const { replies } = await simulateCommand('!gamble bonus', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				role: 'moderator',
+			})
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, A gambling bonus event is already active!')
+		})
+
+		it('should apply bonus win multiplier and threshold when bonus is active', async () => {
+			// Configure custom bonus settings in DB
+			await db.insert(settings).values([
+				{ key: 'points.gambling_bonus_duration', value: '10', updatedAt: new Date() },
+				{ key: 'points.gambling_bonus_win_multiplier', value: '3.0', updatedAt: new Date() },
+				{ key: 'points.gambling_bonus_win_min_roll', value: '80', updatedAt: new Date() },
+				{ key: 'points.gambling_bonus_end_time', value: String(Date.now() + 10 * 60 * 1000), updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			// Let's roll a 75 (75/100 = 0.74)
+			const mockRandom = vi.spyOn(Math, 'random').mockReturnValue(0.74)
+
+			const { replies: replies1 } = await simulateCommand('!gamble 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			expect(replies1[0]).toContain('rolled a 75 and lost 100 points')
+
+			// Let's roll a 85 (85/100 = 0.84)
+			mockRandom.mockReturnValue(0.84)
+			const { replies: replies2, user } = await simulateCommand('!gamble 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 500,
+			})
+			expect(replies2[0]).toBe('@Alice, rolled a 85 and won 300 points! You went from 500 to 800 points.')
+			expect(user?.points).toBe(800)
 		})
 	})
 })

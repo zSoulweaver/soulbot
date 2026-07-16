@@ -10,6 +10,11 @@ const saveGamblingSettingsSchema = z.object({
 	maxBet: z.number().int().min(1, 'Maximum bet must be at least 1'),
 	winMinRoll: z.number().int().min(1, 'Threshold must be between 1 and 100').max(100, 'Threshold must be between 1 and 100'),
 	winMultiplier: z.number().min(0.1, 'Multiplier must be at least 0.1'),
+	bonusDuration: z.number().int().min(1, 'Duration must be between 1 and 30 minutes').max(30, 'Duration must be between 1 and 30 minutes'),
+	bonusWinMultiplier: z.number().min(0.1, 'Bonus multiplier must be at least 0.1'),
+	bonusWinMinRoll: z.number().int().min(1, 'Bonus threshold must be between 1 and 100').max(100, 'Bonus threshold must be between 1 and 100'),
+	bonusMessage: z.string().min(1, 'Bonus start announcement message cannot be empty'),
+	bonusEndMessage: z.string().min(1, 'Bonus end announcement message cannot be empty'),
 }).refine(data => data.maxBet >= data.minBet, {
 	message: 'Maximum bet must be greater than or equal to minimum bet',
 	path: ['maxBet'],
@@ -28,13 +33,28 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { minBet, maxBet, winMinRoll, winMultiplier } = parsed.data
+	const {
+		minBet,
+		maxBet,
+		winMinRoll,
+		winMultiplier,
+		bonusDuration,
+		bonusWinMultiplier,
+		bonusWinMinRoll,
+		bonusMessage,
+		bonusEndMessage,
+	} = parsed.data
 
 	const keysToUpsert = [
 		{ key: 'points.gambling_min_bet', value: String(minBet), updatedAt: new Date() },
 		{ key: 'points.gambling_max_bet', value: String(maxBet), updatedAt: new Date() },
 		{ key: 'points.gambling_win_min_roll', value: String(winMinRoll), updatedAt: new Date() },
 		{ key: 'points.gambling_win_multiplier', value: String(winMultiplier), updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_duration', value: String(bonusDuration), updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_win_multiplier', value: String(bonusWinMultiplier), updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_win_min_roll', value: String(bonusWinMinRoll), updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_message', value: bonusMessage, updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_end_message', value: bonusEndMessage, updatedAt: new Date() },
 	]
 
 	await db

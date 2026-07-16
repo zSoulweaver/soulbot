@@ -47,8 +47,9 @@ export const handleGambleRoot: CommandHandler<typeof GambleArgs> = async (ctx, [
 
 	// Roll between 1 and 100 inclusive
 	const roll = Math.floor(Math.random() * 100) + 1
-	const winMinRoll = settings.pointsGamblingWinMinRoll
-	const winMultiplier = settings.pointsGamblingWinMultiplier
+	const isBonusActive = settings.pointsGamblingBonusEndTime > Date.now()
+	const winMinRoll = isBonusActive ? settings.pointsGamblingBonusWinMinRoll : settings.pointsGamblingWinMinRoll
+	const winMultiplier = isBonusActive ? settings.pointsGamblingBonusWinMultiplier : settings.pointsGamblingWinMultiplier
 
 	if (roll >= winMinRoll) {
 		const winAmount = Math.floor(betAmount * winMultiplier)

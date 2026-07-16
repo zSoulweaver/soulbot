@@ -80,7 +80,7 @@ export const navigation: NavGroup[] = [
 					{ title: 'Payout Exclusions', url: '/admin/loyalty/exclusions' },
 					{ title: 'Point Balances', url: '/admin/loyalty/users' },
 					{ title: 'Watch Time Balances', url: '/admin/loyalty/watchtime' },
-					{ title: 'Gambling', url: '/admin/loyalty/gambling' },
+					{ title: 'Gambling', url: '/admin/loyalty/gambling', roles: ['caster'] },
 				],
 			},
 			{

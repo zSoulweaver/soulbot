@@ -55,6 +55,9 @@ export function initBot() {
 			const { loadTargetPlaylistCache } = await import('~~/server/utils/spotify')
 			await loadTargetPlaylistCache(appSettings.spotifyPlaylistTargetId)
 		}
+		// Initialize the bonus manager timer if active
+		const { initBonusManager } = await import('./modules/points/bonus-manager')
+		await initBonusManager()
 	}).catch((err) => {
 		botLogger.error({ err }, 'Failed to warm up settings cache on initBot')
 	})

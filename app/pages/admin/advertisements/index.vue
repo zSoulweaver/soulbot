@@ -7,22 +7,27 @@ import { Spinner } from '~/components/ui/spinner'
 type AdSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/advertisements/settings.get').default>>
 type AdSchedule = Awaited<ReturnType<typeof import('~~/server/api/admin/advertisements/schedule.get').default>>
 
-// Fetch alert settings and schedule via non-blocking useFetch
-const { data: settingsData, refresh: refreshSettings, pending: settingsLoading } = useFetch<AdSettings>('/api/admin/advertisements/settings')
-const { data: scheduleData, refresh: refreshSchedule, pending: scheduleLoading } = useFetch<AdSchedule>('/api/admin/advertisements/schedule')
-
-const loading = computed(() => settingsLoading.value || scheduleLoading.value)
-
-useHead({
-	title: 'Advertisements Management',
-})
-
 const form = ref<AdSettings>({
 	adsAlertsEnabled: false,
 	adsAlert5mEnabled: false,
 	adsAlert3mEnabled: false,
 	adsAlert1mEnabled: false,
 	adsAlertTemplate: '',
+})
+
+// Fetch alert settings and schedule via non-blocking useFetch
+const { data: settingsData, refresh: refreshSettings, pending: settingsLoading } = useFetch<AdSettings>('/api/admin/advertisements/settings', {
+	transform: (data) => {
+		form.value = { ...data }
+		return data
+	},
+})
+const { data: scheduleData, refresh: refreshSchedule, pending: scheduleLoading } = useFetch<AdSchedule>('/api/admin/advertisements/schedule')
+
+const loading = computed(() => settingsLoading.value || scheduleLoading.value)
+
+useHead({
+	title: 'Advertisements Management',
 })
 
 const isSaving = ref(false)

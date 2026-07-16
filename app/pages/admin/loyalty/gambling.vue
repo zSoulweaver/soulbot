@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { Dices, HelpCircle, RefreshCcw, Sparkles } from '@lucide/vue'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Slider } from '~/components/ui/slider'
+
+const { loggedIn, user } = useUserSession()
+
+// Client-side guard for caster/admin roles only
+watchEffect(() => {
+	if (!loggedIn.value || (user.value?.role !== 'caster' && user.value?.role !== 'admin')) {
+		navigateTo('/')
+	}
+})
 
 type GamblingSettings = Awaited<ReturnType<typeof import('~~/server/api/loyalty/gambling.get').default>>
 

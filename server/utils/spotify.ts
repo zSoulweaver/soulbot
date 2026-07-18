@@ -439,6 +439,37 @@ export async function removeTracksFromPlaylist(playlistId: string, trackUris: st
 	}
 }
 
+export async function reorderPlaylistTrack(
+	playlistId: string,
+	rangeStart: number,
+	insertBefore: number,
+	rangeLength = 1,
+): Promise<boolean> {
+	const token = await getValidSpotifyToken()
+	if (!token)
+		return false
+
+	try {
+		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
+			method: 'PUT',
+			headers: {
+				'Authorization': `Bearer ${token.accessToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: {
+				range_start: rangeStart,
+				insert_before: insertBefore,
+				range_length: rangeLength,
+			},
+		})
+		return true
+	}
+	catch (err: any) {
+		botLogger.error({ err: err?.data || err }, `[Spotify] Failed to reorder playlist items`)
+		return false
+	}
+}
+
 export async function clearPlaylist(playlistId: string): Promise<boolean> {
 	const token = await getValidSpotifyToken()
 	if (!token)

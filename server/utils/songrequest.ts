@@ -218,6 +218,11 @@ export async function requestSong(options: {
 	// Get current Spotify playlist size to prevent Index out of bounds
 	const playlistTracks = await getPlaylistTracks(appSettings.spotifyRequestPlaylistId)
 	const playlistSize = playlistTracks ? playlistTracks.length : 0
+
+	// Calculate and add offset of played tracks at the top of the Spotify playlist
+	const playedTracksCount = Math.max(0, playlistSize - activeTracks.length)
+	insertPosition += playedTracksCount
+
 	if (insertPosition > playlistSize) {
 		insertPosition = playlistSize
 	}

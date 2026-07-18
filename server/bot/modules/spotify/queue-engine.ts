@@ -3,7 +3,7 @@ import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTracksFromPlaylist } from '~~/server/utils/spotify'
 
 let intervalId: any = null
 let lastPlaylistSyncTime = 0
@@ -123,6 +123,24 @@ async function tick() {
 						.where(eq(spotifyQueue.id, item.id))
 					botLogger.info(`[Spotify Queue] Cleaned up stale DB track not in Spotify playlist: ${item.title}`)
 				}
+
+				// 2. Remove lingering tracks from Spotify playlist (not in DB active queue)
+				const dbActiveTrackIds = new Set(dbActiveTracks.map((t) => {
+					return t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop() : t.trackId
+				}))
+
+				const lingeringTrackUris: string[] = []
+				for (const spotifyTrack of playlistTracks) {
+					if (!dbActiveTrackIds.has(spotifyTrack.id)) {
+						botLogger.info(`[Spotify Queue] Sync: Identified lingering/manual track to remove: ${spotifyTrack.title}`)
+						lingeringTrackUris.push(spotifyTrack.uri)
+					}
+				}
+
+				if (lingeringTrackUris.length > 0) {
+					botLogger.info(`[Spotify Queue] Sync: Performing bulk removal of ${lingeringTrackUris.length} lingering tracks...`)
+					await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, lingeringTrackUris)
+				}
 			}
 		}
 
@@ -144,16 +162,16 @@ async function tick() {
 
 		const currentTrack = await getCurrentlyPlaying(true) // force refresh
 
-		// Proactively queue fallback songs if active fallbacks count <= 1
+		// Proactively queue fallback songs if active fallbacks count === 0
 		const activeFallbacksCount = activeTracks.filter(t => t.requestedBy === 'Fallback Playlist').length
-		if (activeFallbacksCount <= 1 && appSettings.spotifyPlaylistTargetId) {
+		if (activeFallbacksCount === 0 && appSettings.spotifyPlaylistTargetId) {
 			const exists = await playlistExists(appSettings.spotifyRequestPlaylistId)
 			if (!exists) {
 				await clearRequestPlaylistId()
 				return
 			}
 
-			const fallbackTracks = await getRandomTracksFromPlaylist(appSettings.spotifyPlaylistTargetId, 5)
+			const fallbackTracks = await getRandomTracksFromPlaylist(appSettings.spotifyPlaylistTargetId, 2)
 			const newUris: string[] = []
 
 			for (const track of fallbackTracks) {
@@ -249,7 +267,7 @@ async function tick() {
 										.where(eq(spotifyQueue.id, prevItem.id))
 
 									const trackUri = prevItem.trackId.startsWith('spotify:track:') ? prevItem.trackId : `spotify:track:${prevItem.trackId}`
-									const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+									const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 									if (!removed) {
 										await handlePlaylistError()
 									}
@@ -273,7 +291,7 @@ async function tick() {
 									.where(eq(spotifyQueue.id, playingItem.id))
 
 								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
-								const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+								const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 								if (!removed) {
 									await handlePlaylistError()
 								}
@@ -297,7 +315,7 @@ async function tick() {
 									.where(eq(spotifyQueue.id, playingItem.id))
 
 								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
-								const removed = await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+								const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 								if (!removed) {
 									await handlePlaylistError()
 								}

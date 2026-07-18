@@ -6,7 +6,7 @@ import { spotifyQueue } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { sendChannelChatMessage } from '~~/server/utils/chat'
 import { getAppSettings } from '~~/server/utils/settings'
-import { removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { removeTracksFromPlaylist } from '~~/server/utils/spotify'
 
 export default defineEventHandler(async (event) => {
 	const user = await requireUserRole(event)
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
 	// Remove from custom Spotify playlist
 	if (appSettings.spotifyRequestPlaylistId) {
 		const trackUri = item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`
-		await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+		await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 	}
 
 	// Notify Twitch chat

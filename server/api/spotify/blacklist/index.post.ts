@@ -6,7 +6,7 @@ import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getTrackDetails, removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { getTrackDetails, removeTracksFromPlaylist } from '~~/server/utils/spotify'
 
 const blacklistSchema = z.object({
 	link: z.string().min(1, 'Spotify track link or URI is required'),
@@ -111,7 +111,7 @@ export default defineEventHandler(async (event) => {
 		// Remove from Spotify request playlist
 		if (appSettings.spotifyRequestPlaylistId) {
 			const trackUri = item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`
-			await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+			await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 		}
 	}
 

@@ -5,7 +5,7 @@ import { getUserRecord } from '~~/server/bot/services/user'
 import { db } from '~~/server/database'
 import { spotifyBlacklist, spotifyQueue } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
-import { getTrackDetails, removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { getTrackDetails, removeTracksFromPlaylist } from '~~/server/utils/spotify'
 import { updateUserPoints } from '../../points/service'
 import { parseSpotifyTrackId } from '../utils'
 
@@ -69,7 +69,7 @@ export const handleSongRequestBlacklist: CommandHandler<typeof SongRequestBlackl
 
 		if (appSettings.spotifyRequestPlaylistId) {
 			const trackUri = item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`
-			await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+			await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 		}
 	}
 

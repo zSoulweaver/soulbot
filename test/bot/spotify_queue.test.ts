@@ -279,7 +279,7 @@ describe('Bot Spotify Queue Commands Integration', () => {
 		expect(replies).toHaveLength(1)
 		expect(replies[0]).toBe('@streamer, the current track requested by @streamer has been saved to the playlist!')
 		expect(mockFetch).toHaveBeenCalledWith(
-			'https://api.spotify.com/v1/playlists/target-123/tracks',
+			'https://api.spotify.com/v1/playlists/target-123/items',
 			expect.objectContaining({
 				method: 'POST',
 				body: expect.objectContaining({

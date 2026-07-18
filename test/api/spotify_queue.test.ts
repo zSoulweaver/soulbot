@@ -349,7 +349,7 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 						album: { images: [{ url: 'https://art.com/blinding' }] },
 					}
 				}
-				if (url.includes('/playlists/playlist-123/tracks')) {
+				if (url.includes('/playlists/playlist-123/items')) {
 					return { snapshot_id: 'snapshot-1' }
 				}
 				return {}
@@ -378,7 +378,7 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 						album: { images: [{ url: 'https://art.com/blinding' }] },
 					}
 				}
-				if (url.includes('/playlists/playlist-123/tracks')) {
+				if (url.includes('/playlists/playlist-123/items')) {
 					return { snapshot_id: 'snapshot-1' }
 				}
 				return {}
@@ -432,7 +432,7 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 						}
 					}
 				}
-				if (url.includes('/playlists/playlist-123/tracks')) {
+				if (url.includes('/playlists/playlist-123/items')) {
 					return { snapshot_id: 'snapshot-1' }
 				}
 				return {}
@@ -768,7 +768,7 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			const res = await likePostHandler({} as any)
 			expect(res).toEqual({ success: true, alreadyLiked: false, title: 'Test Song' })
 			expect(mockFetch).toHaveBeenCalledWith(
-				'https://api.spotify.com/v1/playlists/target-123/tracks',
+				'https://api.spotify.com/v1/playlists/target-123/items',
 				expect.objectContaining({
 					method: 'POST',
 					body: expect.objectContaining({

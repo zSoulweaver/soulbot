@@ -6,7 +6,7 @@ import { spotifyQueue } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { sendChannelChatMessage } from '~~/server/utils/chat'
 import { getAppSettings } from '~~/server/utils/settings'
-import { removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { removeTracksFromPlaylist } from '~~/server/utils/spotify'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'caster')
@@ -52,10 +52,8 @@ export default defineEventHandler(async (event) => {
 
 		// Remove from custom Spotify playlist
 		if (appSettings.spotifyRequestPlaylistId) {
-			for (const item of viewerTracks) {
-				const trackUri = item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`
-				await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
-			}
+			const trackUris = viewerTracks.map(item => item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`)
+			await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUris)
 		}
 	}
 

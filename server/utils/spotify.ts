@@ -332,7 +332,7 @@ export async function addTracksToPlaylist(playlistId: string, trackUris: string[
 	if (!token)
 		return false
 	try {
-		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${token.accessToken}`,
@@ -414,25 +414,27 @@ export async function playQueuePlaylist(): Promise<boolean> {
 	}
 }
 
-export async function removeTrackFromPlaylist(playlistId: string, trackUri: string): Promise<boolean> {
+export async function removeTracksFromPlaylist(playlistId: string, trackUris: string[]): Promise<boolean> {
+	if (trackUris.length === 0)
+		return true
 	const token = await getValidSpotifyToken()
 	if (!token)
 		return false
 	try {
-		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
 			method: 'DELETE',
 			headers: {
 				'Authorization': `Bearer ${token.accessToken}`,
 				'Content-Type': 'application/json',
 			},
 			body: {
-				tracks: [{ uri: trackUri }],
+				items: trackUris.map(uri => ({ uri })),
 			},
 		})
 		return true
 	}
 	catch (err: any) {
-		botLogger.error({ err: err?.data || err }, `[Spotify] Failed to remove track ${trackUri} from playlist ${playlistId}`)
+		botLogger.error({ err: err?.data || err }, `[Spotify] Failed to remove tracks from playlist ${playlistId}`)
 		return false
 	}
 }
@@ -442,7 +444,7 @@ export async function clearPlaylist(playlistId: string): Promise<boolean> {
 	if (!token)
 		return false
 	try {
-		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+		await $fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
 			method: 'PUT',
 			headers: {
 				'Authorization': `Bearer ${token.accessToken}`,
@@ -475,7 +477,7 @@ export async function getPlaylistTracks(playlistId: string): Promise<PlaylistTra
 	if (!token)
 		return null
 	try {
-		const res = await $fetch<any>(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, {
+		const res = await $fetch<any>(`https://api.spotify.com/v1/playlists/${playlistId}/items?limit=100`, {
 			headers: {
 				Authorization: `Bearer ${token.accessToken}`,
 			},
@@ -605,7 +607,7 @@ export async function syncTargetPlaylist(playlistId: string, _force = false): Pr
 	try {
 		const tracks: typeof spotifyPlaylistCache.$inferInsert[] = []
 		const trackIdsSet = new Set<string>()
-		let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?fields=items(track(id,uri,name,artists(name),duration_ms,album(images))),next&limit=50`
+		let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/items?fields=items(track(id,uri,name,artists(name),duration_ms,album(images))),next&limit=50`
 
 		while (nextUrl) {
 			const syncResponse: any = await $fetch<any>(nextUrl, {

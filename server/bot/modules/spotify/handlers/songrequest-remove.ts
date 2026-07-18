@@ -5,7 +5,7 @@ import { getUserRecord } from '~~/server/bot/services/user'
 import { db } from '~~/server/database'
 import { spotifyQueue } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
-import { removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { removeTracksFromPlaylist } from '~~/server/utils/spotify'
 import { updateUserPoints } from '../../points/service'
 
 export const handleSongRequestRemove: CommandHandler<typeof SongRequestRemoveArgs> = async (ctx, [position]) => {
@@ -52,7 +52,7 @@ export const handleSongRequestRemove: CommandHandler<typeof SongRequestRemoveArg
 	// Remove from Spotify playlist
 	if (appSettings.spotifyRequestPlaylistId) {
 		const trackUri = item.trackId.startsWith('spotify:track:') ? item.trackId : `spotify:track:${item.trackId}`
-		await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+		await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 	}
 
 	if (item.requestedBy === 'Fallback Playlist') {

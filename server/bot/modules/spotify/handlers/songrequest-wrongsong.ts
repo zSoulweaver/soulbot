@@ -4,7 +4,7 @@ import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
 import { spotifyQueue } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
-import { removeTrackFromPlaylist } from '~~/server/utils/spotify'
+import { removeTracksFromPlaylist } from '~~/server/utils/spotify'
 import { updateUserPoints } from '../../points/service'
 
 export const handleSongRequestWrongSong: CommandHandler = async (ctx) => {
@@ -41,7 +41,7 @@ export const handleSongRequestWrongSong: CommandHandler = async (ctx) => {
 	// Remove from Spotify playlist
 	if (appSettings.spotifyRequestPlaylistId) {
 		const trackUri = userRequest.trackId.startsWith('spotify:track:') ? userRequest.trackId : `spotify:track:${userRequest.trackId}`
-		await removeTrackFromPlaylist(appSettings.spotifyRequestPlaylistId, trackUri)
+		await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 	}
 
 	return ctx.reply('spotify.sr.wrongsong', {

@@ -2,11 +2,12 @@ import process from 'node:process'
 import { ApiClient } from '@twurple/api'
 import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray, ne } from 'drizzle-orm'
 import { handleChatMessage, initBot, registry, templateRegistry } from '../bot'
 import { eventSubManager } from '../bot/core/eventsub'
 import { db } from '../database'
-import { twitchTokens } from '../database/schema'
+import { twitchTokens, users } from '../database/schema'
+import { updateUserRoleCache } from './auth'
 import { botLogger } from './logger'
 
 let authProviderInstance: RefreshingAuthProvider | null = null
@@ -290,6 +291,9 @@ let cachedIsBotMod: boolean | null = null
 let lastModCheckTime = 0
 const MOD_CHECK_CACHE_MS = 5 * 60 * 1000 // 5 minutes
 
+let lastRolesSyncTime = 0
+const ROLES_SYNC_CACHE_MS = 10 * 60 * 1000 // 10 minutes
+
 export async function getBotModeratorStatus(forceRefresh = false): Promise<boolean> {
 	const botToken = await getBotToken()
 	const streamerToken = await getStreamerToken()
@@ -322,4 +326,79 @@ export function clearTwitchTokenCache() {
 	cachedBotToken = null
 	cachedIsBotMod = null
 	lastModCheckTime = 0
+	lastRolesSyncTime = 0
+}
+
+export async function syncModeratorRoles(preFetchedModIds?: string[]): Promise<void> {
+	const streamerToken = await getStreamerToken()
+	if (!streamerToken || !streamerToken.userId) {
+		return
+	}
+
+	try {
+		const twitchMods: string[] = preFetchedModIds || []
+
+		if (!preFetchedModIds) {
+			const api = getApiClient()
+			await api.asUser(streamerToken.userId, async (ctx) => {
+				const paginator = ctx.moderation.getModeratorsPaginated(streamerToken.userId!)
+				let page = await paginator.getNext()
+				while (page.length > 0) {
+					for (const mod of page) {
+						twitchMods.push(mod.userId)
+					}
+					page = await paginator.getNext()
+				}
+			})
+		}
+
+		// Fetch all database users with 'admin' or 'moderator' role (excluding the broadcaster themselves)
+		const dbPrivilegedUsers = await db
+			.select({ id: users.id, role: users.role })
+			.from(users)
+			.where(
+				and(
+					inArray(users.role, ['admin', 'moderator']),
+					ne(users.id, streamerToken.userId),
+				),
+			)
+
+		if (dbPrivilegedUsers.length === 0) {
+			return
+		}
+
+		const twitchModSet = new Set(twitchMods)
+		const usersToDemote = dbPrivilegedUsers.filter(u => !twitchModSet.has(u.id))
+
+		if (usersToDemote.length > 0) {
+			const userIds = usersToDemote.map(u => u.id)
+			const now = new Date()
+
+			await db.update(users)
+				.set({
+					role: 'viewer',
+					updatedAt: now,
+				})
+				.where(inArray(users.id, userIds))
+
+			for (const userId of userIds) {
+				updateUserRoleCache(userId, 'viewer')
+			}
+
+			botLogger.info({ demotedUserIds: userIds }, '[Sync Moderator Roles] Demoted unmodded users to viewer')
+		}
+	}
+	catch (err) {
+		botLogger.error(err, '[Sync Moderator Roles] Failed to sync moderator and administrator roles')
+	}
+}
+
+export async function syncModeratorRolesThrottled(force = false): Promise<void> {
+	const now = Date.now()
+	if (!force && (now - lastRolesSyncTime) < ROLES_SYNC_CACHE_MS) {
+		return
+	}
+
+	await syncModeratorRoles()
+	lastRolesSyncTime = now
 }

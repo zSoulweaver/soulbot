@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, RefreshCcw, Search, ShieldAlert } from '@lucide/vue'
+import { RefreshCcw, Search } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
@@ -120,7 +120,6 @@ async function confirmToggle() {
 					<TableHeader>
 						<TableRow>
 							<TableHead>User</TableHead>
-							<TableHead>Twitch Status</TableHead>
 							<TableHead>Panel Role</TableHead>
 							<TableHead class="text-center">
 								Admin Privilege
@@ -129,12 +128,12 @@ async function confirmToggle() {
 					</TableHeader>
 					<TableBody class="divide-y divide-border/60">
 						<TableRow v-if="loading" class="text-center">
-							<TableCell colspan="4" class="py-12 text-muted-foreground">
+							<TableCell colspan="3" class="py-12 text-muted-foreground">
 								Loading moderators...
 							</TableCell>
 						</TableRow>
 						<TableRow v-else-if="filteredMods.length === 0" class="text-center">
-							<TableCell colspan="4" class="py-12 text-muted-foreground">
+							<TableCell colspan="3" class="py-12 text-muted-foreground">
 								No moderators found.
 							</TableCell>
 						</TableRow>
@@ -156,21 +155,6 @@ async function confirmToggle() {
 											<span class="text-xs text-muted-foreground">@{{ mod.username }}</span>
 										</div>
 									</div>
-								</TableCell>
-								<TableCell>
-									<Badge v-if="mod.isNotTwitchMod" variant="destructive" class="gap-1 px-1.5 py-0 text-[10px] font-bold tracking-wider uppercase select-none">
-										<ShieldAlert class="size-3" />
-										Not Twitch Mod
-									</Badge>
-									<Badge
-										v-else variant="outline" class="
-											gap-1 border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0 text-[10px] font-bold tracking-wider text-emerald-600 uppercase select-none
-											dark:text-emerald-400
-										"
-									>
-										<Check class="size-3" />
-										Twitch Moderator
-									</Badge>
 								</TableCell>
 								<TableCell>
 									<Badge

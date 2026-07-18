@@ -2,7 +2,7 @@ import { BOT_OAUTH_VERSION, STREAMER_OAUTH_VERSION } from '~~/server/config/twit
 import { db } from '~~/server/database'
 import { twitchTokens } from '~~/server/database/schema'
 import { getAppSettings } from '~~/server/utils/settings'
-import { getBotModeratorStatus, getBotToken, getStreamerToken, isBotRunning } from '~~/server/utils/twurple'
+import { getBotModeratorStatus, getBotToken, getStreamerToken, isBotRunning, syncModeratorRolesThrottled } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
 	const query = getQuery(event) || {}
@@ -46,6 +46,13 @@ export default defineEventHandler(async (event) => {
 	const isBotModerator = isBotRunning()
 		? await getBotModeratorStatus(force)
 		: false
+
+	// Trigger throttled moderator role synchronization in the background
+	if (isBotRunning()) {
+		syncModeratorRolesThrottled(force).catch((err) => {
+			console.error('[Bot Status API] Failed to run syncModeratorRolesThrottled:', err)
+		})
+	}
 
 	return {
 		bot: botToken

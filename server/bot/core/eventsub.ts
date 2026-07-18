@@ -1,5 +1,5 @@
 import type { ApiClient } from '@twurple/api'
-import type { EventSubChannelAdBreakBeginEvent, EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
+import type { EventSubChannelAdBreakBeginEvent, EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelModeratorEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
 import { EventEmitter } from 'node:events'
 import { EventSubHttpListener, EventSubMiddleware } from '@twurple/eventsub-http'
 import { NgrokAdapter } from '@twurple/eventsub-ngrok'
@@ -15,6 +15,8 @@ export interface EventSubMap {
 	'stream.offline': EventSubStreamOfflineEvent
 	'raid': EventSubChannelRaidEvent
 	'ad.break.begin': EventSubChannelAdBreakBeginEvent
+	'moderator.add': EventSubChannelModeratorEvent
+	'moderator.remove': EventSubChannelModeratorEvent
 }
 
 export class EventSubEmitter extends EventEmitter {
@@ -130,6 +132,19 @@ class EventSubManager {
 				this.events.emitAsync('ad.break.begin', e)
 			})
 			this.activeSubscriptions.push(adBreakSub)
+
+			const modAddSub = this.listener.onChannelModeratorAdd(streamerUserId, (e) => {
+				botLogger.info({ user: e.userName }, '[EventSub] moderator added')
+				this.events.emitAsync('moderator.add', e)
+			})
+			this.activeSubscriptions.push(modAddSub)
+
+			const modRemoveSub = this.listener.onChannelModeratorRemove(streamerUserId, (e) => {
+				botLogger.info({ user: e.userName }, '[EventSub] moderator removed')
+				this.events.emitAsync('moderator.remove', e)
+			})
+			this.activeSubscriptions.push(modRemoveSub)
+
 			if (this.listener instanceof EventSubMiddleware) {
 				await this.listener.markAsReady()
 			}

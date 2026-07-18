@@ -18,6 +18,7 @@ import { spotifyModule } from './modules/spotify'
 import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
+import { registerTwitchEventSubHandlers } from './modules/twitch/eventsub'
 import { watchtimeModule } from './modules/watchtime'
 
 let isRegistryInitialized = false
@@ -42,6 +43,7 @@ export function initBot() {
 	// Register modular EventSub event listeners
 	registerPointsEventSubHandlers()
 	registerAlertsEventSubHandlers()
+	registerTwitchEventSubHandlers()
 
 	// Ensure we have seeded default bots on initialization
 	if (process.env.NODE_ENV !== 'test') {

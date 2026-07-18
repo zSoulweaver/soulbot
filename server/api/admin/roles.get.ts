@@ -2,7 +2,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
+import { getApiClient, getStreamerToken, syncModeratorRoles } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
 	// Require caster permissions
@@ -46,6 +46,11 @@ export default defineEventHandler(async (event) => {
 		console.error('[roles.get] Failed to fetch moderators from Twitch API:', err)
 	}
 
+	const modIds = twitchMods.map(m => m.userId)
+
+	// Sync unmodded users in the background/database
+	await syncModeratorRoles(modIds)
+
 	// Fetch all database users with 'admin' role
 	const dbAdmins = await db
 		.select()
@@ -53,7 +58,6 @@ export default defineEventHandler(async (event) => {
 		.where(eq(users.role, 'admin'))
 
 	// Also fetch database users that correspond to the Twitch moderators
-	const modIds = twitchMods.map(m => m.userId)
 	const dbMods = modIds.length > 0
 		? await db.select().from(users).where(inArray(users.id, modIds))
 		: []
@@ -73,25 +77,8 @@ export default defineEventHandler(async (event) => {
 			image: dbUser?.image || null,
 			role: dbUser?.role || 'moderator',
 			isAdmin: dbUser?.role === 'admin',
-			isNotTwitchMod: false,
 		}
 	})
-
-	// Add any DB admins that are no longer Twitch moderators
-	const twitchModIdsSet = new Set(modIds)
-	for (const admin of dbAdmins) {
-		if (!twitchModIdsSet.has(admin.id)) {
-			results.push({
-				id: admin.id,
-				username: admin.username,
-				displayName: admin.displayName,
-				image: admin.image || null,
-				role: 'admin',
-				isAdmin: true,
-				isNotTwitchMod: true,
-			})
-		}
-	}
 
 	return results
 })

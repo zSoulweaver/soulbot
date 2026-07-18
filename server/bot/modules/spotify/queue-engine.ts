@@ -3,7 +3,7 @@ import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
-import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTracksFromPlaylist, reorderPlaylistTrack } from '~~/server/utils/spotify'
+import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTracksFromPlaylist, replacePlaylistTracks } from '~~/server/utils/spotify'
 
 let intervalId: any = null
 let lastPlaylistSyncTime = 0
@@ -129,78 +129,17 @@ async function tick() {
 					botLogger.info(`[Spotify Queue] Cleaned up stale DB track not in Spotify playlist: ${item.title}`)
 				}
 
-				// 2. Remove lingering tracks from Spotify playlist (not in DB active queue)
-				const dbActiveTrackIds = new Set(dbActiveTracks.map((t) => {
-					return t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop() : t.trackId
-				}))
+				// 2. Align Spotify playlist items with DB active queue (handles duplicates, lingering tracks, and order)
+				const currentUris = playlistTracks.map(t => t.uri)
+				const expectedUris = dbActiveTracks.map(t => t.trackId.startsWith('spotify:track:') ? t.trackId : `spotify:track:${t.trackId}`)
 
-				const lingeringTrackUris: string[] = []
-				for (const spotifyTrack of playlistTracks) {
-					if (!dbActiveTrackIds.has(spotifyTrack.id)) {
-						botLogger.info(`[Spotify Queue] Sync: Identified lingering/manual track to remove: ${spotifyTrack.title}`)
-						lingeringTrackUris.push(spotifyTrack.uri)
-					}
-				}
+				const listsMatch = currentUris.length === expectedUris.length && currentUris.every((uri, idx) => uri === expectedUris[idx])
 
-				if (lingeringTrackUris.length > 0) {
-					botLogger.info(`[Spotify Queue] Sync: Performing bulk removal of ${lingeringTrackUris.length} lingering tracks...`)
-					await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, lingeringTrackUris)
-				}
-
-				// 3. Reorder active tracks if they are out of order (only if no lingering tracks were deleted in this tick to avoid index shifting)
-				if (lingeringTrackUris.length === 0) {
-					const currentPlaylistIds = playlistTracks.map(t => t.id)
-					// Filter expected active IDs to only those that are currently present in Spotify
-					const expectedActiveIds = dbActiveTracks
-						.map((t) => {
-							return t.trackId.startsWith('spotify:track:') ? t.trackId.split(':').pop()! : t.trackId!
-						})
-						.filter(id => currentPlaylistIds.includes(id))
-
-					const currentIndices = expectedActiveIds.map(id => currentPlaylistIds.indexOf(id))
-
-					if (currentIndices.length > 0) {
-						let isSorted = true
-						for (let i = 0; i < currentIndices.length - 1; i++) {
-							if (currentIndices[i]! > currentIndices[i + 1]!) {
-								isSorted = false
-								break
-							}
-						}
-
-						if (!isSorted) {
-							botLogger.info('[Spotify Queue] Sync: Active tracks are out of order in Spotify playlist. Reordering...')
-
-							const actualActiveTracks = playlistTracks
-								.map((t, idx) => ({ id: t.id, index: idx }))
-								.filter(t => expectedActiveIds.includes(t.id))
-
-							for (let i = 0; i < expectedActiveIds.length; i++) {
-								const expectedId = expectedActiveIds[i]
-								const actualTrack = actualActiveTracks[i]
-
-								if (actualTrack && actualTrack.id !== expectedId) {
-									const currentIdx = currentPlaylistIds.indexOf(expectedId!)
-									if (currentIdx !== -1) {
-										const insertBefore = currentIdx < actualTrack.index ? actualTrack.index + 1 : actualTrack.index
-										botLogger.info(`[Spotify Queue] Sync: Moving track ${expectedId} from index ${currentIdx} to index ${insertBefore} (target index ${actualTrack.index})`)
-										const success = await reorderPlaylistTrack(appSettings.spotifyRequestPlaylistId, currentIdx, insertBefore)
-										if (success) {
-											// Update local arrays to reflect the move
-											const [movedId] = currentPlaylistIds.splice(currentIdx, 1)
-											currentPlaylistIds.splice(actualTrack.index, 0, movedId!)
-
-											actualActiveTracks.length = 0
-											currentPlaylistIds.forEach((id, idx) => {
-												if (expectedActiveIds.includes(id)) {
-													actualActiveTracks.push({ id, index: idx })
-												}
-											})
-										}
-									}
-								}
-							}
-						}
+				if (!listsMatch) {
+					botLogger.info('[Spotify Queue] Sync: Spotify playlist is out of sync (duplicates, missing tracks, or incorrect order). Overwriting playlist...')
+					const success = await replacePlaylistTracks(appSettings.spotifyRequestPlaylistId, expectedUris)
+					if (!success) {
+						await handlePlaylistError()
 					}
 				}
 			}
@@ -307,7 +246,6 @@ async function tick() {
 						const currentIdStr = currentTrack.id
 						return trackIdStr === currentIdStr
 					})
-
 					if (matchedIndex !== -1) {
 						const matchedItem = activeTracks[matchedIndex]
 

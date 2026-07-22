@@ -13,7 +13,7 @@ const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/ap
 const channels = computed(() => channelsResponse.value || [])
 
 useHead({
-	title: 'Discord Event Alerts',
+	title: 'Twitch Event Alerts',
 })
 
 const form = ref<AlertsSettings>({
@@ -154,7 +154,7 @@ async function saveSettings() {
 
 <template>
 	<AppSettingsPage
-		heading="Discord Event Alerts"
+		heading="Twitch Event Alerts"
 		subheading="Configure real-time text announcements in specific Discord channels triggered by Twitch events."
 	>
 		<template #header-actions>

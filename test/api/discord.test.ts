@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import alertsGetHandler from '~~/server/api/admin/discord/alerts.get'
 import alertsPutHandler from '~~/server/api/admin/discord/alerts.put'
 import channelsGetHandler from '~~/server/api/admin/discord/channels.get'
+import eventsGetHandler from '~~/server/api/admin/discord/events.get'
+import eventsPutHandler from '~~/server/api/admin/discord/events.put'
 import rolesGetHandler from '~~/server/api/admin/discord/guild-roles.get'
 import guildsGetHandler from '~~/server/api/admin/discord/guilds.get'
-import rolesSettingsGetHandler from '~~/server/api/admin/discord/roles.get'
-import rolesSettingsPutHandler from '~~/server/api/admin/discord/roles.put'
 import settingsGetHandler from '~~/server/api/admin/discord/settings.get'
 import settingsPutHandler from '~~/server/api/admin/discord/settings.put'
 import { db } from '~~/server/database'
@@ -122,31 +122,49 @@ describe('Discord API Routes', () => {
 		})
 	})
 
-	describe('Roles Endpoints', () => {
-		it('gET should return role configurations', async () => {
-			const res = await rolesSettingsGetHandler({} as any)
-			expect(res.discordRolesAutoBestowEnabled).toBe(false)
-			expect(res.discordRolesAutoBestowRoles).toBe('')
-			expect(res.isDiscordConnected).toBe(true) // mocked
+	describe('Native Events Endpoints', () => {
+		it('gET should return native event and auto-role settings', async () => {
+			const res = await eventsGetHandler({} as any)
+			expect(res.discordEventJoinEnabled).toBe(false)
+			expect(res.discordEventJoinTemplate).toBe('Welcome to {server}, {user}!')
+			expect(res.discordEventLeaveEnabled).toBe(false)
+			expect(res.discordEventLeaveTemplate).toBe('{username} has left the server.')
+			expect(res.isDiscordConnected).toBe(true)
 		})
 
-		it('pUT should update role configurations in DB', async () => {
-			const res = await rolesSettingsPutHandler({
+		it('pUT should update native event settings in DB', async () => {
+			const res = await eventsPutHandler({
 				body: {
+					discordEventJoinEnabled: true,
+					discordEventJoinChannelId: 'ch-join',
+					discordEventJoinTemplate: 'Welcome {user}!',
+
 					discordRolesAutoBestowEnabled: true,
-					discordRolesAutoBestowRoles: 'role-a,role-b',
+					discordRolesAutoBestowRoles: 'role-123',
+
+					discordEventLeaveEnabled: true,
+					discordEventLeaveChannelId: 'ch-leave',
+					discordEventLeaveTemplate: 'Goodbye {username}!',
 				},
 			} as any)
 
 			expect(res.success).toBe(true)
 
-			const dbVal = await db
+			const joinVal = await db
 				.select()
 				.from(settings)
-				.where(eq(settings.key, 'discord.roles.auto_bestow_roles'))
+				.where(eq(settings.key, 'discord.events.join.channel_id'))
 				.then(r => r[0])
 
-			expect(dbVal?.value).toBe('role-a,role-b')
+			expect(joinVal?.value).toBe('ch-join')
+
+			const leaveVal = await db
+				.select()
+				.from(settings)
+				.where(eq(settings.key, 'discord.events.leave.template'))
+				.then(r => r[0])
+
+			expect(leaveVal?.value).toBe('Goodbye {username}!')
 		})
 	})
 

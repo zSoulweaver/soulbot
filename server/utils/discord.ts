@@ -92,7 +92,7 @@ export async function startDiscord(): Promise<void> {
 			client.on('guildMemberAdd', async (member) => {
 				try {
 					const currentSettings = await getAppSettings()
-					if (!currentSettings.discordEnabled || !currentSettings.discordRolesAutoBestowEnabled) {
+					if (!currentSettings.discordEnabled) {
 						return
 					}
 
@@ -100,18 +100,58 @@ export async function startDiscord(): Promise<void> {
 						return
 					}
 
-					const roleIds = currentSettings.discordRolesAutoBestowRoles
-						.split(',')
-						.map(id => id.trim())
-						.filter(id => !!id)
+					if (currentSettings.discordRolesAutoBestowEnabled) {
+						const roleIds = currentSettings.discordRolesAutoBestowRoles
+							.split(',')
+							.map(id => id.trim())
+							.filter(id => !!id)
 
-					if (roleIds.length > 0) {
-						botLogger.info({ userId: member.id, roles: roleIds }, '[Discord Bot] Bestowing roles on member join')
-						await member.roles.add(roleIds)
+						if (roleIds.length > 0) {
+							botLogger.info({ userId: member.id, roles: roleIds }, '[Discord Bot] Bestowing roles on member join')
+							await member.roles.add(roleIds)
+						}
+					}
+
+					if (currentSettings.discordEventJoinEnabled && currentSettings.discordEventJoinChannelId) {
+						const text = currentSettings.discordEventJoinTemplate
+							.replace(/\{user\}/g, `<@${member.id}>`)
+							.replace(/\{username\}/g, member.user.username)
+							.replace(/\{server\}/g, member.guild.name)
+							.replace(/\{memberCount\}/g, String(member.guild.memberCount))
+
+						botLogger.info({ userId: member.id, channelId: currentSettings.discordEventJoinChannelId }, '[Discord Bot] Sending member join alert')
+						await sendDiscordMessage(currentSettings.discordEventJoinChannelId, text)
 					}
 				}
 				catch (err) {
-					botLogger.error({ err, userId: member.id }, '[Discord Bot] Failed to auto-bestow roles to user')
+					botLogger.error({ err, userId: member.id }, '[Discord Bot] Failed to process guildMemberAdd event')
+				}
+			})
+
+			client.on('guildMemberRemove', async (member) => {
+				try {
+					const currentSettings = await getAppSettings()
+					if (!currentSettings.discordEnabled) {
+						return
+					}
+
+					if (member.guild.id !== currentSettings.discordGuildId) {
+						return
+					}
+
+					if (currentSettings.discordEventLeaveEnabled && currentSettings.discordEventLeaveChannelId) {
+						const text = currentSettings.discordEventLeaveTemplate
+							.replace(/\{user\}/g, member.user.displayName || member.user.username)
+							.replace(/\{username\}/g, member.user.username)
+							.replace(/\{server\}/g, member.guild.name)
+							.replace(/\{memberCount\}/g, String(member.guild.memberCount))
+
+						botLogger.info({ userId: member.id, channelId: currentSettings.discordEventLeaveChannelId }, '[Discord Bot] Sending member leave alert')
+						await sendDiscordMessage(currentSettings.discordEventLeaveChannelId, text)
+					}
+				}
+				catch (err) {
+					botLogger.error({ err, userId: member.id }, '[Discord Bot] Failed to process guildMemberRemove event')
 				}
 			})
 

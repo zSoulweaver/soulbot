@@ -90,8 +90,8 @@ export const navigation: NavGroup[] = [
 				roles: ['caster', 'moderator'],
 				items: [
 					{ title: 'Settings', url: '/admin/discord/settings', roles: ['caster'] },
-					{ title: 'Alerts', url: '/admin/discord/alerts' },
-					{ title: 'Role Bestow', url: '/admin/discord/roles' },
+					{ title: 'Twitch Alerts', url: '/admin/discord/alerts' },
+					{ title: 'Discord Events', url: '/admin/discord/events' },
 				],
 			},
 			{

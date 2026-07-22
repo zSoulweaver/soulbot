@@ -12,8 +12,17 @@ export default defineEventHandler(async (event) => {
 	const settings = await getAppSettings()
 
 	return {
+		discordEventJoinEnabled: settings.discordEventJoinEnabled,
+		discordEventJoinChannelId: settings.discordEventJoinChannelId,
+		discordEventJoinTemplate: settings.discordEventJoinTemplate,
+
 		discordRolesAutoBestowEnabled: settings.discordRolesAutoBestowEnabled,
 		discordRolesAutoBestowRoles: settings.discordRolesAutoBestowRoles,
+
+		discordEventLeaveEnabled: settings.discordEventLeaveEnabled,
+		discordEventLeaveChannelId: settings.discordEventLeaveChannelId,
+		discordEventLeaveTemplate: settings.discordEventLeaveTemplate,
+
 		isDiscordConnected: isDiscordConnected(),
 	}
 })

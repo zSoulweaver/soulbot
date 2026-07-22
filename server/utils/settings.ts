@@ -91,6 +91,12 @@ export interface AppSettings {
 	discordAlertOfflineEnabled: boolean
 	discordAlertOfflineChannelId: string
 	discordAlertOfflineTemplate: string
+	discordEventJoinEnabled: boolean
+	discordEventJoinChannelId: string
+	discordEventJoinTemplate: string
+	discordEventLeaveEnabled: boolean
+	discordEventLeaveChannelId: string
+	discordEventLeaveTemplate: string
 	adsAlertsEnabled: boolean
 	adsAlert5mEnabled: boolean
 	adsAlert3mEnabled: boolean
@@ -200,6 +206,12 @@ export function getAppSettingsSync(): AppSettings {
 			discordAlertOfflineEnabled: false,
 			discordAlertOfflineChannelId: '',
 			discordAlertOfflineTemplate: 'The stream has ended. Thanks for watching!',
+			discordEventJoinEnabled: false,
+			discordEventJoinChannelId: '',
+			discordEventJoinTemplate: 'Welcome to {server}, {user}!',
+			discordEventLeaveEnabled: false,
+			discordEventLeaveChannelId: '',
+			discordEventLeaveTemplate: '{username} has left the server.',
 			adsAlertsEnabled: false,
 			adsAlert5mEnabled: false,
 			adsAlert3mEnabled: false,
@@ -306,6 +318,12 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			discordAlertOfflineEnabled: getVal('discord.alerts.offline.enabled', 'false') === 'true',
 			discordAlertOfflineChannelId: getVal('discord.alerts.offline.channel_id', ''),
 			discordAlertOfflineTemplate: getVal('discord.alerts.offline.template', 'The stream has ended. Thanks for watching!'),
+			discordEventJoinEnabled: getVal('discord.events.join.enabled', 'false') === 'true',
+			discordEventJoinChannelId: getVal('discord.events.join.channel_id', ''),
+			discordEventJoinTemplate: getVal('discord.events.join.template', 'Welcome to {server}, {user}!'),
+			discordEventLeaveEnabled: getVal('discord.events.leave.enabled', 'false') === 'true',
+			discordEventLeaveChannelId: getVal('discord.events.leave.channel_id', ''),
+			discordEventLeaveTemplate: getVal('discord.events.leave.template', '{username} has left the server.'),
 			adsAlertsEnabled: getVal('ads.alerts.enabled', 'false') === 'true',
 			adsAlert5mEnabled: getVal('ads.alerts.5m.enabled', 'false') === 'true',
 			adsAlert3mEnabled: getVal('ads.alerts.3m.enabled', 'false') === 'true',

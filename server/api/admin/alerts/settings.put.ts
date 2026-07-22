@@ -30,6 +30,14 @@ const saveAlertSettingsSchema = z.object({
 	eventsubPointsCheer: z.number().int().min(0, 'Cheer multiplier must be non-negative'),
 	eventsubAlertAdBreakEnabled: z.boolean(),
 	eventsubAlertAdBreak: z.string().max(500, 'Ad break alert template is too long'),
+	eventsubAlertBanEnabled: z.boolean().optional(),
+	eventsubAlertBan: z.string().max(500, 'Ban alert template is too long').optional(),
+	eventsubAlertTimeoutEnabled: z.boolean().optional(),
+	eventsubAlertTimeout: z.string().max(500, 'Timeout alert template is too long').optional(),
+	eventsubAlertUnbanEnabled: z.boolean().optional(),
+	eventsubAlertUnban: z.string().max(500, 'Unban alert template is too long').optional(),
+	eventsubAlertMessageDeleteEnabled: z.boolean().optional(),
+	eventsubAlertMessageDelete: z.string().max(500, 'Message delete alert template is too long').optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -67,6 +75,31 @@ export default defineEventHandler(async (event) => {
 		{ key: 'eventsub.alert.adbreak.enabled', value: String(d.eventsubAlertAdBreakEnabled), updatedAt: new Date() },
 		{ key: 'eventsub.alert.adbreak', value: d.eventsubAlertAdBreak, updatedAt: new Date() },
 	]
+
+	if (d.eventsubAlertBanEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.ban.enabled', value: String(d.eventsubAlertBanEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertBan !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.ban', value: d.eventsubAlertBan, updatedAt: new Date() })
+	}
+	if (d.eventsubAlertTimeoutEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.timeout.enabled', value: String(d.eventsubAlertTimeoutEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertTimeout !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.timeout', value: d.eventsubAlertTimeout, updatedAt: new Date() })
+	}
+	if (d.eventsubAlertUnbanEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.unban.enabled', value: String(d.eventsubAlertUnbanEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertUnban !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.unban', value: d.eventsubAlertUnban, updatedAt: new Date() })
+	}
+	if (d.eventsubAlertMessageDeleteEnabled !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.message_delete.enabled', value: String(d.eventsubAlertMessageDeleteEnabled), updatedAt: new Date() })
+	}
+	if (d.eventsubAlertMessageDelete !== undefined) {
+		keysToUpsert.push({ key: 'eventsub.alert.message_delete', value: d.eventsubAlertMessageDelete, updatedAt: new Date() })
+	}
 
 	if (d.eventsubAlertRaidEnabled !== undefined) {
 		keysToUpsert.push({ key: 'eventsub.alert.raid.enabled', value: String(d.eventsubAlertRaidEnabled), updatedAt: new Date() })

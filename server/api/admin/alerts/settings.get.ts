@@ -30,5 +30,13 @@ export default defineEventHandler(async (event) => {
 		eventsubPointsCheer: appSettings.eventsubPointsCheer,
 		eventsubAlertAdBreakEnabled: appSettings.eventsubAlertAdBreakEnabled,
 		eventsubAlertAdBreak: appSettings.eventsubAlertAdBreak,
+		eventsubAlertBanEnabled: appSettings.eventsubAlertBanEnabled,
+		eventsubAlertBan: appSettings.eventsubAlertBan,
+		eventsubAlertTimeoutEnabled: appSettings.eventsubAlertTimeoutEnabled,
+		eventsubAlertTimeout: appSettings.eventsubAlertTimeout,
+		eventsubAlertUnbanEnabled: appSettings.eventsubAlertUnbanEnabled,
+		eventsubAlertUnban: appSettings.eventsubAlertUnban,
+		eventsubAlertMessageDeleteEnabled: appSettings.eventsubAlertMessageDeleteEnabled,
+		eventsubAlertMessageDelete: appSettings.eventsubAlertMessageDelete,
 	}
 })

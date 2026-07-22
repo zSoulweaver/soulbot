@@ -34,6 +34,22 @@ const saveDiscordAlertsSchema = z.object({
 	discordAlertOfflineEnabled: z.boolean().optional(),
 	discordAlertOfflineChannelId: z.string().max(100, 'Offline alert channel ID is too long').optional(),
 	discordAlertOfflineTemplate: z.string().max(500, 'Offline alert template is too long').optional(),
+
+	discordAlertBanEnabled: z.boolean().optional(),
+	discordAlertBanChannelId: z.string().max(100, 'Ban alert channel ID is too long').optional(),
+	discordAlertBanTemplate: z.string().max(500, 'Ban alert template is too long').optional(),
+
+	discordAlertTimeoutEnabled: z.boolean().optional(),
+	discordAlertTimeoutChannelId: z.string().max(100, 'Timeout alert channel ID is too long').optional(),
+	discordAlertTimeoutTemplate: z.string().max(500, 'Timeout alert template is too long').optional(),
+
+	discordAlertUnbanEnabled: z.boolean().optional(),
+	discordAlertUnbanChannelId: z.string().max(100, 'Unban alert channel ID is too long').optional(),
+	discordAlertUnbanTemplate: z.string().max(500, 'Unban alert template is too long').optional(),
+
+	discordAlertMessageDeleteEnabled: z.boolean().optional(),
+	discordAlertMessageDeleteChannelId: z.string().max(100, 'Message delete alert channel ID is too long').optional(),
+	discordAlertMessageDeleteTemplate: z.string().max(500, 'Message delete alert template is too long').optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -100,6 +116,46 @@ export default defineEventHandler(async (event) => {
 	}
 	if (d.discordAlertOfflineTemplate !== undefined) {
 		keysToUpsert.push({ key: 'discord.alerts.offline.template', value: d.discordAlertOfflineTemplate, updatedAt: new Date() })
+	}
+
+	if (d.discordAlertBanEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.ban.enabled', value: String(d.discordAlertBanEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertBanChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.ban.channel_id', value: d.discordAlertBanChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertBanTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.ban.template', value: d.discordAlertBanTemplate, updatedAt: new Date() })
+	}
+
+	if (d.discordAlertTimeoutEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.timeout.enabled', value: String(d.discordAlertTimeoutEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertTimeoutChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.timeout.channel_id', value: d.discordAlertTimeoutChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertTimeoutTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.timeout.template', value: d.discordAlertTimeoutTemplate, updatedAt: new Date() })
+	}
+
+	if (d.discordAlertUnbanEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.unban.enabled', value: String(d.discordAlertUnbanEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertUnbanChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.unban.channel_id', value: d.discordAlertUnbanChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertUnbanTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.unban.template', value: d.discordAlertUnbanTemplate, updatedAt: new Date() })
+	}
+
+	if (d.discordAlertMessageDeleteEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.message_delete.enabled', value: String(d.discordAlertMessageDeleteEnabled), updatedAt: new Date() })
+	}
+	if (d.discordAlertMessageDeleteChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.message_delete.channel_id', value: d.discordAlertMessageDeleteChannelId, updatedAt: new Date() })
+	}
+	if (d.discordAlertMessageDeleteTemplate !== undefined) {
+		keysToUpsert.push({ key: 'discord.alerts.message_delete.template', value: d.discordAlertMessageDeleteTemplate, updatedAt: new Date() })
 	}
 
 	await db

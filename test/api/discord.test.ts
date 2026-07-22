@@ -35,6 +35,8 @@ describe('Discord API Routes', () => {
 			const res = await settingsGetHandler({} as any)
 			expect(res.discordEnabled).toBe(false)
 			expect(res.discordGuildId).toBe('')
+			expect(res.discordModerationLogEnabled).toBe(false)
+			expect(res.discordModerationLogChannelId).toBe('')
 			expect(res.isTokenConfigured).toBe(true) // mocked
 			expect(res.isDiscordConnected).toBe(true) // mocked
 		})
@@ -44,6 +46,8 @@ describe('Discord API Routes', () => {
 				body: {
 					discordEnabled: true,
 					discordGuildId: 'my-guild-123',
+					discordModerationLogEnabled: true,
+					discordModerationLogChannelId: 'mod-log-ch',
 				},
 			} as any)
 
@@ -56,6 +60,14 @@ describe('Discord API Routes', () => {
 				.then(r => r[0])
 
 			expect(dbVal?.value).toBe('my-guild-123')
+
+			const logVal = await db
+				.select()
+				.from(settings)
+				.where(eq(settings.key, 'discord.moderation.log.channel_id'))
+				.then(r => r[0])
+
+			expect(logVal?.value).toBe('mod-log-ch')
 		})
 
 		it('pUT should fail on validation error', async () => {

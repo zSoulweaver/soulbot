@@ -91,12 +91,34 @@ export interface AppSettings {
 	discordAlertOfflineEnabled: boolean
 	discordAlertOfflineChannelId: string
 	discordAlertOfflineTemplate: string
+	discordAlertBanEnabled: boolean
+	discordAlertBanChannelId: string
+	discordAlertBanTemplate: string
+	discordAlertTimeoutEnabled: boolean
+	discordAlertTimeoutChannelId: string
+	discordAlertTimeoutTemplate: string
+	discordAlertUnbanEnabled: boolean
+	discordAlertUnbanChannelId: string
+	discordAlertUnbanTemplate: string
+	discordAlertMessageDeleteEnabled: boolean
+	discordAlertMessageDeleteChannelId: string
+	discordAlertMessageDeleteTemplate: string
+	discordModerationLogEnabled: boolean
+	discordModerationLogChannelId: string
 	discordEventJoinEnabled: boolean
 	discordEventJoinChannelId: string
 	discordEventJoinTemplate: string
 	discordEventLeaveEnabled: boolean
 	discordEventLeaveChannelId: string
 	discordEventLeaveTemplate: string
+	eventsubAlertBanEnabled: boolean
+	eventsubAlertBan: string
+	eventsubAlertTimeoutEnabled: boolean
+	eventsubAlertTimeout: string
+	eventsubAlertUnbanEnabled: boolean
+	eventsubAlertUnban: string
+	eventsubAlertMessageDeleteEnabled: boolean
+	eventsubAlertMessageDelete: string
 	adsAlertsEnabled: boolean
 	adsAlert5mEnabled: boolean
 	adsAlert3mEnabled: boolean
@@ -206,12 +228,34 @@ export function getAppSettingsSync(): AppSettings {
 			discordAlertOfflineEnabled: false,
 			discordAlertOfflineChannelId: '',
 			discordAlertOfflineTemplate: 'The stream has ended. Thanks for watching!',
+			discordAlertBanEnabled: false,
+			discordAlertBanChannelId: '',
+			discordAlertBanTemplate: '$(sender) has been banned from the channel.',
+			discordAlertTimeoutEnabled: false,
+			discordAlertTimeoutChannelId: '',
+			discordAlertTimeoutTemplate: '$(sender) has been timed out for $(duration) seconds.',
+			discordAlertUnbanEnabled: false,
+			discordAlertUnbanChannelId: '',
+			discordAlertUnbanTemplate: '$(sender) has been unbanned.',
+			discordAlertMessageDeleteEnabled: false,
+			discordAlertMessageDeleteChannelId: '',
+			discordAlertMessageDeleteTemplate: 'A message from $(sender) was deleted.',
+			discordModerationLogEnabled: false,
+			discordModerationLogChannelId: '',
 			discordEventJoinEnabled: false,
 			discordEventJoinChannelId: '',
 			discordEventJoinTemplate: 'Welcome to {server}, {user}!',
 			discordEventLeaveEnabled: false,
 			discordEventLeaveChannelId: '',
 			discordEventLeaveTemplate: '{username} has left the server.',
+			eventsubAlertBanEnabled: false,
+			eventsubAlertBan: '$(sender) has been banned from the channel.',
+			eventsubAlertTimeoutEnabled: false,
+			eventsubAlertTimeout: '$(sender) has been timed out for $(duration) seconds.',
+			eventsubAlertUnbanEnabled: false,
+			eventsubAlertUnban: '$(sender) has been unbanned.',
+			eventsubAlertMessageDeleteEnabled: false,
+			eventsubAlertMessageDelete: 'A message from $(sender) was deleted.',
 			adsAlertsEnabled: false,
 			adsAlert5mEnabled: false,
 			adsAlert3mEnabled: false,
@@ -318,12 +362,34 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			discordAlertOfflineEnabled: getVal('discord.alerts.offline.enabled', 'false') === 'true',
 			discordAlertOfflineChannelId: getVal('discord.alerts.offline.channel_id', ''),
 			discordAlertOfflineTemplate: getVal('discord.alerts.offline.template', 'The stream has ended. Thanks for watching!'),
+			discordAlertBanEnabled: getVal('discord.alerts.ban.enabled', 'false') === 'true',
+			discordAlertBanChannelId: getVal('discord.alerts.ban.channel_id', ''),
+			discordAlertBanTemplate: getVal('discord.alerts.ban.template', '$(sender) has been banned from the channel.'),
+			discordAlertTimeoutEnabled: getVal('discord.alerts.timeout.enabled', 'false') === 'true',
+			discordAlertTimeoutChannelId: getVal('discord.alerts.timeout.channel_id', ''),
+			discordAlertTimeoutTemplate: getVal('discord.alerts.timeout.template', '$(sender) has been timed out for $(duration) seconds.'),
+			discordAlertUnbanEnabled: getVal('discord.alerts.unban.enabled', 'false') === 'true',
+			discordAlertUnbanChannelId: getVal('discord.alerts.unban.channel_id', ''),
+			discordAlertUnbanTemplate: getVal('discord.alerts.unban.template', '$(sender) has been unbanned.'),
+			discordAlertMessageDeleteEnabled: getVal('discord.alerts.message_delete.enabled', 'false') === 'true',
+			discordAlertMessageDeleteChannelId: getVal('discord.alerts.message_delete.channel_id', ''),
+			discordAlertMessageDeleteTemplate: getVal('discord.alerts.message_delete.template', 'A message from $(sender) was deleted.'),
+			discordModerationLogEnabled: getVal('discord.moderation.log.enabled', 'false') === 'true',
+			discordModerationLogChannelId: getVal('discord.moderation.log.channel_id', ''),
 			discordEventJoinEnabled: getVal('discord.events.join.enabled', 'false') === 'true',
 			discordEventJoinChannelId: getVal('discord.events.join.channel_id', ''),
 			discordEventJoinTemplate: getVal('discord.events.join.template', 'Welcome to {server}, {user}!'),
 			discordEventLeaveEnabled: getVal('discord.events.leave.enabled', 'false') === 'true',
 			discordEventLeaveChannelId: getVal('discord.events.leave.channel_id', ''),
 			discordEventLeaveTemplate: getVal('discord.events.leave.template', '{username} has left the server.'),
+			eventsubAlertBanEnabled: getVal('eventsub.alert.ban.enabled', 'false') === 'true',
+			eventsubAlertBan: getVal('eventsub.alert.ban', '$(sender) has been banned from the channel.'),
+			eventsubAlertTimeoutEnabled: getVal('eventsub.alert.timeout.enabled', 'false') === 'true',
+			eventsubAlertTimeout: getVal('eventsub.alert.timeout', '$(sender) has been timed out for $(duration) seconds.'),
+			eventsubAlertUnbanEnabled: getVal('eventsub.alert.unban.enabled', 'false') === 'true',
+			eventsubAlertUnban: getVal('eventsub.alert.unban', '$(sender) has been unbanned.'),
+			eventsubAlertMessageDeleteEnabled: getVal('eventsub.alert.message_delete.enabled', 'false') === 'true',
+			eventsubAlertMessageDelete: getVal('eventsub.alert.message_delete', 'A message from $(sender) was deleted.'),
 			adsAlertsEnabled: getVal('ads.alerts.enabled', 'false') === 'true',
 			adsAlert5mEnabled: getVal('ads.alerts.5m.enabled', 'false') === 'true',
 			adsAlert3mEnabled: getVal('ads.alerts.3m.enabled', 'false') === 'true',

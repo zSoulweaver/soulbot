@@ -14,6 +14,8 @@ export default defineEventHandler(async (event) => {
 	return {
 		discordEnabled: settings.discordEnabled,
 		discordGuildId: settings.discordGuildId,
+		discordModerationLogEnabled: settings.discordModerationLogEnabled,
+		discordModerationLogChannelId: settings.discordModerationLogChannelId,
 		isTokenConfigured: isDiscordTokenConfigured(),
 		isDiscordConnected: isDiscordConnected(),
 	}

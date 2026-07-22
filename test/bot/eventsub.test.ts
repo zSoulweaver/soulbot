@@ -277,4 +277,64 @@ describe('Bot EventSub Integration', () => {
 			expect(clearedMsgSetting?.value).toBe('')
 		})
 	})
+
+	describe('Moderation EventSub Alerts & Audit Log Embed', () => {
+		it('should trigger Twitch chat alert, Discord text alert, and rich Discord moderation log embed on ban and timeout', async () => {
+			await db.insert(settings).values([
+				{ key: 'eventsub.alert.ban.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.ban', value: '$(sender) was banned!', updatedAt: new Date() },
+				{ key: 'eventsub.alert.timeout.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'eventsub.alert.timeout', value: '$(sender) was timed out for $(duration)s!', updatedAt: new Date() },
+				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.ban.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.alerts.ban.channel_id', value: 'ch-disc-ban', updatedAt: new Date() },
+				{ key: 'discord.alerts.ban.template', value: 'Discord: $(sender) banned!', updatedAt: new Date() },
+				{ key: 'discord.moderation.log.enabled', value: 'true', updatedAt: new Date() },
+				{ key: 'discord.moderation.log.channel_id', value: 'ch-mod-log', updatedAt: new Date() },
+			])
+			await refreshAppSettingsCache()
+
+			// 1. Simulate permanent ban
+			await eventSubManager.simulate('ban', {
+				userId: 'bad-user-id',
+				userName: 'baduser',
+				userDisplayName: 'BadUser',
+				moderatorId: 'mod-id',
+				moderatorName: 'goodmod',
+				moderatorDisplayName: 'GoodMod',
+				reason: 'spamming',
+				isPermanent: true,
+				endDate: null,
+			} as any)
+
+			expect(mockSay).toHaveBeenCalledWith('streamerchannel', 'BadUser was banned!')
+			expect(mockSendDiscordMessage).toHaveBeenCalledWith('ch-disc-ban', 'Discord: BadUser banned!', undefined)
+			expect(mockSendDiscordMessage).toHaveBeenCalledWith('ch-mod-log', '', expect.objectContaining({
+				title: '🔴 User Banned',
+				color: 0xEF4444,
+				url: 'https://www.twitch.tv/popout/streamerchannel/viewercard/baduser',
+			}))
+
+			// 2. Simulate timeout
+			vi.clearAllMocks()
+			const futureDate = new Date(Date.now() + 600 * 1000)
+			await eventSubManager.simulate('ban', {
+				userId: 'bad-user-id',
+				userName: 'baduser',
+				userDisplayName: 'BadUser',
+				moderatorId: 'mod-id',
+				moderatorName: 'goodmod',
+				moderatorDisplayName: 'GoodMod',
+				reason: 'offensive speech',
+				isPermanent: false,
+				endDate: futureDate,
+			} as any)
+
+			expect(mockSay).toHaveBeenCalledWith('streamerchannel', expect.stringContaining('BadUser was timed out for'))
+			expect(mockSendDiscordMessage).toHaveBeenCalledWith('ch-mod-log', '', expect.objectContaining({
+				title: '🟠 User Timed Out',
+				color: 0xF59E0B,
+			}))
+		})
+	})
 })

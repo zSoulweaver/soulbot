@@ -261,6 +261,7 @@ export async function sendDiscordMessage(
 		footerText?: string
 		footerIconUrl?: string
 		timestamp?: boolean
+		color?: number
 	},
 ): Promise<{ id: string, channelId: string } | null> {
 	const settings = await getAppSettings()
@@ -299,7 +300,7 @@ export async function sendDiscordMessage(
 				}
 				if (embed.timestamp)
 					embedBuilder.setTimestamp()
-				embedBuilder.setColor(0x9146FF) // Twitch Purple
+				embedBuilder.setColor(embed.color ?? 0x9146FF)
 				options.embeds = [embedBuilder]
 			}
 			const message = await channel.send(options)

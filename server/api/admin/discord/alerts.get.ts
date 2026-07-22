@@ -41,6 +41,22 @@ export default defineEventHandler(async (event) => {
 		discordAlertOfflineChannelId: settings.discordAlertOfflineChannelId,
 		discordAlertOfflineTemplate: settings.discordAlertOfflineTemplate,
 
+		discordAlertBanEnabled: settings.discordAlertBanEnabled,
+		discordAlertBanChannelId: settings.discordAlertBanChannelId,
+		discordAlertBanTemplate: settings.discordAlertBanTemplate,
+
+		discordAlertTimeoutEnabled: settings.discordAlertTimeoutEnabled,
+		discordAlertTimeoutChannelId: settings.discordAlertTimeoutChannelId,
+		discordAlertTimeoutTemplate: settings.discordAlertTimeoutTemplate,
+
+		discordAlertUnbanEnabled: settings.discordAlertUnbanEnabled,
+		discordAlertUnbanChannelId: settings.discordAlertUnbanChannelId,
+		discordAlertUnbanTemplate: settings.discordAlertUnbanTemplate,
+
+		discordAlertMessageDeleteEnabled: settings.discordAlertMessageDeleteEnabled,
+		discordAlertMessageDeleteChannelId: settings.discordAlertMessageDeleteChannelId,
+		discordAlertMessageDeleteTemplate: settings.discordAlertMessageDeleteTemplate,
+
 		isDiscordConnected: isDiscordConnected(),
 	}
 })

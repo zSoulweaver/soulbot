@@ -44,6 +44,14 @@ const form = ref<AlertSettings>({
 	eventsubAlertOffline: '',
 	eventsubAlertAdBreakEnabled: false,
 	eventsubAlertAdBreak: '',
+	eventsubAlertBanEnabled: false,
+	eventsubAlertBan: '',
+	eventsubAlertTimeoutEnabled: false,
+	eventsubAlertTimeout: '',
+	eventsubAlertUnbanEnabled: false,
+	eventsubAlertUnban: '',
+	eventsubAlertMessageDeleteEnabled: false,
+	eventsubAlertMessageDelete: '',
 })
 
 const isSaving = ref(false)
@@ -89,6 +97,15 @@ const isModified = computed(() => {
 		|| form.value.eventsubAlertOffline !== settingsData.value.eventsubAlertOffline
 		|| form.value.eventsubAlertAdBreakEnabled !== settingsData.value.eventsubAlertAdBreakEnabled
 		|| form.value.eventsubAlertAdBreak !== settingsData.value.eventsubAlertAdBreak
+
+		|| form.value.eventsubAlertBanEnabled !== settingsData.value.eventsubAlertBanEnabled
+		|| form.value.eventsubAlertBan !== settingsData.value.eventsubAlertBan
+		|| form.value.eventsubAlertTimeoutEnabled !== settingsData.value.eventsubAlertTimeoutEnabled
+		|| form.value.eventsubAlertTimeout !== settingsData.value.eventsubAlertTimeout
+		|| form.value.eventsubAlertUnbanEnabled !== settingsData.value.eventsubAlertUnbanEnabled
+		|| form.value.eventsubAlertUnban !== settingsData.value.eventsubAlertUnban
+		|| form.value.eventsubAlertMessageDeleteEnabled !== settingsData.value.eventsubAlertMessageDeleteEnabled
+		|| form.value.eventsubAlertMessageDelete !== settingsData.value.eventsubAlertMessageDelete
 	)
 })
 
@@ -139,6 +156,15 @@ async function saveAlertSettings() {
 				eventsubAlertOffline: form.value.eventsubAlertOffline,
 				eventsubAlertAdBreakEnabled: form.value.eventsubAlertAdBreakEnabled,
 				eventsubAlertAdBreak: form.value.eventsubAlertAdBreak,
+
+				eventsubAlertBanEnabled: form.value.eventsubAlertBanEnabled,
+				eventsubAlertBan: form.value.eventsubAlertBan,
+				eventsubAlertTimeoutEnabled: form.value.eventsubAlertTimeoutEnabled,
+				eventsubAlertTimeout: form.value.eventsubAlertTimeout,
+				eventsubAlertUnbanEnabled: form.value.eventsubAlertUnbanEnabled,
+				eventsubAlertUnban: form.value.eventsubAlertUnban,
+				eventsubAlertMessageDeleteEnabled: form.value.eventsubAlertMessageDeleteEnabled,
+				eventsubAlertMessageDelete: form.value.eventsubAlertMessageDelete,
 			},
 		})
 		toast.success('Alert and reward settings updated successfully!')
@@ -254,6 +280,46 @@ async function saveAlertSettings() {
 				title="Ad Break Start Alerts"
 				description="Triggers when an advertisement break starts on your channel."
 				:variables="['$(duration) (Ad break duration in seconds)', '$(requester) (User who triggered ad break)']"
+				:hide-points="true"
+			/>
+
+			<!-- User Ban Config Card -->
+			<AlertConfig
+				v-model:alert-enabled="form.eventsubAlertBanEnabled"
+				v-model:alert-template="form.eventsubAlertBan"
+				title="User Ban Alerts"
+				description="Triggers when a user is permanently banned from your channel."
+				:variables="['$(sender) (Banned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+				:hide-points="true"
+			/>
+
+			<!-- User Timeout Config Card -->
+			<AlertConfig
+				v-model:alert-enabled="form.eventsubAlertTimeoutEnabled"
+				v-model:alert-template="form.eventsubAlertTimeout"
+				title="User Timeout Alerts"
+				description="Triggers when a user is timed out in your channel."
+				:variables="['$(sender) (Timed-out User)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(duration) (Timeout Duration in Seconds)']"
+				:hide-points="true"
+			/>
+
+			<!-- User Unban Config Card -->
+			<AlertConfig
+				v-model:alert-enabled="form.eventsubAlertUnbanEnabled"
+				v-model:alert-template="form.eventsubAlertUnban"
+				title="User Unban Alerts"
+				description="Triggers when a user is unbanned from your channel."
+				:variables="['$(sender) (Unbanned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+				:hide-points="true"
+			/>
+
+			<!-- Message Delete Config Card -->
+			<AlertConfig
+				v-model:alert-enabled="form.eventsubAlertMessageDeleteEnabled"
+				v-model:alert-template="form.eventsubAlertMessageDelete"
+				title="Message Delete Alerts"
+				description="Triggers when a chat message is deleted by a moderator."
+				:variables="['$(sender) (User Name)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
 				:hide-points="true"
 			/>
 		</ConfigAccordionGroup>

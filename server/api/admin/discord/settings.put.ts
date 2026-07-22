@@ -9,6 +9,8 @@ import { refreshAppSettingsCache } from '~~/server/utils/settings'
 const saveDiscordSettingsSchema = z.object({
 	discordEnabled: z.boolean(),
 	discordGuildId: z.string().max(100, 'Guild ID is too long'),
+	discordModerationLogEnabled: z.boolean().optional(),
+	discordModerationLogChannelId: z.string().max(100, 'Moderation log channel ID is too long').optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -37,6 +39,13 @@ export default defineEventHandler(async (event) => {
 		{ key: 'discord.enabled', value: String(d.discordEnabled), updatedAt: new Date() },
 		{ key: 'discord.guild_id', value: d.discordGuildId, updatedAt: new Date() },
 	]
+
+	if (d.discordModerationLogEnabled !== undefined) {
+		keysToUpsert.push({ key: 'discord.moderation.log.enabled', value: String(d.discordModerationLogEnabled), updatedAt: new Date() })
+	}
+	if (d.discordModerationLogChannelId !== undefined) {
+		keysToUpsert.push({ key: 'discord.moderation.log.channel_id', value: d.discordModerationLogChannelId, updatedAt: new Date() })
+	}
 
 	await db
 		.insert(settings)

@@ -18,8 +18,10 @@ type DiscordSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/dis
 
 const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<DiscordSettings>('/api/admin/discord/settings')
 const { data: guildsResponse, refresh: refreshGuilds } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/guilds')
+const { data: channelsResponse, refresh: refreshChannels } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
 
 const guilds = computed(() => guildsResponse.value || [])
+const channels = computed(() => channelsResponse.value || [])
 
 useHead({
 	title: 'Discord Settings',
@@ -28,6 +30,8 @@ useHead({
 const form = ref<DiscordSettings>({
 	discordEnabled: false,
 	discordGuildId: '',
+	discordModerationLogEnabled: false,
+	discordModerationLogChannelId: '',
 	isTokenConfigured: false,
 	isDiscordConnected: false,
 })
@@ -47,6 +51,8 @@ const isModified = computed(() => {
 	return (
 		form.value.discordEnabled !== settingsData.value.discordEnabled
 		|| form.value.discordGuildId !== settingsData.value.discordGuildId
+		|| form.value.discordModerationLogEnabled !== settingsData.value.discordModerationLogEnabled
+		|| form.value.discordModerationLogChannelId !== settingsData.value.discordModerationLogChannelId
 	)
 })
 
@@ -68,11 +74,14 @@ async function saveSettings() {
 			body: {
 				discordEnabled: form.value.discordEnabled,
 				discordGuildId: form.value.discordGuildId,
+				discordModerationLogEnabled: form.value.discordModerationLogEnabled,
+				discordModerationLogChannelId: form.value.discordModerationLogChannelId,
 			},
 		})
 		toast.success('Discord settings updated successfully!')
 		await refreshSettings()
 		await refreshGuilds()
+		await refreshChannels()
 	}
 	catch (err: any) {
 		toast.error(err.data?.statusMessage || 'Failed to save settings')
@@ -87,6 +96,7 @@ async function refreshAll() {
 	await Promise.all([
 		refreshSettings(),
 		refreshGuilds(),
+		refreshChannels(),
 	])
 }
 </script>
@@ -201,6 +211,68 @@ async function refreshAll() {
 								<Switch
 									v-model:model-value="form.discordEnabled"
 									:disabled="!form.isTokenConfigured || !form.discordGuildId"
+								/>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
+
+				<!-- Twitch Moderation Alerts Section -->
+				<div class="flex flex-col gap-1">
+					<SettingsHeading>
+						Twitch Moderation Alerts
+					</SettingsHeading>
+
+					<SettingsGroup>
+						<!-- Moderation Log Enable Toggle -->
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Enable Moderation Audit Log</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Post color-coded rich embeds (with Twitch viewercard links and recent chat history) to Discord when moderation events occur.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch
+									v-model:model-value="form.discordModerationLogEnabled"
+									:disabled="!form.isDiscordConnected || !form.discordEnabled || !form.discordGuildId"
+								/>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<!-- Target Moderation Log Channel Selector -->
+						<SettingsGroupItem v-if="form.discordModerationLogEnabled">
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Target Moderation Log Channel</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Select the text channel where rich moderation embeds will be logged.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Select
+									v-if="channels.length > 0"
+									v-model="form.discordModerationLogChannelId"
+									:disabled="!form.isDiscordConnected"
+								>
+									<SelectTrigger id="discord-mod-log-channel-id" class="w-full">
+										<SelectValue placeholder="Select a text channel..." />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem
+											v-for="c in channels"
+											:key="c.id"
+											:value="c.id"
+										>
+											#{{ c.name }} ({{ c.id }})
+										</SelectItem>
+									</SelectContent>
+								</Select>
+								<Input
+									v-else
+									v-model="form.discordModerationLogChannelId"
+									placeholder="Enter text channel ID..."
+									class="w-full"
+									:disabled="!form.isDiscordConnected"
 								/>
 							</SettingsGroupAction>
 						</SettingsGroupItem>

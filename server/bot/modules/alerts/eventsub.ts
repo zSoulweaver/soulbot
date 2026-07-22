@@ -1,3 +1,4 @@
+import { getUserRecentMessages } from '~~/server/bot/core/chat-history'
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { sendRawChatMessage } from '~~/server/utils/chat'
@@ -321,11 +322,209 @@ export function registerAlertsEventSubHandlers() {
 					duration: event.durationSeconds,
 					requester: event.requesterDisplayName || event.requesterName,
 				},
-				{ duration: event.durationSeconds, type: 'ad.break.begin' },
 			)
 		}
 		catch (err) {
 			botLogger.error({ err }, '[EventSub Alerts] Failed to handle ad break alert')
 		}
+	})
+
+	eventSubManager.events.on('ban', async (event) => {
+		try {
+			const settings = await getAppSettings()
+			const isTimeout = !event.isPermanent && !!event.endDate
+			const duration = isTimeout && event.endDate ? Math.max(1, Math.round((event.endDate.getTime() - Date.now()) / 1000)) : 0
+
+			const eventUser = { id: event.userId, name: event.userName, displayName: event.userDisplayName }
+			const moderator = { name: event.moderatorName, displayName: event.moderatorDisplayName }
+
+			if (isTimeout) {
+				await logTwitchEvent('timeout', event.userName, event.userDisplayName, { duration, moderator: event.moderatorName })
+				await renderAndPostAlert(
+					settings.eventsubAlertTimeoutEnabled,
+					settings.eventsubAlertTimeout,
+					eventUser,
+					{ duration },
+					{ user: event.userName, type: 'timeout' },
+				)
+				await renderAndPostDiscordAlert(
+					settings.discordAlertTimeoutEnabled,
+					settings.discordAlertTimeoutChannelId,
+					settings.discordAlertTimeoutTemplate,
+					eventUser,
+					{ duration },
+					{ user: event.userName, type: 'discord-timeout' },
+				)
+				await postDiscordModerationEmbed(
+					'🟠 User Timed Out',
+					0xF59E0B,
+					eventUser,
+					moderator,
+					`Timed out for ${duration}s (${Math.ceil(duration / 60)}m)`,
+				)
+			}
+			else {
+				await logTwitchEvent('ban', event.userName, event.userDisplayName, { moderator: event.moderatorName })
+				await renderAndPostAlert(
+					settings.eventsubAlertBanEnabled,
+					settings.eventsubAlertBan,
+					eventUser,
+					undefined,
+					{ user: event.userName, type: 'ban' },
+				)
+				await renderAndPostDiscordAlert(
+					settings.discordAlertBanEnabled,
+					settings.discordAlertBanChannelId,
+					settings.discordAlertBanTemplate,
+					eventUser,
+					undefined,
+					{ user: event.userName, type: 'discord-ban' },
+				)
+				await postDiscordModerationEmbed(
+					'🔴 User Banned',
+					0xEF4444,
+					eventUser,
+					moderator,
+					'Permanently Banned',
+				)
+			}
+		}
+		catch (err) {
+			botLogger.error({ err }, '[EventSub Alerts] Failed to handle ban/timeout alert')
+		}
+	})
+
+	eventSubManager.events.on('unban', async (event) => {
+		try {
+			await logTwitchEvent('unban', event.userName, event.userDisplayName, { moderator: event.moderatorName })
+			const settings = await getAppSettings()
+			const eventUser = { id: event.userId, name: event.userName, displayName: event.userDisplayName }
+			const moderator = { name: event.moderatorName, displayName: event.moderatorDisplayName }
+
+			await renderAndPostAlert(
+				settings.eventsubAlertUnbanEnabled,
+				settings.eventsubAlertUnban,
+				eventUser,
+				undefined,
+				{ user: event.userName, type: 'unban' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertUnbanEnabled,
+				settings.discordAlertUnbanChannelId,
+				settings.discordAlertUnbanTemplate,
+				eventUser,
+				undefined,
+				{ user: event.userName, type: 'discord-unban' },
+			)
+			await postDiscordModerationEmbed(
+				'🟢 User Unbanned',
+				0x10B981,
+				eventUser,
+				moderator,
+				'Unbanned',
+			)
+		}
+		catch (err) {
+			botLogger.error({ err }, '[EventSub Alerts] Failed to handle unban alert')
+		}
+	})
+
+	eventSubManager.events.on('chat.message_delete', async (event: any) => {
+		try {
+			await logTwitchEvent('message_delete', event.userName, event.userDisplayName)
+			const settings = await getAppSettings()
+			const eventUser = { id: event.userId, name: event.userName, displayName: event.userDisplayName }
+			const moderator = { name: event.moderatorName || 'Moderator', displayName: event.moderatorDisplayName || 'Moderator' }
+
+			await renderAndPostAlert(
+				settings.eventsubAlertMessageDeleteEnabled,
+				settings.eventsubAlertMessageDelete,
+				eventUser,
+				undefined,
+				{ user: event.userName, type: 'message_delete' },
+			)
+			await renderAndPostDiscordAlert(
+				settings.discordAlertMessageDeleteEnabled,
+				settings.discordAlertMessageDeleteChannelId,
+				settings.discordAlertMessageDeleteTemplate,
+				eventUser,
+				undefined,
+				{ user: event.userName, type: 'discord-message_delete' },
+			)
+			await postDiscordModerationEmbed(
+				'🔵 Message Deleted',
+				0x3B82F6,
+				eventUser,
+				moderator,
+				'Chat Message Deleted',
+				event.messageText,
+			)
+		}
+		catch (err) {
+			botLogger.error({ err }, '[EventSub Alerts] Failed to handle message delete alert')
+		}
+	})
+}
+
+async function postDiscordModerationEmbed(
+	title: string,
+	color: number,
+	targetUser: { id: string, name: string, displayName: string },
+	moderator: { name: string, displayName: string },
+	actionDetails: string,
+	deletedMessageText?: string,
+) {
+	const settings = await getAppSettings()
+	if (!settings.discordModerationLogEnabled || !settings.discordModerationLogChannelId) {
+		return
+	}
+
+	const casterName = (await getStreamerChannelName()) || 'streamer'
+	const viewercardUrl = `https://www.twitch.tv/popout/${casterName}/viewercard/${targetUser.name}`
+
+	const fields: { name: string, value: string, inline?: boolean }[] = [
+		{
+			name: 'Target User',
+			value: `[@${targetUser.name}](${viewercardUrl})`,
+			inline: true,
+		},
+		{
+			name: 'Moderator',
+			value: moderator.displayName || moderator.name || 'System',
+			inline: true,
+		},
+		{
+			name: 'Action Details',
+			value: actionDetails,
+			inline: false,
+		},
+	]
+
+	if (deletedMessageText) {
+		fields.push({
+			name: 'Deleted Message',
+			value: deletedMessageText.length > 1000 ? `${deletedMessageText.slice(0, 997)}...` : deletedMessageText,
+			inline: false,
+		})
+	}
+
+	const recentMessages = getUserRecentMessages(targetUser.id)
+	if (recentMessages.length > 0) {
+		const historyText = recentMessages.map((msg, i) => `${i + 1}. ${msg}`).join('\n')
+		fields.push({
+			name: 'Last 5 Messages',
+			value: historyText.length > 1000 ? `${historyText.slice(0, 997)}...` : historyText,
+			inline: false,
+		})
+	}
+
+	botLogger.info({ targetUser: targetUser.name, actionDetails }, '[Discord Moderation Log] Posting embed log')
+	await sendDiscordMessage(settings.discordModerationLogChannelId, '', {
+		title,
+		url: viewercardUrl,
+		color,
+		fields,
+		timestamp: true,
+		footerText: 'Twitch Moderation Log',
 	})
 }

@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
+import { trackUserChatMessage } from '../chat-history'
 import { cleanUsername } from '../utils'
 
 const lastSeenCache = new Map<string, number>()
@@ -26,6 +27,9 @@ export const userTrackingMiddleware: ChatMiddleware = async (event, next) => {
 	const userId = event.raw.userInfo.userId
 	const nowTime = Date.now()
 	const lastUpdated = lastSeenCache.get(userId)
+
+	// Record chat message for recent history buffer
+	trackUserChatMessage(userId, event.message)
 
 	// Throttled database upsert
 	if (!lastUpdated || (nowTime - lastUpdated) > USER_TRACKING_THROTTLE_MS) {

@@ -46,6 +46,22 @@ const form = ref<AlertsSettings>({
 	discordAlertOfflineChannelId: '',
 	discordAlertOfflineTemplate: '',
 
+	discordAlertBanEnabled: false,
+	discordAlertBanChannelId: '',
+	discordAlertBanTemplate: '',
+
+	discordAlertTimeoutEnabled: false,
+	discordAlertTimeoutChannelId: '',
+	discordAlertTimeoutTemplate: '',
+
+	discordAlertUnbanEnabled: false,
+	discordAlertUnbanChannelId: '',
+	discordAlertUnbanTemplate: '',
+
+	discordAlertMessageDeleteEnabled: false,
+	discordAlertMessageDeleteChannelId: '',
+	discordAlertMessageDeleteTemplate: '',
+
 	isDiscordConnected: false,
 })
 
@@ -90,6 +106,22 @@ const isModified = computed(() => {
 		|| form.value.discordAlertOfflineEnabled !== settingsData.value.discordAlertOfflineEnabled
 		|| form.value.discordAlertOfflineChannelId !== settingsData.value.discordAlertOfflineChannelId
 		|| form.value.discordAlertOfflineTemplate !== settingsData.value.discordAlertOfflineTemplate
+
+		|| form.value.discordAlertBanEnabled !== settingsData.value.discordAlertBanEnabled
+		|| form.value.discordAlertBanChannelId !== settingsData.value.discordAlertBanChannelId
+		|| form.value.discordAlertBanTemplate !== settingsData.value.discordAlertBanTemplate
+
+		|| form.value.discordAlertTimeoutEnabled !== settingsData.value.discordAlertTimeoutEnabled
+		|| form.value.discordAlertTimeoutChannelId !== settingsData.value.discordAlertTimeoutChannelId
+		|| form.value.discordAlertTimeoutTemplate !== settingsData.value.discordAlertTimeoutTemplate
+
+		|| form.value.discordAlertUnbanEnabled !== settingsData.value.discordAlertUnbanEnabled
+		|| form.value.discordAlertUnbanChannelId !== settingsData.value.discordAlertUnbanChannelId
+		|| form.value.discordAlertUnbanTemplate !== settingsData.value.discordAlertUnbanTemplate
+
+		|| form.value.discordAlertMessageDeleteEnabled !== settingsData.value.discordAlertMessageDeleteEnabled
+		|| form.value.discordAlertMessageDeleteChannelId !== settingsData.value.discordAlertMessageDeleteChannelId
+		|| form.value.discordAlertMessageDeleteTemplate !== settingsData.value.discordAlertMessageDeleteTemplate
 	)
 })
 
@@ -137,6 +169,22 @@ async function saveSettings() {
 				discordAlertOfflineEnabled: form.value.discordAlertOfflineEnabled,
 				discordAlertOfflineChannelId: form.value.discordAlertOfflineChannelId,
 				discordAlertOfflineTemplate: form.value.discordAlertOfflineTemplate,
+
+				discordAlertBanEnabled: form.value.discordAlertBanEnabled,
+				discordAlertBanChannelId: form.value.discordAlertBanChannelId,
+				discordAlertBanTemplate: form.value.discordAlertBanTemplate,
+
+				discordAlertTimeoutEnabled: form.value.discordAlertTimeoutEnabled,
+				discordAlertTimeoutChannelId: form.value.discordAlertTimeoutChannelId,
+				discordAlertTimeoutTemplate: form.value.discordAlertTimeoutTemplate,
+
+				discordAlertUnbanEnabled: form.value.discordAlertUnbanEnabled,
+				discordAlertUnbanChannelId: form.value.discordAlertUnbanChannelId,
+				discordAlertUnbanTemplate: form.value.discordAlertUnbanTemplate,
+
+				discordAlertMessageDeleteEnabled: form.value.discordAlertMessageDeleteEnabled,
+				discordAlertMessageDeleteChannelId: form.value.discordAlertMessageDeleteChannelId,
+				discordAlertMessageDeleteTemplate: form.value.discordAlertMessageDeleteTemplate,
 			},
 		})
 		toast.success('Discord alerts configuration updated successfully!')
@@ -295,6 +343,54 @@ async function saveSettings() {
 						title="Raid Alerts"
 						description="Send an announcement message to Discord when another channel raids you."
 						:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- User Ban Alert Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertBanEnabled"
+						v-model:alert-channel-id="form.discordAlertBanChannelId"
+						v-model:alert-template="form.discordAlertBanTemplate"
+						title="User Ban Alerts"
+						description="Send a message to Discord when a user is permanently banned from your stream."
+						:variables="['$(sender) (Banned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- User Timeout Alert Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertTimeoutEnabled"
+						v-model:alert-channel-id="form.discordAlertTimeoutChannelId"
+						v-model:alert-template="form.discordAlertTimeoutTemplate"
+						title="User Timeout Alerts"
+						description="Send a message to Discord when a user is timed out in your stream."
+						:variables="['$(sender) (Timed-out User)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(duration) (Timeout Duration in Seconds)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- User Unban Alert Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertUnbanEnabled"
+						v-model:alert-channel-id="form.discordAlertUnbanChannelId"
+						v-model:alert-template="form.discordAlertUnbanTemplate"
+						title="User Unban Alerts"
+						description="Send a message to Discord when a user is unbanned from your stream."
+						:variables="['$(sender) (Unbanned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+						:channels="channels"
+						:disabled="!form.isDiscordConnected"
+					/>
+
+					<!-- Message Delete Alert Card -->
+					<DiscordAlertConfig
+						v-model:alert-enabled="form.discordAlertMessageDeleteEnabled"
+						v-model:alert-channel-id="form.discordAlertMessageDeleteChannelId"
+						v-model:alert-template="form.discordAlertMessageDeleteTemplate"
+						title="Message Delete Alerts"
+						description="Send a message to Discord when a chat message is deleted by a moderator."
+						:variables="['$(sender) (User Name)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>

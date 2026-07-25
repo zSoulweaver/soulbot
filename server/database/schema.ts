@@ -99,6 +99,14 @@ export const counters = sqliteTable('counters', {
 	value: integer('value').notNull().default(0),
 })
 
+export const gameDeaths = sqliteTable('game_deaths', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	gameName: text('game_name').notNull().unique(),
+	deaths: integer('deaths').notNull().default(0),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})
+
 export interface TimerMessage {
 	text: string
 	enabled: boolean

@@ -10,6 +10,7 @@ import { adsModule } from './modules/advertisements'
 import { startAdsEngine } from './modules/advertisements/engine'
 import { registerAlertsEventSubHandlers } from './modules/alerts/eventsub'
 import { commandsModule } from './modules/commands'
+import { deathsModule } from './modules/deaths'
 import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
@@ -34,6 +35,7 @@ export function initRegistry() {
 	registry.register(spotifyModule)
 	registry.register(watchtimeModule)
 	registry.register(adsModule)
+	registry.register(deathsModule)
 	isRegistryInitialized = true
 }
 

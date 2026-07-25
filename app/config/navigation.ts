@@ -2,6 +2,7 @@ import {
 	Bell,
 	Bot,
 	Clock,
+	Gamepad2,
 	LayoutDashboard,
 	Megaphone,
 	Music,
@@ -47,6 +48,7 @@ export const navigation: NavGroup[] = [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
 			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
 			{ title: 'Advertisements', url: '/admin/advertisements', icon: Megaphone, roles: ['caster', 'moderator'] },
+			{ title: 'Deaths', url: '/admin/deaths', icon: Gamepad2, roles: ['moderator', 'caster'] },
 			{
 				title: 'Commands',
 				url: '/admin/commands/core',

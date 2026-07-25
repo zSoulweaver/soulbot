@@ -8,7 +8,15 @@ const userCooldowns = new Map<string, Map<string, number>>() // commandId -> (us
  * Validates command global and user cooldowns and updates them upon successful command execution.
  */
 export const cooldownMiddleware: CommandMiddleware = async (ctx, next) => {
-	if ((ctx.raw as any).isTimer) {
+	const isModOrAbove = Boolean(
+		ctx.raw?.userInfo?.isBroadcaster
+		|| ctx.raw?.userInfo?.isMod
+		|| ctx.state?.dbUser?.role === 'moderator'
+		|| ctx.state?.dbUser?.role === 'admin'
+		|| ctx.state?.dbUser?.role === 'caster',
+	)
+
+	if ((ctx.raw as any).isTimer || isModOrAbove) {
 		await next()
 		return
 	}

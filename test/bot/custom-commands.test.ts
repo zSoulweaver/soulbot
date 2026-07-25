@@ -297,10 +297,37 @@ describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 			expect(res1.replies).toHaveLength(1)
 			expect(res1.replies[0]).toBe('Running.')
 
-			// Call 2 immediately after -> blocked
+			// Call 2 immediately after -> blocked for regular viewer
 			const res2 = await simulateCommand('!limited', { id: '1', username: 'alice', displayName: 'Alice' })
 			expect(res2.replies).toHaveLength(1)
 			expect(res2.replies[0]).toContain('This command is on global cooldown. Please wait 10s.')
+		})
+
+		it('should allow moderators and above to bypass global and user cooldowns', async () => {
+			await db.insert(customCommands).values({
+				id: 'c11',
+				trigger: 'modcooldown',
+				response: 'Mod executed.',
+				enabled: true,
+				cost: 0,
+				globalCooldown: 60,
+				userCooldown: 60,
+				permission: 'everyone',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+
+			await registry.syncWithDb()
+
+			// Moderator call 1 -> succeeds
+			const res1 = await simulateCommand('!modcooldown', { id: '2', username: 'moduser', displayName: 'ModUser', role: 'moderator' })
+			expect(res1.replies).toHaveLength(1)
+			expect(res1.replies[0]).toBe('Mod executed.')
+
+			// Moderator call 2 immediately after -> also succeeds (bypasses cooldown)
+			const res2 = await simulateCommand('!modcooldown', { id: '2', username: 'moduser', displayName: 'ModUser', role: 'moderator' })
+			expect(res2.replies).toHaveLength(1)
+			expect(res2.replies[0]).toBe('Mod executed.')
 		})
 	})
 

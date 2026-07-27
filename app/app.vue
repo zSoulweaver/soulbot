@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import 'vue-sonner/style.css'
 
+const route = useRoute()
 const { public: { botName } } = useRuntimeConfig()
+
+const isWidgetLayout = computed(() => route.meta.layout === 'widget')
 
 useHead({
 	titleTemplate: titleChunk => titleChunk ? `${titleChunk} - ${botName}` : botName,
@@ -10,11 +13,11 @@ useHead({
 </script>
 
 <template>
-	<div class="min-h-screen bg-background font-sans antialiased">
+	<div :class="[isWidgetLayout ? 'bg-transparent' : 'min-h-screen bg-background font-sans antialiased']">
 		<NuxtLayout>
 			<NuxtPage />
 		</NuxtLayout>
-		<ClientOnly>
+		<ClientOnly v-if="!isWidgetLayout">
 			<Sonner position="top-center" />
 		</ClientOnly>
 	</div>

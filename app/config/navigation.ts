@@ -1,4 +1,5 @@
 import {
+	AppWindow,
 	Bell,
 	Bot,
 	Clock,
@@ -71,7 +72,6 @@ export const navigation: NavGroup[] = [
 					{ title: 'Blacklist', url: '/admin/spotify/blacklist', roles: ['moderator', 'caster'] },
 				],
 			},
-
 			{
 				title: 'Loyalty & Points',
 				url: '/admin/loyalty',
@@ -83,6 +83,15 @@ export const navigation: NavGroup[] = [
 					{ title: 'Point Balances', url: '/admin/loyalty/users' },
 					{ title: 'Watch Time Balances', url: '/admin/loyalty/watchtime' },
 					{ title: 'Gambling', url: '/admin/loyalty/gambling', roles: ['caster'] },
+				],
+			},
+			{
+				title: 'Widgets',
+				url: '/admin/widgets/deaths',
+				icon: AppWindow,
+				roles: ['moderator', 'caster'],
+				items: [
+					{ title: 'Death Counter', url: '/admin/widgets/deaths' },
 				],
 			},
 			{
@@ -107,7 +116,6 @@ export const navigation: NavGroup[] = [
 					{ title: 'Migration', url: '/admin/misc/migration', roles: ['caster'] },
 				],
 			},
-
 		],
 	},
 ]

@@ -1,8 +1,21 @@
 import type { ChatMessageEvent } from './types'
 import { EventEmitter } from 'node:events'
 
+export interface DeathsUpdatedEvent {
+	gameName: string
+	deaths: number
+}
+
+export interface WidgetUpdatedEvent {
+	widgetId: string
+	template: string
+	styles: Record<string, any>
+}
+
 export interface BotEventMap {
-	chat: ChatMessageEvent
+	'chat': ChatMessageEvent
+	'deaths:updated': DeathsUpdatedEvent
+	'widget:updated': WidgetUpdatedEvent
 }
 
 class BotEventBus extends EventEmitter {

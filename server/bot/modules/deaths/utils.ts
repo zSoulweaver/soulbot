@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
+import { botEventBus } from '~~/server/bot/core/events'
 import { db } from '~~/server/database'
 import { gameDeaths } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
@@ -60,5 +61,7 @@ export async function updateGameDeathCount(gameName: string, deaths: number): Pr
 		.where(eq(gameDeaths.id, record.id))
 		.returning()
 
-	return updated || record
+	const result = updated || record
+	botEventBus.emit('deaths:updated', { gameName: result.gameName, deaths: result.deaths })
+	return result
 }

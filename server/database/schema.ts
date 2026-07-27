@@ -107,6 +107,26 @@ export const gameDeaths = sqliteTable('game_deaths', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
 
+export interface WidgetStyles {
+	fontFamily?: string
+	fontSize?: number
+	fontWeight?: string
+	color?: string
+	backgroundColor?: string
+	textAlign?: string
+	customCss?: string
+}
+
+export const widgets = sqliteTable('widgets', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	enabled: integer('enabled', { mode: 'boolean' }).default(true).notNull(),
+	template: text('template').notNull(),
+	styles: text('styles', { mode: 'json' }).$type<WidgetStyles>().notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})
+
 export interface TimerMessage {
 	text: string
 	enabled: boolean

@@ -50,6 +50,8 @@ describe('Commands Management API Routes in-process', () => {
 			expect(pointsCmd).toBeDefined()
 			expect(pointsCmd!.trigger).toBe('points')
 			expect(pointsCmd!.enabled).toBe(true)
+			expect(pointsCmd!.allowWhisper).toBe(false)
+			expect(pointsCmd!.whisperSilentResponse).toBe(false)
 			expect(pointsCmd!.aliases).toBeInstanceOf(Array)
 			expect(pointsCmd!.templates).toBeInstanceOf(Array)
 		})
@@ -66,6 +68,8 @@ describe('Commands Management API Routes in-process', () => {
 					globalCooldown: 60,
 					userCooldown: 10,
 					permission: 'moderator',
+					allowWhisper: true,
+					whisperSilentResponse: true,
 				},
 			} as any)
 
@@ -78,6 +82,8 @@ describe('Commands Management API Routes in-process', () => {
 			expect(dbCmd?.globalCooldown).toBe(60)
 			expect(dbCmd?.userCooldown).toBe(10)
 			expect(dbCmd?.permission).toBe('moderator')
+			expect(dbCmd?.allowWhisper).toBe(true)
+			expect(dbCmd?.whisperSilentResponse).toBe(true)
 		})
 
 		it('should fail with 409 Conflict if trigger conflicts with another root command', async () => {

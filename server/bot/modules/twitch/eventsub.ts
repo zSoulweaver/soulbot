@@ -1,12 +1,50 @@
 import { eq } from 'drizzle-orm'
+import { handleCommand } from '~~/server/bot/core/command-dispatcher'
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { updateUserRoleCache } from '~~/server/utils/auth'
 import { botLogger } from '~~/server/utils/logger'
+import { getStreamerChannelName, getTwitchUserRole } from '~~/server/utils/twurple'
 
 export function registerTwitchEventSubHandlers() {
+	eventSubManager.events.on('user.whisper.message', async (event) => {
+		try {
+			const message = event.messageText.trim()
+			if (!message.startsWith('!'))
+				return
+
+			const channel = await getStreamerChannelName()
+			if (!channel) {
+				botLogger.warn('[EventSub Twitch] No streamer channel configured; dropping whisper command')
+				return
+			}
+
+			// Look up user roles on the broadcaster channel
+			const roleInfo = await getTwitchUserRole(event.senderUserId)
+
+			const mockRaw: any = {
+				id: event.id,
+				isWhisper: true,
+				userInfo: {
+					userId: event.senderUserId,
+					userName: event.senderUserName,
+					displayName: event.senderUserDisplayName,
+					isBroadcaster: roleInfo.role === 'caster',
+					isMod: roleInfo.role === 'moderator',
+					isVip: roleInfo.isVip,
+					isSubscriber: roleInfo.isSubscriber,
+				},
+			}
+
+			await handleCommand(channel, event.senderUserName, message, mockRaw, { isWhisper: true })
+		}
+		catch (err) {
+			botLogger.error({ err, fromUser: event.senderUserName }, '[EventSub Twitch] Failed to handle user.whisper.message')
+		}
+	})
+
 	eventSubManager.events.on('moderator.add', async (event) => {
 		try {
 			const now = new Date()

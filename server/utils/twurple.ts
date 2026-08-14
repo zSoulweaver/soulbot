@@ -197,11 +197,12 @@ export async function startBot() {
 
 	await chat.connect()
 
-	// Start EventSub WebSocket manager using streamer credentials
+	// Start EventSub WebSocket manager using streamer credentials and bot credentials
 	const streamerToken = await getStreamerToken()
+	const botToken = await getBotToken()
 	if (streamerToken && streamerToken.userId) {
 		const api = getApiClient()
-		eventSubManager.start(api, streamerToken.userId).catch((err) => {
+		eventSubManager.start(api, streamerToken.userId, botToken?.userId || undefined).catch((err) => {
 			botLogger.error({ err }, 'Failed to start EventSub manager on startBot')
 		})
 	}

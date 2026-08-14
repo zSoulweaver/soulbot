@@ -73,6 +73,8 @@ class CommandRegistry {
 						globalCooldown: custom.globalCooldown,
 						userCooldown: custom.userCooldown,
 						permission: custom.permission,
+						allowWhisper: false,
+						whisperSilentResponse: false,
 					}
 					// Populate dbConfigs map so other middlewares (cooldown, cost, role checks) read the config
 					this.dbConfigs.set(def.id, mockDbRow as any)
@@ -94,6 +96,8 @@ class CommandRegistry {
 					globalCooldown: def.globalCooldown ?? 0,
 					userCooldown: def.userCooldown ?? 0,
 					permission: null,
+					allowWhisper: def.allowWhisper ?? false,
+					whisperSilentResponse: false,
 				}
 				await db.insert(commands).values(newRow)
 				dbCmd = { ...newRow } as any
@@ -122,6 +126,8 @@ class CommandRegistry {
 							globalCooldown: 0,
 							userCooldown: 0,
 							permission: null,
+							allowWhisper: subValue.allowWhisper ?? false,
+							whisperSilentResponse: false,
 						}
 						await db.insert(commands).values(newSubRow)
 						dbSubCmd = { ...newSubRow } as any

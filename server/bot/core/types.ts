@@ -30,6 +30,7 @@ export interface CommandContext {
 	args?: any // Validated/transformed argument results from Zod parser
 	rawArgs: string[] // Raw string arguments
 	state: Record<string, any> // Stateful context passed between middlewares
+	isWhisper?: boolean
 }
 
 export type InferArgs<T> = T extends { _output: infer Out } ? Out : T
@@ -48,6 +49,7 @@ export interface CommandDefinition<T = any> {
 	cooldown?: number
 	globalCooldown?: number
 	userCooldown?: number
+	allowWhisper?: boolean
 	args?: T
 	handler: CommandHandler<T>
 	subcommands?: Record<string, SubcommandDefinition<any>>
@@ -62,6 +64,7 @@ export interface SubcommandDefinition<T = any> {
 	cooldown?: number
 	globalCooldown?: number
 	userCooldown?: number
+	allowWhisper?: boolean
 	args?: T
 	handler?: CommandHandler<T>
 	templates?: TemplateName[]

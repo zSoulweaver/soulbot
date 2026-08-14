@@ -24,6 +24,8 @@ export default defineEventHandler(async (event) => {
 			globalCooldown: command.globalCooldown ?? 0,
 			userCooldown: command.userCooldown ?? 0,
 			permission: null,
+			allowWhisper: false,
+			whisperSilentResponse: false,
 		}
 
 		// Find all registered aliases for this specific command
@@ -73,6 +75,8 @@ export default defineEventHandler(async (event) => {
 					userCooldown: 0,
 					trigger: null,
 					permission: null,
+					allowWhisper: false,
+					whisperSilentResponse: false,
 				}
 
 				subcommandsTree[subcommandName] = {
@@ -86,6 +90,8 @@ export default defineEventHandler(async (event) => {
 					cost: subcommandDbConfig.cost,
 					globalCooldown: subcommandDbConfig.globalCooldown,
 					userCooldown: subcommandDbConfig.userCooldown,
+					allowWhisper: Boolean(subcommandDbConfig.allowWhisper),
+					whisperSilentResponse: Boolean(subcommandDbConfig.whisperSilentResponse),
 					templates: subcommandTemplates,
 					hasHandler: Boolean(subcommand.handler),
 					subcommands: subcommand.subcommands ? buildSubcommandsTree(subcommand.subcommands, subcommandId) : undefined,
@@ -108,6 +114,8 @@ export default defineEventHandler(async (event) => {
 			cost: databaseConfig.cost,
 			globalCooldown: databaseConfig.globalCooldown,
 			userCooldown: databaseConfig.userCooldown,
+			allowWhisper: Boolean(databaseConfig.allowWhisper),
+			whisperSilentResponse: Boolean(databaseConfig.whisperSilentResponse),
 			// Mapped sub-structures
 			aliases,
 			templates: rootTemplates,

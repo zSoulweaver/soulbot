@@ -1,5 +1,5 @@
 import type { ApiClient } from '@twurple/api'
-import type { EventSubChannelAdBreakBeginEvent, EventSubChannelBanEvent, EventSubChannelChatMessageDeleteEvent, EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelModeratorEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubChannelUnbanEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription } from '@twurple/eventsub-base'
+import type { EventSubChannelAdBreakBeginEvent, EventSubChannelBanEvent, EventSubChannelChatMessageDeleteEvent, EventSubChannelCheerEvent, EventSubChannelFollowEvent, EventSubChannelModeratorEvent, EventSubChannelRaidEvent, EventSubChannelSubscriptionEvent, EventSubChannelSubscriptionGiftEvent, EventSubChannelUnbanEvent, EventSubStreamOfflineEvent, EventSubStreamOnlineEvent, EventSubSubscription, EventSubUserWhisperMessageEvent } from '@twurple/eventsub-base'
 import { EventEmitter } from 'node:events'
 import { EventSubHttpListener, EventSubMiddleware } from '@twurple/eventsub-http'
 import { NgrokAdapter } from '@twurple/eventsub-ngrok'
@@ -20,6 +20,7 @@ export interface EventSubMap {
 	'ban': EventSubChannelBanEvent
 	'unban': EventSubChannelUnbanEvent
 	'chat.message_delete': EventSubChannelChatMessageDeleteEvent
+	'user.whisper.message': EventSubUserWhisperMessageEvent
 }
 
 export class EventSubEmitter extends EventEmitter {
@@ -53,7 +54,7 @@ class EventSubManager {
 	private listener: EventSubWsListener | EventSubHttpListener | EventSubMiddleware | null = null
 	private activeSubscriptions: EventSubSubscription[] = []
 
-	async start(apiClient: ApiClient, streamerUserId: string) {
+	async start(apiClient: ApiClient, streamerUserId: string, botUserId?: string) {
 		if (this.listener) {
 			botLogger.info('[EventSub] EventSub listener already initialized.')
 			return
@@ -175,6 +176,19 @@ class EventSubManager {
 				}
 			})
 			this.activeSubscriptions.push(msgDeleteSub)
+
+			if (botUserId) {
+				try {
+					const whisperSub = this.listener.onUserWhisperMessage(botUserId, (e) => {
+						botLogger.info({ user: e.senderUserName }, '[EventSub] whisper received')
+						this.events.emitAsync('user.whisper.message', e)
+					})
+					this.activeSubscriptions.push(whisperSub)
+				}
+				catch (err) {
+					botLogger.error({ err }, '[EventSub] Failed to subscribe to onUserWhisperMessage')
+				}
+			}
 
 			if (this.listener instanceof EventSubMiddleware) {
 				await this.listener.markAsReady()

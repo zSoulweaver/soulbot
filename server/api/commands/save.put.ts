@@ -13,6 +13,8 @@ const saveCommandSchema = z.object({
 	globalCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	userCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	permission: z.string().optional().nullable(),
+	allowWhisper: z.boolean().default(false),
+	whisperSilentResponse: z.boolean().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -28,7 +30,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { id, trigger, enabled, cost, globalCooldown, userCooldown, permission } = parsed.data
+	const { id, trigger, enabled, cost, globalCooldown, userCooldown, permission, allowWhisper, whisperSilentResponse } = parsed.data
 	const cleanTrigger = trigger ? trigger.toLowerCase() : null
 
 	const isSubCommand = id.includes('.')
@@ -121,6 +123,8 @@ export default defineEventHandler(async (event) => {
 				globalCooldown,
 				userCooldown,
 				permission,
+				allowWhisper,
+				whisperSilentResponse,
 			})
 			.where(eq(commands.id, id))
 	}
@@ -134,6 +138,8 @@ export default defineEventHandler(async (event) => {
 			userCooldown,
 			cooldown: 0,
 			permission,
+			allowWhisper,
+			whisperSilentResponse,
 		})
 	}
 

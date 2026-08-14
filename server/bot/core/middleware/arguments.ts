@@ -90,6 +90,19 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 		}
 	}
 
+	// If invoked via whisper, verify that either the resolved subcommand or root command allows whispers
+	if (ctx.isWhisper) {
+		const isWhisperAllowed = Boolean(ctx.state.dbCmd?.allowWhisper || rootDbConfig?.allowWhisper)
+		if (!isWhisperAllowed) {
+			botLogger.warn({
+				command: ctx.state.trigger,
+				subcommand: ctx.state.subcommand,
+				user: ctx.user.name,
+			}, 'Whisper command ignored (allowWhisper is disabled)')
+			return
+		}
+	}
+
 	// Store permission level downstream
 	ctx.state.permission = finalPermission
 

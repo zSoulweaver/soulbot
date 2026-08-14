@@ -118,6 +118,8 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 		cost: subcommand.cost,
 		globalCooldown: subcommand.globalCooldown,
 		userCooldown: subcommand.userCooldown,
+		allowWhisper: Boolean(subcommand.allowWhisper),
+		whisperSilentResponse: Boolean(subcommand.whisperSilentResponse),
 		aliases: [],
 		templates: subcommand.templates || [],
 		hasHandler: subcommand.hasHandler,

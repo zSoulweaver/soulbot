@@ -31,6 +31,8 @@ export const commands = sqliteTable('commands', {
 	globalCooldown: integer('global_cooldown').default(0).notNull(), // global command cooldown in seconds
 	userCooldown: integer('user_cooldown').default(0).notNull(), // user command cooldown in seconds
 	permission: text('permission'), // custom permission override
+	allowWhisper: integer('allow_whisper', { mode: 'boolean' }).default(false).notNull(),
+	whisperSilentResponse: integer('whisper_silent_response', { mode: 'boolean' }).default(false).notNull(),
 })
 
 export const commandAliases = sqliteTable('command_aliases', {

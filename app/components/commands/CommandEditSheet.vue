@@ -18,6 +18,8 @@ const globalCooldownValue = ref(0)
 const userCooldownValue = ref(0)
 const isEnabled = ref(true)
 const permissionValue = ref('everyone')
+const allowWhisperValue = ref(false)
+const whisperSilentResponseValue = ref(false)
 
 // Aliases edit states
 const aliasesList = ref<Alias[]>([])
@@ -36,6 +38,8 @@ watch(() => props.open, (isOpen) => {
 		userCooldownValue.value = props.command.userCooldown
 		isEnabled.value = props.command.enabled
 		permissionValue.value = props.command.permission || 'everyone'
+		allowWhisperValue.value = Boolean(props.command.allowWhisper)
+		whisperSilentResponseValue.value = Boolean(props.command.whisperSilentResponse)
 
 		// Clone aliases and normalize null target subcommands to '__root__'
 		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || [])).map((alias: any) => ({
@@ -135,6 +139,8 @@ async function saveAllConfig() {
 				globalCooldown: typeof globalCooldownValue.value === 'number' && !Number.isNaN(globalCooldownValue.value) ? globalCooldownValue.value : 0,
 				userCooldown: typeof userCooldownValue.value === 'number' && !Number.isNaN(userCooldownValue.value) ? userCooldownValue.value : 0,
 				permission: permissionValue.value,
+				allowWhisper: allowWhisperValue.value,
+				whisperSilentResponse: whisperSilentResponseValue.value,
 			},
 		})
 
@@ -239,6 +245,44 @@ function navigateToTemplateEditor() {
 						<Switch v-model:model-value="isEnabled" />
 					</ItemActions>
 				</Item>
+
+				<!-- Toggle Switch for Whisper Execution Support & Settings -->
+				<div class="rounded-md bg-muted/50 transition-colors">
+					<Item variant="default" class="rounded-none">
+						<ItemContent>
+							<ItemTitle>Allow in Whispers</ItemTitle>
+							<ItemDescription class="line-clamp-none text-wrap">
+								Allow this command to be triggered via private whisper to the bot.
+							</ItemDescription>
+						</ItemContent>
+						<ItemActions>
+							<Switch v-model:model-value="allowWhisperValue" />
+						</ItemActions>
+					</Item>
+
+					<template v-if="allowWhisperValue">
+						<div class="border-t border-border/40" />
+						<Item variant="default" class="rounded-none">
+							<ItemContent>
+								<ItemTitle>Suppress Response When Whispered</ItemTitle>
+								<ItemDescription class="line-clamp-none text-wrap">
+									Execute whispered commands silently without sending any confirmation response to chat.
+									<span
+										class="
+											mt-1 block text-xs font-medium text-amber-500
+											dark:text-amber-400
+										"
+									>
+										Warning: With this enabled, there will be no chat output or confirmation when the command runs.
+									</span>
+								</ItemDescription>
+							</ItemContent>
+							<ItemActions>
+								<Switch v-model:model-value="whisperSilentResponseValue" />
+							</ItemActions>
+						</Item>
+					</template>
+				</div>
 
 				<FieldGroup>
 					<!-- Active Trigger Word Segment -->

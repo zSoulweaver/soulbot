@@ -22,10 +22,20 @@ const commandMiddlewares: CommandMiddleware[] = [
 	handlerExecutionMiddleware,
 ]
 
+export interface HandleCommandOptions {
+	isWhisper?: boolean
+}
+
 /**
  * Core command dispatcher. Resolves message triggers and runs the command execution middleware pipeline.
  */
-export async function handleCommand(channel: string, user: string, message: string, raw: ChatMessage): Promise<void> {
+export async function handleCommand(
+	channel: string,
+	user: string,
+	message: string,
+	raw: ChatMessage,
+	options?: HandleCommandOptions,
+): Promise<void> {
 	if (!message.startsWith('!'))
 		return
 
@@ -46,6 +56,9 @@ export async function handleCommand(channel: string, user: string, message: stri
 	if (!chatClient)
 		return
 
+	const dbCmd = registry.getCommandConfig(command.id)
+	const isWhisper = Boolean(options?.isWhisper)
+
 	// Initialize state and context, fetching DB config synchronously from registry
 	const ctx: CommandContext = {
 		user: {
@@ -54,7 +67,13 @@ export async function handleCommand(channel: string, user: string, message: stri
 			displayName: raw.userInfo.displayName,
 		},
 		channel,
+		isWhisper,
 		reply: async (textOrTemplate: string, ...args: any[]) => {
+			const isSilent = isWhisper && Boolean(ctx.state.dbCmd?.whisperSilentResponse || dbCmd?.whisperSilentResponse)
+			if (isSilent) {
+				botLogger.info({ command: trigger, user }, '[Chat Utils] Whisper command executed with chat reply suppressed (silent mode)')
+				return
+			}
 			const data = args[0]
 			const text = templateRegistry.get(textOrTemplate)
 				? templateRegistry.render(textOrTemplate, data || {})
@@ -63,6 +82,11 @@ export async function handleCommand(channel: string, user: string, message: stri
 			await sendRawChatMessage(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
 		say: async (textOrTemplate: string, ...args: any[]) => {
+			const isSilent = isWhisper && Boolean(ctx.state.dbCmd?.whisperSilentResponse || dbCmd?.whisperSilentResponse)
+			if (isSilent) {
+				botLogger.info({ command: trigger, user }, '[Chat Utils] Whisper command executed with chat message suppressed (silent mode)')
+				return
+			}
 			const data = args[0]
 			const text = templateRegistry.get(textOrTemplate)
 				? templateRegistry.render(textOrTemplate, data || {})
@@ -76,7 +100,7 @@ export async function handleCommand(channel: string, user: string, message: stri
 			command,
 			resolved,
 			trigger,
-			dbCmd: registry.getCommandConfig(command.id),
+			dbCmd,
 		},
 	}
 

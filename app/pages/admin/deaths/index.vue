@@ -71,10 +71,25 @@ const columns: any[] = [
 		header: 'Game',
 		cell: (info) => {
 			const game = info.getValue()
+			const row = info.row.original
 			const isActive = game.toLowerCase() === currentGame.value.toLowerCase()
-			return h('div', { class: 'flex items-center gap-2 font-medium' }, [
-				h('span', game),
-				isActive ? h(Badge, { variant: 'default', class: 'text-[10px] uppercase font-bold' }, () => 'Currently Live') : null,
+
+			const boxArtEl = row.boxArtUrl
+				? h('img', {
+						src: row.boxArtUrl,
+						alt: game,
+						class: 'h-12 w-9 rounded-sm object-cover border border-border/50 bg-muted/40 shrink-0',
+					})
+				: h('div', {
+						class: 'h-12 w-9 rounded-sm border border-border/50 bg-muted/50 flex items-center justify-center text-muted-foreground shrink-0',
+					}, [h(Gamepad2, { class: 'size-4 opacity-40' })])
+
+			return h('div', { class: 'flex items-center gap-3 font-medium' }, [
+				boxArtEl,
+				h('div', { class: 'flex items-center gap-2' }, [
+					h('span', { class: 'font-semibold text-foreground' }, game),
+					isActive ? h(Badge, { variant: 'default', class: 'text-[10px] uppercase font-bold' }, () => 'Currently Live') : null,
+				]),
 			])
 		},
 	}),

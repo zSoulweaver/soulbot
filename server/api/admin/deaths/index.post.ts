@@ -1,7 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
-import { botEventBus } from '~~/server/bot/core/events'
-import { db } from '~~/server/database'
-import { gameDeaths } from '~~/server/database/schema'
+import { fetchTwitchGameMetadata, updateGameDeathCount } from '~~/server/bot/modules/deaths/utils'
 import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -17,54 +14,20 @@ export default defineEventHandler(async (event) => {
 
 	const gameName = body.gameName.trim()
 	const deaths = Math.max(0, Math.floor(Number(body.deaths) || 0))
+	let twitchGameId: string | null = body.twitchGameId || null
+	let boxArtUrl: string | null = body.boxArtUrl || null
 
-	let result
-	if (body.id) {
-		const [updated] = await db
-			.update(gameDeaths)
-			.set({
-				gameName,
-				deaths,
-				updatedAt: sql`(strftime('%s', 'now'))`,
-			})
-			.where(eq(gameDeaths.id, Number(body.id)))
-			.returning()
-
-		result = updated
-	}
-	else {
-		const existing = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, gameName),
-		})
-
-		if (existing) {
-			const [updated] = await db
-				.update(gameDeaths)
-				.set({
-					deaths,
-					updatedAt: sql`(strftime('%s', 'now'))`,
-				})
-				.where(eq(gameDeaths.id, existing.id))
-				.returning()
-
-			result = updated
-		}
-		else {
-			const [created] = await db
-				.insert(gameDeaths)
-				.values({
-					gameName,
-					deaths,
-				})
-				.returning()
-
-			result = created
-		}
+	if (!twitchGameId || !boxArtUrl) {
+		const fetched = await fetchTwitchGameMetadata(gameName)
+		if (!twitchGameId && fetched.twitchGameId)
+			twitchGameId = fetched.twitchGameId
+		if (!boxArtUrl && fetched.boxArtUrl)
+			boxArtUrl = fetched.boxArtUrl
 	}
 
-	if (result) {
-		botEventBus.emit('deaths:updated', { gameName: result.gameName, deaths: result.deaths })
-	}
-
-	return result
+	const recordId = body.id ? Number(body.id) : null
+	return await updateGameDeathCount(gameName, deaths, {
+		twitchGameId,
+		boxArtUrl,
+	}, recordId)
 })

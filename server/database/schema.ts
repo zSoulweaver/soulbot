@@ -104,6 +104,8 @@ export const counters = sqliteTable('counters', {
 export const gameDeaths = sqliteTable('game_deaths', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	gameName: text('game_name').notNull().unique(),
+	twitchGameId: text('twitch_game_id'),
+	boxArtUrl: text('box_art_url'),
 	deaths: integer('deaths').notNull().default(0),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),

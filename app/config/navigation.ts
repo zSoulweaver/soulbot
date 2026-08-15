@@ -41,6 +41,7 @@ export const navigation: NavGroup[] = [
 		items: [
 			{ title: 'Points Leaderboard', url: '/leaderboard/points', icon: Trophy },
 			{ title: 'Watch Time', url: '/leaderboard/watch-time', icon: Clock },
+			{ title: 'Game Deaths', url: '/leaderboard/deaths', icon: Gamepad2 },
 		],
 	},
 	{
@@ -48,8 +49,6 @@ export const navigation: NavGroup[] = [
 		items: [
 			{ title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['moderator', 'caster'] },
 			{ title: 'Alerts & Events', url: '/admin/alerts', icon: Bell, roles: ['caster', 'moderator'] },
-			{ title: 'Advertisements', url: '/admin/advertisements', icon: Megaphone, roles: ['caster', 'moderator'] },
-			{ title: 'Deaths', url: '/admin/deaths', icon: Gamepad2, roles: ['moderator', 'caster'] },
 			{
 				title: 'Commands',
 				url: '/admin/commands/core',
@@ -62,16 +61,7 @@ export const navigation: NavGroup[] = [
 				],
 			},
 			{ title: 'Timers', url: '/admin/timers', icon: Timer, roles: ['caster'] },
-			{
-				title: 'Spotify',
-				url: '/admin/spotify',
-				icon: Music,
-				roles: ['caster', 'moderator'],
-				items: [
-					{ title: 'Settings', url: '/admin/spotify', roles: ['caster'] },
-					{ title: 'Blacklist', url: '/admin/spotify/blacklist', roles: ['moderator', 'caster'] },
-				],
-			},
+			{ title: 'Advertisements', url: '/admin/advertisements', icon: Megaphone, roles: ['caster', 'moderator'] },
 			{
 				title: 'Loyalty & Points',
 				url: '/admin/loyalty',
@@ -85,6 +75,19 @@ export const navigation: NavGroup[] = [
 					{ title: 'Gambling', url: '/admin/loyalty/gambling', roles: ['caster'] },
 				],
 			},
+
+			{
+				title: 'Spotify',
+				url: '/admin/spotify',
+				icon: Music,
+				roles: ['caster', 'moderator'],
+				items: [
+					{ title: 'Settings', url: '/admin/spotify', roles: ['caster'] },
+					{ title: 'Blacklist', url: '/admin/spotify/blacklist', roles: ['moderator', 'caster'] },
+				],
+			},
+			{ title: 'Deaths', url: '/admin/deaths', icon: Gamepad2, roles: ['moderator', 'caster'] },
+
 			{
 				title: 'Widgets',
 				url: '/admin/widgets/deaths',

@@ -1,3 +1,5 @@
+import { botEventBus } from '~~/server/bot/core/events'
+import { botLogger } from '~~/server/utils/logger'
 import { defineCommand } from '../../core/define-command'
 import { handleDeathsAdd } from './handlers/add'
 import { handleDeathsRemove } from './handlers/remove'
@@ -6,8 +8,36 @@ import { handleDeathsRoot } from './handlers/root'
 import { handleDeathsSet } from './handlers/set'
 import { DeathsAmountArgs, DeathsSetArgs } from './schema'
 import { registerDeathsTemplates } from './templates'
+import { cleanupZeroDeathsRecords, clearDeathsCache, syncAllGameDeathsMetadata } from './utils'
 
 registerDeathsTemplates()
+
+// Clean up zero-death records on module initialization
+cleanupZeroDeathsRecords()
+	.then((deletedCount) => {
+		if (deletedCount > 0) {
+			botLogger.info({ deletedCount }, '[Deaths] Cleaned up zero-death records on startup')
+		}
+	})
+	.catch((err) => {
+		botLogger.error({ err }, '[Deaths] Error cleaning up zero-death records on startup')
+	})
+
+// Run async metadata sync in background without blocking module initialization
+syncAllGameDeathsMetadata()
+	.then((updatedCount) => {
+		if (updatedCount > 0) {
+			botLogger.info({ updatedCount }, '[Deaths] Startup game metadata sync completed')
+		}
+	})
+	.catch((err) => {
+		botLogger.error({ err }, '[Deaths] Startup game metadata sync failed')
+	})
+
+// Invalidate cached public deaths leaderboard when a death counter is updated
+botEventBus.on('deaths:updated', () => {
+	clearDeathsCache()
+})
 
 export const deathsModule = defineCommand({
 	id: 'deaths',

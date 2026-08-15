@@ -3,7 +3,7 @@ import { getBotToken } from '~~/server/utils/twurple'
 import { db } from '../../database'
 import { excludedUsers, users } from '../../database/schema'
 
-export default defineEventHandler(async () => {
+export default defineCachedEventHandler(async () => {
 	const excludedList = await db.select({ id: excludedUsers.id }).from(excludedUsers)
 	const excludedIds = excludedList.map(u => u.id).filter(Boolean) as string[]
 
@@ -30,4 +30,9 @@ export default defineEventHandler(async () => {
 		.limit(100)
 
 	return leaderboard
+}, {
+	maxAge: 30,
+	swr: false,
+	name: 'loyalty-leaderboard',
+	getKey: () => 'default',
 })

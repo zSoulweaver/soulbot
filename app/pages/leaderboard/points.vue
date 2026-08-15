@@ -44,7 +44,7 @@ const sideboards = computed(() => {
 			col: 'left',
 		},
 		{
-			title: 'Luckiest Users',
+			title: 'Luckiest Chatters',
 			icon: SparklesIcon,
 			iconClass: 'text-yellow-500',
 			items: gamblingData.value.luckiest,
@@ -54,7 +54,7 @@ const sideboards = computed(() => {
 			col: 'right',
 		},
 		{
-			title: 'Unluckiest Users',
+			title: 'Unluckiest Chatters',
 			icon: FlameIcon,
 			iconClass: 'text-orange-500',
 			items: gamblingData.value.unluckiest,

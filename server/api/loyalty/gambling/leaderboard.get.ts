@@ -88,7 +88,7 @@ export default defineCachedEventHandler(async () => {
 		unluckiest: unluckiestRaw.map(mapUser),
 	}
 }, {
-	maxAge: 60, // cache for 60 seconds (1 minute)
+	maxAge: 30,
 	swr: false,
 	name: 'gambling-leaderboard',
 	getKey: () => 'default',

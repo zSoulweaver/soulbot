@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { handleChatMessage } from '~~/server/bot'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
-import { commandAliases, commands, commandTemplates, gameDeaths, settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens, twitchTokens, users } from '~~/server/database/schema'
+import { commandAliases, commands, commandTemplates, gameDeathCounters, games, settings, spotifyBlacklist, spotifyPlaylistCache, spotifyQueue, spotifyTokens, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { clearSpotifyTokenCache } from '~~/server/utils/spotify'
 import { clearTwitchTokenCache } from '~~/server/utils/twurple'
@@ -206,6 +206,7 @@ export async function clearDatabase() {
 	await db.delete(spotifyQueue)
 	await db.delete(spotifyPlaylistCache)
 	await db.delete(spotifyBlacklist)
-	await db.delete(gameDeaths)
+	await db.delete(gameDeathCounters)
+	await db.delete(games)
 	await refreshAppSettingsCache()
 }

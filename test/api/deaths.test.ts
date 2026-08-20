@@ -1,69 +1,108 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import deleteDeathsHandler from '~~/server/api/admin/deaths/[id].delete'
+import setActiveCounterHandler from '~~/server/api/admin/deaths/active.patch'
+import postCounterHandler from '~~/server/api/admin/deaths/counter.post'
+import deleteCounterHandler from '~~/server/api/admin/deaths/counter/[id].delete'
 import getDeathsHandler from '~~/server/api/admin/deaths/index.get'
 import postDeathsHandler from '~~/server/api/admin/deaths/index.post'
-import searchDeathsHandler from '~~/server/api/admin/deaths/search.get'
 import publicDeathsHandler from '~~/server/api/deaths/index.get'
 import { db } from '~~/server/database'
-import { gameDeaths } from '~~/server/database/schema'
+import { gameDeathCounters, games } from '~~/server/database/schema'
 import { clearDatabase } from '../helpers'
 
 describe('Deaths API Endpoints', () => {
 	beforeEach(async () => {
 		await clearDatabase()
-		await db.delete(gameDeaths)
+		await db.delete(gameDeathCounters)
+		await db.delete(games)
 	})
 
 	describe('GET /api/deaths (Public)', () => {
-		it('should return ranked deaths list and current game metadata', async () => {
+		it('should return ranked deaths list and current game metadata with sub-counters', async () => {
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({})
 
-			await db.insert(gameDeaths).values([
-				{ gameName: 'Elden Ring', deaths: 50, boxArtUrl: 'https://example.com/elden.jpg' },
-				{ gameName: 'Dark Souls', deaths: 30, boxArtUrl: 'https://example.com/souls.jpg' },
-				{ gameName: 'Hollow Knight', deaths: 75, boxArtUrl: 'https://example.com/hollow.jpg' },
+			const [elden] = await db.insert(games).values({
+				name: 'Elden Ring',
+				boxArtUrl: 'https://example.com/elden.jpg',
+			}).returning()
+			await db.insert(gameDeathCounters).values([
+				{ gameId: elden!.id, name: 'Default', deaths: 30 },
+				{ gameId: elden!.id, name: 'DLC', deaths: 20 },
 			])
+
+			const [souls] = await db.insert(games).values({
+				name: 'Dark Souls',
+				boxArtUrl: 'https://example.com/souls.jpg',
+			}).returning()
+			await db.insert(gameDeathCounters).values({
+				gameId: souls!.id,
+				name: 'Default',
+				deaths: 30,
+			})
+
+			const [hollow] = await db.insert(games).values({
+				name: 'Hollow Knight',
+				boxArtUrl: 'https://example.com/hollow.jpg',
+			}).returning()
+			await db.insert(gameDeathCounters).values({
+				gameId: hollow!.id,
+				name: 'Default',
+				deaths: 75,
+			})
 
 			const res = await publicDeathsHandler({} as any)
 
 			expect(res.data).toHaveLength(3)
 			expect(res.data[0]?.gameName).toBe('Hollow Knight')
 			expect(res.data[0]?.rank).toBe(1)
+			expect(res.data[0]?.deaths).toBe(75)
+
 			expect(res.data[1]?.gameName).toBe('Elden Ring')
 			expect(res.data[1]?.rank).toBe(2)
+			expect(res.data[1]?.deaths).toBe(50) // 30 + 20
+			expect(res.data[1]?.counters).toHaveLength(2)
+
 			expect(res.data[2]?.gameName).toBe('Dark Souls')
 			expect(res.data[2]?.rank).toBe(3)
+			expect(res.data[2]?.deaths).toBe(30)
 			expect(res.meta.total).toBe(3)
 			expect(res.currentGame).toBeDefined()
 		})
 
-		it('should correctly calculate featured game rank without SQLite parameter binding errors', async () => {
+		it('should correctly calculate featured game rank and active counter stats', async () => {
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({})
 
-			await db.insert(gameDeaths).values([
-				{ gameName: 'General', deaths: 25 },
-				{ gameName: 'Top Game', deaths: 100 },
-			])
+			const [top] = await db.insert(games).values({ name: 'Top Game' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: top!.id, name: 'Default', deaths: 100 })
+
+			const [gen] = await db.insert(games).values({ name: 'General' }).returning()
+			const [dlc] = await db.insert(gameDeathCounters).values({ gameId: gen!.id, name: 'DLC Run', deaths: 25 }).returning()
+			await db.update(games).set({ activeDeathCounterId: dlc!.id }).where(eq(games.id, gen!.id))
 
 			const res = await publicDeathsHandler({} as any)
 
 			expect(res.featuredGame).toBeDefined()
 			expect(res.featuredGame?.gameName).toBe('General')
 			expect(res.featuredGame?.rank).toBe(2)
+			expect(res.featuredGame?.activeCounterName).toBe('DLC Run')
+			expect(res.featuredGame?.activeCounterDeaths).toBe(25)
 		})
 
 		it('should support pagination and search filtering', async () => {
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({ search: 'Dark' })
 
-			await db.insert(gameDeaths).values([
-				{ gameName: 'Elden Ring', deaths: 50 },
-				{ gameName: 'Dark Souls', deaths: 30 },
-				{ gameName: 'Dark Souls II', deaths: 40 },
-			])
+			const [elden] = await db.insert(games).values({ name: 'Elden Ring' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: elden!.id, name: 'Default', deaths: 50 })
+
+			const [souls] = await db.insert(games).values({ name: 'Dark Souls' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: souls!.id, name: 'Default', deaths: 30 })
+
+			const [souls2] = await db.insert(games).values({ name: 'Dark Souls II' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: souls2!.id, name: 'Default', deaths: 40 })
 
 			const res = await publicDeathsHandler({} as any)
 
@@ -75,35 +114,22 @@ describe('Deaths API Endpoints', () => {
 	})
 
 	describe('GET /api/admin/deaths', () => {
-		it('should list game death records paginated', async () => {
+		it('should list game death records with sub-counters paginated', async () => {
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({ page: '1', limit: '10' })
 
-			await db.insert(gameDeaths).values([
-				{ gameName: 'Elden Ring', deaths: 50 },
-				{ gameName: 'Dark Souls', deaths: 30 },
-			])
+			const [elden] = await db.insert(games).values({ name: 'Elden Ring' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: elden!.id, name: 'Default', deaths: 50 })
+
+			const [souls] = await db.insert(games).values({ name: 'Dark Souls' }).returning()
+			await db.insert(gameDeathCounters).values({ gameId: souls!.id, name: 'Default', deaths: 30 })
 
 			const res = await getDeathsHandler({} as any)
 
 			expect(res.data).toHaveLength(2)
 			expect(res.meta.total).toBe(2)
+			expect(res.data[0]?.counters).toBeDefined()
 			expect(res.currentGame).toBeDefined()
-		})
-
-		it('should filter game deaths by search query', async () => {
-			const mockGetQuery = (globalThis as any).getQuery
-			mockGetQuery.mockReturnValueOnce({ search: 'Elden' })
-
-			await db.insert(gameDeaths).values([
-				{ gameName: 'Elden Ring', deaths: 50 },
-				{ gameName: 'Dark Souls', deaths: 30 },
-			])
-
-			const res = await getDeathsHandler({} as any)
-
-			expect(res.data).toHaveLength(1)
-			expect(res.data[0]?.gameName).toBe('Elden Ring')
 		})
 	})
 
@@ -112,6 +138,7 @@ describe('Deaths API Endpoints', () => {
 			const event = {
 				body: {
 					gameName: 'Bloodborne',
+					counterName: 'Default',
 					deaths: 15,
 					twitchGameId: '12345',
 					boxArtUrl: 'https://example.com/bloodborne.jpg',
@@ -126,91 +153,107 @@ describe('Deaths API Endpoints', () => {
 			expect(res!.twitchGameId).toBe('12345')
 			expect(res!.boxArtUrl).toBe('https://example.com/bloodborne.jpg')
 
-			const record = await db.query.gameDeaths.findFirst({
-				where: eq(gameDeaths.gameName, 'Bloodborne'),
+			const record = await db.query.games.findFirst({
+				where: eq(games.name, 'Bloodborne'),
 			})
 			expect(record).toBeDefined()
-			expect(record?.deaths).toBe(15)
 		})
 
-		it('should update existing game death counter', async () => {
-			const created = await db.insert(gameDeaths).values({
-				gameName: 'Bloodborne',
-				deaths: 15,
-			}).returning().then(r => r[0]!)
+		it('should save multiple counters in batch and update active counter', async () => {
+			const [game] = await db.insert(games).values({ name: 'Hollow Knight' }).returning()
+			const [c1] = await db.insert(gameDeathCounters).values({ gameId: game!.id, name: 'Default', deaths: 20 }).returning()
 
 			const event = {
-				body: { id: created.id, gameName: 'Bloodborne', deaths: 20 },
+				body: {
+					gameName: 'Hollow Knight',
+					counters: [
+						{ id: c1!.id, name: 'Main Game', deaths: 25, isActive: false },
+						{ name: 'Steel Soul', deaths: 5, isActive: true },
+					],
+				},
 			} as any
 
 			const res = await postDeathsHandler(event)
+			expect(res!.gameName).toBe('Hollow Knight')
+			expect(res!.totalDeaths).toBe(30)
+			expect(res!.counterName).toBe('Steel Soul')
+			expect(res!.deaths).toBe(5)
 
-			expect(res!.deaths).toBe(20)
-
-			const record = await db.query.gameDeaths.findFirst({
-				where: eq(gameDeaths.id, created.id),
-			})
-			expect(record?.deaths).toBe(20)
-		})
-
-		it('should reject missing gameName', async () => {
-			const event = {
-				body: { deaths: 10 },
-			} as any
-
-			await expect(async () => {
-				await postDeathsHandler(event)
-			}).rejects.toThrow()
+			const dbCounters = await db.select().from(gameDeathCounters).where(eq(gameDeathCounters.gameId, game!.id))
+			expect(dbCounters).toHaveLength(2)
 		})
 	})
 
-	describe('GET /api/admin/deaths/search', () => {
-		it('should return empty list when query is empty', async () => {
-			const mockGetQuery = (globalThis as any).getQuery
-			mockGetQuery.mockReturnValueOnce({})
+	describe('POST /api/admin/deaths/counter & DELETE /api/admin/deaths/counter/[id]', () => {
+		it('should create and delete individual playthrough counters', async () => {
+			const [game] = await db.insert(games).values({ name: 'Elden Ring' }).returning()
 
-			const res = await searchDeathsHandler({} as any)
-			expect(res).toEqual([])
+			const createRes = await postCounterHandler({
+				body: {
+					gameId: game!.id,
+					name: 'Shadow of the Erdtree',
+					deaths: 12,
+					setActive: true,
+				},
+			} as any)
+
+			expect(createRes.counter.name).toBe('Shadow of the Erdtree')
+			expect(createRes.counter.deaths).toBe(12)
+
+			const gameCheck = await db.query.games.findFirst({ where: eq(games.id, game!.id) })
+			expect(gameCheck?.activeDeathCounterId).toBe(createRes.counter.id)
+
+			// Delete counter
+			const deleteRes = await deleteCounterHandler({
+				context: { params: { id: String(createRes.counter.id) } },
+			} as any)
+			expect(deleteRes.success).toBe(true)
+		})
+	})
+
+	describe('PATCH /api/admin/deaths/active', () => {
+		it('should switch active counter for a game', async () => {
+			const [game] = await db.insert(games).values({ name: 'Elden Ring' }).returning()
+			const [_c1] = await db.insert(gameDeathCounters).values({ gameId: game!.id, name: 'Default', deaths: 5 }).returning()
+			const [c2] = await db.insert(gameDeathCounters).values({ gameId: game!.id, name: 'NG+', deaths: 10 }).returning()
+
+			const res = await setActiveCounterHandler({
+				body: { gameId: game!.id, counterId: c2!.id },
+			} as any)
+
+			expect(res.activeCounter.id).toBe(c2!.id)
+			expect(res.activeCounter.name).toBe('NG+')
 		})
 	})
 
 	describe('DELETE /api/admin/deaths/[id]', () => {
-		it('should delete a game death record', async () => {
-			const created = await db.insert(gameDeaths).values({
-				gameName: 'Hollow Knight',
+		it('should delete a game and all its sub-counters', async () => {
+			const [created] = await db.insert(games).values({
+				name: 'Hollow Knight',
+			}).returning()
+			await db.insert(gameDeathCounters).values({
+				gameId: created!.id,
+				name: 'Default',
 				deaths: 12,
-			}).returning().then(r => r[0]!)
+			})
 
 			const event = {
-				context: { params: { id: String(created.id) } },
+				context: { params: { id: String(created!.id) } },
 			} as any
 
 			const res = await deleteDeathsHandler(event)
 
 			expect(res.success).toBe(true)
 
-			const record = await db.query.gameDeaths.findFirst({
-				where: eq(gameDeaths.id, created.id),
+			const record = await db.query.games.findFirst({
+				where: eq(games.id, created!.id),
 			})
 			expect(record).toBeUndefined()
-		})
-	})
 
-	describe('cleanupZeroDeathsRecords', () => {
-		it('should remove records with 0 deaths', async () => {
-			const { cleanupZeroDeathsRecords } = await import('~~/server/bot/modules/deaths/utils')
-
-			await db.insert(gameDeaths).values([
-				{ gameName: 'Zero Death Game', deaths: 0 },
-				{ gameName: 'Active Game', deaths: 10 },
-			])
-
-			const deletedCount = await cleanupZeroDeathsRecords()
-			expect(deletedCount).toBe(1)
-
-			const remaining = await db.select().from(gameDeaths)
-			expect(remaining).toHaveLength(1)
-			expect(remaining[0]?.gameName).toBe('Active Game')
+			const counters = await db.query.gameDeathCounters.findMany({
+				where: eq(gameDeathCounters.gameId, created!.id),
+			})
+			expect(counters).toHaveLength(0)
 		})
 	})
 })

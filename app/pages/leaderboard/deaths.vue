@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { PublicDeathsResponse } from '~/types/deaths'
-import { Gamepad2Icon, MedalIcon, SearchIcon, SkullIcon, TrophyIcon } from '@lucide/vue'
-import { computed } from 'vue'
+import { ChevronDownIcon, Gamepad2Icon, MedalIcon, SearchIcon, TrophyIcon } from '@lucide/vue'
+import { computed, ref } from 'vue'
+import { Badge } from '~/components/ui/badge'
 import {
 	Pagination,
 	PaginationContent,
@@ -39,6 +40,18 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
 	return Math.min(currentPage.value * itemsPerPage.value, totalGames.value)
 })
+
+// Expanded row tracking for playthrough breakdowns
+const expandedGameIds = ref<Set<number>>(new Set())
+
+function toggleExpand(gameId: number) {
+	if (expandedGameIds.value.has(gameId)) {
+		expandedGameIds.value.delete(gameId)
+	}
+	else {
+		expandedGameIds.value.add(gameId)
+	}
+}
 </script>
 
 <template>
@@ -110,53 +123,120 @@ const endIndex = computed(() => {
 						sm:text-left
 					"
 				>
-					<span class="text-xs font-bold tracking-widest text-primary uppercase">
-						Current Category
-					</span>
+					<div
+						class="
+							flex flex-wrap items-center justify-center gap-2
+							sm:justify-start
+						"
+					>
+						<span class="text-xs font-bold tracking-widest text-primary uppercase">
+							Current Category
+						</span>
+					</div>
+
 					<h2
 						class="
-							mt-2.5 font-serif text-3xl font-bold text-foreground
+							mt-2 font-serif text-3xl font-bold text-foreground
 							md:text-4xl
 						"
 					>
 						{{ featuredGame.gameName }}
 					</h2>
 
+					<span
+						v-if="featuredGame.counters && featuredGame.counters.length > 1"
+						class="mt-1 text-sm font-normal text-muted-foreground"
+					>
+						Active Counter: <span class="font-medium text-foreground">{{ featuredGame.activeCounterName }}</span>
+					</span>
+
 					<!-- Clean Typographic Stat Callouts -->
 					<div
-						class="
-							mt-5 flex flex-wrap items-center justify-center gap-8
-							sm:justify-start
-						"
+						class="mt-5 w-full"
 					>
-						<!-- Total Deaths Stat -->
-						<div class="flex items-center gap-3">
-							<SkullIcon class="size-7 shrink-0 text-destructive" />
-							<div class="flex flex-col">
+						<!-- Case A: Multiple Counters exist (3-column grid on desktop, stacked on mobile) -->
+						<div
+							v-if="featuredGame.counters && featuredGame.counters.length > 1"
+							class="
+								grid grid-cols-1 gap-4
+								sm:grid-cols-3 sm:items-start sm:gap-0 sm:divide-x sm:divide-border/60
+							"
+						>
+							<!-- Active Counter Deaths Stat -->
+							<div
+								class="
+									flex flex-col items-center justify-start
+									sm:items-start sm:pr-4
+								"
+							>
 								<span class="text-3xl leading-none font-black text-destructive tabular-nums">
-									{{ featuredGame.deaths.toLocaleString() }}
+									{{ featuredGame.activeCounterDeaths.toLocaleString() }}
+								</span>
+								<span class="mt-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									Active Counter Deaths
+								</span>
+							</div>
+
+							<!-- Total Deaths Stat Across All Counters -->
+							<div
+								class="
+									flex flex-col items-center justify-start
+									sm:items-start sm:px-4
+								"
+							>
+								<span class="text-3xl leading-none font-black text-foreground tabular-nums">
+									{{ featuredGame.totalDeaths.toLocaleString() }}
+								</span>
+								<span class="mt-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									Total Game Deaths
+								</span>
+							</div>
+
+							<!-- Leaderboard Rank Stat -->
+							<div
+								class="
+									flex flex-col items-center justify-start
+									sm:items-start sm:pl-4
+								"
+							>
+								<span class="text-3xl leading-none font-black text-foreground tabular-nums">
+									#{{ featuredGame.rank }}
+								</span>
+								<span class="mt-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									Leaderboard Rank
+								</span>
+							</div>
+						</div>
+
+						<!-- Case B: Single Counter (2-column grid on desktop, stacked on mobile) -->
+						<div
+							v-else
+							class="
+								grid grid-cols-1 gap-4
+								sm:grid-cols-2 sm:items-start sm:gap-0 sm:divide-x sm:divide-border/60
+							"
+						>
+							<div
+								class="
+									flex flex-col items-center justify-start
+									sm:items-start sm:pr-4
+								"
+							>
+								<span class="text-3xl leading-none font-black text-destructive tabular-nums">
+									{{ featuredGame.totalDeaths.toLocaleString() }}
 								</span>
 								<span class="mt-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
 									Total Deaths
 								</span>
 							</div>
-						</div>
 
-						<div
-							class="
-								hidden h-8 w-px bg-border/60
-								sm:block
-							"
-						/>
-
-						<!-- Leaderboard Rank Stat -->
-						<div class="flex items-center gap-3">
-							<TrophyIcon v-if="featuredGame.rank === 1" class="size-7 shrink-0 text-yellow-500" />
-							<MedalIcon v-else-if="featuredGame.rank === 2" class="size-7 shrink-0 text-slate-400" />
-							<MedalIcon v-else-if="featuredGame.rank === 3" class="size-7 shrink-0 text-amber-600" />
-							<Gamepad2Icon v-else class="size-7 shrink-0 text-primary" />
-
-							<div class="flex flex-col">
+							<!-- Leaderboard Rank Stat -->
+							<div
+								class="
+									flex flex-col items-center justify-start
+									sm:items-start sm:pl-4
+								"
+							>
 								<span class="text-3xl leading-none font-black text-foreground tabular-nums">
 									#{{ featuredGame.rank }}
 								</span>
@@ -227,58 +307,112 @@ const endIndex = computed(() => {
 
 						<!-- Data Rows -->
 						<template v-else-if="filteredDeaths.length">
-							<TableRow
-								v-for="game in filteredDeaths"
-								:key="game.id"
-								:class="{
-									'bg-yellow-500/10 font-medium dark:bg-yellow-500/10': game.rank === 1,
-									'bg-slate-500/10 font-medium dark:bg-slate-400/10': game.rank === 2,
-									'bg-amber-600/10 font-medium dark:bg-amber-600/10': game.rank === 3,
-									'bg-primary/5': game.isCurrentGame && game.rank > 3,
-								}"
-							>
-								<!-- Rank Cell -->
-								<TableCell class="relative">
-									<div
-										v-if="game.isCurrentGame"
-										class="absolute inset-y-0 left-0 w-1 bg-primary"
-									/>
-									<div class="flex items-center justify-center">
-										<TrophyIcon v-if="game.rank === 1" class="size-5 text-yellow-500" />
-										<MedalIcon v-else-if="game.rank === 2" class="size-5 text-slate-400" />
-										<MedalIcon v-else-if="game.rank === 3" class="size-5 text-amber-600" />
-										<span v-else class="font-mono text-sm font-semibold text-muted-foreground">#{{ game.rank }}</span>
-									</div>
-								</TableCell>
+							<template v-for="game in filteredDeaths" :key="game.id">
+								<TableRow
+									class="transition-colors select-none"
+									:class="{
+										'cursor-pointer': game.counters && game.counters.length > 1,
+										'bg-yellow-500/10 font-medium dark:bg-yellow-500/10': game.rank === 1,
+										'bg-slate-500/10 font-medium dark:bg-slate-400/10': game.rank === 2,
+										'bg-amber-600/10 font-medium dark:bg-amber-600/10': game.rank === 3,
+										'bg-primary/5': game.isCurrentGame && game.rank > 3,
+									}"
+									@click="game.counters && game.counters.length > 1 && toggleExpand(game.id)"
+								>
+									<!-- Rank Cell -->
+									<TableCell class="relative">
+										<div
+											v-if="game.isCurrentGame"
+											class="absolute inset-y-0 left-0 w-1 bg-primary"
+										/>
+										<div class="flex items-center justify-center">
+											<TrophyIcon v-if="game.rank === 1" class="size-5 text-yellow-500" />
+											<MedalIcon v-else-if="game.rank === 2" class="size-5 text-slate-400" />
+											<MedalIcon v-else-if="game.rank === 3" class="size-5 text-amber-600" />
+											<span v-else class="font-mono text-sm font-semibold text-muted-foreground">#{{ game.rank }}</span>
+										</div>
+									</TableCell>
 
-								<!-- Game Name & Box Art Cell -->
-								<TableCell>
-									<div class="flex items-center gap-3">
-										<div class="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/50 bg-muted/40">
-											<img
-												v-if="game.boxArtUrl"
-												:src="game.boxArtUrl"
-												:alt="game.gameName"
-												class="size-full object-cover"
-											>
-											<div v-else class="flex size-full items-center justify-center bg-muted text-muted-foreground">
-												<Gamepad2Icon class="size-6 opacity-40" />
+									<!-- Game Name & Box Art Cell -->
+									<TableCell>
+										<div class="flex items-center gap-3">
+											<div class="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/50 bg-muted/40">
+												<img
+													v-if="game.boxArtUrl"
+													:src="game.boxArtUrl"
+													:alt="game.gameName"
+													class="size-full object-cover"
+												>
+												<div v-else class="flex size-full items-center justify-center bg-muted text-muted-foreground">
+													<Gamepad2Icon class="size-6 opacity-40" />
+												</div>
+											</div>
+
+											<div class="flex flex-1 flex-col">
+												<div class="flex items-center gap-2">
+													<span class="text-base font-bold text-foreground">
+														{{ game.gameName }}
+													</span>
+													<ChevronDownIcon
+														v-if="game.counters && game.counters.length > 1"
+														class="size-4 text-muted-foreground transition-transform duration-200"
+														:class="{ 'rotate-180': expandedGameIds.has(game.id) }"
+													/>
+												</div>
+												<span v-if="game.counters && game.counters.length > 1" class="text-xs text-muted-foreground">
+													{{ game.counters.length }} counters
+												</span>
 											</div>
 										</div>
+									</TableCell>
 
-										<div class="flex flex-col">
-											<span class="text-base font-bold text-foreground">
-												{{ game.gameName }}
+									<!-- Death Count Cell -->
+									<TableCell class="pr-8 text-right text-lg font-black text-foreground tabular-nums">
+										{{ game.deaths.toLocaleString() }}
+									</TableCell>
+								</TableRow>
+
+								<!-- Expandable Death Counters Breakdown Row -->
+								<TableRow
+									v-if="game.counters && game.counters.length > 1 && expandedGameIds.has(game.id)"
+									:key="`breakdown-${game.id}`"
+									class="
+										border-t-0 bg-muted/10
+										hover:bg-muted/10
+									"
+								>
+									<TableCell colspan="3" class="p-0">
+										<div class="flex flex-col gap-2 border-y border-border/40 bg-muted/20 px-6 py-3">
+											<span class="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+												Death Counters
 											</span>
+											<div class="flex flex-col gap-1.5">
+												<div
+													v-for="counter in game.counters"
+													:key="counter.id"
+													class="flex items-center justify-between rounded-lg border border-border/40 bg-background/80 px-3.5 py-2 text-sm shadow-xs"
+												>
+													<div class="flex items-center gap-2">
+														<span class="font-medium text-foreground">
+															{{ counter.name }}
+														</span>
+														<Badge
+															v-if="game.isCurrentGame && counter.isActive"
+															variant="default"
+															class="h-4.5 px-1.5 text-[10px] font-bold tracking-wide uppercase"
+														>
+															Active
+														</Badge>
+													</div>
+													<span class="font-black text-foreground tabular-nums">
+														{{ counter.deaths.toLocaleString() }} <span class="text-xs font-normal text-muted-foreground">deaths</span>
+													</span>
+												</div>
+											</div>
 										</div>
-									</div>
-								</TableCell>
-
-								<!-- Death Count Cell (Primary text color for readability) -->
-								<TableCell class="pr-8 text-right text-lg font-black text-foreground tabular-nums">
-									{{ game.deaths.toLocaleString() }}
-								</TableCell>
-							</TableRow>
+									</TableCell>
+								</TableRow>
+							</template>
 						</template>
 
 						<!-- Empty State -->

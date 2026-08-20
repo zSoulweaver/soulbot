@@ -1,4 +1,4 @@
-import { fetchTwitchGameMetadata, updateGameDeathCount } from '~~/server/bot/modules/deaths/utils'
+import { fetchTwitchGameMetadata, saveGameWithCounters, updateGameDeathCount } from '~~/server/bot/modules/deaths/utils'
 import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -13,7 +13,6 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const gameName = body.gameName.trim()
-	const deaths = Math.max(0, Math.floor(Number(body.deaths) || 0))
 	let twitchGameId: string | null = body.twitchGameId || null
 	let boxArtUrl: string | null = body.boxArtUrl || null
 
@@ -25,9 +24,44 @@ export default defineEventHandler(async (event) => {
 			boxArtUrl = fetched.boxArtUrl
 	}
 
-	const recordId = body.id ? Number(body.id) : null
-	return await updateGameDeathCount(gameName, deaths, {
-		twitchGameId,
-		boxArtUrl,
-	}, recordId)
+	if (Array.isArray(body.counters)) {
+		const result = await saveGameWithCounters(gameName, body.counters, {
+			twitchGameId,
+			boxArtUrl,
+		})
+
+		return {
+			id: result.game.id,
+			gameName: result.game.name,
+			twitchGameId: result.game.twitchGameId,
+			boxArtUrl: result.game.boxArtUrl,
+			deaths: result.activeCounter.deaths,
+			totalDeaths: result.totalDeaths,
+			counterName: result.activeCounter.name,
+			counters: result.counters,
+		}
+	}
+
+	const deaths = Math.max(0, Math.floor(Number(body.deaths) || 0))
+	const counterName = typeof body.counterName === 'string' && body.counterName.trim()
+		? body.counterName.trim()
+		: undefined
+
+	const result = await updateGameDeathCount(gameName, deaths, {
+		counterName,
+		metadata: {
+			twitchGameId,
+			boxArtUrl,
+		},
+	})
+
+	return {
+		id: result.game.id,
+		gameName: result.game.name,
+		twitchGameId: result.game.twitchGameId,
+		boxArtUrl: result.game.boxArtUrl,
+		deaths: result.targetCounter.deaths,
+		totalDeaths: result.totalDeaths,
+		counterName: result.targetCounter.name,
+	}
 })

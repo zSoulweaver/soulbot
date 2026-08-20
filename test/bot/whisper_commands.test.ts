@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registry } from '~~/server/bot'
 import { eventSubManager } from '~~/server/bot/core/eventsub'
 import { db } from '~~/server/database'
-import { commands, gameDeaths, twitchTokens } from '~~/server/database/schema'
+import { commands, gameDeathCounters, games, twitchTokens } from '~~/server/database/schema'
 import { getStreamerToken } from '~~/server/utils/twurple'
 import { clearDatabase } from '../helpers'
 import { mockApiClient, mockSay } from '../setup'
@@ -27,9 +27,9 @@ describe('Whisper Commands Integration', () => {
 			},
 			{
 				accountType: 'bot',
-				userId: 'bot-id-123',
-				userName: 'botuser',
-				displayName: 'BotUser',
+				userId: 'bot-id-456',
+				userName: 'soulbot',
+				displayName: 'SoulBot',
 				accessToken: 'access',
 				refreshToken: 'refresh',
 				scope: '[]',
@@ -38,8 +38,6 @@ describe('Whisper Commands Integration', () => {
 		])
 
 		await getStreamerToken(true)
-		const { getBotToken } = await import('~~/server/utils/twurple')
-		await getBotToken(true)
 
 		// Mock live stream with game "Elden Ring"
 		;(mockApiClient as any).streams = {
@@ -81,10 +79,10 @@ describe('Whisper Commands Integration', () => {
 		} as any)
 
 		// Death count should not exist/change
-		const record = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, 'Elden Ring'),
+		const game = await db.query.games.findFirst({
+			where: eq(games.name, 'Elden Ring'),
 		})
-		expect(record).toBeUndefined()
+		expect(game).toBeUndefined()
 		expect(mockSay).not.toHaveBeenCalled()
 	})
 
@@ -110,10 +108,14 @@ describe('Whisper Commands Integration', () => {
 		} as any)
 
 		// Deaths record should be updated
-		const record = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, 'Elden Ring'),
+		const game = await db.query.games.findFirst({
+			where: eq(games.name, 'Elden Ring'),
 		})
-		expect(record?.deaths).toBe(1)
+		expect(game).toBeDefined()
+		const counter = await db.query.gameDeathCounters.findFirst({
+			where: eq(gameDeathCounters.gameId, game!.id),
+		})
+		expect(counter?.deaths).toBe(1)
 
 		// Response should have been broadcast to the streamer's chat
 		expect(mockSay).toHaveBeenCalledWith(
@@ -144,10 +146,14 @@ describe('Whisper Commands Integration', () => {
 		} as any)
 
 		// Deaths record should be updated in database
-		const record = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, 'Elden Ring'),
+		const game = await db.query.games.findFirst({
+			where: eq(games.name, 'Elden Ring'),
 		})
-		expect(record?.deaths).toBe(3)
+		expect(game).toBeDefined()
+		const counter = await db.query.gameDeathCounters.findFirst({
+			where: eq(gameDeathCounters.gameId, game!.id),
+		})
+		expect(counter?.deaths).toBe(3)
 
 		// Chat output should be suppressed (mockSay not called)
 		expect(mockSay).not.toHaveBeenCalled()
@@ -175,10 +181,10 @@ describe('Whisper Commands Integration', () => {
 		} as any)
 
 		// Action should have been rejected due to permissions (moderator required)
-		const record = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, 'Elden Ring'),
+		const game = await db.query.games.findFirst({
+			where: eq(games.name, 'Elden Ring'),
 		})
-		expect(record).toBeUndefined()
+		expect(game).toBeUndefined()
 		expect(mockSay).not.toHaveBeenCalled()
 	})
 
@@ -209,10 +215,14 @@ describe('Whisper Commands Integration', () => {
 		} as any)
 
 		// Deaths record should be updated
-		const record = await db.query.gameDeaths.findFirst({
-			where: eq(gameDeaths.gameName, 'Elden Ring'),
+		const game = await db.query.games.findFirst({
+			where: eq(games.name, 'Elden Ring'),
 		})
-		expect(record?.deaths).toBe(1)
+		expect(game).toBeDefined()
+		const counter = await db.query.gameDeathCounters.findFirst({
+			where: eq(gameDeathCounters.gameId, game!.id),
+		})
+		expect(counter?.deaths).toBe(1)
 		expect(mockSay).toHaveBeenCalledWith(
 			'streamerchannel',
 			'@StreamerChannel, Added 1 death(s)! Total deaths for Elden Ring: 1.',

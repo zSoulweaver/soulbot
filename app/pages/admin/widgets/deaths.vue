@@ -20,6 +20,7 @@ import {
 } from '~/components/ui/settings-group'
 import { SettingsHeading } from '~/components/ui/settings-heading'
 import { Spinner } from '~/components/ui/spinner'
+import { Switch } from '~/components/ui/switch'
 import { Textarea } from '~/components/ui/textarea'
 
 useRequireUserRole(['caster'])
@@ -34,8 +35,8 @@ const { data: pageData, pending: loading, refresh } = useFetch<AdminWidgetRespon
 const regeneratedKey = ref('')
 const secretKey = computed(() => regeneratedKey.value || pageData.value?.key || '')
 
-const template = ref('{game} Deaths: {count}')
-const initialTemplate = ref('{game} Deaths: {count}')
+const template = ref('$(game) Deaths: $(count)')
+const initialTemplate = ref('$(game) Deaths: $(count)')
 
 const styles = ref({
 	fontFamily: 'Inter',
@@ -45,6 +46,7 @@ const styles = ref({
 	backgroundColor: 'transparent',
 	textAlign: 'center',
 	customCss: '',
+	showActiveCounter: true,
 })
 const initialStyles = ref<Record<string, any>>({})
 
@@ -57,7 +59,7 @@ const previewIframe = ref<HTMLIFrameElement | null>(null)
 // Synchronize state when data resolves
 watch(pageData, (newData) => {
 	if (newData?.widget) {
-		const loadedTemplate = newData.widget.template || '{game} Deaths: {count}'
+		const loadedTemplate = newData.widget.template || '$(game) Deaths: $(count)'
 		template.value = loadedTemplate
 		initialTemplate.value = loadedTemplate
 
@@ -275,7 +277,7 @@ const TEXT_ALIGN_OPTIONS = [
 							<Input
 								id="template-input"
 								v-model="template"
-								placeholder="{game} Deaths: {count}"
+								placeholder="$(game) Deaths: $(count)"
 								class="w-full"
 							/>
 							<FieldDescription>
@@ -289,9 +291,9 @@ const TEXT_ALIGN_OPTIONS = [
 										cursor-pointer
 										hover:bg-accent
 									"
-									@click="insertTag('{count}')"
+									@click="insertTag('$(count)')"
 								>
-									{count}
+									$(count)
 								</Badge>
 
 								<Badge
@@ -300,13 +302,49 @@ const TEXT_ALIGN_OPTIONS = [
 										cursor-pointer
 										hover:bg-accent
 									"
-									@click="insertTag('{game}')"
+									@click="insertTag('$(total)')"
 								>
-									{game}
+									$(total)
+								</Badge>
+
+								<Badge
+									variant="secondary"
+									class="
+										cursor-pointer
+										hover:bg-accent
+									"
+									@click="insertTag('$(counter)')"
+								>
+									$(counter)
+								</Badge>
+
+								<Badge
+									variant="secondary"
+									class="
+										cursor-pointer
+										hover:bg-accent
+									"
+									@click="insertTag('$(game)')"
+								>
+									$(game)
 								</Badge>
 							</div>
 						</Field>
 					</FieldGroup>
+
+					<SettingsGroup class="mt-4">
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Show Active Counter</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Display the active death counter name (e.g. [DLC]) in the widget.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch v-model:model-value="styles.showActiveCounter" />
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
 				</div>
 
 				<!-- Section 3: Visual Styling -->

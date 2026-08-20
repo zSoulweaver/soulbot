@@ -1,11 +1,11 @@
-import { getCurrentGameName, getOrCreateGameDeathRecord } from '~~/server/bot/modules/deaths/utils'
-import { getWidgetConfig, validateWidgetSecretKey } from '~~/server/utils/widgets'
+import { getCurrentGameName, getOrCreateGame } from '~~/server/bot/modules/deaths/utils'
+import { formatDeathWidgetText, getWidgetConfig, validateWidgetSecretKey } from '~~/server/utils/widgets'
 
 export default defineEventHandler(async (event) => {
 	await validateWidgetSecretKey(event)
 
 	const gameName = await getCurrentGameName()
-	const record = await getOrCreateGameDeathRecord(gameName)
+	const data = await getOrCreateGame(gameName)
 	const widget = await getWidgetConfig('deaths')
 
 	if (!widget) {
@@ -15,14 +15,21 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const formattedText = widget.template
-		.replace(/\{count\}/g, String(record.deaths))
-		.replace(/\{deaths\}/g, String(record.deaths))
-		.replace(/\{game\}/g, record.gameName)
+	const showActiveCounter = widget.styles?.showActiveCounter !== false
+	const formattedText = formatDeathWidgetText(
+		widget.template,
+		data.game.name,
+		data.activeCounter.name,
+		data.activeCounter.deaths,
+		data.totalDeaths,
+		showActiveCounter,
+	)
 
 	return {
-		gameName: record.gameName,
-		deaths: record.deaths,
+		gameName: data.game.name,
+		counterName: data.activeCounter.name,
+		deaths: data.activeCounter.deaths,
+		totalDeaths: data.totalDeaths,
 		template: widget.template,
 		styles: widget.styles,
 		enabled: widget.enabled,

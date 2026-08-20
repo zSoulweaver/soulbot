@@ -16,9 +16,39 @@ export const DEFAULT_DEATH_WIDGET_STYLES: WidgetStyles = {
 	backgroundColor: 'transparent',
 	textAlign: 'center',
 	customCss: '',
+	showActiveCounter: true,
 }
 
-export const DEFAULT_DEATH_WIDGET_TEMPLATE = '{game} Deaths: {count}'
+export const DEFAULT_DEATH_WIDGET_TEMPLATE = '$(game) Deaths: $(count)'
+
+/**
+ * Shared helper to format death widget text with variable substitution.
+ */
+export function formatDeathWidgetText(
+	template: string,
+	gameName: string,
+	counterName: string,
+	deaths: number,
+	totalDeaths?: number,
+	showActiveCounter = true,
+): string {
+	const isDefault = !counterName || counterName.toLowerCase() === 'default'
+	let tpl = template
+
+	if (/\$\(counter(?:_name)?\)/.test(tpl)) {
+		const counterText = showActiveCounter ? counterName : ''
+		tpl = tpl.replace(/\$\(counter(?:_name)?\)/g, counterText)
+	}
+	else if (showActiveCounter && !isDefault) {
+		tpl = tpl.replace(/\$\(game\)/g, `${gameName} [${counterName}]`)
+	}
+
+	return tpl
+		.replace(/\$\(count\)/g, String(deaths))
+		.replace(/\$\(deaths\)/g, String(deaths))
+		.replace(/\$\(total(?:_deaths)?\)/g, String(totalDeaths !== undefined ? totalDeaths : deaths))
+		.replace(/\$\(game\)/g, gameName)
+}
 
 /**
  * Gets or creates the global secret key for OBS widgets.

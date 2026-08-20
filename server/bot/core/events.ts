@@ -3,7 +3,9 @@ import { EventEmitter } from 'node:events'
 
 export interface DeathsUpdatedEvent {
 	gameName: string
+	counterName?: string
 	deaths: number
+	totalDeaths?: number
 }
 
 export interface WidgetUpdatedEvent {

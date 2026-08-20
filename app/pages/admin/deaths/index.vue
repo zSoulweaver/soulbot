@@ -72,7 +72,8 @@ const columns: any[] = [
 		cell: (info) => {
 			const game = info.getValue()
 			const row = info.row.original
-			const isActive = game.toLowerCase() === currentGame.value.toLowerCase()
+			const isLive = game.toLowerCase() === currentGame.value.toLowerCase()
+			const hasCustomActive = row.activeCounterName && row.activeCounterName.toLowerCase() !== 'default'
 
 			const boxArtEl = row.boxArtUrl
 				? h('img', {
@@ -86,15 +87,23 @@ const columns: any[] = [
 
 			return h('div', { class: 'flex items-center gap-3 font-medium' }, [
 				boxArtEl,
-				h('div', { class: 'flex items-center gap-2' }, [
-					h('span', { class: 'font-semibold text-foreground' }, game),
-					isActive ? h(Badge, { variant: 'default', class: 'text-[10px] uppercase font-bold' }, () => 'Currently Live') : null,
+				h('div', { class: 'flex flex-col gap-1' }, [
+					h('div', { class: 'flex items-center gap-2' }, [
+						h('span', { class: 'font-semibold text-foreground' }, game),
+						isLive ? h(Badge, { variant: 'default', class: 'text-[10px] uppercase font-bold' }, () => 'Currently Live') : null,
+					]),
+					h('div', { class: 'flex items-center gap-1.5 text-xs text-muted-foreground' }, [
+						hasCustomActive
+							? h(Badge, { variant: 'outline', class: 'text-[10px] px-1.5 py-0 font-medium' }, () => `Active: ${row.activeCounterName}`)
+							: null,
+						h('span', `${row.counters?.length || 1} counter(s)`),
+					]),
 				]),
 			])
 		},
 	}),
 	columnHelper.accessor('deaths', {
-		header: 'Deaths',
+		header: 'Total Deaths',
 		cell: info => h('span', { class: 'font-bold tabular-nums text-primary text-base' }, info.getValue().toLocaleString()),
 	}),
 	columnHelper.accessor('updatedAt', {
@@ -117,7 +126,7 @@ const columns: any[] = [
 				onClick: () => openEditSheet(info.row.original),
 			}, () => [
 				h(PencilIcon, { 'data-icon': 'inline-start' }),
-				'Adjust Deaths',
+				'Manage Counters',
 			]),
 			h(Button, {
 				variant: 'ghost',

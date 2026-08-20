@@ -13,8 +13,10 @@ const isPreview = computed(() => route.query.preview === '1' || route.query.prev
 
 const isUnauthorized = ref(false)
 const gameName = ref('Elden Ring')
+const counterName = ref('Default')
 const deaths = ref(0)
-const template = ref('{game} Deaths: {count}')
+const totalDeaths = ref(0)
+const template = ref('$(game) Deaths: $(count)')
 const styles = ref<Record<string, any>>({
 	fontFamily: 'Inter',
 	fontSize: 36,
@@ -49,10 +51,24 @@ useStyleTag(computed(() => styles.value.customCss || ''))
 
 // Compute formatted text replacement
 const formattedText = computed(() => {
-	return template.value
-		.replace(/\{count\}/g, String(deaths.value))
-		.replace(/\{deaths\}/g, String(deaths.value))
-		.replace(/\{game\}/g, gameName.value)
+	const showCounter = styles.value.showActiveCounter !== false
+	const isDefaultCounter = !counterName.value || counterName.value.toLowerCase() === 'default'
+
+	let tpl = template.value
+
+	if (/\$\(counter(?:_name)?\)/.test(tpl)) {
+		const counterText = showCounter ? counterName.value : ''
+		tpl = tpl.replace(/\$\(counter(?:_name)?\)/g, counterText)
+	}
+	else if (showCounter && !isDefaultCounter) {
+		tpl = tpl.replace(/\$\(game\)/g, `${gameName.value} [${counterName.value}]`)
+	}
+
+	return tpl
+		.replace(/\$\(count\)/g, String(deaths.value))
+		.replace(/\$\(deaths\)/g, String(deaths.value))
+		.replace(/\$\(total(?:_deaths)?\)/g, String(totalDeaths.value || deaths.value))
+		.replace(/\$\(game\)/g, gameName.value)
 })
 
 // Dynamic inline styles
@@ -97,7 +113,9 @@ async function loadInitialData() {
 		if (data) {
 			isUnauthorized.value = false
 			gameName.value = data.gameName
+			counterName.value = data.counterName || 'Default'
 			deaths.value = data.deaths
+			totalDeaths.value = data.totalDeaths || data.deaths
 			template.value = data.template
 			if (data.styles) {
 				styles.value = { ...styles.value, ...data.styles }
@@ -127,8 +145,12 @@ function initSSE() {
 			const payload = JSON.parse(e.data)
 			if (payload.gameName !== undefined)
 				gameName.value = payload.gameName
+			if (payload.counterName !== undefined)
+				counterName.value = payload.counterName
 			if (payload.deaths !== undefined)
 				deaths.value = payload.deaths
+			if (payload.totalDeaths !== undefined)
+				totalDeaths.value = payload.totalDeaths
 		}
 		catch (err) {
 			console.error('[OBS Widget] Failed to parse deaths:updated event:', err)

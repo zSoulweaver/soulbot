@@ -1,14 +1,13 @@
-import { and, count, desc, gt, like, sql } from 'drizzle-orm'
+import { desc, eq, inArray, sql } from 'drizzle-orm'
 import { getCurrentGameName } from '~~/server/bot/modules/deaths/utils'
 import { db } from '~~/server/database'
-import { gameDeaths } from '~~/server/database/schema'
+import { gameDeathCounters, games } from '~~/server/database/schema'
 import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
 import { getApiClient, getStreamerToken } from '~~/server/utils/twurple'
 
 export default defineCachedEventHandler(async (event) => {
 	const { page, limit, search } = parsePaginationParams(event)
 
-	// 1. Fetch current game name and stream live status
 	const currentGame = await getCurrentGameName()
 	let isLive = false
 
@@ -26,63 +25,114 @@ export default defineCachedEventHandler(async (event) => {
 		// Ignore API errors for public endpoint
 	}
 
-	// 2. Identify featured game matching current stream category across ALL tracked deaths (> 0 deaths)
-	const [featuredRecord] = await db
-		.select()
-		.from(gameDeaths)
-		.where(and(gt(gameDeaths.deaths, 0), sql`LOWER(${gameDeaths.gameName}) = LOWER(${currentGame})`))
+	// Fetch all games with their calculated total deaths (> 0)
+	const allRankedGames = await db
+		.select({
+			id: games.id,
+			name: games.name,
+			twitchGameId: games.twitchGameId,
+			boxArtUrl: games.boxArtUrl,
+			activeDeathCounterId: games.activeDeathCounterId,
+			createdAt: games.createdAt,
+			updatedAt: games.updatedAt,
+			totalDeaths: sql<number>`CAST(COALESCE(SUM(${gameDeathCounters.deaths}), 0) AS INTEGER)`,
+		})
+		.from(games)
+		.leftJoin(gameDeathCounters, eq(gameDeathCounters.gameId, games.id))
+		.groupBy(games.id)
+		.having(sql`COALESCE(SUM(${gameDeathCounters.deaths}), 0) > 0`)
+		.orderBy(
+			desc(sql`COALESCE(SUM(${gameDeathCounters.deaths}), 0)`),
+			desc(games.updatedAt),
+		)
 
+	// Attach overall ranks (1-indexed based on full dataset)
+	const rankedWithPositions = allRankedGames.map((game, index) => ({
+		...game,
+		rank: index + 1,
+	}))
+
+	// Featured current game lookup
 	let featuredGame = null
-	if (featuredRecord) {
-		const updatedAtTs = featuredRecord.updatedAt instanceof Date
-			? Math.floor(featuredRecord.updatedAt.getTime() / 1000)
-			: Number(featuredRecord.updatedAt) || 0
+	const currentFeatured = rankedWithPositions.find(
+		g => g.name.toLowerCase() === currentGame.toLowerCase(),
+	)
 
-		const [rankResult] = await db
-			.select({
-				rank: sql<number>`COUNT(*) + 1`,
-			})
-			.from(gameDeaths)
-			.where(
-				and(
-					gt(gameDeaths.deaths, 0),
-					sql`(${gameDeaths.deaths} > ${featuredRecord.deaths} OR (${gameDeaths.deaths} = ${featuredRecord.deaths} AND ${gameDeaths.updatedAt} > ${updatedAtTs}))`,
-				),
-			)
+	if (currentFeatured) {
+		const featuredCounters = await db
+			.select()
+			.from(gameDeathCounters)
+			.where(eq(gameDeathCounters.gameId, currentFeatured.id))
+			.orderBy(desc(gameDeathCounters.deaths))
+
+		const activeCounter = featuredCounters.find(c => c.id === currentFeatured.activeDeathCounterId) || featuredCounters[0]
 
 		featuredGame = {
-			...featuredRecord,
-			rank: Number(rankResult?.rank || 1),
+			id: currentFeatured.id,
+			gameName: currentFeatured.name,
+			twitchGameId: currentFeatured.twitchGameId,
+			boxArtUrl: currentFeatured.boxArtUrl,
+			deaths: currentFeatured.totalDeaths,
+			totalDeaths: currentFeatured.totalDeaths,
+			activeDeathCounterId: currentFeatured.activeDeathCounterId,
+			activeCounterName: activeCounter?.name || 'Default',
+			activeCounterDeaths: activeCounter?.deaths || 0,
+			rank: currentFeatured.rank,
 			isCurrentGame: true,
+			counters: featuredCounters.map(c => ({
+				id: c.id,
+				name: c.name,
+				deaths: c.deaths,
+				isActive: c.id === currentFeatured.activeDeathCounterId,
+			})),
+			createdAt: currentFeatured.createdAt,
+			updatedAt: currentFeatured.updatedAt,
 		}
 	}
 
-	// 3. Build search condition for paginated list (deaths > 0 AND search filter if provided)
-	const searchCondition = search
-		? and(gt(gameDeaths.deaths, 0), like(sql`LOWER(${gameDeaths.gameName})`, `%${search.toLowerCase()}%`))
-		: gt(gameDeaths.deaths, 0)
+	// Apply search filtering for paginated table
+	const searchLower = search ? search.trim().toLowerCase() : ''
+	const filteredGames = searchLower
+		? rankedWithPositions.filter(g => g.name.toLowerCase().includes(searchLower))
+		: rankedWithPositions
 
-	const totalCountResult = await db
-		.select({ totalCount: count() })
-		.from(gameDeaths)
-		.where(searchCondition)
-	const totalCount = totalCountResult[0]?.totalCount || 0
+	const totalCount = filteredGames.length
+	const pagedGames = filteredGames.slice((page - 1) * limit, page * limit)
 
-	// 4. Fetch paged rows
-	const pagedRows = await db
-		.select()
-		.from(gameDeaths)
-		.where(searchCondition)
-		.orderBy(desc(gameDeaths.deaths), desc(gameDeaths.updatedAt))
-		.limit(limit)
-		.offset((page - 1) * limit)
+	// Fetch sub-counters for the paged games
+	const pagedGameIds = pagedGames.map(g => g.id)
+	const pagedCounters = pagedGameIds.length > 0
+		? await db
+				.select()
+				.from(gameDeathCounters)
+				.where(inArray(gameDeathCounters.gameId, pagedGameIds))
+				.orderBy(desc(gameDeathCounters.deaths))
+		: []
 
-	const data = pagedRows.map((item, index) => {
-		const rank = (page - 1) * limit + index + 1
+	const data = pagedGames.map((game) => {
+		const gameCounters = pagedCounters.filter(c => c.gameId === game.id)
+		const activeCounter = gameCounters.find(c => c.id === game.activeDeathCounterId) || gameCounters[0]
+
 		return {
-			...item,
-			rank,
-			isCurrentGame: item.gameName.toLowerCase() === currentGame.toLowerCase(),
+			id: game.id,
+			gameName: game.name,
+			twitchGameId: game.twitchGameId,
+			boxArtUrl: game.boxArtUrl,
+			deaths: game.totalDeaths,
+			totalDeaths: game.totalDeaths,
+			activeDeathCounterId: game.activeDeathCounterId,
+			activeCounterName: activeCounter?.name || 'Default',
+			activeCounterDeaths: activeCounter?.deaths || 0,
+			rank: game.rank,
+			isCurrentGame: game.name.toLowerCase() === currentGame.toLowerCase(),
+			counters: gameCounters.map(c => ({
+				id: c.id,
+				name: c.name,
+				deaths: c.deaths,
+				isActive: c.id === game.activeDeathCounterId,
+			})),
+			createdAt: game.createdAt,
+			updatedAt: game.updatedAt,
 		}
 	})
 

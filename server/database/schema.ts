@@ -101,11 +101,20 @@ export const counters = sqliteTable('counters', {
 	value: integer('value').notNull().default(0),
 })
 
-export const gameDeaths = sqliteTable('game_deaths', {
+export const games = sqliteTable('games', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
-	gameName: text('game_name').notNull().unique(),
+	name: text('name').notNull().unique(),
 	twitchGameId: text('twitch_game_id'),
 	boxArtUrl: text('box_art_url'),
+	activeDeathCounterId: integer('active_death_counter_id'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})
+
+export const gameDeathCounters = sqliteTable('game_death_counters', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	gameId: integer('game_id').notNull().references(() => games.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
 	deaths: integer('deaths').notNull().default(0),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
@@ -119,6 +128,7 @@ export interface WidgetStyles {
 	backgroundColor?: string
 	textAlign?: string
 	customCss?: string
+	showActiveCounter?: boolean
 }
 
 export const widgets = sqliteTable('widgets', {

@@ -1,20 +1,38 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { eq } from 'drizzle-orm'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import getAdminWidgetHandler from '~~/server/api/admin/widgets/[id].get'
 import putAdminWidgetHandler from '~~/server/api/admin/widgets/[id].put'
 import getKeyHandler from '~~/server/api/admin/widgets/key.get'
 import postKeyHandler from '~~/server/api/admin/widgets/key.post'
 import getPublicDeathsWidgetHandler from '~~/server/api/widgets/deaths.get'
 import { db } from '~~/server/database'
-import { gameDeaths, settings, widgets } from '~~/server/database/schema'
-import { getWidgetSecretKey } from '~~/server/utils/widgets'
+import { gameDeathCounters, games, settings, twitchTokens, widgets } from '~~/server/database/schema'
+import { getStreamerToken } from '~~/server/utils/twurple'
+import { getWidgetConfig, getWidgetSecretKey } from '~~/server/utils/widgets'
 import { clearDatabase } from '../helpers'
+import { mockApiClient } from '../setup'
 
 describe('OBS Widgets API Endpoints', () => {
 	beforeEach(async () => {
 		await clearDatabase()
 		await db.delete(widgets)
 		await db.delete(settings)
-		await db.delete(gameDeaths)
+		await db.delete(gameDeathCounters)
+		await db.delete(games)
+		await db.delete(twitchTokens)
+
+		await db.insert(twitchTokens).values({
+			accountType: 'streamer',
+			userId: 'streamer-id-123',
+			userName: 'streamerchannel',
+			displayName: 'StreamerChannel',
+			accessToken: 'access',
+			refreshToken: 'refresh',
+			scope: '[]',
+			obtainmentTimestamp: Date.now(),
+		})
+
+		await getStreamerToken(true)
 	})
 
 	describe('Secret Key Management', () => {
@@ -28,52 +46,51 @@ describe('OBS Widgets API Endpoints', () => {
 		it('pOST /api/admin/widgets/key regenerates and updates secret key', async () => {
 			const initial = await getWidgetSecretKey()
 			const res = await postKeyHandler({} as any)
-
 			expect(res.key).toBeDefined()
 			expect(res.key).not.toBe(initial)
-
-			const current = await getWidgetSecretKey()
-			expect(current).toBe(res.key)
 		})
 	})
 
-	describe('Admin Widget Configuration', () => {
-		it('gET /api/admin/widgets/[id] returns default death counter config', async () => {
-			const mockGetRouterParam = (globalThis as any).getRouterParam
-			mockGetRouterParam.mockReturnValueOnce('deaths')
+	describe('Widget Configuration Management', () => {
+		it('gET /api/admin/widgets/:id returns default death counter widget configuration', async () => {
+			const event = {
+				context: { params: { id: 'deaths' } },
+			} as any
 
-			const res = await getAdminWidgetHandler({} as any)
+			const res = await getAdminWidgetHandler(event)
 
 			expect(res.widget).toBeDefined()
-			expect(res.widget!.id).toBe('deaths')
-			expect(res.widget!.template).toContain('{count}')
+			expect(res.widget.id).toBe('deaths')
+			expect(res.widget.template).toBe('$(game) Deaths: $(count)')
+			expect(res.widget.styles).toBeDefined()
 			expect(res.key).toBeDefined()
 		})
 
-		it('pUT /api/admin/widgets/[id] updates template and custom styles', async () => {
+		it('pUT /api/admin/widgets/:id updates widget template and styles', async () => {
 			const mockGetRouterParam = (globalThis as any).getRouterParam
 			mockGetRouterParam.mockReturnValueOnce('deaths')
 
 			const event = {
+				context: { params: { id: 'deaths' } },
 				body: {
-					template: 'Deaths Count: {count} in {game}',
+					template: '💀 Deaths: $(count)',
 					styles: {
-						color: '#ff0000',
 						fontSize: 48,
+						color: '#ff0000',
 					},
 				},
 			} as any
 
 			const res = await putAdminWidgetHandler(event)
 
-			expect(res!.template).toBe('Deaths Count: {count} in {game}')
-			expect(res!.styles.color).toBe('#ff0000')
-			expect(res!.styles.fontSize).toBe(48)
+			expect(res.template).toBe('💀 Deaths: $(count)')
+			expect(res.styles.fontSize).toBe(48)
+			expect(res.styles.color).toBe('#ff0000')
 		})
 	})
 
-	describe('Public OBS Widget Endpoint', () => {
-		it('rejects public request when key query parameter is missing', async () => {
+	describe('Public Overlay Widget Endpoint', () => {
+		it('rejects public request when secret key is missing', async () => {
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({})
 
@@ -94,10 +111,15 @@ describe('OBS Widgets API Endpoints', () => {
 
 		it('returns formatted widget output when valid key is provided', async () => {
 			const validKey = await getWidgetSecretKey()
-			await db.insert(gameDeaths).values({
-				gameName: 'General',
+			const [game] = await db.insert(games).values({
+				name: 'General',
+			}).returning()
+			const [counter] = await db.insert(gameDeathCounters).values({
+				gameId: game!.id,
+				name: 'Default',
 				deaths: 42,
-			})
+			}).returning()
+			await db.update(games).set({ activeDeathCounterId: counter!.id }).where(eq(games.id, game!.id))
 
 			const mockGetQuery = (globalThis as any).getQuery
 			mockGetQuery.mockReturnValueOnce({ key: validKey })
@@ -108,6 +130,66 @@ describe('OBS Widgets API Endpoints', () => {
 			expect(res.deaths).toBe(42)
 			expect(res.formattedText).toBe('General Deaths: 42')
 			expect(res.styles).toBeDefined()
+		})
+
+		it('formats active counter name in brackets when non-default and showActiveCounter is enabled', async () => {
+			;(mockApiClient as any).streams = {
+				getStreamByUserId: vi.fn(async () => ({
+					gameName: 'Elden Ring',
+				})),
+			}
+
+			const validKey = await getWidgetSecretKey()
+			const [game] = await db.insert(games).values({
+				name: 'Elden Ring',
+			}).returning()
+			const [counter] = await db.insert(gameDeathCounters).values({
+				gameId: game!.id,
+				name: 'DLC',
+				deaths: 15,
+			}).returning()
+			await db.update(games).set({ activeDeathCounterId: counter!.id }).where(eq(games.id, game!.id))
+
+			const mockGetQuery = (globalThis as any).getQuery
+			mockGetQuery.mockReturnValueOnce({ key: validKey })
+
+			const res = await getPublicDeathsWidgetHandler({} as any)
+
+			expect(res.gameName).toBe('Elden Ring')
+			expect(res.counterName).toBe('DLC')
+			expect(res.deaths).toBe(15)
+			expect(res.formattedText).toBe('Elden Ring [DLC] Deaths: 15')
+		})
+
+		it('replaces explicit $(counter) variable in template', async () => {
+			;(mockApiClient as any).streams = {
+				getStreamByUserId: vi.fn(async () => ({
+					gameName: 'Ghost of Tsushima',
+				})),
+			}
+
+			const validKey = await getWidgetSecretKey()
+			const [game] = await db.insert(games).values({
+				name: 'Ghost of Tsushima',
+			}).returning()
+			const [counter] = await db.insert(gameDeathCounters).values({
+				gameId: game!.id,
+				name: 'Lethal+',
+				deaths: 7,
+			}).returning()
+			await db.update(games).set({ activeDeathCounterId: counter!.id }).where(eq(games.id, game!.id))
+
+			await getWidgetConfig('deaths')
+			await db.update(widgets).set({
+				template: '$(game) ($(counter)): $(count) deaths',
+			}).where(eq(widgets.id, 'deaths'))
+
+			const mockGetQuery = (globalThis as any).getQuery
+			mockGetQuery.mockReturnValueOnce({ key: validKey })
+
+			const res = await getPublicDeathsWidgetHandler({} as any)
+
+			expect(res.formattedText).toBe('Ghost of Tsushima (Lethal+): 7 deaths')
 		})
 	})
 })

@@ -1,6 +1,6 @@
 import { createEventStream } from 'h3'
 import { botEventBus } from '~~/server/bot/core/events'
-import { getCurrentGameName, getOrCreateGameDeathRecord } from '~~/server/bot/modules/deaths/utils'
+import { getCurrentGameName, getOrCreateGame } from '~~/server/bot/modules/deaths/utils'
 import { getWidgetConfig, validateWidgetSecretKey } from '~~/server/utils/widgets'
 
 export default defineEventHandler(async (event) => {
@@ -8,20 +8,32 @@ export default defineEventHandler(async (event) => {
 
 	const eventStream = createEventStream(event)
 
-	const onDeathsUpdated = async (data: { gameName: string, deaths: number }) => {
+	const onDeathsUpdated = async (data: { gameName: string, counterName?: string, deaths: number, totalDeaths?: number }) => {
 		const widget = await getWidgetConfig('deaths')
 		if (!widget)
 			return
-		const formattedText = widget.template
-			.replace(/\{count\}/g, String(data.deaths))
-			.replace(/\{deaths\}/g, String(data.deaths))
-			.replace(/\{game\}/g, data.gameName)
+
+		const gameData = await getOrCreateGame(data.gameName)
+		const counterName = data.counterName || gameData.activeCounter.name
+		const total = data.totalDeaths !== undefined ? data.totalDeaths : gameData.totalDeaths
+		const showActiveCounter = widget.styles?.showActiveCounter !== false
+
+		const formattedText = formatDeathWidgetText(
+			widget.template,
+			data.gameName,
+			counterName,
+			data.deaths,
+			total,
+			showActiveCounter,
+		)
 
 		eventStream.push({
 			event: 'deaths:updated',
 			data: JSON.stringify({
 				gameName: data.gameName,
+				counterName,
 				deaths: data.deaths,
+				totalDeaths: total,
 				formattedText,
 			}),
 		})
@@ -30,11 +42,17 @@ export default defineEventHandler(async (event) => {
 	const onWidgetUpdated = async (data: { widgetId: string, template: string, styles: any }) => {
 		if (data.widgetId === 'deaths') {
 			const gameName = await getCurrentGameName()
-			const record = await getOrCreateGameDeathRecord(gameName)
-			const formattedText = data.template
-				.replace(/\{count\}/g, String(record.deaths))
-				.replace(/\{deaths\}/g, String(record.deaths))
-				.replace(/\{game\}/g, record.gameName)
+			const gameData = await getOrCreateGame(gameName)
+			const showActiveCounter = data.styles?.showActiveCounter !== false
+
+			const formattedText = formatDeathWidgetText(
+				data.template,
+				gameData.game.name,
+				gameData.activeCounter.name,
+				gameData.activeCounter.deaths,
+				gameData.totalDeaths,
+				showActiveCounter,
+			)
 
 			eventStream.push({
 				event: 'widget:updated',

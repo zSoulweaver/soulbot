@@ -1,7 +1,31 @@
 <script setup lang="ts">
 import type { PublicCommand } from '~/types/commands'
 import { ChevronRight, CornerDownRight, RefreshCcw, SearchIcon } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { createColumnHelper } from '@tanstack/vue-table'
+import { computed, h, ref, watch } from 'vue'
+import CommandPermissionBadge from '~/components/commands/CommandPermissionBadge.vue'
+import CommandPointsBadge from '~/components/commands/CommandPointsBadge.vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import DataTable from '~/components/ui/data-table/DataTable.vue'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group'
+import { cn } from '~/lib/utils'
+
+export interface CommandDirectoryRow {
+	id: string
+	type: 'core' | 'custom' | 'subcommand'
+	trigger: string | null
+	activeTrigger: string
+	fullTriggerPath: string
+	description: string | null
+	usage: string | null
+	permission: string
+	cost: number
+	hidden: boolean
+	aliases: Array<{ id?: number, trigger: string, subcommand?: string | null }>
+	hasHandler?: boolean
+	subRows?: CommandDirectoryRow[]
+}
 
 const { user } = useUserSession()
 const { data: commandsList, refresh: refreshCommands, pending: loading } = useFetch<PublicCommand[]>('/api/commands/directory')
@@ -15,78 +39,224 @@ const isPrivileged = computed(() => {
 	return Boolean(role && ['moderator', 'admin', 'caster'].includes(role))
 })
 
-// Expanded subcommands tracking - subcommands expanded by default
-const expandedCommands = ref<Record<string, boolean>>({})
-
-function isExpanded(commandId: string): boolean {
-	return expandedCommands.value[commandId] !== false
-}
-
-function toggleCommandExpanded(commandId: string) {
-	expandedCommands.value[commandId] = !isExpanded(commandId)
-}
-
-// Search & Filter state
+// Expanded subcommands tracking - public directory expanded by default
+const expandedState = ref<any>(true)
 const searchQuery = ref('')
 
-function getFlatSubcommands(subcommandsObject: any): Array<{ name: string, triggerPath: string, detail: any }> {
-	if (!subcommandsObject || typeof subcommandsObject !== 'object' || Array.isArray(subcommandsObject))
-		return []
-	const flatList: Array<{ name: string, triggerPath: string, detail: any }> = []
+// Auto-expand all when search query is active
+watch(searchQuery, (query) => {
+	if (query.trim()) {
+		expandedState.value = true
+	}
+})
 
-	function traverse(objectRecord: any, pathPrefix: string, triggerPrefix: string) {
-		if (!objectRecord || typeof objectRecord !== 'object' || Array.isArray(objectRecord))
-			return
-		for (const [name, value] of Object.entries(objectRecord)) {
-			if (!value || typeof value !== 'object')
-				continue
-			const detail = value as any
-			const currentPath = pathPrefix ? `${pathPrefix} ${name}` : name
-			const currentTriggerPath = triggerPrefix ? `${triggerPrefix} ${detail.activeTrigger}` : detail.activeTrigger
-			flatList.push({
-				name: currentPath,
-				triggerPath: currentTriggerPath,
-				detail,
-			})
-			if (detail.subcommands) {
-				traverse(detail.subcommands, currentPath, currentTriggerPath)
-			}
-		}
+// Convert subcommands dictionary tree to recursive array of subRows
+function buildSubRows(subcommandsRecord: any, parentTriggerPath: string): CommandDirectoryRow[] {
+	if (!subcommandsRecord || typeof subcommandsRecord !== 'object' || Array.isArray(subcommandsRecord)) {
+		return []
 	}
 
-	traverse(subcommandsObject, '', '')
-	return flatList
+	const rows: CommandDirectoryRow[] = []
+	for (const [key, sub] of Object.entries(subcommandsRecord)) {
+		if (!sub || typeof sub !== 'object')
+			continue
+		const detail = sub as any
+		const activeTrigger = detail.activeTrigger || key
+		const fullTriggerPath = `${parentTriggerPath} ${activeTrigger}`
+		const childRows = detail.subcommands ? buildSubRows(detail.subcommands, fullTriggerPath) : undefined
+
+		rows.push({
+			id: detail.id || key,
+			type: 'subcommand',
+			trigger: detail.trigger || null,
+			activeTrigger,
+			fullTriggerPath,
+			description: detail.description || null,
+			usage: detail.usage || null,
+			permission: detail.permission || 'everyone',
+			cost: detail.cost || 0,
+			hidden: Boolean(detail.hidden),
+			aliases: detail.aliases || [],
+			hasHandler: detail.hasHandler !== false,
+			subRows: childRows && childRows.length > 0 ? childRows : undefined,
+		})
+	}
+	return rows
 }
 
-const filteredCommands = computed(() => {
+// Convert public command list into tree
+const commandTree = computed<CommandDirectoryRow[]>(() => {
 	if (!commandsList.value)
 		return []
+
+	return commandsList.value.map((cmd) => {
+		const fullTriggerPath = `!${cmd.activeTrigger}`
+		const childRows = cmd.subcommands ? buildSubRows(cmd.subcommands, fullTriggerPath) : undefined
+
+		return {
+			id: cmd.id,
+			type: cmd.type,
+			trigger: cmd.trigger,
+			activeTrigger: cmd.activeTrigger,
+			fullTriggerPath,
+			description: cmd.description,
+			usage: cmd.usage,
+			permission: cmd.permission,
+			cost: cmd.cost,
+			hidden: cmd.hidden,
+			aliases: cmd.aliases || [],
+			hasHandler: true,
+			subRows: childRows && childRows.length > 0 ? childRows : undefined,
+		}
+	})
+})
+
+function rowMatchesFilter(row: CommandDirectoryRow, filter: string): boolean {
+	const match = row.activeTrigger.toLowerCase().includes(filter)
+		|| row.id.toLowerCase().includes(filter)
+		|| row.fullTriggerPath.toLowerCase().includes(filter)
+		|| (row.description && row.description.toLowerCase().includes(filter))
+		|| (row.usage && row.usage.toLowerCase().includes(filter))
+		|| (row.aliases && row.aliases.some(a => a.trigger.toLowerCase().includes(filter)))
+
+	if (match)
+		return true
+
+	if (row.subRows && row.subRows.length > 0) {
+		return row.subRows.some(child => rowMatchesFilter(child, filter))
+	}
+
+	return false
+}
+
+function filterTree(rows: CommandDirectoryRow[], filter: string): CommandDirectoryRow[] {
+	return rows
+		.filter(row => rowMatchesFilter(row, filter))
+		.map((row) => {
+			if (!row.subRows || row.subRows.length === 0)
+				return row
+
+			return {
+				...row,
+				subRows: filterTree(row.subRows, filter),
+			}
+		})
+}
+
+const filteredCommands = computed<CommandDirectoryRow[]>(() => {
 	const filter = searchQuery.value.trim().toLowerCase()
 	if (!filter)
-		return commandsList.value
+		return commandTree.value
 
-	return commandsList.value.filter((cmd) => {
-		const matchRoot = cmd.activeTrigger.toLowerCase().includes(filter)
-			|| cmd.id.toLowerCase().includes(filter)
-			|| (cmd.description && cmd.description.toLowerCase().includes(filter))
-			|| (cmd.usage && cmd.usage.toLowerCase().includes(filter))
-			|| (cmd.aliases && cmd.aliases.some((a: any) => a.trigger.toLowerCase().includes(filter)))
+	return filterTree(commandTree.value, filter)
+})
 
-		if (matchRoot)
-			return true
+// Define TanStack Table Columns
+const columnHelper = createColumnHelper<CommandDirectoryRow>()
 
-		if (cmd.subcommands) {
-			const flatSubs = getFlatSubcommands(cmd.subcommands)
-			return flatSubs.some(sub =>
-				sub.triggerPath.toLowerCase().includes(filter)
-				|| (sub.detail.description && sub.detail.description.toLowerCase().includes(filter))
-				|| (sub.detail.usage && sub.detail.usage.toLowerCase().includes(filter))
-				|| (sub.detail.aliases && sub.detail.aliases.some((a: any) => a.trigger.toLowerCase().includes(filter))),
-			)
-		}
+const columns = computed(() => {
+	const cols: any[] = [
+		columnHelper.display({
+			id: 'trigger',
+			header: 'Command Trigger',
+			cell: ({ row }) => {
+				const item = row.original
+				const hasChildren = row.getCanExpand()
+				const isExpanded = row.getIsExpanded()
+				const depth = row.depth
 
-		return false
-	})
+				return h('div', {
+					class: 'flex items-center gap-1.5 py-1',
+					style: { paddingLeft: `${depth * 1.5}rem` },
+				}, [
+					hasChildren
+						? h('button', {
+								class: 'rounded-sm p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer',
+								title: 'Toggle nested subcommands',
+								onClick: (e: MouseEvent) => {
+									e.stopPropagation()
+									row.toggleExpanded()
+								},
+							}, [
+								h(ChevronRight, {
+									class: cn('size-4 text-primary transition-transform duration-200', isExpanded && 'rotate-90'),
+								}),
+							])
+						: depth > 0
+							? h(CornerDownRight, { class: 'size-3.5 shrink-0 text-muted-foreground/50 ml-1 mr-0.5' })
+							: null,
+
+					h('div', {
+						class: cn('flex flex-wrap items-baseline gap-2', hasChildren && 'cursor-pointer select-none'),
+						onClick: hasChildren ? () => row.toggleExpanded() : undefined,
+					}, [
+						h('span', { class: 'font-bold whitespace-nowrap text-foreground' }, item.fullTriggerPath),
+						item.aliases && item.aliases.length > 0
+							? h('span', { class: 'flex items-center gap-1 text-xs text-muted-foreground' }, item.aliases.map(alias =>
+									h('span', {
+										key: alias.trigger,
+										class: 'rounded-sm bg-muted/65 px-1.5 py-0.5 font-mono text-[11px]',
+									}, `!${alias.trigger}`),
+								))
+							: null,
+						item.hasHandler === false
+							? h(Badge, {
+									variant: 'outline',
+									class: 'border-amber-500/20 bg-amber-500/5 px-1 py-0 text-[9px] font-medium text-amber-600 dark:text-amber-400',
+								}, () => 'Route Group')
+							: null,
+					]),
+				])
+			},
+		}),
+		columnHelper.accessor('type', {
+			header: 'Type',
+			cell: info => h(Badge, { variant: 'outline', class: 'capitalize' }, () => info.getValue()),
+		}),
+		columnHelper.display({
+			id: 'description',
+			header: 'Description & Usage',
+			cell: ({ row }) => {
+				const item = row.original
+				if (!item.description && !item.usage) {
+					return h('span', { class: 'text-xs text-muted-foreground/60 italic' }, '—')
+				}
+				return h('div', { class: 'flex flex-col gap-1 py-1' }, [
+					item.description ? h('span', { class: 'text-sm text-foreground' }, item.description) : null,
+					item.usage ? h('span', { class: 'font-mono text-xs text-muted-foreground' }, `Usage: ${item.usage}`) : null,
+				])
+			},
+		}),
+		columnHelper.accessor('cost', {
+			header: 'Points Cost',
+			cell: (info) => {
+				const cost = info.getValue()
+				return cost > 0
+					? h(CommandPointsBadge, { cost })
+					: h('span', { class: 'text-xs text-muted-foreground' }, 'Free')
+			},
+		}),
+	]
+
+	if (isPrivileged.value) {
+		cols.push(
+			columnHelper.accessor('permission', {
+				header: 'Permission',
+				cell: info => h(CommandPermissionBadge, { permission: info.getValue() }),
+			}),
+			columnHelper.accessor('hidden', {
+				id: 'visibility',
+				header: () => h('div', { class: 'text-right' }, 'Visibility'),
+				cell: info => h('div', { class: 'flex justify-end' }, [
+					info.getValue()
+						? h(Badge, { variant: 'outline', class: 'border-muted-foreground/30 text-[10px] text-muted-foreground' }, () => 'Hidden')
+						: h('span', { class: 'text-xs text-muted-foreground' }, 'Public'),
+				]),
+			}),
+		)
+	}
+
+	return cols
 })
 </script>
 
@@ -126,207 +296,20 @@ const filteredCommands = computed(() => {
 					</div>
 				</div>
 
-				<!-- Table Container -->
-				<div class="relative overflow-hidden rounded-lg border bg-card/25 backdrop-blur-xs">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>
-									Command Trigger
-								</TableHead>
-								<TableHead>
-									Type
-								</TableHead>
-								<TableHead>
-									Description & Usage
-								</TableHead>
-								<TableHead>
-									Points Cost
-								</TableHead>
-								<TableHead v-if="isPrivileged">
-									Permission
-								</TableHead>
-								<TableHead v-if="isPrivileged" class="text-right">
-									Visibility
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody class="divide-y divide-border/60">
-							<TableRow v-if="loading" class="text-center">
-								<TableCell :colspan="isPrivileged ? 6 : 4" class="py-12 text-muted-foreground">
-									Loading bot commands...
-								</TableCell>
-							</TableRow>
-							<TableRow v-else-if="filteredCommands.length === 0" class="text-center">
-								<TableCell :colspan="isPrivileged ? 6 : 4" class="py-12 text-muted-foreground">
-									No commands found matching your search.
-								</TableCell>
-							</TableRow>
-							<template v-for="command in filteredCommands" v-else :key="command.id">
-								<TableRow
-									class="
-										transition-colors
-										hover:bg-muted/40
-									"
-								>
-									<!-- Trigger Name & Aliases -->
-									<TableCell class="py-3.5">
-										<div class="flex flex-col gap-1.5">
-											<div class="flex items-center gap-1.5">
-												<button
-													v-if="command.subcommands && Object.keys(command.subcommands).length > 0"
-													class="
-														rounded-sm p-1 text-muted-foreground transition-colors
-														hover:bg-muted hover:text-foreground
-													"
-													title="Toggle nested subcommands"
-													@click="toggleCommandExpanded(command.id)"
-												>
-													<ChevronRight class="size-4 text-primary transition-transform" :class="{ 'rotate-90': isExpanded(command.id) }" />
-												</button>
-
-												<div
-													class="flex items-baseline gap-2"
-													:class="{ 'cursor-pointer': command.subcommands && Object.keys(command.subcommands).length > 0 }"
-													@click="command.subcommands && Object.keys(command.subcommands).length > 0 ? toggleCommandExpanded(command.id) : null"
-												>
-													<span class="font-bold whitespace-nowrap text-foreground">
-														!{{ command.activeTrigger }}
-													</span>
-													<span v-if="command.aliases && command.aliases.length > 0" class="flex items-center gap-1 text-xs text-muted-foreground">
-														<span v-for="alias in command.aliases" :key="alias.trigger" class="rounded-sm bg-muted/65 px-1.5 py-0.5 font-mono text-[11px]">
-															!{{ alias.trigger }}
-														</span>
-													</span>
-												</div>
-											</div>
-										</div>
-									</TableCell>
-
-									<!-- Type (Core / Custom) -->
-									<TableCell>
-										<Badge variant="outline" class="capitalize">
-											{{ command.type }}
-										</Badge>
-									</TableCell>
-
-									<!-- Description & Usage -->
-									<TableCell class="py-3.5">
-										<div class="flex flex-col gap-1">
-											<span v-if="command.description" class="text-sm text-foreground">
-												{{ command.description }}
-											</span>
-											<span v-if="command.usage" class="font-mono text-xs text-muted-foreground">
-												Usage: {{ command.usage }}
-											</span>
-											<span v-if="!command.description && !command.usage" class="text-xs text-muted-foreground/60 italic">
-												—
-											</span>
-										</div>
-									</TableCell>
-
-									<!-- Points Cost -->
-									<TableCell>
-										<CommandPointsBadge v-if="command.cost > 0" :cost="command.cost" />
-										<span v-else class="text-xs text-muted-foreground">Free</span>
-									</TableCell>
-
-									<!-- Permission Badge (for privileged users) -->
-									<TableCell v-if="isPrivileged">
-										<CommandPermissionBadge :permission="command.permission" />
-									</TableCell>
-
-									<!-- Hidden Status (for privileged users) -->
-									<TableCell v-if="isPrivileged" class="text-right">
-										<Badge v-if="command.hidden" variant="outline" class="border-muted-foreground/30 text-[10px] text-muted-foreground">
-											Hidden
-										</Badge>
-										<span v-else class="text-xs text-muted-foreground">Public</span>
-									</TableCell>
-								</TableRow>
-
-								<!-- Subcommands Breakdown -->
-								<TableRow v-if="command.subcommands && Object.keys(command.subcommands).length > 0 && isExpanded(command.id)" class="bg-muted/10">
-									<TableCell :colspan="isPrivileged ? 6 : 4" class="px-6 py-4">
-										<div class="ml-5 flex flex-col gap-3 border-l border-border/80 py-2 pr-2 pl-4">
-											<div class="flex items-center justify-between select-none">
-												<span class="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-													Subcommands
-												</span>
-												<Badge variant="outline" class="uppercase">
-													{{ getFlatSubcommands(command.subcommands).length }} Options
-												</Badge>
-											</div>
-
-											<div class="grid gap-2">
-												<div
-													v-for="subcommandItem in getFlatSubcommands(command.subcommands)"
-													:key="subcommandItem.detail.id"
-													class="
-														flex flex-col justify-between rounded-lg border border-border/60 bg-card p-3 transition-all
-														hover:bg-muted/40
-														sm:flex-row sm:items-center
-													"
-													:style="{
-														marginLeft: `${(subcommandItem.name.trim().split(/\s+/).length - 1) * 1.5}rem`,
-													}"
-												>
-													<div class="flex min-w-0 items-center gap-3">
-														<CornerDownRight
-															v-if="subcommandItem.name.trim().split(/\s+/).length - 1 > 0"
-															class="size-3.5 shrink-0 text-muted-foreground/50"
-														/>
-														<div class="flex min-w-0 flex-col gap-1">
-															<div class="flex flex-wrap items-center gap-1.5">
-																<span class="font-mono text-xs font-bold text-foreground">
-																	!{{ command.activeTrigger }} {{ subcommandItem.triggerPath }}
-																</span>
-																<span v-if="subcommandItem.detail.aliases && subcommandItem.detail.aliases.length > 0" class="flex items-center gap-1 text-xs text-muted-foreground">
-																	<span v-for="alias in subcommandItem.detail.aliases" :key="alias.trigger" class="rounded-sm bg-muted/65 px-1.5 py-0.5 font-mono text-[11px]">
-																		!{{ alias.trigger }}
-																	</span>
-																</span>
-																<Badge
-																	v-if="subcommandItem.detail.hasHandler === false" variant="outline" class="
-																		border-amber-500/20 bg-amber-500/5 px-1 py-0 text-[9px] font-medium text-amber-600
-																		dark:text-amber-400
-																	"
-																>
-																	Route Group
-																</Badge>
-															</div>
-															<span v-if="subcommandItem.detail.description" class="text-xs text-muted-foreground">
-																{{ subcommandItem.detail.description }}
-															</span>
-															<span v-if="subcommandItem.detail.usage" class="font-mono text-[11px] text-muted-foreground/80">
-																Usage: {{ subcommandItem.detail.usage }}
-															</span>
-														</div>
-													</div>
-
-													<div
-														class="
-															mt-3 flex shrink-0 items-center gap-2 select-none
-															sm:mt-0 sm:justify-end
-														"
-													>
-														<CommandPointsBadge v-if="subcommandItem.detail.cost > 0" :cost="subcommandItem.detail.cost" />
-														<template v-if="isPrivileged">
-															<CommandPermissionBadge :permission="subcommandItem.detail.permission" />
-															<Badge v-if="subcommandItem.detail.hidden" variant="outline" class="border-muted-foreground/30 text-[9px] text-muted-foreground">
-																Hidden
-															</Badge>
-														</template>
-													</div>
-												</div>
-											</div>
-										</div>
-									</TableCell>
-								</TableRow>
-							</template>
-						</TableBody>
-					</Table>
-				</div>
+				<!-- DataTable Component -->
+				<DataTable
+					v-model:expanded="expandedState"
+					:columns="columns"
+					:data="filteredCommands"
+					:loading="loading"
+					loading-text="Loading bot commands..."
+					:get-sub-rows="(row: CommandDirectoryRow) => row.subRows"
+					:auto-reset-expanded="false"
+				>
+					<template #empty>
+						No commands found matching your search.
+					</template>
+				</DataTable>
 			</div>
 		</AppPageContainer>
 	</div>

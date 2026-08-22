@@ -191,6 +191,9 @@ async function confirmDelete() {
 								<!-- Trigger Name & Description -->
 								<TableCell class="py-3.5">
 									<div class="flex flex-col gap-1">
+										<span class="font-bold whitespace-nowrap text-foreground">
+											!{{ command.trigger }}
+										</span>
 										<span v-if="command.description" class="line-clamp-1 max-w-50 text-xs text-muted-foreground">
 											{{ command.description }}
 										</span>

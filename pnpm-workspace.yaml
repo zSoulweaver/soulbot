@@ -1,5 +1,9 @@
 minimumReleaseAge: 1440
 
+minimumReleaseAgeExclude:
+  - '@vue/language-core@3.3.11'
+  - eslint@10.9.0
+  - vue-tsc@3.3.11
 shellEmulator: true
 
 trustPolicy: no-downgrade

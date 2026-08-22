@@ -120,6 +120,7 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 		userCooldown: subcommand.userCooldown,
 		allowWhisper: Boolean(subcommand.allowWhisper),
 		whisperSilentResponse: Boolean(subcommand.whisperSilentResponse),
+		hidden: Boolean(subcommand.hidden),
 		aliases: [],
 		templates: subcommand.templates || [],
 		hasHandler: subcommand.hasHandler,
@@ -236,6 +237,9 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 												<span v-if="command.activeTrigger !== command.id" class="rounded-sm bg-muted/65 px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
 													{{ command.id }}
 												</span>
+												<Badge v-if="command.hidden" variant="outline" class="border-muted-foreground/30 text-[9px] text-muted-foreground">
+													Hidden
+												</Badge>
 											</div>
 										</div>
 										<span class="line-clamp-1 max-w-70 pl-1 text-xs text-muted-foreground">
@@ -351,6 +355,11 @@ function openSubCommandQuickEdit(subcommandItem: any, parentCommand: Command) {
 																"
 															>
 																Route Group
+															</Badge>
+															<Badge
+																v-if="subcommandItem.detail.hidden" variant="outline" class="border-muted-foreground/30 px-1 py-0 text-[9px] text-muted-foreground"
+															>
+																Hidden
 															</Badge>
 														</div>
 														<span class="line-clamp-2 text-xs text-muted-foreground">

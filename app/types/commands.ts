@@ -14,3 +14,6 @@ export interface Command extends Omit<CoreCommand, 'aliases' | 'subcommands'> {
 	hasHandler?: boolean
 	subcommands?: CoreCommand['subcommands']
 }
+
+export type PublicDirectoryResponse = Awaited<ReturnType<typeof import('~~/server/api/commands/directory.get').default>>
+export type PublicCommand = PublicDirectoryResponse[number]

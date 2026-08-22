@@ -33,6 +33,7 @@ export const navigation: NavGroup[] = [
 	{
 		label: '',
 		items: [
+			{ title: 'Commands', url: '/commands', icon: Terminal },
 			{ title: 'Song Queue', url: '/song-queue', icon: Music },
 		],
 	},

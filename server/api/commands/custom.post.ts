@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { clearCommandsDirectoryCache } from '~~/server/api/commands/directory.get'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands, customCommands } from '~~/server/database/schema'
@@ -13,6 +14,7 @@ const createCustomCommandSchema = z.object({
 	globalCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	userCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	permission: z.string().default('everyone'),
+	hidden: z.boolean().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -29,7 +31,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { trigger, response, description, cost, globalCooldown, userCooldown, permission } = parsed.data
+	const { trigger, response, description, cost, globalCooldown, userCooldown, permission, hidden } = parsed.data
 	const cleanTrigger = trigger.trim().toLowerCase().replace(/^!/, '')
 
 	// Prevent collision with another root core command trigger
@@ -85,11 +87,13 @@ export default defineEventHandler(async (event) => {
 		globalCooldown,
 		userCooldown,
 		permission,
+		hidden,
 		createdAt: new Date(),
 		updatedAt: new Date(),
 	})
 
 	await registry.syncWithDb()
+	await clearCommandsDirectoryCache()
 
 	return { success: true, id: customId }
 })

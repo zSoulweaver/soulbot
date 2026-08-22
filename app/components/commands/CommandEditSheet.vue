@@ -17,6 +17,7 @@ const costValue = ref(0)
 const globalCooldownValue = ref(0)
 const userCooldownValue = ref(0)
 const isEnabled = ref(true)
+const isHidden = ref(false)
 const permissionValue = ref('everyone')
 const allowWhisperValue = ref(false)
 const whisperSilentResponseValue = ref(false)
@@ -37,6 +38,7 @@ watch(() => props.open, (isOpen) => {
 		globalCooldownValue.value = props.command.globalCooldown
 		userCooldownValue.value = props.command.userCooldown
 		isEnabled.value = props.command.enabled
+		isHidden.value = Boolean(props.command.hidden)
 		permissionValue.value = props.command.permission || 'everyone'
 		allowWhisperValue.value = Boolean(props.command.allowWhisper)
 		whisperSilentResponseValue.value = Boolean(props.command.whisperSilentResponse)
@@ -141,6 +143,7 @@ async function saveAllConfig() {
 				permission: permissionValue.value,
 				allowWhisper: allowWhisperValue.value,
 				whisperSilentResponse: whisperSilentResponseValue.value,
+				hidden: isHidden.value,
 			},
 		})
 
@@ -283,6 +286,19 @@ function navigateToTemplateEditor() {
 						</Item>
 					</template>
 				</div>
+
+				<!-- Toggle Switch for Hiding from Public Directory -->
+				<Item variant="muted">
+					<ItemContent>
+						<ItemTitle>Hide from Directory</ItemTitle>
+						<ItemDescription>
+							Hide this command from the public commands directory page for viewers.
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Switch v-model:model-value="isHidden" />
+					</ItemActions>
+				</Item>
 
 				<FieldGroup>
 					<!-- Active Trigger Word Segment -->

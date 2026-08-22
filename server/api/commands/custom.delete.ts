@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { clearCommandsDirectoryCache } from '~~/server/api/commands/directory.get'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, customCommands } from '~~/server/database/schema'
@@ -32,6 +33,7 @@ export default defineEventHandler(async (event) => {
 	await db.delete(customCommands).where(eq(customCommands.id, id))
 
 	await registry.syncWithDb()
+	await clearCommandsDirectoryCache()
 
 	return { success: true }
 })

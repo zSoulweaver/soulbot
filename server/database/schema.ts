@@ -33,6 +33,7 @@ export const commands = sqliteTable('commands', {
 	permission: text('permission'), // custom permission override
 	allowWhisper: integer('allow_whisper', { mode: 'boolean' }).default(false).notNull(),
 	whisperSilentResponse: integer('whisper_silent_response', { mode: 'boolean' }).default(false).notNull(),
+	hidden: integer('hidden', { mode: 'boolean' }).default(false).notNull(),
 })
 
 export const commandAliases = sqliteTable('command_aliases', {
@@ -92,6 +93,7 @@ export const customCommands = sqliteTable('custom_commands', {
 	userCooldown: integer('user_cooldown').default(0).notNull(),
 	permission: text('permission').default('everyone').notNull(), // 'everyone' | 'subscriber' | 'vip' | 'moderator' | 'broadcaster'
 	description: text('description'),
+	hidden: integer('hidden', { mode: 'boolean' }).default(false).notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })

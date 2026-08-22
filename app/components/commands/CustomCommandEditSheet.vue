@@ -18,6 +18,7 @@ const costValue = ref(0)
 const globalCooldownValue = ref(0)
 const userCooldownValue = ref(0)
 const isEnabled = ref(true)
+const isHidden = ref(false)
 const permissionValue = ref('everyone')
 
 const isSaving = ref(false)
@@ -47,6 +48,7 @@ watch(() => props.open, (isOpen) => {
 			globalCooldownValue.value = props.command.globalCooldown || 0
 			userCooldownValue.value = props.command.userCooldown || 0
 			isEnabled.value = props.command.enabled !== false
+			isHidden.value = Boolean(props.command.hidden)
 			permissionValue.value = props.command.permission || 'everyone'
 		}
 		else {
@@ -58,6 +60,7 @@ watch(() => props.open, (isOpen) => {
 			globalCooldownValue.value = 0
 			userCooldownValue.value = 0
 			isEnabled.value = true
+			isHidden.value = false
 			permissionValue.value = 'everyone'
 		}
 	}
@@ -90,6 +93,7 @@ async function saveConfig() {
 			globalCooldown: globalCooldownValue.value,
 			userCooldown: userCooldownValue.value,
 			permission: permissionValue.value,
+			hidden: isHidden.value,
 		}
 
 		if (isEditMode.value) {
@@ -145,6 +149,19 @@ async function saveConfig() {
 					</ItemContent>
 					<ItemActions>
 						<Switch v-model:model-value="isEnabled" />
+					</ItemActions>
+				</Item>
+
+				<!-- Toggle Switch for Hiding from Public Directory -->
+				<Item variant="muted">
+					<ItemContent>
+						<ItemTitle>Hide from Directory</ItemTitle>
+						<ItemDescription>
+							Hide this custom command from the public commands directory page for viewers.
+						</ItemDescription>
+					</ItemContent>
+					<ItemActions>
+						<Switch v-model:model-value="isHidden" />
 					</ItemActions>
 				</Item>
 

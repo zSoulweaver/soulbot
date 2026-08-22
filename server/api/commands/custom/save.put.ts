@@ -1,5 +1,6 @@
 import { and, eq, ne } from 'drizzle-orm'
 import { z } from 'zod'
+import { clearCommandsDirectoryCache } from '~~/server/api/commands/directory.get'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands, customCommands } from '~~/server/database/schema'
@@ -15,6 +16,7 @@ const saveCustomCommandSchema = z.object({
 	globalCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	userCooldown: z.preprocess(value => (value === null || value === undefined || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value)), z.number().int().nonnegative()),
 	permission: z.string().default('everyone'),
+	hidden: z.boolean().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +33,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { id, trigger, response, description, enabled, cost, globalCooldown, userCooldown, permission } = parsed.data
+	const { id, trigger, response, description, enabled, cost, globalCooldown, userCooldown, permission, hidden } = parsed.data
 	const cleanTrigger = trigger.trim().toLowerCase().replace(/^!/, '')
 
 	// Validate command exists
@@ -96,11 +98,13 @@ export default defineEventHandler(async (event) => {
 			globalCooldown,
 			userCooldown,
 			permission,
+			hidden,
 			updatedAt: new Date(),
 		})
 		.where(eq(customCommands.id, id))
 
 	await registry.syncWithDb()
+	await clearCommandsDirectoryCache()
 
 	return { success: true }
 })

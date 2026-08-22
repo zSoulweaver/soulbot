@@ -43,6 +43,13 @@
 			"when": 1787228209811,
 			"tag": "0005_multi_death_counters",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1787360174182,
+			"tag": "0006_clever_apocalypse",
+			"breakpoints": true
 		}
 	]
 }

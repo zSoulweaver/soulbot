@@ -1,5 +1,6 @@
 import { and, eq, ne } from 'drizzle-orm'
 import { z } from 'zod'
+import { clearCommandsDirectoryCache } from '~~/server/api/commands/directory.get'
 import { registry } from '~~/server/bot/core/registry'
 import { db } from '~~/server/database'
 import { commandAliases, commands } from '~~/server/database/schema'
@@ -15,6 +16,7 @@ const saveCommandSchema = z.object({
 	permission: z.string().optional().nullable(),
 	allowWhisper: z.boolean().default(false),
 	whisperSilentResponse: z.boolean().default(false),
+	hidden: z.boolean().default(false),
 })
 
 export default defineEventHandler(async (event) => {
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { id, trigger, enabled, cost, globalCooldown, userCooldown, permission, allowWhisper, whisperSilentResponse } = parsed.data
+	const { id, trigger, enabled, cost, globalCooldown, userCooldown, permission, allowWhisper, whisperSilentResponse, hidden } = parsed.data
 	const cleanTrigger = trigger ? trigger.toLowerCase() : null
 
 	const isSubCommand = id.includes('.')
@@ -125,6 +127,7 @@ export default defineEventHandler(async (event) => {
 				permission,
 				allowWhisper,
 				whisperSilentResponse,
+				hidden,
 			})
 			.where(eq(commands.id, id))
 	}
@@ -140,11 +143,13 @@ export default defineEventHandler(async (event) => {
 			permission,
 			allowWhisper,
 			whisperSilentResponse,
+			hidden,
 		})
 	}
 
 	// Trigger in-memory re-sync of the live Twitch chat client triggers
 	await registry.syncWithDb()
+	await clearCommandsDirectoryCache()
 
 	return { success: true }
 })

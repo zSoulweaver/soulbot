@@ -13,6 +13,8 @@
 		"db:studio": "drizzle-kit studio",
 		"lint": "eslint",
 		"lint:fix": "eslint --fix",
+		"typecheck": "nuxt typecheck",
+		"check": "pnpm typecheck && pnpm lint:fix",
 		"test": "NUXT_SESSION_PASSWORD=12345678901234567890123456789012 NODE_ENV=test npm_config_loglevel=silent vitest",
 		"test:run": "NUXT_SESSION_PASSWORD=12345678901234567890123456789012 NODE_ENV=test npm_config_loglevel=silent vitest run"
 	},

@@ -146,15 +146,13 @@ const columns: any[] = [
 		subheading="Track and adjust death counts per game for Twitch stream command responses."
 	>
 		<template #header-actions>
-			<div class="flex items-center gap-2">
-				<Button variant="outline" size="sm" @click="openAddSheet">
-					<PlusIcon data-icon="inline-start" />
-					Add Game
-				</Button>
-				<Button variant="ghost" size="icon-sm" :disabled="loadingTable" @click="refreshDeaths">
-					<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-				</Button>
-			</div>
+			<Button @click="openAddSheet">
+				<PlusIcon data-icon="inline-start" />
+				Add Game
+			</Button>
+			<Button variant="ghost" :disabled="loadingTable" @click="refreshDeaths">
+				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
+			</Button>
 		</template>
 
 		<div class="flex flex-col gap-4">

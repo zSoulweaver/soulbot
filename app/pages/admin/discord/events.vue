@@ -137,16 +137,11 @@ async function saveSettings() {
 	>
 		<template #header-actions>
 			<Button
-				variant="outline"
-				size="sm"
+				variant="ghost"
 				:disabled="loading"
 				@click="refreshSettings"
 			>
-				<RefreshCcw
-					class="mr-2 size-4"
-					:class="{ 'animate-spin': loading }"
-				/>
-				Refresh
+				<RefreshCcw :class="{ 'animate-spin': loading }" />
 			</Button>
 		</template>
 

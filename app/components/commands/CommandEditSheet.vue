@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import type { Alias, Command } from '~/types/commands'
-import { ArrowRight, CornerDownRight, HelpCircle, Plus, Save, Trash } from '@lucide/vue'
+import { ArrowRight, CornerDownRight, HelpCircle, Pencil, Plus, Save, Trash } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import CommandLimitsFields from '~/components/commands/CommandLimitsFields.vue'
+import CommandPermissionSelect from '~/components/commands/CommandPermissionSelect.vue'
+import CommandStatusSettings from '~/components/commands/CommandStatusSettings.vue'
+import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group'
+import {
+	SettingsGroup,
+	SettingsGroupAction,
+	SettingsGroupContent,
+	SettingsGroupDescription,
+	SettingsGroupItem,
+	SettingsGroupLabel,
+} from '~/components/ui/settings-group'
 
 const props = defineProps<{
 	command: Command | null
@@ -22,13 +36,27 @@ const permissionValue = ref('everyone')
 const allowWhisperValue = ref(false)
 const whisperSilentResponseValue = ref(false)
 
-// Aliases edit states
+// Aliases edit states (node-scoped: only aliases targeting the open node)
 const aliasesList = ref<Alias[]>([])
+const showAddForm = ref(false)
 const newAliasTrigger = ref('')
-const newAliasSubcommand = ref('__root__')
 const newAliasOverrides = ref('')
+const editingKey = ref<string | null>(null)
+const editTrigger = ref('')
+const editOverrides = ref('')
 
 const isSaving = ref(false)
+
+function cleanTriggerInput(value: string): string {
+	return value.trim().toLowerCase().replace(/^!/, '')
+}
+
+function splitOverrides(value: string): string[] {
+	return value
+		.split(',')
+		.map(segment => segment.trim())
+		.filter(Boolean)
+}
 
 // Populate values on edit open
 watch(() => props.open, (isOpen) => {
@@ -43,16 +71,12 @@ watch(() => props.open, (isOpen) => {
 		allowWhisperValue.value = Boolean(props.command.allowWhisper)
 		whisperSilentResponseValue.value = Boolean(props.command.whisperSilentResponse)
 
-		// Clone aliases and normalize null target subcommands to '__root__'
-		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || [])).map((alias: any) => ({
-			...alias,
-			subcommand: alias.subcommand || '__root__',
-		}))
+		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || []))
 
-		// Clear inputs
+		showAddForm.value = false
 		newAliasTrigger.value = ''
-		newAliasSubcommand.value = '__root__'
 		newAliasOverrides.value = ''
+		editingKey.value = null
 	}
 })
 
@@ -60,38 +84,42 @@ const isSubCommand = computed(() => {
 	return props.command?.id.includes('.') ?? false
 })
 
+// Root command id and relative dotted scope path of the open node
+const rootId = computed(() => props.command?.id.split('.')[0] ?? '')
+const scopePath = computed(() => {
+	const id = props.command?.id
+	if (!id)
+		return null
+	const dotIndex = id.indexOf('.')
+	return dotIndex === -1 ? null : id.slice(dotIndex + 1)
+})
+
 const baseCommandTrigger = computed(() => {
 	if (!props.command)
 		return ''
-	return triggerName.value.trim().toLowerCase().replace(/^!/, '') || props.command.id
-})
-
-const executableSubcommandPaths = computed(() => {
-	if (!props.command || !props.command.subcommands)
-		return []
-	const paths: string[] = []
-
-	function traverse(subcommandsMap: any, currentPath: string) {
-		for (const [name, subcommandRecord] of Object.entries(subcommandsMap)) {
-			if (!subcommandRecord || typeof subcommandRecord !== 'object')
-				continue
-			const detail = subcommandRecord as any
-			const path = currentPath ? `${currentPath}.${name}` : name
-			if (detail.hasHandler !== false) {
-				paths.push(path)
-			}
-			if (detail.subcommands) {
-				traverse(detail.subcommands, path)
-			}
-		}
+	if (!scopePath.value) {
+		return cleanTriggerInput(triggerName.value) || props.command.id
 	}
-
-	traverse(props.command.subcommands, '')
-	return paths
+	return (props.command.parentTriggerPath || `!${rootId.value}`).replace(/^!/, '')
 })
+
+// Resolved execution target shared by all aliases in this scope: !<baseTrigger> [path]
+const resolvedTarget = computed(() => {
+	const parts = [baseCommandTrigger.value]
+	if (scopePath.value) {
+		parts.push(scopePath.value.replace(/\./g, ' '))
+	}
+	return parts.filter(Boolean).join(' ')
+})
+
+function toggleAddForm() {
+	showAddForm.value = !showAddForm.value
+	newAliasTrigger.value = ''
+	newAliasOverrides.value = ''
+}
 
 function addAliasLocally() {
-	const trigger = newAliasTrigger.value.trim().toLowerCase().replace(/^!/, '')
+	const trigger = cleanTriggerInput(newAliasTrigger.value)
 	if (!trigger) {
 		toast.error('Alias trigger word is required')
 		return
@@ -102,24 +130,61 @@ function addAliasLocally() {
 		return
 	}
 
-	const overrides = newAliasOverrides.value
-		.split(',')
-		.map(segment => segment.trim())
-		.filter(Boolean)
+	const overrides = splitOverrides(newAliasOverrides.value)
 
 	aliasesList.value.push({
 		trigger,
-		subcommand: newAliasSubcommand.value === '__root__' ? null : newAliasSubcommand.value || null,
+		subcommand: scopePath.value,
 		overrideArgs: overrides.length > 0 ? overrides : null,
 	})
 
 	newAliasTrigger.value = ''
-	newAliasSubcommand.value = '__root__'
 	newAliasOverrides.value = ''
+	showAddForm.value = false
 }
 
-function removeAliasLocally(index: number) {
-	aliasesList.value.splice(index, 1)
+function removeAliasLocally(trigger: string) {
+	aliasesList.value = aliasesList.value.filter(alias => alias.trigger !== trigger)
+	if (editingKey.value === trigger) {
+		cancelEditAlias()
+	}
+}
+
+function startEditAlias(alias: Alias) {
+	editingKey.value = alias.trigger
+	editTrigger.value = alias.trigger
+	editOverrides.value = alias.overrideArgs?.join(', ') ?? ''
+}
+
+function cancelEditAlias() {
+	editingKey.value = null
+	editTrigger.value = ''
+	editOverrides.value = ''
+}
+
+function saveEditAlias(originalTrigger: string) {
+	const trigger = cleanTriggerInput(editTrigger.value)
+	if (!trigger) {
+		toast.error('Alias trigger word is required')
+		return
+	}
+
+	if (aliasesList.value.some(alias => alias.trigger !== originalTrigger && alias.trigger === trigger)) {
+		toast.error(`Alias '!${trigger}' already exists in this list`)
+		return
+	}
+
+	const index = aliasesList.value.findIndex(alias => alias.trigger === originalTrigger)
+	if (index === -1)
+		return
+
+	const overrides = splitOverrides(editOverrides.value)
+	aliasesList.value[index] = {
+		...aliasesList.value[index]!,
+		trigger,
+		overrideArgs: overrides.length > 0 ? overrides : null,
+	}
+	cancelEditAlias()
 }
 
 async function saveAllConfig() {
@@ -128,7 +193,7 @@ async function saveAllConfig() {
 	isSaving.value = true
 
 	try {
-		const cleanTrigger = triggerName.value.trim().toLowerCase().replace(/^!/, '') || null
+		const cleanTrigger = cleanTriggerInput(triggerName.value) || null
 
 		// Update primary command DB config
 		await $fetch('/api/commands/save', {
@@ -147,15 +212,15 @@ async function saveAllConfig() {
 			},
 		})
 
-		// Overwrite aliases list (only for root commands)
-		if (!isSubCommand.value) {
+		// Replace aliases for this node's scope only (group nodes have no handler to target)
+		if (props.command.hasHandler !== false) {
 			await $fetch('/api/commands/aliases', {
 				method: 'PUT',
 				body: {
-					commandId: props.command.id,
+					commandId: rootId.value,
+					subcommand: scopePath.value,
 					aliases: aliasesList.value.map(alias => ({
 						trigger: alias.trigger,
-						subcommand: alias.subcommand === '__root__' ? null : alias.subcommand,
 						overrideArgs: alias.overrideArgs,
 					})),
 				},
@@ -163,9 +228,9 @@ async function saveAllConfig() {
 		}
 
 		const displayName = isSubCommand.value
-			? (props.command.trigger || props.command.id.split('.').pop())
+			? `!${baseCommandTrigger.value} ${scopePath.value?.replace(/\./g, ' ')}`.trim()
 			: `!${cleanTrigger || props.command.id}`
-		toast.success(`Saved Quick Config for "${displayName}"!`)
+		toast.success(`Saved settings for "${displayName}"!`)
 		emit('saved')
 		emit('update:open', false)
 	}
@@ -183,30 +248,29 @@ function navigateToTemplateEditor() {
 		return
 	emit('update:open', false)
 
-	const rootId = props.command.id.split('.')[0]
-	if (isSubCommand.value && rootId) {
-		const subPath = props.command.id.slice(rootId.length + 1).replace(/\./g, ' ')
-		navigateTo(`/admin/commands/${rootId}?path=${subPath}`)
+	if (isSubCommand.value && rootId.value) {
+		const subPath = scopePath.value?.replace(/\./g, ' ')
+		navigateTo(subPath ? `/admin/commands/${rootId.value}?path=${subPath}` : `/admin/commands/${rootId.value}`)
 	}
 	else {
-		navigateTo(`/admin/commands/${rootId}`)
+		navigateTo(`/admin/commands/${rootId.value}`)
 	}
 }
 </script>
 
 <template>
 	<Sheet :open="props.open" @update:open="emit('update:open', $event)">
-		<SheetContent class="sm:max-w-2xl">
+		<SheetContent class="sm:max-w-3xl">
 			<SheetHeader class="border-b border-border">
 				<SheetTitle>
-					Quick Settings - <span class="font-mono font-bold text-primary">!{{ props.command?.id.replace(/\./g, ' ') }}</span>
+					Command Settings - <span class="font-mono font-bold text-primary">!{{ props.command?.id.replace(/\./g, ' ') }}</span>
 				</SheetTitle>
 				<SheetDescription>
-					Adjust point costs, dynamic execution limits, and trigger alias redirections.
+					Adjust activation status, trigger access, point costs, execution limits, and node-scoped alias redirections.
 				</SheetDescription>
 			</SheetHeader>
 
-			<div class="flex flex-col gap-6 overflow-y-auto px-4">
+			<div class="flex flex-col gap-6 overflow-y-auto px-4 py-2">
 				<!-- Alert for Non-executable Command Groups -->
 				<Alert v-if="props.command?.hasHandler === false">
 					<HelpCircle />
@@ -218,224 +282,194 @@ function navigateToTemplateEditor() {
 					</AlertDescription>
 				</Alert>
 
-				<!-- Link to Template Customizer Card (Dual-mode Navigation) -->
-				<Item v-if="props.command?.hasHandler !== false" variant="outline">
-					<ItemContent>
-						<ItemTitle>Command Response Templates</ItemTitle>
-						<ItemDescription>
-							Customize chat response messages for this command and it's subcommands parameters on a dedicated full-screen page.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Button
-							size="sm" variant="outline" @click="navigateToTemplateEditor"
-						>
-							Edit Templates
-							<ArrowRight data-icon="inline-end" />
-						</Button>
-					</ItemActions>
-				</Item>
-
-				<!-- Toggle Switch for Command Active State -->
-				<Item variant="muted">
-					<ItemContent>
-						<ItemTitle>Enable Trigger</ItemTitle>
-						<ItemDescription>
-							Toggle command activation state in chat.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Switch v-model:model-value="isEnabled" />
-					</ItemActions>
-				</Item>
-
-				<!-- Toggle Switch for Whisper Execution Support & Settings -->
-				<div class="rounded-md bg-muted/50 transition-colors">
-					<Item variant="default" class="rounded-none">
-						<ItemContent>
-							<ItemTitle>Allow in Whispers</ItemTitle>
-							<ItemDescription class="line-clamp-none text-wrap">
-								Allow this command to be triggered via private whisper to the bot.
-							</ItemDescription>
-						</ItemContent>
-						<ItemActions>
-							<Switch v-model:model-value="allowWhisperValue" />
-						</ItemActions>
-					</Item>
-
-					<template v-if="allowWhisperValue">
-						<div class="border-t border-border/40" />
-						<Item variant="default" class="rounded-none">
-							<ItemContent>
-								<ItemTitle>Suppress Response When Whispered</ItemTitle>
-								<ItemDescription class="line-clamp-none text-wrap">
-									Execute whispered commands silently without sending any confirmation response to chat.
-									<span
-										class="
-											mt-1 block text-xs font-medium text-amber-500
-											dark:text-amber-400
-										"
-									>
-										Warning: With this enabled, there will be no chat output or confirmation when the command runs.
-									</span>
-								</ItemDescription>
-							</ItemContent>
-							<ItemActions>
-								<Switch v-model:model-value="whisperSilentResponseValue" />
-							</ItemActions>
-						</Item>
-					</template>
+				<!-- Response Templates Navigation -->
+				<div v-if="props.command?.hasHandler !== false" class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Response Templates</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Customize Chat Responses</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Customize chat response messages for this command and its subcommands parameters on a dedicated full-screen page.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Button size="sm" variant="outline" @click="navigateToTemplateEditor">
+									Edit Templates
+									<ArrowRight data-icon="inline-end" />
+								</Button>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
 				</div>
 
-				<!-- Toggle Switch for Hiding from Public Directory -->
-				<Item variant="muted">
-					<ItemContent>
-						<ItemTitle>Hide from Directory</ItemTitle>
-						<ItemDescription>
-							Hide this command from the public commands directory page for viewers.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Switch v-model:model-value="isHidden" />
-					</ItemActions>
-				</Item>
+				<!-- Status -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Status</span>
+					<SettingsGroup>
+						<CommandStatusSettings
+							v-model:enabled="isEnabled"
+							v-model:allow-whisper="allowWhisperValue"
+							v-model:whisper-silent-response="whisperSilentResponseValue"
+							v-model:hidden="isHidden"
+						/>
+					</SettingsGroup>
+				</div>
 
-				<FieldGroup>
-					<!-- Active Trigger Word Segment -->
-					<Field>
-						<FieldLabel for="active-trigger">
-							Active Trigger Word
-						</FieldLabel>
-						<InputGroup>
-							<InputGroupAddon class="bg-muted px-3">
-								{{ props?.command?.parentTriggerPath || '!' }}
-							</InputGroupAddon>
-							<InputGroupInput
-								id="active-trigger"
-								v-model="triggerName"
-								placeholder="trigger"
-							/>
-						</InputGroup>
-						<FieldDescription>Keep blank to use default command value.</FieldDescription>
-					</Field>
+				<!-- Trigger & Access -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Trigger &amp; Access</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Active Trigger Word</SettingsGroupLabel>
+								<SettingsGroupDescription>Keep blank to use default command value.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<InputGroup class="w-full">
+									<InputGroupAddon class="bg-muted px-3">
+										{{ props?.command?.parentTriggerPath || '!' }}
+									</InputGroupAddon>
+									<InputGroupInput
+										v-model="triggerName"
+										placeholder="trigger"
+									/>
+								</InputGroup>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-					<FieldSeparator />
+						<CommandPermissionSelect v-model="permissionValue" />
+					</SettingsGroup>
+				</div>
 
-					<!-- Custom Permission Level Segment -->
-					<CommandPermissionSelect v-model="permissionValue" />
+				<!-- Limits -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Limits</span>
+					<SettingsGroup>
+						<CommandLimitsFields
+							v-model:cost="costValue"
+							v-model:global-cooldown="globalCooldownValue"
+							v-model:user-cooldown="userCooldownValue"
+							:disabled="props.command?.hasHandler === false"
+						/>
+					</SettingsGroup>
+				</div>
 
-					<FieldSeparator />
+				<!-- Node-scoped Alias Manager -->
+				<div v-if="props.command?.hasHandler !== false" class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Aliases</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Alias Triggers</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Extra chat triggers that execute this exact node with optional argument overrides.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Button size="sm" variant="outline" @click="toggleAddForm">
+									<Plus data-icon="inline-start" />
+									Add Alias
+								</Button>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-					<!-- Config Stepper Fields (Points, Global Cooldown, User Cooldown) -->
-					<CommandLimitsFields
-						v-model:cost="costValue"
-						v-model:global-cooldown="globalCooldownValue"
-						v-model:user-cooldown="userCooldownValue"
-						:disabled="props.command?.hasHandler === false"
-					/>
+						<!-- Collapsed Add Form -->
+						<SettingsGroupItem v-if="showAddForm" class="sm:flex-col sm:items-stretch sm:gap-3">
+							<SettingsGroupContent class="sm:pr-0">
+								<SettingsGroupLabel>New Alias Trigger</SettingsGroupLabel>
+								<SettingsGroupDescription>
+									Comma-separated overrides are appended as fixed arguments when the alias runs.
+								</SettingsGroupDescription>
+								<div class="flex w-full flex-col gap-2 pt-1">
+									<InputGroup class="w-full">
+										<InputGroupAddon class="bg-muted px-3">
+											!
+										</InputGroupAddon>
+										<InputGroupInput
+											v-model="newAliasTrigger"
+											placeholder="command"
+										/>
+									</InputGroup>
+									<Input
+										v-model="newAliasOverrides"
+										placeholder="Argument overrides, comma split (e.g. user, 50)"
+									/>
+									<div class="flex items-center gap-2">
+										<Button size="sm" @click="addAliasLocally">
+											<Plus data-icon="inline-start" />
+											Add Alias
+										</Button>
+										<Button size="sm" variant="ghost" @click="showAddForm = false">
+											Cancel
+										</Button>
+									</div>
+								</div>
+							</SettingsGroupContent>
+						</SettingsGroupItem>
 
-					<FieldSeparator />
-
-					<!-- Command Aliases Segment -->
-					<FieldSet v-if="!isSubCommand">
-						<FieldLegend class="text-sm font-semibold">
-							Command Aliases
-						</FieldLegend>
-						<FieldDescription>Map dynamic chat triggers directly to subcommands with optional parameter overrides.</FieldDescription>
-
-						<Item variant="outline" class="w-full">
-							<ItemContent>
-								<FieldGroup>
-									<Field orientation="horizontal">
-										<FieldLabel for="alias-trigger" class="w-52 shrink-0">
-											Trigger Word
-										</FieldLabel>
-										<InputGroup>
+						<!-- Alias Rows -->
+						<template v-for="alias in aliasesList" :key="alias.trigger">
+							<SettingsGroupItem v-if="editingKey === alias.trigger" class="sm:flex-col sm:items-stretch sm:gap-3">
+								<SettingsGroupContent class="sm:pr-0">
+									<SettingsGroupLabel>Edit Alias Trigger</SettingsGroupLabel>
+									<div class="flex w-full flex-col gap-2 pt-1">
+										<InputGroup class="w-full">
 											<InputGroupAddon class="bg-muted px-3">
 												!
 											</InputGroupAddon>
 											<InputGroupInput
-												id="alias-trigger"
-												v-model="newAliasTrigger"
+												v-model="editTrigger"
 												placeholder="command"
-												class="w-full"
 											/>
 										</InputGroup>
-									</Field>
-
-									<Field orientation="horizontal">
-										<FieldLabel for="alias-subcommand" class="w-52 shrink-0">
-											Target Subcommand
-										</FieldLabel>
-										<Select v-model="newAliasSubcommand">
-											<SelectTrigger id="alias-subcommand" class="w-full">
-												<SelectValue placeholder="subcommand" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="__root__">
-													-- None (runs root/base command) --
-												</SelectItem>
-												<SelectItem v-for="path in executableSubcommandPaths" :key="path" :value="path">
-													{{ path.replace(/\./g, ' ') }}
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</Field>
-
-									<Field orientation="horizontal">
-										<FieldLabel for="alias-overrides" class="w-52 shrink-0">
-											Argument Overrides (Comma split)
-										</FieldLabel>
 										<Input
-											id="alias-overrides"
-											v-model="newAliasOverrides"
-											placeholder="user, 50"
+											v-model="editOverrides"
+											placeholder="Argument overrides, comma split (e.g. user, 50)"
 										/>
-									</Field>
-
-									<Button size="sm" @click="addAliasLocally">
-										<Plus data-icon="inline-start" />
-										Add Alias
-									</Button>
-								</FieldGroup>
-							</ItemContent>
-						</Item>
-
-						<!-- Active Alias Items -->
-						<div class="flex w-full flex-col gap-2">
-							<Item
-								v-for="(alias, index) in aliasesList"
-								:key="alias.trigger" variant="muted"
-								size="sm"
-								class="w-full"
-							>
-								<ItemContent>
-									<ItemTitle class="font-mono">
-										!{{ alias.trigger }}
-									</ItemTitle>
-									<ItemDescription>
-										<div class="ml-1 flex items-center gap-1 font-mono">
-											<CornerDownRight class="size-5" />
-											<p class="mt-1">
-												!{{ baseCommandTrigger }}
-												<span v-if="alias.subcommand && alias.subcommand !== '__root__'"> {{ alias.subcommand.replace(/\./g, ' ') }}</span>
-												<span v-if="alias.overrideArgs && alias.overrideArgs.length"> {{ alias.overrideArgs.join(' ') }}</span>
-											</p>
+										<div class="flex items-center gap-2">
+											<Button size="sm" @click="saveEditAlias(alias.trigger)">
+												Save
+											</Button>
+											<Button size="sm" variant="ghost" @click="cancelEditAlias">
+												Cancel
+											</Button>
 										</div>
-									</ItemDescription>
-								</ItemContent>
-								<ItemActions>
-									<Button
-										size="sm" variant="ghostDestructive" @click="removeAliasLocally(index)"
-									>
+									</div>
+								</SettingsGroupContent>
+							</SettingsGroupItem>
+
+							<SettingsGroupItem v-else>
+								<SettingsGroupContent>
+									<SettingsGroupLabel class="font-mono">
+										!{{ alias.trigger }}
+									</SettingsGroupLabel>
+									<SettingsGroupDescription class="flex items-center gap-1 font-mono text-wrap">
+										<CornerDownRight class="size-3 shrink-0" />
+										<span>!{{ resolvedTarget }}<template v-if="alias.overrideArgs?.length">&nbsp;{{ alias.overrideArgs.join(' ') }}</template></span>
+									</SettingsGroupDescription>
+								</SettingsGroupContent>
+								<SettingsGroupAction>
+									<Button size="sm" variant="ghost" @click="startEditAlias(alias)">
+										<Pencil data-icon="inline-start" />
+										Edit
+									</Button>
+									<Button size="sm" variant="ghostDestructive" @click="removeAliasLocally(alias.trigger)">
 										<Trash data-icon="inline-start" />
 										Remove
 									</Button>
-								</ItemActions>
-							</Item>
-						</div>
-					</FieldSet>
-				</FieldGroup>
+								</SettingsGroupAction>
+							</SettingsGroupItem>
+						</template>
+					</SettingsGroup>
+
+					<div
+						v-if="aliasesList.length === 0"
+						class="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground"
+					>
+						No aliases configured for this node. Click "Add Alias" to create one.
+					</div>
+				</div>
 			</div>
 
 			<!-- Pinned Bottom Footer with docked buttons -->
@@ -447,7 +481,7 @@ function navigateToTemplateEditor() {
 				</SheetClose>
 				<Button :disabled="isSaving" @click="saveAllConfig">
 					<Save data-icon="inline-start" />
-					{{ isSaving ? 'Saving...' : 'Save Quick Config' }}
+					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>
 			</SheetFooter>
 		</SheetContent>

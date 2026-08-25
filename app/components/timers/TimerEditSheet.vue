@@ -3,6 +3,14 @@ import type { Timer, TimerMessage } from '~/types/timers'
 import { Plus, Save, Trash2 } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import {
+	SettingsGroup,
+	SettingsGroupAction,
+	SettingsGroupContent,
+	SettingsGroupDescription,
+	SettingsGroupItem,
+	SettingsGroupLabel,
+} from '~/components/ui/settings-group'
 
 const props = defineProps<{
 	timer: Timer | null
@@ -121,10 +129,10 @@ async function saveConfig() {
 
 <template>
 	<Sheet :open="props.open" @update:open="emit('update:open', $event)">
-		<SheetContent class="sm:max-w-2xl">
+		<SheetContent class="sm:max-w-3xl">
 			<SheetHeader class="border-b border-border">
 				<SheetTitle>
-					<span v-if="isEditMode">Edit Timer - <span class="font-bold text-primary">{{ props.timer?.name }}</span></span>
+					<span v-if="isEditMode">Edit Timer - <span class="font-mono font-bold text-primary">{{ props.timer?.name }}</span></span>
 					<span v-else>Create New Timer</span>
 				</SheetTitle>
 				<SheetDescription>
@@ -133,157 +141,170 @@ async function saveConfig() {
 			</SheetHeader>
 
 			<div class="flex flex-col gap-6 overflow-y-auto px-4 py-2">
-				<!-- Toggle Switch for Timer Active State (Only in Edit Mode) -->
-				<Item v-if="isEditMode" variant="muted">
-					<ItemContent>
-						<ItemTitle>Enable Timer</ItemTitle>
-						<ItemDescription>
-							Toggle whether this timer runs in the background.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Switch v-model:model-value="isEnabled" />
-					</ItemActions>
-				</Item>
+				<!-- Status (Only in Edit Mode) -->
+				<div v-if="isEditMode" class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Status</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Enable Timer</SettingsGroupLabel>
+								<SettingsGroupDescription>Toggle whether this timer runs in the background.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Switch v-model:model-value="isEnabled" />
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
 
-				<FieldGroup>
-					<!-- Timer Name field -->
-					<Field>
-						<FieldLabel for="timer-name">
-							Timer Name
-						</FieldLabel>
-						<Input
-							id="timer-name"
-							v-model="timerName"
-							placeholder="E.g. Socials Rotation or Rules Reminder"
-						/>
-						<FieldDescription>A descriptive name to identify this timer in the dashboard.</FieldDescription>
-					</Field>
-
-					<FieldSeparator />
-
-					<!-- Messages List Section -->
-					<Field>
-						<div class="mb-2 flex items-center justify-between">
-							<FieldLabel>Rotating Messages</FieldLabel>
-							<Button size="sm" variant="outline" @click="addMessage">
-								<Plus data-icon="inline-start" />
-								Add Message
-							</Button>
-						</div>
-						<FieldDescription class="mb-3">
-							Define one or more messages. The timer will cycle through enabled messages sequentially each time the interval completes.
-						</FieldDescription>
-
-						<div v-if="messagesList.length === 0" class="rounded-lg border border-dashed py-6 text-center text-xs text-muted-foreground">
-							No messages added. Click "Add Message" to create one.
-						</div>
-						<div v-else class="flex flex-col gap-3">
-							<div
-								v-for="(msg, index) in messagesList"
-								:key="index"
-								class="relative flex flex-col gap-2 rounded-lg border bg-card/40 p-3"
-								:class="{ 'opacity-60': !msg.enabled }"
-							>
-								<Textarea
-									v-model="msg.text"
-									placeholder="Enter chat message..."
-									rows="2"
-									class="text-sm"
+				<!-- Details -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Details</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Timer Name</SettingsGroupLabel>
+								<SettingsGroupDescription>A descriptive name to identify this timer in the dashboard.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Input
+									id="timer-name"
+									v-model="timerName"
+									placeholder="E.g. Socials Rotation or Rules Reminder"
+									class="w-full"
 								/>
-								<div class="flex items-center justify-between">
-									<div class="flex items-center gap-2">
-										<Switch
-											:id="`msg-switch-${index}`"
-											v-model:model-value="msg.enabled"
-										/>
-										<Label :for="`msg-switch-${index}`" class="cursor-pointer text-xs text-muted-foreground select-none">
-											{{ msg.enabled ? 'Message Enabled' : 'Message Disabled' }}
-										</Label>
-									</div>
-									<Button
-										size="sm"
-										variant="ghostDestructive"
-										:disabled="messagesList.length <= 1"
-										@click="removeMessage(index)"
-									>
-										<Trash2 />
-										Remove
-									</Button>
-								</div>
-							</div>
-						</div>
-					</Field>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
 
-					<FieldSeparator />
+				<!-- Rotating Messages -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Rotating Messages</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Message Rotation List</SettingsGroupLabel>
+								<SettingsGroupDescription>The timer cycles through enabled messages sequentially each time the interval completes.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Button size="sm" variant="outline" @click="addMessage">
+									<Plus data-icon="inline-start" />
+									Add Message
+								</Button>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-					<!-- Intervals Segment -->
-					<div
-						class="
-							grid grid-cols-1 gap-4
-							sm:grid-cols-2
-						"
-					>
-						<Field>
-							<FieldLabel for="timer-online-int">
-								Online Interval (minutes)
-							</FieldLabel>
-							<NumberField
-								id="timer-online-int"
-								v-model="intervalOnlineValue"
-								:min="0"
-							>
-								<NumberFieldContent>
-									<NumberFieldDecrement />
-									<NumberFieldInput placeholder="10" />
-									<NumberFieldIncrement />
-								</NumberFieldContent>
-							</NumberField>
-							<FieldDescription>Interval while stream is live. Enter 0 to disable online.</FieldDescription>
-						</Field>
-
-						<Field>
-							<FieldLabel for="timer-offline-int">
-								Offline Interval (minutes)
-							</FieldLabel>
-							<NumberField
-								id="timer-offline-int"
-								v-model="intervalOfflineValue"
-								:min="0"
-							>
-								<NumberFieldContent>
-									<NumberFieldDecrement />
-									<NumberFieldInput placeholder="30" />
-									<NumberFieldIncrement />
-								</NumberFieldContent>
-							</NumberField>
-							<FieldDescription>Interval while stream is offline. Enter 0 to disable offline.</FieldDescription>
-						</Field>
-					</div>
-
-					<FieldSeparator />
-
-					<!-- Chat message threshold limit -->
-					<Field>
-						<FieldLabel for="timer-min-msgs">
-							Minimum Chat Messages
-						</FieldLabel>
-						<NumberField
-							id="timer-min-msgs"
-							v-model="minMessagesValue"
-							:min="0"
+						<SettingsGroupItem
+							v-for="(msg, index) in messagesList"
+							:key="index"
+							class="sm:flex-col sm:items-stretch sm:gap-3"
 						>
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput placeholder="5" />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription>
-							Minimum number of general chat messages required since the last message was sent before this timer can fire again. Helps prevent bot spam when chat is slow.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
+							<SettingsGroupContent class="sm:pr-0">
+								<SettingsGroupLabel :class="{ 'opacity-60': !msg.enabled }">
+									Message {{ index + 1 }}
+								</SettingsGroupLabel>
+								<div class="flex w-full flex-col gap-2 pt-1">
+									<Textarea
+										v-model="msg.text"
+										placeholder="Enter chat message..."
+										rows="2"
+										class="text-sm"
+									/>
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-2">
+											<Switch
+												:id="`msg-switch-${index}`"
+												v-model:model-value="msg.enabled"
+											/>
+											<Label :for="`msg-switch-${index}`" class="cursor-pointer text-xs text-muted-foreground select-none">
+												{{ msg.enabled ? 'Message Enabled' : 'Message Disabled' }}
+											</Label>
+										</div>
+										<Button
+											size="sm"
+											variant="ghostDestructive"
+											:disabled="messagesList.length <= 1"
+											@click="removeMessage(index)"
+										>
+											<Trash2 data-icon="inline-start" />
+											Remove
+										</Button>
+									</div>
+								</div>
+							</SettingsGroupContent>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
+
+				<!-- Intervals & Thresholds -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Intervals &amp; Thresholds</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Online Interval (Minutes)</SettingsGroupLabel>
+								<SettingsGroupDescription>Interval while the stream is live. Enter 0 to disable online.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<NumberField
+									id="timer-online-int"
+									v-model="intervalOnlineValue"
+									:min="0"
+									class="w-full"
+								>
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput placeholder="10" />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Offline Interval (Minutes)</SettingsGroupLabel>
+								<SettingsGroupDescription>Interval while the stream is offline. Enter 0 to disable offline.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<NumberField
+									id="timer-offline-int"
+									v-model="intervalOfflineValue"
+									:min="0"
+									class="w-full"
+								>
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput placeholder="30" />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Minimum Chat Messages</SettingsGroupLabel>
+								<SettingsGroupDescription>Minimum number of general chat messages required since the last message was sent before this timer can fire again. Helps prevent bot spam when chat is slow.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<NumberField
+									id="timer-min-msgs"
+									v-model="minMessagesValue"
+									:min="0"
+									class="w-full"
+								>
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput placeholder="5" />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
 			</div>
 
 			<!-- Pinned Bottom Footer with docked buttons -->
@@ -295,7 +316,7 @@ async function saveConfig() {
 				</SheetClose>
 				<Button :disabled="isSaving" @click="saveConfig">
 					<Save data-icon="inline-start" />
-					{{ isSaving ? 'Saving...' : 'Save Configuration' }}
+					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>
 			</SheetFooter>
 		</SheetContent>

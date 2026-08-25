@@ -29,9 +29,9 @@ export default defineEventHandler(async (event) => {
 			hidden: false,
 		}
 
-		// Find all registered aliases for this specific command
+		// Find all registered root-scope aliases (no target subcommand) for this command
 		const aliases = databaseAliases
-			.filter(alias => alias.commandId === command.id)
+			.filter(alias => alias.commandId === command.id && !alias.subcommand)
 			.map(alias => ({
 				id: alias.id,
 				trigger: alias.trigger,
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
 		})
 
 		// Recursive helper to gather subcommands and all nested child subcommands
-		const buildSubcommandsTree = (subcommandsMap: Record<string, any>, prefix: string): Record<string, any> => {
+		const buildSubcommandsTree = (subcommandsMap: Record<string, any>, prefix: string, relativePathPrefix = ''): Record<string, any> => {
 			const subcommandsTree: Record<string, any> = {}
 			for (const [subcommandName, subcommand] of Object.entries(subcommandsMap)) {
 				const subcommandTemplateIds = subcommand.templates ?? []
@@ -69,6 +69,7 @@ export default defineEventHandler(async (event) => {
 				})
 
 				const subcommandId = `${prefix}.${subcommandName}`
+				const relativePath = relativePathPrefix ? `${relativePathPrefix}.${subcommandName}` : subcommandName
 				const subcommandDbConfig = databaseCommands.find(cmd => cmd.id === subcommandId) || {
 					enabled: true,
 					cost: 0,
@@ -80,6 +81,16 @@ export default defineEventHandler(async (event) => {
 					whisperSilentResponse: false,
 					hidden: false,
 				}
+
+				// Aliases scoped to this exact node (relative dotted path from the root command)
+				const subcommandAliases = databaseAliases
+					.filter(alias => alias.commandId === command.id && alias.subcommand === relativePath)
+					.map(alias => ({
+						id: alias.id,
+						trigger: alias.trigger,
+						subcommand: alias.subcommand,
+						overrideArgs: alias.overrideArgs,
+					}))
 
 				subcommandsTree[subcommandName] = {
 					id: subcommandId,
@@ -97,7 +108,8 @@ export default defineEventHandler(async (event) => {
 					hidden: Boolean(subcommandDbConfig.hidden),
 					templates: subcommandTemplates,
 					hasHandler: Boolean(subcommand.handler),
-					subcommands: subcommand.subcommands ? buildSubcommandsTree(subcommand.subcommands, subcommandId) : undefined,
+					aliases: subcommandAliases,
+					subcommands: subcommand.subcommands ? buildSubcommandsTree(subcommand.subcommands, subcommandId, relativePath) : undefined,
 				}
 			}
 			return subcommandsTree

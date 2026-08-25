@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { clearCommandsDirectoryCache } from '~~/server/api/commands/directory.get'
 import { registry } from '~~/server/bot/core/registry'
@@ -8,10 +8,12 @@ import { requireUserRole } from '~~/server/utils/auth'
 
 const saveAliasesSchema = z.object({
 	commandId: z.string().min(1),
+	// Node scope: relative dotted path from the root command (e.g. 'add', 'get.top') or null for the root node itself.
+	// All aliases in a request belong to this single scope; disjoint scopes prevent root/subcommand saves from clobbering each other.
+	subcommand: z.string().regex(/^[\w-]+(\.[\w-]+)*$/, 'Scope must be a relative dotted subcommand path').nullish().default(null),
 	aliases: z.array(
 		z.object({
 			trigger: z.string().min(1).regex(/^[\w-]+$/, 'Alias trigger must be alphanumeric'),
-			subcommand: z.string().nullable().optional(),
 			overrideArgs: z.array(z.string()).nullable().optional(),
 		}),
 	),
@@ -31,6 +33,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const { commandId, aliases } = parsed.data
+	const scopeSubcommand = parsed.data.subcommand ?? null
 
 	const coreCommand = registry.getCommand(commandId)
 	if (!coreCommand) {
@@ -47,7 +50,6 @@ export default defineEventHandler(async (event) => {
 
 	const cleanAliases = aliases.map(alias => ({
 		trigger: alias.trigger.toLowerCase(),
-		subcommand: alias.subcommand || null,
 		overrideArgs: alias.overrideArgs || null,
 	}))
 
@@ -71,16 +73,20 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	// Clear existing aliases for this command
-	await db.delete(commandAliases).where(eq(commandAliases.commandId, commandId))
+	// Clear only aliases inside this request's scope so other nodes stay untouched
+	await db.delete(commandAliases).where(
+		scopeSubcommand === null
+			? and(eq(commandAliases.commandId, commandId), isNull(commandAliases.subcommand))
+			: and(eq(commandAliases.commandId, commandId), eq(commandAliases.subcommand, scopeSubcommand)),
+	)
 
-	// Insert new aliases
+	// Insert new aliases bound to the scope
 	if (cleanAliases.length > 0) {
 		await db.insert(commandAliases).values(
 			cleanAliases.map(alias => ({
 				commandId,
 				trigger: alias.trigger,
-				subcommand: alias.subcommand,
+				subcommand: scopeSubcommand,
 				overrideArgs: alias.overrideArgs,
 			})),
 		)

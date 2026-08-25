@@ -397,7 +397,7 @@ async function saveSettings() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="flex-col items-stretch gap-3">
+					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
@@ -407,6 +407,7 @@ async function saveSettings() {
 						<SettingsGroupAction
 							class="
 								w-full max-w-full
+								sm:w-full sm:max-w-full
 								md:w-full md:max-w-full
 							"
 						>
@@ -414,7 +415,7 @@ async function saveSettings() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="flex-col items-stretch gap-3">
+					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
 						<SettingsGroupContent>
 							<SettingsGroupLabel>End Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
@@ -424,6 +425,7 @@ async function saveSettings() {
 						<SettingsGroupAction
 							class="
 								w-full max-w-full
+								sm:w-full sm:max-w-full
 								md:w-full md:max-w-full
 							"
 						>

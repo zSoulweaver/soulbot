@@ -2,6 +2,17 @@
 import { Save } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import CommandLimitsFields from '~/components/commands/CommandLimitsFields.vue'
+import CommandPermissionSelect from '~/components/commands/CommandPermissionSelect.vue'
+import CommandStatusSettings from '~/components/commands/CommandStatusSettings.vue'
+import {
+	SettingsGroup,
+	SettingsGroupAction,
+	SettingsGroupContent,
+	SettingsGroupDescription,
+	SettingsGroupItem,
+	SettingsGroupLabel,
+} from '~/components/ui/settings-group'
 
 const props = defineProps<{
 	command: any | null // CustomCommand | null
@@ -127,84 +138,102 @@ async function saveConfig() {
 
 <template>
 	<Sheet :open="props.open" @update:open="emit('update:open', $event)">
-		<SheetContent class="sm:max-w-2xl">
+		<SheetContent class="sm:max-w-3xl">
 			<SheetHeader class="border-b border-border">
 				<SheetTitle>
 					<span v-if="isEditMode">Edit Custom Command - <span class="font-mono font-bold text-primary">!{{ props.command?.trigger }}</span></span>
 					<span v-else>Create Custom Command</span>
 				</SheetTitle>
 				<SheetDescription>
-					Configure dynamic Twitch chat triggers, template responses, point costs, and cooldown limits.
+					Configure activation status, dynamic Twitch chat triggers, template responses, point costs, and cooldown limits.
 				</SheetDescription>
 			</SheetHeader>
 
 			<div class="flex flex-col gap-6 overflow-y-auto px-4 py-2">
-				<!-- Toggle Switch for Command Active State (Only in Edit Mode) -->
-				<Item v-if="isEditMode" variant="muted">
-					<ItemContent>
-						<ItemTitle>Enable Custom Trigger</ItemTitle>
-						<ItemDescription>
-							Toggle this custom command's active state in Twitch chat.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Switch v-model:model-value="isEnabled" />
-					</ItemActions>
-				</Item>
-
-				<!-- Toggle Switch for Hiding from Public Directory -->
-				<Item variant="muted">
-					<ItemContent>
-						<ItemTitle>Hide from Directory</ItemTitle>
-						<ItemDescription>
-							Hide this custom command from the public commands directory page for viewers.
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<Switch v-model:model-value="isHidden" />
-					</ItemActions>
-				</Item>
-
-				<FieldGroup>
-					<!-- Trigger Word Segment -->
-					<Field>
-						<FieldLabel for="custom-trigger">
-							Trigger Word
-						</FieldLabel>
-						<InputGroup>
-							<InputGroupAddon class="bg-muted px-3">
-								!
-							</InputGroupAddon>
-							<InputGroupInput
-								id="custom-trigger"
-								v-model="triggerName"
-								placeholder="hello"
-							/>
-						</InputGroup>
-						<FieldDescription>Alphanumeric trigger word typed by users (e.g. <code>!wins</code>).</FieldDescription>
-					</Field>
-
-					<FieldSeparator />
-
-					<!-- Response Template Field -->
-					<Field>
-						<FieldLabel for="custom-response">
-							Response Template Message
-						</FieldLabel>
-						<Textarea
-							id="custom-response"
-							v-model="responseTemplate"
-							placeholder="Hello $(sender)! You have $(count wins) wins in $(channel)."
-							rows="4"
+				<!-- Status -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Status</span>
+					<SettingsGroup>
+						<CommandStatusSettings
+							v-model:enabled="isEnabled"
+							v-model:hidden="isHidden"
+							enable-label="Enable Custom Trigger"
+							:show-whispers="false"
 						/>
-						<Alert v-if="isMultiLine" variant="warning" class="mt-2">
-							<AlertTitle>Multi-Line Template Detected</AlertTitle>
-							<AlertDescription>
-								We've detected a multi-line template. This will be sent as {{ lineCount }} separate messages.
-							</AlertDescription>
-						</Alert>
-						<FieldDescription>The message output to chat. Dynamic template variables will resolve dynamically.</FieldDescription>
-					</Field>
+					</SettingsGroup>
+				</div>
+
+				<!-- Trigger & Access -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Trigger &amp; Access</span>
+					<SettingsGroup>
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Trigger Word</SettingsGroupLabel>
+								<SettingsGroupDescription>Alphanumeric trigger word typed by users (e.g. <code>!wins</code>).</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<InputGroup class="w-full">
+									<InputGroupAddon class="bg-muted px-3">
+										!
+									</InputGroupAddon>
+									<InputGroupInput
+										v-model="triggerName"
+										placeholder="hello"
+									/>
+								</InputGroup>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<SettingsGroupItem>
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Command Description</SettingsGroupLabel>
+								<SettingsGroupDescription>Optional summary description shown on dashboard lists.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction>
+								<Input
+									v-model="descriptionValue"
+									placeholder="Returns wins count"
+									class="w-full"
+								/>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+
+						<CommandPermissionSelect v-model="permissionValue" />
+					</SettingsGroup>
+				</div>
+
+				<!-- Response Template -->
+				<div class="flex flex-col gap-2">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Response Template</span>
+					<SettingsGroup>
+						<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+							<SettingsGroupContent>
+								<SettingsGroupLabel>Response Template Message</SettingsGroupLabel>
+								<SettingsGroupDescription>The message output to chat. Dynamic template variables will resolve dynamically.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction
+								class="
+									w-full max-w-full
+									md:w-full md:max-w-full
+								"
+							>
+								<div class="flex w-full flex-col gap-2">
+									<Textarea
+										v-model="responseTemplate"
+										placeholder="Hello $(sender)! You have $(count wins) wins in $(channel)."
+										rows="4"
+									/>
+									<Alert v-if="isMultiLine" variant="warning">
+										<AlertTitle>Multi-Line Template Detected</AlertTitle>
+										<AlertDescription>
+											We've detected a multi-line template. This will be sent as {{ lineCount }} separate messages.
+										</AlertDescription>
+									</Alert>
+								</div>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
 
 					<!-- Dynamic Variable Templates Guide -->
 					<Alert variant="info">
@@ -220,36 +249,19 @@ async function saveConfig() {
 							</NuxtLink>.
 						</AlertDescription>
 					</Alert>
+				</div>
 
-					<FieldSeparator />
-
-					<!-- Custom Command Description -->
-					<Field>
-						<FieldLabel for="custom-desc">
-							Command Description
-						</FieldLabel>
-						<Input
-							id="custom-desc"
-							v-model="descriptionValue"
-							placeholder="Returns wins count"
+				<!-- Limits -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Limits</span>
+					<SettingsGroup>
+						<CommandLimitsFields
+							v-model:cost="costValue"
+							v-model:global-cooldown="globalCooldownValue"
+							v-model:user-cooldown="userCooldownValue"
 						/>
-						<FieldDescription>Optional summary description shown on dashboard lists.</FieldDescription>
-					</Field>
-
-					<FieldSeparator />
-
-					<!-- Custom Permission Level Segment -->
-					<CommandPermissionSelect v-model="permissionValue" />
-
-					<FieldSeparator />
-
-					<!-- Config Stepper Fields (Points, Global Cooldown, User Cooldown) -->
-					<CommandLimitsFields
-						v-model:cost="costValue"
-						v-model:global-cooldown="globalCooldownValue"
-						v-model:user-cooldown="userCooldownValue"
-					/>
-				</FieldGroup>
+					</SettingsGroup>
+				</div>
 			</div>
 
 			<!-- Pinned Bottom Footer with docked buttons -->
@@ -261,7 +273,7 @@ async function saveConfig() {
 				</SheetClose>
 				<Button :disabled="isSaving" @click="saveConfig">
 					<Save data-icon="inline-start" />
-					{{ isSaving ? 'Saving...' : 'Save Configuration' }}
+					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>
 			</SheetFooter>
 		</SheetContent>

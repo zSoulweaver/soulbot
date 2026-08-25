@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import commandsAliasesHandler from '~~/server/api/commands/aliases.put'
 import commandsIndexHandler from '~~/server/api/commands/index.get'
@@ -54,6 +54,26 @@ describe('Commands Management API Routes in-process', () => {
 			expect(pointsCmd!.whisperSilentResponse).toBe(false)
 			expect(pointsCmd!.aliases).toBeInstanceOf(Array)
 			expect(pointsCmd!.templates).toBeInstanceOf(Array)
+		})
+
+		it('should surface node-scoped alias slices on the root and each subcommand node', async () => {
+			await db.insert(commandAliases).values([
+				{ commandId: 'points', trigger: 'pts', subcommand: null },
+				{ commandId: 'points', trigger: 'giftalias', subcommand: 'gift' },
+			])
+
+			const res = await commandsIndexHandler({} as any)
+			const pointsCmd = res.find((cmd: any) => cmd.id === 'points')
+			expect(pointsCmd).toBeDefined()
+
+			// Root node only owns its own scope
+			expect(pointsCmd!.aliases.map((a: any) => a.trigger)).toEqual(['pts'])
+
+			// Subcommand nodes own their relative-path scope
+			const giftNode = pointsCmd?.subcommands?.gift
+			expect(giftNode).toBeDefined()
+			expect(giftNode!.aliases.map((a: any) => a.trigger)).toEqual(['giftalias'])
+			expect(giftNode!.aliases[0].subcommand).toBe('gift')
 		})
 	})
 
@@ -115,24 +135,77 @@ describe('Commands Management API Routes in-process', () => {
 	})
 
 	describe('PUT /api/commands/aliases', () => {
-		it('should save command aliases successfully in DB', async () => {
+		it('should save root-scope command aliases in DB without touching subcommand scopes', async () => {
+			// Seed an existing subcommand-scoped alias that must survive the root save
+			await db.insert(commandAliases).values({
+				commandId: 'points',
+				trigger: 'gift',
+				subcommand: 'gift',
+			})
+
 			const res = await commandsAliasesHandler({
 				body: {
 					commandId: 'points',
+					subcommand: null,
 					aliases: [
 						{ trigger: 'balance' },
-						{ trigger: 'top', subcommand: 'get.top' },
 					],
 				},
 			} as any)
 
 			expect(res.success).toBe(true)
 
-			// Check database update
 			const dbAliases = await db.select().from(commandAliases).where(eq(commandAliases.commandId, 'points'))
 			expect(dbAliases).toHaveLength(2)
 			expect(dbAliases.some(a => a.trigger === 'balance' && a.subcommand === null)).toBe(true)
-			expect(dbAliases.some(a => a.trigger === 'top' && a.subcommand === 'get.top')).toBe(true)
+			expect(dbAliases.some(a => a.trigger === 'gift' && a.subcommand === 'gift')).toBe(true)
+		})
+
+		it('should save subcommand-scoped aliases without clobbering the root scope', async () => {
+			await db.insert(commandAliases).values({
+				commandId: 'points',
+				trigger: 'balance',
+				subcommand: null,
+			})
+
+			const res = await commandsAliasesHandler({
+				body: {
+					commandId: 'points',
+					subcommand: 'add',
+					aliases: [
+						{ trigger: 'give', overrideArgs: ['50'] },
+					],
+				},
+			} as any)
+
+			expect(res.success).toBe(true)
+
+			const dbAliases = await db.select().from(commandAliases).where(eq(commandAliases.commandId, 'points'))
+			expect(dbAliases).toHaveLength(2)
+			expect(dbAliases.some(a => a.trigger === 'balance' && a.subcommand === null)).toBe(true)
+			expect(dbAliases.some(a => a.trigger === 'give' && a.subcommand === 'add' && a.overrideArgs?.includes('50'))).toBe(true)
+		})
+
+		it('should replace only its own scope on repeat saves', async () => {
+			await commandsAliasesHandler({
+				body: {
+					commandId: 'points',
+					subcommand: 'add',
+					aliases: [{ trigger: 'stale' }],
+				},
+			} as any)
+
+			await commandsAliasesHandler({
+				body: {
+					commandId: 'points',
+					subcommand: 'add',
+					aliases: [{ trigger: 'fresh' }],
+				},
+			} as any)
+
+			const dbScope = await db.select().from(commandAliases).where(and(eq(commandAliases.commandId, 'points'), eq(commandAliases.subcommand, 'add')))
+			expect(dbScope).toHaveLength(1)
+			expect(dbScope[0]?.trigger).toBe('fresh')
 		})
 
 		it('should fail with 400 Bad Request if duplicate triggers exist in input', async () => {

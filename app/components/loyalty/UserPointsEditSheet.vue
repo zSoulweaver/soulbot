@@ -2,12 +2,15 @@
 import { SaveIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
-import { Button } from '~/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '~/components/ui/item'
-import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '~/components/ui/sheet'
-import { Spinner } from '~/components/ui/spinner'
-import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import {
+	SettingsGroup,
+	SettingsGroupAction,
+	SettingsGroupContent,
+	SettingsGroupDescription,
+	SettingsGroupItem,
+	SettingsGroupLabel,
+} from '~/components/ui/settings-group'
 
 interface User {
 	id: string
@@ -67,15 +70,15 @@ async function saveAdjustment() {
 
 <template>
 	<Sheet :open="props.open" @update:open="emit('update:open', $event)">
-		<SheetContent>
-			<SheetHeader class="border-b border-border pb-4">
+		<SheetContent class="sm:max-w-md">
+			<SheetHeader class="border-b border-border">
 				<SheetTitle>Adjust Points Balance</SheetTitle>
 				<SheetDescription>
 					Add, subtract, or override point balances for channel chatters.
 				</SheetDescription>
 			</SheetHeader>
 
-			<div class="flex flex-col gap-6 px-4 py-6">
+			<div class="flex flex-col gap-6 overflow-y-auto px-4 py-2">
 				<!-- Selected User Banner Item (Using built-in Item components) -->
 				<Item v-if="props.user" variant="outline" class="w-full border-border/60 bg-muted/40">
 					<ItemContent>
@@ -96,54 +99,73 @@ async function saveAdjustment() {
 					</ItemActions>
 				</Item>
 
-				<!-- Adjustment Mode Tabs Selection -->
-				<div class="flex flex-col gap-2">
-					<span class="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-						Adjustment Mode
-					</span>
-					<Tabs v-model="mode" class="w-full">
-						<TabsList class="grid w-full grid-cols-2">
-							<TabsTrigger value="add" :disabled="isSaving" class="text-xs">
-								Add / Subtract
-							</TabsTrigger>
-							<TabsTrigger value="set" :disabled="isSaving" class="text-xs">
-								Set Absolute
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
-				</div>
+				<!-- Adjustment -->
+				<div class="flex flex-col gap-1">
+					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Adjustment</span>
+					<SettingsGroup>
+						<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+							<SettingsGroupContent class="sm:pr-0">
+								<SettingsGroupLabel>Adjustment Mode</SettingsGroupLabel>
+								<SettingsGroupDescription>Add or subtract relative points, or set an absolute final balance.</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction
+								class="
+									w-full
+									sm:w-full
+									md:w-full
+								"
+							>
+								<Tabs v-model="mode" class="w-full">
+									<TabsList class="grid w-full grid-cols-2">
+										<TabsTrigger value="add" :disabled="isSaving" class="text-xs">
+											Add / Subtract
+										</TabsTrigger>
+										<TabsTrigger value="set" :disabled="isSaving" class="text-xs">
+											Set Absolute
+										</TabsTrigger>
+									</TabsList>
+								</Tabs>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
 
-				<!-- Amount Input Field -->
-				<FieldGroup>
-					<Field>
-						<FieldLabel for="amount" class="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-							Amount
-						</FieldLabel>
-						<NumberField
-							id="amount"
-							v-model="amount"
-							:min="mode === 'set' ? 0 : undefined"
-							:disabled="isSaving"
-							:default-value="0"
-							class="mt-1 w-full"
-						>
-							<NumberFieldContent>
-								<NumberFieldDecrement />
-								<NumberFieldInput placeholder="e.g. 500 or -250" />
-								<NumberFieldIncrement />
-							</NumberFieldContent>
-						</NumberField>
-						<FieldDescription v-if="mode === 'add'" class="mt-1.5 text-xs text-muted-foreground">
-							Input a <b>positive</b> number to award points, or a <b>negative</b> number to subtract/remove points.
-						</FieldDescription>
-						<FieldDescription v-else class="mt-1.5 text-xs text-muted-foreground">
-							Input the <b>exact</b> final points balance this user should have.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
+						<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+							<SettingsGroupContent class="sm:pr-0">
+								<SettingsGroupLabel>Amount</SettingsGroupLabel>
+								<SettingsGroupDescription v-if="mode === 'add'">
+									Input a <b>positive</b> number to award points, or a <b>negative</b> number to subtract/remove points.
+								</SettingsGroupDescription>
+								<SettingsGroupDescription v-else>
+									Input the <b>exact</b> final points balance this user should have.
+								</SettingsGroupDescription>
+							</SettingsGroupContent>
+							<SettingsGroupAction
+								class="
+									w-full
+									sm:w-full
+									md:w-full
+								"
+							>
+								<NumberField
+									id="amount"
+									v-model="amount"
+									:min="mode === 'set' ? 0 : undefined"
+									:disabled="isSaving"
+									:default-value="0"
+									class="w-full"
+								>
+									<NumberFieldContent>
+										<NumberFieldDecrement />
+										<NumberFieldInput placeholder="e.g. 500 or -250" />
+										<NumberFieldIncrement />
+									</NumberFieldContent>
+								</NumberField>
+							</SettingsGroupAction>
+						</SettingsGroupItem>
+					</SettingsGroup>
+				</div>
 			</div>
 
-			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t border-border pt-4">
+			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t">
 				<SheetClose as-child>
 					<Button variant="outline" :disabled="isSaving">
 						Cancel
@@ -153,7 +175,7 @@ async function saveAdjustment() {
 				<Button :disabled="isSaving" @click="saveAdjustment">
 					<Spinner v-if="isSaving" data-icon="inline-start" />
 					<SaveIcon v-else data-icon="inline-start" />
-					{{ isSaving ? 'Saving...' : 'Save Adjustments' }}
+					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>
 			</SheetFooter>
 		</SheetContent>

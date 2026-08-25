@@ -180,17 +180,17 @@ async function saveAll() {
 		<SheetContent
 			class="
 				overflow-y-auto
-				sm:max-w-lg
+				sm:max-w-2xl
 			"
 		>
-			<SheetHeader class="border-b border-border pb-4">
+			<SheetHeader class="border-b border-border">
 				<SheetTitle>{{ props.gameRecord ? `Manage Counters: ${props.gameRecord.gameName}` : 'Add New Game Counter' }}</SheetTitle>
 				<SheetDescription>
 					{{ props.gameRecord ? 'Adjust death counters, counts, and active counter for this game.' : 'Select a Twitch game category and set initial counters.' }}
 				</SheetDescription>
 			</SheetHeader>
 
-			<div class="flex flex-col gap-6 px-4 py-6">
+			<div class="flex flex-col gap-6 px-4 py-2">
 				<!-- Selected Game Preview Card -->
 				<Item v-if="gameName" variant="outline" class="w-full border-border/60 bg-muted/40 p-3">
 					<div class="flex w-full items-center justify-between gap-3">
@@ -387,7 +387,7 @@ async function saveAll() {
 				</div>
 			</div>
 
-			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t border-border pt-4">
+			<SheetFooter class="flex flex-row items-center justify-end gap-2 border-t border-border">
 				<SheetClose as-child>
 					<Button variant="outline" :disabled="isSaving">
 						Cancel

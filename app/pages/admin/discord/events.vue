@@ -199,7 +199,7 @@ async function saveSettings() {
 					:disabled="!form.isDiscordConnected"
 				>
 					<template #extra-options>
-						<SettingsGroupItem class="flex-col items-start gap-4">
+						<SettingsGroupItem class="sm:flex-col sm:items-start">
 							<div class="flex w-full items-center justify-between">
 								<SettingsGroupContent>
 									<SettingsGroupLabel>Auto-Bestow Roles on Join</SettingsGroupLabel>

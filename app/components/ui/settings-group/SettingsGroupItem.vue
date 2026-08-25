@@ -10,8 +10,9 @@ const props = defineProps<{
 <template>
 	<div
 		:class="cn(`
-			flex min-h-20 flex-row items-center justify-between gap-4 border-b border-border/20 px-0 py-4
+			flex min-h-20 flex-col items-start gap-4 border-b border-border/20 px-0 py-4
 			last:border-b-0
+			sm:flex-row sm:items-center
 		`, props.class)"
 	>
 		<slot />

@@ -17,29 +17,30 @@ export default defineEventHandler(async (event) => {
 	const botToken = await getBotToken()
 	const streamerToken = await getStreamerToken()
 
-	if (isOnboarded) {
-		const session = await getUserSession(event)
-		const user = session?.user
-		const isBotAccount = user && botToken && user.id === botToken.userId
-		const isModOrCaster = user && (user.role === 'caster' || user.role === 'admin' || user.role === 'moderator')
+	const session = await getUserSession(event)
+	const user = session?.user
+	const isBotAccount = Boolean(user && botToken && user.id === botToken.userId)
+	const isModOrCaster = user && (user.role === 'caster' || user.role === 'admin' || user.role === 'moderator')
 
-		if (!isBotAccount && !isModOrCaster) {
-			return {
-				bot: botToken ? { userName: botToken.userName, displayName: botToken.displayName } : null,
-				streamer: streamerToken ? { userName: streamerToken.userName, displayName: streamerToken.displayName } : null,
-				isBotRunning: isBotRunning(),
-				isStreamerTokenOutdated: false,
-				isBotTokenOutdated: false,
-				isBotModerator: false,
-			}
+	if (isOnboarded && !isBotAccount && !isModOrCaster) {
+		return {
+			bot: botToken ? { userName: botToken.userName, displayName: botToken.displayName } : null,
+			streamer: streamerToken ? { userName: streamerToken.userName, displayName: streamerToken.displayName } : null,
+			isBotRunning: isBotRunning(),
+			isStreamerTokenOutdated: false,
+			isBotTokenOutdated: false,
+			isBotModerator: false,
 		}
 	}
 
+	const isCaster = user?.role === 'caster'
+	const canViewOutdatedTokens = !isOnboarded || isCaster || isBotAccount
+
 	const appSettings = await getAppSettings()
-	const isStreamerTokenOutdated = streamerToken
+	const isStreamerTokenOutdated = (canViewOutdatedTokens && streamerToken)
 		? (appSettings.streamerTokenVersion < STREAMER_OAUTH_VERSION)
 		: false
-	const isBotTokenOutdated = botToken
+	const isBotTokenOutdated = (canViewOutdatedTokens && botToken)
 		? (appSettings.botTokenVersion < BOT_OAUTH_VERSION)
 		: false
 

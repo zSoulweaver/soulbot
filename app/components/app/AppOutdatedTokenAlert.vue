@@ -11,7 +11,9 @@ const { data: status } = useFetch<BotStatusResponse>('/api/bot/status', {
 const isCasterOrBot = computed(() => {
 	if (!user.value || !status.value)
 		return false
-	return user.value.role === 'caster' || user.value.role === 'admin' || (!!status.value.bot?.userId && user.value.id === status.value.bot?.userId)
+	const bot = status.value.bot
+	const isBotAccount = Boolean(bot && 'userId' in bot && bot.userId && user.value.id === bot.userId)
+	return user.value.role === 'caster' || isBotAccount
 })
 
 const showOutdatedAlert = computed(() => isCasterOrBot.value && (status.value?.isStreamerTokenOutdated || status.value?.isBotTokenOutdated))

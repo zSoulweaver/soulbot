@@ -11,12 +11,24 @@ useHead({
 	title: 'Twitch Connection Onboarding',
 })
 
+const { loggedIn, user } = useUserSession()
 const { data: status, refresh } = useFetch('/api/bot/status')
 
 const isComplete = computed(() => {
 	if (!status.value)
 		return false
 	return status.value.bot && !status.value.isBotTokenOutdated && status.value.streamer && !status.value.isStreamerTokenOutdated
+})
+
+// Defensive client-side check: if onboarded and logged in as non-caster (and not bot), redirect
+watchEffect(() => {
+	if (status.value?.streamer && status.value?.bot && loggedIn.value && user.value) {
+		const bot = status.value.bot
+		const isBotAccount = Boolean('userId' in bot && bot.userId && user.value.id === bot.userId)
+		if (user.value.role !== 'caster' && !isBotAccount) {
+			navigateTo('/')
+		}
+	}
 })
 const isLoading = ref(false)
 const isRestarting = ref(false)

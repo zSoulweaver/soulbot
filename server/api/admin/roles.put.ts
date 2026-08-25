@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
-import { requireUserRole, updateUserRoleCache } from '~~/server/utils/auth'
+import { requireStrictCaster, updateUserRoleCache } from '~~/server/utils/auth'
 
 const updateRoleSchema = z.object({
 	userId: z.string().min(1, 'User ID is required'),
@@ -12,16 +12,7 @@ const updateRoleSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-	// Require caster permissions
-	const user = await requireUserRole(event, 'caster')
-
-	// Strict check: only the channel owner (caster) can query/manage roles.
-	if (user.role !== 'caster') {
-		throw createError({
-			statusCode: 403,
-			statusMessage: 'Forbidden: Only the channel broadcaster can manage administrator roles.',
-		})
-	}
+	const user = await requireStrictCaster(event)
 
 	const body = await readBody(event)
 	const parsed = updateRoleSchema.safeParse(body)

@@ -53,7 +53,7 @@ describe('Roles Management API Routes', () => {
 			}
 			catch (err: any) {
 				expect(err.statusCode).toBe(403)
-				expect(err.statusMessage).toContain('Minimum role of "caster" is required')
+				expect(err.statusMessage).toContain('Only the channel broadcaster')
 			}
 		})
 
@@ -69,7 +69,7 @@ describe('Roles Management API Routes', () => {
 			}
 			catch (err: any) {
 				expect(err.statusCode).toBe(403)
-				expect(err.statusMessage).toContain('Only the channel broadcaster can manage administrator roles')
+				expect(err.statusMessage).toContain('Only the channel broadcaster')
 			}
 		})
 
@@ -172,7 +172,7 @@ describe('Roles Management API Routes', () => {
 			}
 			catch (err: any) {
 				expect(err.statusCode).toBe(403)
-				expect(err.statusMessage).toContain('Only the channel broadcaster can manage administrator roles')
+				expect(err.statusMessage).toContain('Only the channel broadcaster')
 			}
 		})
 

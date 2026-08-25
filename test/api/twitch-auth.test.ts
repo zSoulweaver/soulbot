@@ -137,8 +137,7 @@ describe('Twitch Authentication & Bot Control API', () => {
 	})
 
 	describe('Defense-in-depth Role Restriction when onboarded', () => {
-		it('should enforce requireUserRole if already onboarded', async () => {
-			// Populate DB to simulate onboarded state
+		beforeEach(async () => {
 			await db.insert(twitchTokens).values([
 				{
 					accountType: 'bot',
@@ -155,8 +154,9 @@ describe('Twitch Authentication & Bot Control API', () => {
 					scope: '[]',
 				},
 			])
+		})
 
-			// Mock getUserSession to return a non-caster user (moderator)
+		it('should reject viewer with 403 Forbidden', async () => {
 			const mockGetUserSession = (globalThis as any).getUserSession
 			mockGetUserSession.mockResolvedValue({
 				user: { id: 'viewer-user', role: 'viewer' },
@@ -164,19 +164,45 @@ describe('Twitch Authentication & Bot Control API', () => {
 
 			mockGetQuery.mockReturnValueOnce({ type: 'bot' })
 
-			// Since NODE_ENV is 'test' by default, requireUserRole usually returns caster.
-			// Temporarily simulate live server environment to test role checks.
-			const originalEnv = process.env.NODE_ENV
-			process.env.NODE_ENV = 'production'
+			await expect(twitchAuthHandler({} as any)).rejects.toThrow('Forbidden')
+		})
 
-			try {
-				await expect(twitchAuthHandler({} as any)).rejects.toThrow('Forbidden')
-			}
-			finally {
-				process.env.NODE_ENV = originalEnv
-				mockGetUserSession.mockReset()
-				mockGetUserSession.mockResolvedValue({ user: { id: 'mock-user', role: 'caster' } })
-			}
+		it('should reject moderator with 403 Forbidden', async () => {
+			const mockGetUserSession = (globalThis as any).getUserSession
+			mockGetUserSession.mockResolvedValue({
+				user: { id: 'mod-user', role: 'moderator' },
+			})
+
+			mockGetQuery.mockReturnValueOnce({ type: 'bot' })
+
+			await expect(twitchAuthHandler({} as any)).rejects.toThrow('Forbidden')
+		})
+
+		it('should reject admin with 403 Forbidden (strict caster enforcement)', async () => {
+			const mockGetUserSession = (globalThis as any).getUserSession
+			mockGetUserSession.mockResolvedValue({
+				user: { id: 'admin-user', role: 'admin' },
+			})
+
+			mockGetQuery.mockReturnValueOnce({ type: 'bot' })
+
+			await expect(twitchAuthHandler({} as any)).rejects.toThrow('Forbidden')
+		})
+
+		it('should allow caster to initiate auth flow when onboarded', async () => {
+			const mockGetUserSession = (globalThis as any).getUserSession
+			mockGetUserSession.mockResolvedValue({
+				user: { id: 'caster-user', role: 'caster' },
+			})
+
+			mockGetQuery.mockReturnValueOnce({ type: 'streamer' })
+
+			await twitchAuthHandler({} as any)
+
+			expect(mockSendRedirect).toHaveBeenCalledWith(
+				expect.any(Object),
+				expect.stringContaining('https://id.twitch.tv/oauth2/authorize'),
+			)
 		})
 	})
 

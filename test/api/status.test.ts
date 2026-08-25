@@ -106,4 +106,63 @@ describe('Bot Status API', () => {
 		expect(res3.isBotModerator).toBe(true)
 		expect(mockApiClient.moderation.checkUserMod).toHaveBeenCalledTimes(2) // New call triggered
 	})
+
+	describe('Outdated Token Status Exposure by Role', () => {
+		beforeEach(async () => {
+			await db.insert(twitchTokens).values([
+				{
+					accountType: 'streamer',
+					userId: 'streamer-123',
+					userName: 'streamer',
+					displayName: 'Streamer',
+					accessToken: 'access',
+					refreshToken: 'refresh',
+					scope: '[]',
+					obtainmentTimestamp: Date.now(),
+				},
+				{
+					accountType: 'bot',
+					userId: 'bot-456',
+					userName: 'bot',
+					displayName: 'Bot',
+					accessToken: 'access',
+					refreshToken: 'refresh',
+					scope: '[]',
+					obtainmentTimestamp: Date.now(),
+				},
+			])
+			await getStreamerToken(true)
+			await getBotToken(true)
+			const { updateAppSetting } = await import('~~/server/utils/settings')
+			await updateAppSetting('twitch.bot_token_version', '0')
+			await updateAppSetting('twitch.streamer_token_version', '0')
+		})
+
+		it('should expose isStreamerTokenOutdated and isBotTokenOutdated as true for caster', async () => {
+			const mockGetUserSession = getUserSession as any
+			mockGetUserSession.mockResolvedValueOnce({ user: { id: 'streamer-123', role: 'caster' } })
+
+			const res = await statusHandler({ context: {} } as any)
+			expect(res.isStreamerTokenOutdated).toBe(true)
+			expect(res.isBotTokenOutdated).toBe(true)
+		})
+
+		it('should mask isStreamerTokenOutdated and isBotTokenOutdated as false for admin', async () => {
+			const mockGetUserSession = getUserSession as any
+			mockGetUserSession.mockResolvedValueOnce({ user: { id: 'admin-user', role: 'admin' } })
+
+			const res = await statusHandler({ context: {} } as any)
+			expect(res.isStreamerTokenOutdated).toBe(false)
+			expect(res.isBotTokenOutdated).toBe(false)
+		})
+
+		it('should mask isStreamerTokenOutdated and isBotTokenOutdated as false for moderator', async () => {
+			const mockGetUserSession = getUserSession as any
+			mockGetUserSession.mockResolvedValueOnce({ user: { id: 'mod-user', role: 'moderator' } })
+
+			const res = await statusHandler({ context: {} } as any)
+			expect(res.isStreamerTokenOutdated).toBe(false)
+			expect(res.isBotTokenOutdated).toBe(false)
+		})
+	})
 })

@@ -130,3 +130,18 @@ export async function requireUserRole(event: H3Event, minRole?: UserRole) {
 
 	return user
 }
+
+/**
+ * Strictly requires that the user has the 'caster' role (disallowing 'admin' or other roles).
+ * Throws 401 if unauthorized or 403 if role is not 'caster'.
+ */
+export async function requireStrictCaster(event: H3Event) {
+	const user = await requireUserRole(event)
+	if (user.role !== 'caster') {
+		throw createError({
+			statusCode: 403,
+			statusMessage: 'Forbidden: Only the channel broadcaster (caster) can perform this action.',
+		})
+	}
+	return user
+}

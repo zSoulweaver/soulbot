@@ -4,7 +4,7 @@ import { exchangeCode, getTokenInfo } from '@twurple/auth'
 import { BOT_OAUTH_SCOPES, BOT_OAUTH_VERSION, STREAMER_OAUTH_SCOPES, STREAMER_OAUTH_VERSION } from '~~/server/config/twitch'
 import { db } from '~~/server/database'
 import { settings, twitchTokens, users } from '~~/server/database/schema'
-import { requireUserRole } from '~~/server/utils/auth'
+import { requireStrictCaster } from '~~/server/utils/auth'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
 import { getApiClient, getAuthProvider, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
 		const botToken = await getBotToken()
 		const isBot = user && botToken && user.id === botToken.userId
 		if (!isBot) {
-			await requireUserRole(event, 'caster')
+			await requireStrictCaster(event)
 		}
 	}
 

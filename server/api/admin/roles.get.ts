@@ -1,20 +1,11 @@
 import { eq, inArray } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
-import { requireUserRole } from '~~/server/utils/auth'
+import { requireStrictCaster } from '~~/server/utils/auth'
 import { getApiClient, getStreamerToken, syncModeratorRoles } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
-	// Require caster permissions
-	const user = await requireUserRole(event, 'caster')
-
-	// Strict check: only the channel owner (caster) can query/manage roles.
-	if (user.role !== 'caster') {
-		throw createError({
-			statusCode: 403,
-			statusMessage: 'Forbidden: Only the channel broadcaster can manage administrator roles.',
-		})
-	}
+	await requireStrictCaster(event)
 
 	const streamerToken = await getStreamerToken()
 	if (!streamerToken || !streamerToken.userId) {

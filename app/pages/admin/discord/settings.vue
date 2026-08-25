@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import {
@@ -107,9 +106,7 @@ async function refreshAll() {
 		subheading="Configure Discord bot client credentials and toggle integration status."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refreshAll">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshAll" />
 		</template>
 
 		<ClientOnly>

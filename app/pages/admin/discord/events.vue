@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import DiscordAlertConfig from '~/components/discord/DiscordAlertConfig.vue'
@@ -136,13 +135,7 @@ async function saveSettings() {
 		subheading="Configure automated chat alerts and role assignments triggered by native Discord server events."
 	>
 		<template #header-actions>
-			<Button
-				variant="ghost"
-				:disabled="loading"
-				@click="refreshSettings"
-			>
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshSettings" />
 		</template>
 
 		<!-- Full page loader for settings -->

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DeathsListResponse, GameDeathRecord } from '~/types/deaths'
-import { Gamepad2, PencilIcon, PlusIcon, RefreshCcw, SearchIcon, Trash2Icon } from '@lucide/vue'
+import { Gamepad2, PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
@@ -8,6 +8,7 @@ import DataTable from '@/components/ui/data-table/DataTable.vue'
 import GameDeathsEditSheet from '~/components/deaths/GameDeathsEditSheet.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 import { usePagination } from '~/composables/usePagination'
 
 useHead({
@@ -128,12 +129,18 @@ const columns: any[] = [
 				h(PencilIcon, { 'data-icon': 'inline-start' }),
 				'Manage Counters',
 			]),
-			h(Button, {
-				variant: 'ghostDestructive',
-				size: 'icon-sm',
-				onClick: () => deleteRecord(info.row.original),
-			}, () => [
-				h(Trash2Icon),
+			h(Tooltip, null, () => [
+				h(TooltipTrigger, { asChild: true }, () => [
+					h(Button, {
+						variant: 'ghostDestructive',
+						size: 'icon-sm',
+						onClick: () => deleteRecord(info.row.original),
+					}, () => [
+						h(Trash2Icon),
+						h('span', { class: 'sr-only' }, 'Delete game record'),
+					]),
+				]),
+				h(TooltipContent, { side: 'bottom' }, () => 'Delete game record'),
 			]),
 		]),
 	}),
@@ -150,9 +157,7 @@ const columns: any[] = [
 				<PlusIcon data-icon="inline-start" />
 				Add Game
 			</Button>
-			<Button variant="ghost" :disabled="loadingTable" @click="refreshDeaths">
-				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-			</Button>
+			<AppRefreshButton :loading="loadingTable" @click="refreshDeaths" />
 		</template>
 
 		<div class="flex flex-col gap-4">

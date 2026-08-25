@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AutoExclusion, ExcludedUser } from '~/types/loyalty'
-import { PlusIcon, RefreshCcw, SearchIcon, TrashIcon } from '@lucide/vue'
+import { PlusIcon, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
@@ -104,9 +104,7 @@ const columns: any[] = [
 				<PlusIcon data-icon="inline-start" />
 				Add Exclusion
 			</Button>
-			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
-				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-			</Button>
+			<AppRefreshButton :loading="loadingTable" @click="refresh" />
 		</template>
 		<!-- System Exclusions Callout -->
 		<Alert

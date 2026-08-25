@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PencilIcon, PlusIcon, RefreshCcw, SearchIcon } from '@lucide/vue'
+import { PencilIcon, PlusIcon, SearchIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
@@ -105,9 +105,7 @@ const columns: any[] = [
 		subheading="Manage viewer watch times and search the viewer loyalty database."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loadingTable" @click="refreshUsers">
-				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-			</Button>
+			<AppRefreshButton :loading="loadingTable" @click="refreshUsers" />
 		</template>
 		<div class="flex flex-col gap-4">
 			<InputGroup class="w-full max-w-sm">

@@ -14,9 +14,11 @@ useHead({
 
 <template>
 	<div :class="[isWidgetLayout ? 'bg-transparent' : 'min-h-screen bg-background font-sans antialiased']">
-		<NuxtLayout>
-			<NuxtPage />
-		</NuxtLayout>
+		<TooltipProvider :delay-duration="300">
+			<NuxtLayout>
+				<NuxtPage />
+			</NuxtLayout>
+		</TooltipProvider>
 		<ClientOnly v-if="!isWidgetLayout">
 			<Sonner position="top-center" />
 		</ClientOnly>

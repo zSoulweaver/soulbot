@@ -320,9 +320,7 @@ function formatEventType(type: string) {
 		subheading="Real-time control and overview of the Twitch bot and stream."
 	>
 		<template #header-actions>
-			<Button variant="ghost" size="icon" :disabled="loadingStream || loadingBotStatus" @click="refreshDashboard">
-				<RefreshCcw :class="{ 'animate-spin': loadingStream || loadingBotStatus }" />
-			</Button>
+			<AppRefreshButton :loading="loadingStream || loadingBotStatus" @click="refreshDashboard" />
 		</template>
 		<div class="flex flex-col gap-4">
 			<!-- STREAM CONTROLLER PANELS -->

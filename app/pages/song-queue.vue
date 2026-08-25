@@ -27,6 +27,7 @@ import { Input } from '~/components/ui/input'
 import { Spinner } from '~/components/ui/spinner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 import { usePagination } from '~/composables/usePagination'
 
 const { loggedIn, user } = useUserSession()
@@ -581,24 +582,38 @@ function formatTimeAgo(timestamp?: number | null) {
 											</TableCell>
 											<TableCell v-if="loggedIn" class="text-center">
 												<div class="flex items-center justify-center gap-1">
-													<Button
-														v-if="isModeratorOrCaster && queueData?.settings?.announceDeleteWebui"
-														variant="ghostDestructive"
-														size="icon"
-														class="size-8"
-														@click="handleDeleteItemSilently(item)"
-													>
-														<BellOff class="size-4" />
-													</Button>
-													<Button
-														v-if="isModeratorOrCaster || (item.requestedBy.toLowerCase() === user?.displayName?.toLowerCase() && item.status === 'pending')"
-														variant="ghostDestructive"
-														size="icon"
-														class="size-8"
-														@click="handleDeleteItem(item)"
-													>
-														<Trash2 />
-													</Button>
+													<Tooltip v-if="isModeratorOrCaster && queueData?.settings?.announceDeleteWebui">
+														<TooltipTrigger as-child>
+															<Button
+																variant="ghostDestructive"
+																size="icon"
+																class="size-8"
+																@click="handleDeleteItemSilently(item)"
+															>
+																<BellOff class="size-4" />
+																<span class="sr-only">Remove silently</span>
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent side="bottom">
+															Remove silently (no chat announcement)
+														</TooltipContent>
+													</Tooltip>
+													<Tooltip v-if="isModeratorOrCaster || (item.requestedBy.toLowerCase() === user?.displayName?.toLowerCase() && item.status === 'pending')">
+														<TooltipTrigger as-child>
+															<Button
+																variant="ghostDestructive"
+																size="icon"
+																class="size-8"
+																@click="handleDeleteItem(item)"
+															>
+																<Trash2 />
+																<span class="sr-only">Remove from queue</span>
+															</Button>
+														</TooltipTrigger>
+														<TooltipContent side="bottom">
+															Remove from queue
+														</TooltipContent>
+													</Tooltip>
 												</div>
 											</TableCell>
 										</TableRow>
@@ -764,23 +779,30 @@ function formatTimeAgo(timestamp?: number | null) {
 										</DropdownMenu>
 									</div>
 									<!-- Like Song (Caster / Mods) -->
-									<Button
-										variant="outline"
-										size="icon"
-										class="
-											size-9 shrink-0
-											hover:text-red-400
-											hover:[&>svg]:fill-red-500
-										"
-										:disabled="isLiking"
-										:title="queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist'"
-										@click="handleLikeSong"
-									>
-										<Spinner v-if="isLiking" />
-										<Heart
-											v-else class="transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
-										/>
-									</Button>
+									<Tooltip>
+										<TooltipTrigger as-child>
+											<Button
+												variant="outline"
+												size="icon"
+												class="
+													size-9 shrink-0
+													hover:text-red-400
+													hover:[&>svg]:fill-red-500
+												"
+												:disabled="isLiking"
+												@click="handleLikeSong"
+											>
+												<Spinner v-if="isLiking" />
+												<Heart
+													v-else class="transition-colors" :class="{ 'fill-red-500 text-red-400': queueData?.currentlyPlaying?.isLiked }"
+												/>
+												<span class="sr-only">{{ queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist' }}</span>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent side="bottom">
+											{{ queueData?.currentlyPlaying?.isLiked ? 'Already added to stream playlist' : 'Add to stream playlist' }}
+										</TooltipContent>
+									</Tooltip>
 								</div>
 							</div>
 						</template>

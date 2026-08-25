@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, Music, Plus, Radio, RefreshCcw, X } from '@lucide/vue'
+import { AlertTriangle, Check, ChevronsUpDown, Link2, Link2Off, Music, Plus, Radio, X } from '@lucide/vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -27,6 +27,7 @@ import {
 	SettingsGroupLabel,
 } from '~/components/ui/settings-group'
 import { SettingsHeading } from '~/components/ui/settings-heading'
+import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 
 const { public: { botName } } = useRuntimeConfig()
 const { user } = useUserSession()
@@ -317,10 +318,12 @@ function formatTime(ms?: number) {
 		subheading="Manage Spotify authentication, automated queue requests, and saved playlists."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="pending || status?.rateLimited" @click="handleRefresh">
-				<RefreshCcw :class="{ 'animate-spin': pending }" />
-				{{ status?.rateLimited ? 'Rate Limited' : '' }}
-			</Button>
+			<AppRefreshButton
+				:loading="pending"
+				:disabled="status?.rateLimited"
+				:tooltip="status?.rateLimited ? 'Rate Limited' : 'Refresh Data'"
+				@click="handleRefresh"
+			/>
 		</template>
 		<!-- Loading State -->
 		<div v-if="(pending && !status) || (loadingSettings && !settingsData)" class="flex items-center justify-center p-12">
@@ -790,16 +793,22 @@ function formatTime(ms?: number) {
 											</ComboboxViewport>
 										</ComboboxList>
 									</Combobox>
-									<Button
-										v-if="form.targetPlaylist"
-										variant="outline"
-										size="icon"
-										class="shrink-0 animate-in duration-200 fade-in zoom-in"
-										title="Clear target playlist"
-										@click="clearTargetPlaylist"
-									>
-										<X class="size-4 text-muted-foreground" />
-									</Button>
+									<Tooltip v-if="form.targetPlaylist">
+										<TooltipTrigger as-child>
+											<Button
+												variant="outline"
+												size="icon"
+												class="shrink-0 animate-in duration-200 fade-in zoom-in"
+												@click="clearTargetPlaylist"
+											>
+												<X class="size-4 text-muted-foreground" />
+												<span class="sr-only">Clear target playlist</span>
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent side="bottom">
+											Clear target playlist
+										</TooltipContent>
+									</Tooltip>
 								</SettingsGroupAction>
 							</SettingsGroupItem>
 

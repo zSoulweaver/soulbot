@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'
@@ -186,9 +185,7 @@ async function saveAlertSettings() {
 		subheading="Configure chat announcement templates and point rewards triggered by Twitch events."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refreshSettings">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshSettings" />
 		</template>
 		<!-- Loading state -->
 		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">

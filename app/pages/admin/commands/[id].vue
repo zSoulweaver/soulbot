@@ -3,7 +3,6 @@ import type { Command, Template } from '~/types/commands'
 import {
 	CornerDownRight,
 	Folder,
-	RefreshCcw,
 	Search,
 	Terminal,
 } from '@lucide/vue'
@@ -267,9 +266,7 @@ async function saveTemplates() {
 			subheading="Customize exact text responses post by the bot in chat. Reset any response template back to default parameters instantly."
 		>
 			<template #header-actions>
-				<Button variant="ghost" :disabled="loading" @click="refreshCommands">
-					<RefreshCcw :class="{ 'animate-spin': loading }" />
-				</Button>
+				<AppRefreshButton :loading="loading" @click="refreshCommands" />
 			</template>
 			<ClientOnly>
 				<!-- Dynamic Left-Right Sidebar Workspace -->

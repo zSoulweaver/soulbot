@@ -214,9 +214,7 @@ const TEXT_ALIGN_OPTIONS = [
 		subheading="Customize text templates, typography, colors, and generate OBS browser source links for your stream."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refresh">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refresh" />
 		</template>
 
 		<!-- Full Page Loader -->

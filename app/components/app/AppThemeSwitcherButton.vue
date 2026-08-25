@@ -21,27 +21,35 @@ function toggleTheme() {
 
 <template>
 	<ClientOnly>
-		<Button
-			size="icon"
-			variant="ghost"
-			class="transition-transform"
-			@click="toggleTheme"
-		>
-			<div
-				class="relative flex size-5 items-center justify-center overflow-hidden"
-			>
-				<transition name="theme-slide">
-					<SunIcon
-						v-if="displayedMode === 'light'"
-						class="absolute size-4 text-amber-500"
-					/>
-					<MoonIcon
-						v-else
-						class="absolute size-4 text-blue-400"
-					/>
-				</transition>
-			</div>
-		</Button>
+		<Tooltip>
+			<TooltipTrigger as-child>
+				<Button
+					size="icon"
+					variant="ghost"
+					class="transition-transform"
+					@click="toggleTheme"
+				>
+					<div
+						class="relative flex size-5 items-center justify-center overflow-hidden"
+					>
+						<transition name="theme-slide">
+							<SunIcon
+								v-if="displayedMode === 'light'"
+								class="absolute size-4 text-amber-500"
+							/>
+							<MoonIcon
+								v-else
+								class="absolute size-4 text-blue-400"
+							/>
+						</transition>
+					</div>
+					<span class="sr-only">Toggle theme</span>
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent side="bottom">
+				{{ displayedMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode' }}
+			</TooltipContent>
+		</Tooltip>
 	</ClientOnly>
 </template>
 

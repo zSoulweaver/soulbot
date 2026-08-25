@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Timer } from '~/types/timers'
-import { Plus, RefreshCcw, Search, Settings, Trash2 } from '@lucide/vue'
+import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref, resolveComponent } from 'vue'
 import { toast } from 'vue-sonner'
@@ -207,9 +207,7 @@ const columns: any[] = [
 				<Plus data-icon="inline-start" />
 				Add Timer
 			</Button>
-			<Button variant="ghost" :disabled="loadingTable" @click="refreshTimers">
-				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-			</Button>
+			<AppRefreshButton :loading="loadingTable" @click="refreshTimers" />
 		</template>
 		<div class="flex flex-col gap-4">
 			<!-- Search & Count Control Row -->

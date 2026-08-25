@@ -13,15 +13,22 @@ const { toggleSidebar } = useSidebar()
 </script>
 
 <template>
-	<Button
-		data-sidebar="trigger"
-		data-slot="sidebar-trigger"
-		variant="ghost"
-		size="icon"
-		:class="cn('size-7', props.class)"
-		@click="toggleSidebar"
-	>
-		<PanelLeft />
-		<span class="sr-only">Toggle Sidebar</span>
-	</Button>
+	<Tooltip>
+		<TooltipTrigger as-child>
+			<Button
+				data-sidebar="trigger"
+				data-slot="sidebar-trigger"
+				variant="ghost"
+				size="icon"
+				:class="cn('size-7', props.class)"
+				@click="toggleSidebar"
+			>
+				<PanelLeft />
+				<span class="sr-only">Toggle Sidebar</span>
+			</Button>
+		</TooltipTrigger>
+		<TooltipContent side="bottom">
+			Toggle Sidebar
+		</TooltipContent>
+	</Tooltip>
 </template>

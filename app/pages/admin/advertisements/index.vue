@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, Megaphone, Play, RefreshCcw, Timer } from '@lucide/vue'
+import { AlertCircle, Megaphone, Play, Timer } from '@lucide/vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'
@@ -216,9 +216,7 @@ async function refreshAll() {
 		subheading="Monitor the upcoming commercial schedule, configure chat warning alerts, and trigger manual ad breaks."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refreshAll">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshAll" />
 		</template>
 		<!-- Full Page Loader -->
 		<div v-if="loading && !settingsData" class="flex flex-col items-center justify-center gap-2 py-20">

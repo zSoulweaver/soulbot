@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Music, PlusIcon, RefreshCcw, SearchIcon, TrashIcon } from '@lucide/vue'
+import { Music, PlusIcon, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
@@ -153,9 +153,7 @@ const columns: any[] = [
 				<PlusIcon data-icon="inline-start" />
 				Add to Blacklist
 			</Button>
-			<Button variant="ghost" :disabled="loadingTable" @click="refresh">
-				<RefreshCcw :class="{ 'animate-spin': loadingTable }" />
-			</Button>
+			<AppRefreshButton :loading="loadingTable" @click="refresh" />
 		</template>
 		<div class="flex flex-col gap-4">
 			<InputGroup class="w-full max-w-sm">

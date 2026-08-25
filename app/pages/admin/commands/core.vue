@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Alias, Command, Template } from '~/types/commands'
-import { ChevronRight, CornerDownRight, MessageSquare, RefreshCcw, SearchIcon, Settings } from '@lucide/vue'
+import { ChevronRight, CornerDownRight, MessageSquare, SearchIcon, Settings } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -364,9 +364,7 @@ const columns = [
 		subheading="Configure point costs, dynamic execution cooldowns, trigger aliases, and chat response templates."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refreshCommands">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshCommands" />
 		</template>
 
 		<!-- Command Controls and Dashboard Table -->

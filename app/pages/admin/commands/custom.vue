@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, RefreshCcw, Search, Settings, Trash2 } from '@lucide/vue'
+import { Plus, Search, Settings, Trash2 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CustomCommandEditSheet from '~/components/commands/CustomCommandEditSheet.vue'
@@ -113,9 +113,7 @@ async function confirmDelete() {
 				<Plus data-icon="inline-start" />
 				Add Command
 			</Button>
-			<Button variant="ghost" :disabled="loading" @click="refreshCustomCommands">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshCustomCommands" />
 		</template>
 		<!-- Custom Commands Dashboard (Card-Free Design) -->
 		<div class="flex flex-col gap-4">

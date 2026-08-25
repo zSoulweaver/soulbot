@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { RefreshCcw, Search } from '@lucide/vue'
+import { Search } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import { Switch } from '~/components/ui/switch'
 
 useRequireUserRole(['caster'])
@@ -86,9 +85,7 @@ async function confirmToggle() {
 		subheading="Delegate administrative permissions to trusted moderators. Admin users hold full bot access but cannot manage other roles."
 	>
 		<template #header-actions>
-			<Button variant="ghost" :disabled="loading" @click="refresh">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refresh" />
 		</template>
 
 		<div class="flex flex-col gap-4">

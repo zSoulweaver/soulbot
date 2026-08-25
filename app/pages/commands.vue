@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import type { PublicCommand } from '~/types/commands'
-import { ChevronRight, CornerDownRight, RefreshCcw, SearchIcon } from '@lucide/vue'
+import { ChevronRight, CornerDownRight, SearchIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref, watch } from 'vue'
 import CommandPermissionBadge from '~/components/commands/CommandPermissionBadge.vue'
 import CommandPointsBadge from '~/components/commands/CommandPointsBadge.vue'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import DataTable from '~/components/ui/data-table/DataTable.vue'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group'
 import { cn } from '~/lib/utils'
@@ -266,9 +265,7 @@ const columns = computed(() => {
 			heading="Commands Directory"
 			subheading="Explore available chat commands, usage syntax, and point costs for our Twitch stream."
 		>
-			<Button variant="ghost" :disabled="loading" @click="refreshCommands">
-				<RefreshCcw :class="{ 'animate-spin': loading }" />
-			</Button>
+			<AppRefreshButton :loading="loading" @click="refreshCommands" />
 		</AppPageHeader>
 
 		<AppPageContainer class="flex-1">

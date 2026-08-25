@@ -128,6 +128,24 @@ describe('Bot Gamble Command Integration', () => {
 		expect(aliceRecord?.gambleNetPoints).toBe(500)
 	})
 
+	it('should support !gamble all with invisible unicode characters and trailing spaces', async () => {
+		vi.spyOn(Math, 'random').mockReturnValue(0.74) // win
+
+		// Invisible characters: \u034F (combining grapheme joiner), \u200B (zero width space), trailing space
+		const { replies } = await simulateCommand('!gamble all \u034F\u200B ', {
+			id: '12345',
+			username: 'alice',
+			displayName: 'Alice',
+			points: 500,
+		})
+
+		expect(replies).toHaveLength(1)
+		expect(replies[0]).toBe('@Alice, rolled a 75 and won 500 points! You went from 500 to 1000 points.')
+
+		const aliceRecord = await db.select().from(users).where(eq(users.id, '12345')).then(res => res[0])
+		expect(aliceRecord?.points).toBe(1000)
+	})
+
 	it('should support !gamble half shortcut', async () => {
 		vi.spyOn(Math, 'random').mockReturnValue(0.1) // lose (11)
 

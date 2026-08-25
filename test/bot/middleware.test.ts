@@ -190,5 +190,15 @@ describe('Bot Middleware Core Execution Pipeline', () => {
 			expect(replies).toHaveLength(1)
 			expect(replies[0]).toBe('@Alice, Incorrect usage, amount must be a number. | Usage: `!points add <user> <amount>`')
 		})
+
+		it('should strip invisible characters and extra whitespace without causing validation errors', async () => {
+			const { replies } = await simulateCommand('!points  add  \u034F@bob\u200B  50  \u2800 ', {
+				id: '12345',
+				username: 'alice',
+				role: 'moderator',
+			})
+			expect(replies).toHaveLength(1)
+			expect(replies[0]).toBe('@Alice, Added 50 points to Bob. They now have 50 points.')
+		})
 	})
 })

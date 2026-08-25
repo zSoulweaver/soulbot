@@ -1,7 +1,8 @@
 import { z } from 'zod'
+import { cleanUsername } from './utils'
 
 // Clean twitch username: strip @ and lowercase
-export const TwitchUser = z.string().transform(s => s.replace(/^@/, '').toLowerCase())
+export const TwitchUser = z.string().transform(s => cleanUsername(s))
 
 // Standard number parser using refine for validation and transform for transformation
 export const NumberParsed = z.string()

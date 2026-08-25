@@ -3,10 +3,17 @@ import { botLogger } from '~~/server/utils/logger'
 import { getApiClient, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 
 /**
- * Standardizes a Twitch username by removing a leading '@' and converting to lowercase.
+ * Strips invisible formatting characters, zero-width characters, braille blank spaces, and trims whitespace.
+ */
+export function sanitizeChatText(text: string): string {
+	return text.replace(/[\p{Cf}\u034F\u2800]/gu, '').trim()
+}
+
+/**
+ * Standardizes a Twitch username by removing invisible characters, a leading '@', and converting to lowercase.
  */
 export function cleanUsername(username: string): string {
-	return username.replace(/^@/, '').toLowerCase()
+	return sanitizeChatText(username).replace(/^@/, '').toLowerCase()
 }
 
 interface CacheEntry<T> {

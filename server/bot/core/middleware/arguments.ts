@@ -143,6 +143,9 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 				command: ctx.state.trigger,
 				subcommand: ctx.state.subcommand,
 				user: ctx.user.name,
+				rawArgs: ctx.rawArgs,
+				finalArgs,
+				zodIssues: result.error.issues,
 				error: message,
 			}, 'Command validation error')
 

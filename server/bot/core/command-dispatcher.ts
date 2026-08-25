@@ -11,6 +11,7 @@ import { permissionsMiddleware } from './middleware/permissions'
 import { pointsCostMiddleware } from './middleware/points-cost'
 import { registry } from './registry'
 import { templateRegistry } from './templates'
+import { sanitizeChatText } from './utils'
 
 // Sequential composition of onion execution middlewares
 const commandMiddlewares: CommandMiddleware[] = [
@@ -39,7 +40,8 @@ export async function handleCommand(
 	if (!message.startsWith('!'))
 		return
 
-	const parts = message.slice(1).split(/\s+/)
+	const cleaned = sanitizeChatText(message.slice(1))
+	const parts = cleaned ? cleaned.split(/\s+/).filter(Boolean) : []
 	const trigger = parts[0]?.toLowerCase()
 	if (!trigger)
 		return

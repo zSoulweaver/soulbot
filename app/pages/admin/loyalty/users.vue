@@ -82,7 +82,7 @@ const columns: any[] = [
 		header: () => h('div', { class: 'text-right' }, 'Actions'),
 		cell: info => h('div', { class: 'flex justify-end' }, [
 			h(Button, {
-				variant: 'outline',
+				variant: 'ghostPrimary',
 				size: 'sm',
 				onClick: () => openAdjustSheet(info.row.original),
 			}, () => [

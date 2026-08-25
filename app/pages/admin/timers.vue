@@ -177,7 +177,7 @@ const columns: any[] = [
 			return h('div', { class: 'flex justify-end gap-1.5' }, [
 				h(Button, {
 					size: 'sm',
-					variant: 'outline',
+					variant: 'ghostPrimary',
 					onClick: () => openEditSheet(timer),
 				}, () => [
 					h(Settings, { 'data-icon': 'inline-start' }),

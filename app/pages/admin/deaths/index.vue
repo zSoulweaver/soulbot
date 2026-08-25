@@ -121,7 +121,7 @@ const columns: any[] = [
 		header: () => h('div', { class: 'text-right' }, 'Actions'),
 		cell: info => h('div', { class: 'flex justify-end gap-2' }, [
 			h(Button, {
-				variant: 'outline',
+				variant: 'ghostPrimary',
 				size: 'sm',
 				onClick: () => openEditSheet(info.row.original),
 			}, () => [
@@ -129,9 +129,8 @@ const columns: any[] = [
 				'Manage Counters',
 			]),
 			h(Button, {
-				variant: 'ghost',
+				variant: 'ghostDestructive',
 				size: 'icon-sm',
-				class: 'text-destructive hover:bg-destructive/10',
 				onClick: () => deleteRecord(info.row.original),
 			}, () => [
 				h(Trash2Icon),

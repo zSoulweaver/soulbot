@@ -334,7 +334,7 @@ const columns = [
 			return h('div', { class: 'flex items-center justify-end gap-1.5' }, [
 				h(Button, {
 					size: 'sm',
-					variant: 'outline',
+					variant: 'ghostPrimary',
 					onClick: () => openQuickEdit(item),
 				}, () => [
 					h(Settings, { 'data-icon': 'inline-start' }),
@@ -342,7 +342,7 @@ const columns = [
 				]),
 				row.depth === 0 && item.hasHandler !== false
 					? h(Button, {
-							variant: 'outline',
+							variant: 'ghostPrimary',
 							size: 'sm',
 							asChild: true,
 						}, () => [

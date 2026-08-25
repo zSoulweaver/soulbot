@@ -230,7 +230,7 @@ async function confirmDelete() {
 								<!-- Configure & Delete Actions -->
 								<TableCell class="text-right">
 									<div class="flex items-center justify-end gap-1.5">
-										<Button size="sm" variant="outline" @click="openEditSheet(command)">
+										<Button size="sm" variant="ghostPrimary" @click="openEditSheet(command)">
 											<Settings data-icon="inline-start" />
 											Config
 										</Button>

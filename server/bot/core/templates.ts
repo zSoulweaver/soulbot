@@ -59,13 +59,24 @@ export function getGlobalTemplateVariables(data: Record<string, string | number>
 class TemplateRegistry {
 	private templates = new Map<string, TemplateDefinition>()
 	private overrides = new Map<string, string>()
+	private syncPromise: Promise<void> | null = null
 
 	register(definition: TemplateDefinition) {
 		botLogger.info('[Templates] Registering: %s', definition.id)
 		this.templates.set(definition.id, definition)
 	}
 
-	async syncWithDb() {
+	async syncWithDb(): Promise<void> {
+		if (this.syncPromise) {
+			return this.syncPromise
+		}
+		this.syncPromise = this.performSyncWithDb().finally(() => {
+			this.syncPromise = null
+		})
+		return this.syncPromise
+	}
+
+	private async performSyncWithDb() {
 		const databaseTemplates = await db.select().from(commandTemplates)
 		this.overrides.clear()
 		for (const templateRow of databaseTemplates) {

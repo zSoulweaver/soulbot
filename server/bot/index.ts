@@ -23,6 +23,7 @@ import { registerTwitchEventSubHandlers } from './modules/twitch/eventsub'
 import { watchtimeModule } from './modules/watchtime'
 
 let isRegistryInitialized = false
+let isBotInitialized = false
 
 export function initRegistry() {
 	if (isRegistryInitialized)
@@ -41,6 +42,10 @@ export function initRegistry() {
 
 export function initBot() {
 	initRegistry()
+
+	if (isBotInitialized)
+		return
+	isBotInitialized = true
 
 	// Register modular EventSub event listeners
 	registerPointsEventSubHandlers()

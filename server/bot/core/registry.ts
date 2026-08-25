@@ -9,6 +9,7 @@ class CommandRegistry {
 	private triggerMap = new Map<string, { commandId: string, subcommand?: string, overrideArgs?: string[] }>()
 	private dbConfigs = new Map<string, typeof commands.$inferSelect>()
 	private subcommandTriggers = new Map<string, string>()
+	private syncPromise: Promise<void> | null = null
 
 	register(definition: CommandDefinition | CommandDefinition[]) {
 		if (Array.isArray(definition)) {
@@ -21,7 +22,17 @@ class CommandRegistry {
 		botLogger.info('Registering %s module', definition.id)
 	}
 
-	async syncWithDb() {
+	async syncWithDb(): Promise<void> {
+		if (this.syncPromise) {
+			return this.syncPromise
+		}
+		this.syncPromise = this.performSyncWithDb().finally(() => {
+			this.syncPromise = null
+		})
+		return this.syncPromise
+	}
+
+	private async performSyncWithDb() {
 		const dbCommands = await db.select().from(commands)
 		const dbAliases = await db.select().from(commandAliases)
 
@@ -101,7 +112,7 @@ class CommandRegistry {
 					whisperSilentResponse: false,
 					hidden: false,
 				}
-				await db.insert(commands).values(newRow)
+				await db.insert(commands).values(newRow).onConflictDoNothing()
 				dbCmd = { ...newRow } as any
 			}
 
@@ -132,7 +143,7 @@ class CommandRegistry {
 							whisperSilentResponse: false,
 							hidden: false,
 						}
-						await db.insert(commands).values(newSubRow)
+						await db.insert(commands).values(newSubRow).onConflictDoNothing()
 						dbSubCmd = { ...newSubRow } as any
 					}
 					this.dbConfigs.set(subId, dbSubCmd!)

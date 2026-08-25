@@ -31,8 +31,10 @@ export async function triggerQueueEngineTick() {
 	await tick()
 }
 
-export async function clearRequestPlaylistId() {
+export async function clearRequestPlaylistId(reason?: string) {
 	try {
+		const appSettings = getAppSettingsSync()
+		const previousPlaylistId = appSettings.spotifyRequestPlaylistId
 		await db.insert(settings)
 			.values({
 				key: 'spotify.request.playlist_id',
@@ -60,7 +62,10 @@ export async function clearRequestPlaylistId() {
 				},
 			})
 		await refreshAppSettingsCache()
-		botLogger.warn('[Spotify Queue] Cleared invalid/deleted request playlist ID and forcefully disabled song requests')
+		botLogger.warn(
+			{ previousPlaylistId, reason: reason || 'Playlist not found or deleted' },
+			`[Spotify Queue] Unlinked request playlist (ID: "${previousPlaylistId}") and forcefully disabled song requests. Reason: ${reason || 'Playlist not found or deleted'}`,
+		)
 	}
 	catch (err) {
 		botLogger.error({ err }, '[Spotify Queue] Failed to clear invalid playlist ID and disable song requests')
@@ -139,7 +144,7 @@ async function tick() {
 					botLogger.info('[Spotify Queue] Sync: Spotify playlist is out of sync (duplicates, missing tracks, or incorrect order). Overwriting playlist...')
 					const success = await replacePlaylistTracks(appSettings.spotifyRequestPlaylistId, expectedUris)
 					if (!success) {
-						await handlePlaylistError()
+						await handlePlaylistError('syncing queue tracks')
 					}
 				}
 			}
@@ -166,12 +171,6 @@ async function tick() {
 		// Proactively queue fallback songs if active fallbacks count === 0
 		const activeFallbacksCount = activeTracks.filter(t => t.requestedBy === 'Fallback Playlist').length
 		if (activeFallbacksCount === 0 && appSettings.spotifyPlaylistTargetId) {
-			const exists = await playlistExists(appSettings.spotifyRequestPlaylistId)
-			if (!exists) {
-				await clearRequestPlaylistId()
-				return
-			}
-
 			const fallbackTracks = await getRandomTracksFromPlaylist(appSettings.spotifyPlaylistTargetId, 2)
 			const newUris: string[] = []
 
@@ -217,7 +216,7 @@ async function tick() {
 			if (newUris.length > 0) {
 				const added = await addTracksToPlaylist(appSettings.spotifyRequestPlaylistId, newUris)
 				if (!added) {
-					await handlePlaylistError()
+					await handlePlaylistError('adding fallback tracks')
 				}
 				else {
 					botLogger.info(`[Spotify Queue] Autoplay: Added ${newUris.length} fallback songs to the bottom.`)
@@ -269,7 +268,7 @@ async function tick() {
 									const trackUri = prevItem.trackId.startsWith('spotify:track:') ? prevItem.trackId : `spotify:track:${prevItem.trackId}`
 									const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 									if (!removed) {
-										await handlePlaylistError()
+										await handlePlaylistError('removing played song')
 									}
 									else {
 										botLogger.info(`[Spotify Queue] Cleaned up played song from playlist: ${prevItem.title}`)
@@ -293,7 +292,7 @@ async function tick() {
 								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
 								const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 								if (!removed) {
-									await handlePlaylistError()
+									await handlePlaylistError('removing duration-exceeded track')
 								}
 							}
 						}
@@ -317,7 +316,7 @@ async function tick() {
 								const trackUri = playingItem.trackId.startsWith('spotify:track:') ? playingItem.trackId : `spotify:track:${playingItem.trackId}`
 								const removed = await removeTracksFromPlaylist(appSettings.spotifyRequestPlaylistId, [trackUri])
 								if (!removed) {
-									await handlePlaylistError()
+									await handlePlaylistError('removing completed song on context switch')
 								}
 								else {
 									botLogger.info(`[Spotify Queue] Cleaned up completed song: ${playingItem.title}`)
@@ -371,7 +370,7 @@ async function tick() {
 	}
 }
 
-async function handlePlaylistError() {
+async function handlePlaylistError(operation?: string) {
 	const appSettings = getAppSettingsSync()
 	if (!appSettings.spotifyRequestPlaylistId)
 		return
@@ -383,7 +382,7 @@ async function handlePlaylistError() {
 	try {
 		const exists = await playlistExists(appSettings.spotifyRequestPlaylistId)
 		if (!exists) {
-			await clearRequestPlaylistId()
+			await clearRequestPlaylistId(`Playlist does not exist on Spotify after failed operation: ${operation || 'unknown'}`)
 		}
 	}
 	catch (err: any) {

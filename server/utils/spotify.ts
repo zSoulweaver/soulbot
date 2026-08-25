@@ -264,13 +264,41 @@ export async function playlistExists(playlistId: string): Promise<boolean> {
 		return cachedPlaylistExists.exists
 	}
 
-	const token = await getValidSpotifyToken()
-	if (!token)
+	const storedToken = await getSpotifyToken()
+	if (!storedToken) {
 		return false
+	}
 
-	const userId = await getSpotifyUserId()
-	if (!userId)
-		return false
+	if (isSpotifyRateLimited()) {
+		botLogger.warn('[Spotify] Bypassing playlistExists check due to active rate-limit cooldown')
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
+	}
+
+	let token: typeof storedToken | null = null
+	try {
+		token = await getValidSpotifyToken()
+	}
+	catch (err) {
+		botLogger.error({ err, playlistId }, '[Spotify] Failed to get valid token for playlistExists check')
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
+	}
+
+	if (!token) {
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
+	}
+
+	let userId: string | null = null
+	try {
+		userId = await getSpotifyUserId()
+	}
+	catch (err) {
+		botLogger.error({ err, playlistId }, '[Spotify] Failed to get user ID for playlistExists check')
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
+	}
+
+	if (!userId) {
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
+	}
 
 	try {
 		const res = await $fetch<boolean[]>(`https://api.spotify.com/v1/playlists/${playlistId}/followers/contains?ids=${userId}`, {
@@ -288,7 +316,7 @@ export async function playlistExists(playlistId: string): Promise<boolean> {
 		return exists
 	}
 	catch (err: any) {
-		if (err.response?.status === 404) {
+		if (err.response?.status === 404 || err.status === 404 || err.statusCode === 404) {
 			cachedPlaylistExists = {
 				playlistId,
 				exists: false,
@@ -297,7 +325,7 @@ export async function playlistExists(playlistId: string): Promise<boolean> {
 			return false
 		}
 		botLogger.error({ err, playlistId }, `[Spotify] Failed to verify if playlist is in user library`)
-		return true
+		return cachedPlaylistExists?.playlistId === playlistId ? cachedPlaylistExists.exists : true
 	}
 }
 

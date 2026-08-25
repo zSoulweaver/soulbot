@@ -138,6 +138,43 @@ describe('Spotify Queue & Playlists API Endpoints', () => {
 			expect(res.playlistExists).toBe(false)
 		})
 
+		it('should fail-safe and report playlistExists as true if Spotify API returns a network or 500 error', async () => {
+			const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+			clearSpotifyTokenCache()
+
+			mockFetch.mockImplementation(async (url: string) => {
+				if (url.includes('/v1/me')) {
+					return { id: 'spotify-user-123', display_name: 'Spotify User' }
+				}
+				if (url.includes('/followers/contains')) {
+					const error = new Error('Spotify Server Error')
+					;(error as any).response = { status: 500 }
+					throw error
+				}
+				return {}
+			})
+			const res = await settingsGetHandler({} as any)
+			expect(res).toBeDefined()
+			expect(res.playlistExists).toBe(true)
+		})
+
+		it('should fail-safe and report playlistExists as true if user profile cannot be fetched due to transient network error', async () => {
+			const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
+			clearSpotifyTokenCache()
+
+			mockFetch.mockImplementation(async (url: string) => {
+				if (url.includes('/v1/me')) {
+					const error = new Error('Network Timeout')
+					;(error as any).response = { status: 504 }
+					throw error
+				}
+				return {}
+			})
+			const res = await settingsGetHandler({} as any)
+			expect(res).toBeDefined()
+			expect(res.playlistExists).toBe(true)
+		})
+
 		it('should update song request settings', async () => {
 			const mockEvent = {
 				body: {

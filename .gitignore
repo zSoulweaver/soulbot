@@ -22,6 +22,8 @@ logs
 .env
 .env.*
 !.env.example
+.certs
+
 
 # Database files
 *.db

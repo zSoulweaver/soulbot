@@ -1,5 +1,56 @@
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import process from 'node:process'
 import tailwindcss from '@tailwindcss/vite'
+import selfsigned from 'selfsigned'
+
+async function getDevHttpsConfig() {
+	const certsDir = join(process.cwd(), '.certs')
+	const keyPath = join(certsDir, 'dev-key.pem')
+	const certPath = join(certsDir, 'dev-cert.pem')
+
+	if (!existsSync(keyPath) || !existsSync(certPath)) {
+		mkdirSync(certsDir, { recursive: true })
+		const attrs = [{ name: 'commonName', value: '127.0.0.1' }]
+		const notAfterDate = new Date()
+		notAfterDate.setFullYear(notAfterDate.getFullYear() + 10)
+
+		const pems = await selfsigned.generate(attrs, {
+			notAfterDate,
+			algorithm: 'sha256',
+			keySize: 2048,
+			extensions: [
+				{
+					name: 'basicConstraints',
+					cA: true,
+				},
+				{
+					name: 'keyUsage',
+					keyCertSign: true,
+					digitalSignature: true,
+					keyEncipherment: true,
+				},
+				{
+					name: 'subjectAltName',
+					altNames: [
+						{ type: 2, value: 'localhost' },
+						{ type: 7, ip: '127.0.0.1' },
+					],
+				},
+			],
+		})
+
+		writeFileSync(keyPath, pems.private, 'utf8')
+		writeFileSync(certPath, pems.cert, 'utf8')
+	}
+
+	return {
+		key: keyPath,
+		cert: certPath,
+	}
+}
+
+const devHttps = await getDevHttpsConfig()
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -15,7 +66,7 @@ export default defineNuxtConfig({
 
 	devServer: {
 		host: '127.0.0.1',
-		https: true,
+		https: devHttps,
 	},
 
 	vite: {

@@ -13,6 +13,8 @@ export const gambleModule = defineCommand({
 	templates: [
 		'points.gambling.win',
 		'points.gambling.lose',
+		'points.gambling.bonus-win',
+		'points.gambling.bonus-lose',
 		'points.gambling.min-bet',
 		'points.gambling.max-bet',
 		'points.gambling.not-enough-points',

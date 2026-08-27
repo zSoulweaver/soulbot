@@ -23,6 +23,7 @@ const form = ref<GamblingSettings>({
 	bonusDuration: 5,
 	bonusWinMultiplier: 2.0,
 	bonusWinMinRoll: 50,
+	bonusTicketsPerUser: 5,
 	bonusMessage: '',
 	bonusEndMessage: '',
 	bonusEndTime: 0,
@@ -51,6 +52,7 @@ const isModified = computed(() => {
 		|| form.value.bonusDuration !== settingsData.value.bonusDuration
 		|| form.value.bonusWinMultiplier !== settingsData.value.bonusWinMultiplier
 		|| form.value.bonusWinMinRoll !== settingsData.value.bonusWinMinRoll
+		|| form.value.bonusTicketsPerUser !== settingsData.value.bonusTicketsPerUser
 		|| form.value.bonusMessage !== settingsData.value.bonusMessage
 		|| form.value.bonusEndMessage !== settingsData.value.bonusEndMessage
 	)
@@ -191,6 +193,10 @@ async function saveSettings() {
 		toast.error('Bonus winning roll threshold must be between 1 and 100')
 		return
 	}
+	if (form.value.bonusTicketsPerUser < 1) {
+		toast.error('Bonus tickets per user must be at least 1')
+		return
+	}
 	if (!form.value.bonusMessage.trim()) {
 		toast.error('Bonus start message cannot be empty')
 		return
@@ -212,6 +218,7 @@ async function saveSettings() {
 				bonusDuration: Number(form.value.bonusDuration),
 				bonusWinMultiplier: Number(form.value.bonusWinMultiplier),
 				bonusWinMinRoll: Number(form.value.bonusWinMinRoll),
+				bonusTicketsPerUser: Number(form.value.bonusTicketsPerUser),
 				bonusMessage: form.value.bonusMessage,
 				bonusEndMessage: form.value.bonusEndMessage,
 			},
@@ -395,11 +402,29 @@ async function saveSettings() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
+					<SettingsGroupItem>
+						<SettingsGroupContent>
+							<SettingsGroupLabel>Bonus Tickets Per User</SettingsGroupLabel>
+							<SettingsGroupDescription>
+								The number of bonus bets each viewer receives during a bonus event before reverting to standard odds.
+							</SettingsGroupDescription>
+						</SettingsGroupContent>
+						<SettingsGroupAction>
+							<NumberField id="bonusTicketsPerUser" v-model="form.bonusTicketsPerUser" :min="1" :default-value="5" class="w-full">
+								<NumberFieldContent>
+									<NumberFieldDecrement />
+									<NumberFieldInput />
+									<NumberFieldIncrement />
+								</NumberFieldContent>
+							</NumberField>
+						</SettingsGroupAction>
+					</SettingsGroupItem>
+
 					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Twitch chat message sent when the bonus event is triggered. Supports $(multiplier), $(threshold), $(duration).
+								Twitch chat message sent when the bonus event is triggered. Supports $(multiplier), $(threshold), $(duration), $(tickets).
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -417,7 +442,7 @@ async function saveSettings() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>End Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Twitch chat message sent when the bonus event ends. Supports $(multiplier), $(threshold), $(duration).
+								Twitch chat message sent when the bonus event ends. Supports $(multiplier), $(threshold), $(duration), $(tickets).
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction

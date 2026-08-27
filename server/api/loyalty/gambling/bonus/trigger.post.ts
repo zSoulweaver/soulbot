@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
 			multiplier,
 			threshold,
 			duration,
+			tickets: settings.pointsGamblingBonusTicketsPerUser,
 		})
 		await sendRawChatMessage(channel, rendered)
 	}

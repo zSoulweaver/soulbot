@@ -114,6 +114,30 @@ export const definitions = {
 			newAmount: 'The user\'s new points balance after losing.',
 		},
 	},
+	'points.gambling.bonus-win': {
+		default: 'rolled a $(roll) and won $(winAmount) bonus $(core.currency)! (Bonus Ticket Used, $(ticketsRemaining) left) You went from $(oldAmount) to $(newAmount) $(core.currency).',
+		params: { sender: '', roll: 0, winAmount: 0, oldAmount: 0, newAmount: 0, ticketsRemaining: 0 } as { sender: string, roll: number, winAmount: number, oldAmount: number, newAmount: number, ticketsRemaining: number },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user gambling.',
+			roll: 'The number rolled by the user (1-100).',
+			winAmount: 'The amount of points won in this roll.',
+			oldAmount: 'The user\'s points balance before the roll.',
+			newAmount: 'The user\'s new points balance after winning.',
+			ticketsRemaining: 'The number of bonus tickets remaining for the user during this event.',
+		},
+	},
+	'points.gambling.bonus-lose': {
+		default: 'rolled a $(roll) and lost $(betAmount) $(core.currency). (Bonus Ticket Used, $(ticketsRemaining) left) You went from $(oldAmount) to $(newAmount) $(core.currency).',
+		params: { sender: '', roll: 0, betAmount: 0, oldAmount: 0, newAmount: 0, ticketsRemaining: 0 } as { sender: string, roll: number, betAmount: number, oldAmount: number, newAmount: number, ticketsRemaining: number },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user gambling.',
+			roll: 'The number rolled by the user (1-100).',
+			betAmount: 'The amount of points bet and lost.',
+			oldAmount: 'The user\'s points balance before the roll.',
+			newAmount: 'The user\'s new points balance after losing.',
+			ticketsRemaining: 'The number of bonus tickets remaining for the user during this event.',
+		},
+	},
 	'points.gambling.min-bet': {
 		default: 'The minimum amount to gamble is $(minBet) $(core.currency).',
 		params: { minBet: 0 } as { minBet: number },

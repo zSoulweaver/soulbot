@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
 		bonusDuration: settings.pointsGamblingBonusDuration,
 		bonusWinMultiplier: settings.pointsGamblingBonusWinMultiplier,
 		bonusWinMinRoll: settings.pointsGamblingBonusWinMinRoll,
+		bonusTicketsPerUser: settings.pointsGamblingBonusTicketsPerUser,
 		bonusMessage: settings.pointsGamblingBonusMessage,
 		bonusEndMessage: settings.pointsGamblingBonusEndMessage,
 		bonusEndTime: settings.pointsGamblingBonusEndTime,

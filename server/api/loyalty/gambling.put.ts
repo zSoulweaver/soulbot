@@ -13,6 +13,7 @@ const saveGamblingSettingsSchema = z.object({
 	bonusDuration: z.number().int().min(1, 'Duration must be between 1 and 30 minutes').max(30, 'Duration must be between 1 and 30 minutes'),
 	bonusWinMultiplier: z.number().min(0.1, 'Bonus multiplier must be at least 0.1'),
 	bonusWinMinRoll: z.number().int().min(1, 'Bonus threshold must be between 1 and 100').max(100, 'Bonus threshold must be between 1 and 100'),
+	bonusTicketsPerUser: z.number().int().min(1, 'Bonus tickets must be at least 1'),
 	bonusMessage: z.string().min(1, 'Bonus start announcement message cannot be empty'),
 	bonusEndMessage: z.string().min(1, 'Bonus end announcement message cannot be empty'),
 }).refine(data => data.maxBet >= data.minBet, {
@@ -41,6 +42,7 @@ export default defineEventHandler(async (event) => {
 		bonusDuration,
 		bonusWinMultiplier,
 		bonusWinMinRoll,
+		bonusTicketsPerUser,
 		bonusMessage,
 		bonusEndMessage,
 	} = parsed.data
@@ -53,6 +55,7 @@ export default defineEventHandler(async (event) => {
 		{ key: 'points.gambling_bonus_duration', value: String(bonusDuration), updatedAt: new Date() },
 		{ key: 'points.gambling_bonus_win_multiplier', value: String(bonusWinMultiplier), updatedAt: new Date() },
 		{ key: 'points.gambling_bonus_win_min_roll', value: String(bonusWinMinRoll), updatedAt: new Date() },
+		{ key: 'points.gambling_bonus_tickets_per_user', value: String(bonusTicketsPerUser), updatedAt: new Date() },
 		{ key: 'points.gambling_bonus_message', value: bonusMessage, updatedAt: new Date() },
 		{ key: 'points.gambling_bonus_end_message', value: bonusEndMessage, updatedAt: new Date() },
 	]

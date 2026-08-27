@@ -27,11 +27,14 @@ export const handleGambleBonus: CommandHandler = async (ctx) => {
 	const { scheduleBonusEnd } = await import('~~/server/bot/modules/points/bonus-manager')
 	await scheduleBonusEnd(endTime)
 
+	const tickets = settings.pointsGamblingBonusTicketsPerUser
+
 	// Render customizable start message
 	const rendered = await renderCustomTemplate(bonusMessage, ctx, {
 		multiplier,
 		threshold,
 		duration,
+		tickets,
 	})
 
 	// Broadcast start message to Twitch chat

@@ -41,6 +41,7 @@ export interface AppSettings {
 	pointsGamblingBonusDuration: number
 	pointsGamblingBonusWinMultiplier: number
 	pointsGamblingBonusWinMinRoll: number
+	pointsGamblingBonusTicketsPerUser: number
 	pointsGamblingBonusMessage: string
 	pointsGamblingBonusEndMessage: string
 	pointsGamblingBonusEndTime: number
@@ -178,7 +179,8 @@ export function getAppSettingsSync(): AppSettings {
 			pointsGamblingBonusDuration: 5,
 			pointsGamblingBonusWinMultiplier: 2.0,
 			pointsGamblingBonusWinMinRoll: 50,
-			pointsGamblingBonusMessage: 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes!',
+			pointsGamblingBonusTicketsPerUser: 5,
+			pointsGamblingBonusMessage: 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes! Everyone gets $(tickets) bonus bets!',
 			pointsGamblingBonusEndMessage: 'The limited-time gambling bonus event has ended! Win multiplier and win threshold have returned to normal.',
 			pointsGamblingBonusEndTime: 0,
 			spotifySongRequestEnabled: true,
@@ -312,7 +314,8 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			pointsGamblingBonusDuration: Math.max(1, Math.min(30, Number(getVal('points.gambling_bonus_duration', '5')))),
 			pointsGamblingBonusWinMultiplier: Math.max(0.1, Number(getVal('points.gambling_bonus_win_multiplier', '2.0'))),
 			pointsGamblingBonusWinMinRoll: Math.max(1, Math.min(100, Number(getVal('points.gambling_bonus_win_min_roll', '50')))),
-			pointsGamblingBonusMessage: getVal('points.gambling_bonus_message', 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes!'),
+			pointsGamblingBonusTicketsPerUser: Math.max(1, Number(getVal('points.gambling_bonus_tickets_per_user', '5'))),
+			pointsGamblingBonusMessage: getVal('points.gambling_bonus_message', 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes! Everyone gets $(tickets) bonus bets!'),
 			pointsGamblingBonusEndMessage: getVal('points.gambling_bonus_end_message', 'The limited-time gambling bonus event has ended! Win multiplier and win threshold have returned to normal.'),
 			pointsGamblingBonusEndTime: Number(getVal('points.gambling_bonus_end_time', '0')),
 			spotifySongRequestEnabled: getVal('spotify.sr.enabled', 'true') === 'true',

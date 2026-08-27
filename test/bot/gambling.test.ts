@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { resetBonusTickets } from '~~/server/bot/modules/points/bonus-manager'
 import { db } from '~~/server/database'
 import { settings, users } from '~~/server/database/schema'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
@@ -8,6 +9,7 @@ import { clearDatabase, createTestUser, simulateCommand } from '../helpers'
 describe('Bot Gamble Command Integration', () => {
 	beforeEach(async () => {
 		await clearDatabase()
+		resetBonusTickets()
 		vi.restoreAllMocks()
 	})
 
@@ -259,17 +261,18 @@ describe('Bot Gamble Command Integration', () => {
 			expect(replies[0]).toBe('@Alice, A gambling bonus event is already active!')
 		})
 
-		it('should apply bonus win multiplier and threshold when bonus is active', async () => {
-			// Configure custom bonus settings in DB
+		it('should apply bonus win multiplier, deduct tickets, and fallback to normal odds after exhausting tickets', async () => {
+			// Configure custom bonus settings in DB (2 tickets per user)
 			await db.insert(settings).values([
 				{ key: 'points.gambling_bonus_duration', value: '10', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_win_multiplier', value: '3.0', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_win_min_roll', value: '80', updatedAt: new Date() },
+				{ key: 'points.gambling_bonus_tickets_per_user', value: '2', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_end_time', value: String(Date.now() + 10 * 60 * 1000), updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
-			// Let's roll a 75 (75/100 = 0.74)
+			// Ticket 1: roll a 75 (75 < 80 => bonus lose, 1 ticket remaining)
 			const mockRandom = vi.spyOn(Math, 'random').mockReturnValue(0.74)
 
 			const { replies: replies1 } = await simulateCommand('!gamble 100', {
@@ -278,17 +281,27 @@ describe('Bot Gamble Command Integration', () => {
 				displayName: 'Alice',
 				points: 500,
 			})
-			expect(replies1[0]).toContain('rolled a 75 and lost 100 points')
+			expect(replies1[0]).toBe('@Alice, rolled a 75 and lost 100 points. (Bonus Ticket Used - 1 left) You went from 500 to 400 points.')
 
-			// Let's roll a 85 (85/100 = 0.84)
+			// Ticket 2: roll a 85 (85 >= 80 => bonus win with 3x multiplier, 0 tickets remaining)
 			mockRandom.mockReturnValue(0.84)
-			const { replies: replies2, user } = await simulateCommand('!gamble 100', {
+			const { replies: replies2 } = await simulateCommand('!gamble 100', {
 				id: '12345',
 				username: 'alice',
 				displayName: 'Alice',
-				points: 500,
+				points: 400,
 			})
-			expect(replies2[0]).toBe('@Alice, rolled a 85 and won 300 points! You went from 500 to 800 points.')
+			expect(replies2[0]).toBe('@Alice, rolled a 85 and won 300 bonus points! (Bonus Ticket Used - 0 left) You went from 400 to 700 points.')
+
+			// Ticket 3 (exhausted tickets): roll 75 (75 >= 50 normal threshold => normal win with 1x multiplier, normal template)
+			mockRandom.mockReturnValue(0.74)
+			const { replies: replies3, user } = await simulateCommand('!gamble 100', {
+				id: '12345',
+				username: 'alice',
+				displayName: 'Alice',
+				points: 700,
+			})
+			expect(replies3[0]).toBe('@Alice, rolled a 75 and won 100 points! You went from 700 to 800 points.')
 			expect(user?.points).toBe(800)
 		})
 	})

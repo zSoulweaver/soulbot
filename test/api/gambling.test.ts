@@ -25,6 +25,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 			expect(res.bonusDuration).toBe(5)
 			expect(res.bonusWinMultiplier).toBe(2.0)
 			expect(res.bonusWinMinRoll).toBe(50)
+			expect(res.bonusTicketsPerUser).toBe(5)
 			expect(res.bonusMessage).toContain('A limited-time gambling bonus event is now active!')
 			expect(res.bonusEndMessage).toContain('The limited-time gambling bonus event has ended!')
 			expect(res.bonusEndTime).toBe(0)
@@ -39,6 +40,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 				{ key: 'points.gambling_bonus_duration', value: '8', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_win_multiplier', value: '2.5', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_win_min_roll', value: '60', updatedAt: new Date() },
+				{ key: 'points.gambling_bonus_tickets_per_user', value: '7', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_message', value: 'Custom start message', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_end_message', value: 'Custom end message', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_end_time', value: '0', updatedAt: new Date() },
@@ -54,6 +56,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 			expect(res.bonusDuration).toBe(8)
 			expect(res.bonusWinMultiplier).toBe(2.5)
 			expect(res.bonusWinMinRoll).toBe(60)
+			expect(res.bonusTicketsPerUser).toBe(7)
 			expect(res.bonusMessage).toBe('Custom start message')
 			expect(res.bonusEndMessage).toBe('Custom end message')
 			expect(res.bonusEndTime).toBe(0)
@@ -72,6 +75,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 						bonusDuration: 5,
 						bonusWinMultiplier: 2.0,
 						bonusWinMinRoll: 50,
+						bonusTicketsPerUser: 5,
 						bonusMessage: 'Start',
 						bonusEndMessage: 'End',
 					},
@@ -94,6 +98,30 @@ describe('Loyalty Gambling Settings API Routes', () => {
 						bonusDuration: 5,
 						bonusWinMultiplier: 2.0,
 						bonusWinMinRoll: 50,
+						bonusTicketsPerUser: 5,
+						bonusMessage: 'Start',
+						bonusEndMessage: 'End',
+					},
+				} as any)
+				expect.fail('Should have failed')
+			}
+			catch (err: any) {
+				expect(err.statusCode).toBe(400)
+			}
+		})
+
+		it('should fail if bonusTicketsPerUser < 1', async () => {
+			try {
+				await gamblingPutHandler({
+					body: {
+						minBet: 10,
+						maxBet: 1000,
+						winMinRoll: 50,
+						winMultiplier: 1.0,
+						bonusDuration: 5,
+						bonusWinMultiplier: 2.0,
+						bonusWinMinRoll: 50,
+						bonusTicketsPerUser: 0,
 						bonusMessage: 'Start',
 						bonusEndMessage: 'End',
 					},
@@ -115,6 +143,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 					bonusDuration: 12,
 					bonusWinMultiplier: 2.4,
 					bonusWinMinRoll: 55,
+					bonusTicketsPerUser: 8,
 					bonusMessage: 'New Start Message',
 					bonusEndMessage: 'New End Message',
 				},
@@ -130,6 +159,13 @@ describe('Loyalty Gambling Settings API Routes', () => {
 				.then(res => res[0])
 			expect(dbMinBet?.value).toBe('20')
 
+			const dbTickets = await db
+				.select()
+				.from(settings)
+				.where(eq(settings.key, 'points.gambling_bonus_tickets_per_user'))
+				.then(res => res[0])
+			expect(dbTickets?.value).toBe('8')
+
 			// Assert inside synchronous memory cache
 			const cached = getAppSettingsSync()
 			expect(cached.pointsGamblingMinBet).toBe(20)
@@ -139,6 +175,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 			expect(cached.pointsGamblingBonusDuration).toBe(12)
 			expect(cached.pointsGamblingBonusWinMultiplier).toBe(2.4)
 			expect(cached.pointsGamblingBonusWinMinRoll).toBe(55)
+			expect(cached.pointsGamblingBonusTicketsPerUser).toBe(8)
 			expect(cached.pointsGamblingBonusMessage).toBe('New Start Message')
 			expect(cached.pointsGamblingBonusEndMessage).toBe('New End Message')
 		})

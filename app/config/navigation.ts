@@ -74,6 +74,7 @@ export const navigation: NavGroup[] = [
 					{ title: 'Point Balances', url: '/admin/loyalty/users' },
 					{ title: 'Watch Time Balances', url: '/admin/loyalty/watchtime' },
 					{ title: 'Gambling', url: '/admin/loyalty/gambling', roles: ['caster'] },
+					{ title: 'Vault Game', url: '/admin/loyalty/vault', roles: ['caster'] },
 				],
 			},
 

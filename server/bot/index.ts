@@ -15,6 +15,7 @@ import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
 import { seedDefaultExclusions, startPayoutEngine } from './modules/points/payout'
+import { vaultModule } from './modules/points/vault'
 import { spotifyModule } from './modules/spotify'
 import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine } from './modules/timers'
@@ -31,6 +32,7 @@ export function initRegistry() {
 	botLogger.info('Initializing registry modules...')
 	registry.register(pointsModule)
 	registry.register(gambleModule)
+	registry.register(vaultModule)
 	registry.register(commandsModule)
 	registry.register(twitchModule)
 	registry.register(spotifyModule)
@@ -67,6 +69,9 @@ export function initBot() {
 		// Initialize the bonus manager timer if active
 		const { initBonusManager } = await import('./modules/points/bonus-manager')
 		await initBonusManager()
+		// Initialize the vault manager timer if active
+		const { initVaultManager } = await import('./modules/points/vault-manager')
+		await initVaultManager()
 	}).catch((err) => {
 		botLogger.error({ err }, 'Failed to warm up settings cache on initBot')
 	})

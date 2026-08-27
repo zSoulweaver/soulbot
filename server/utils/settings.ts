@@ -45,6 +45,17 @@ export interface AppSettings {
 	pointsGamblingBonusMessage: string
 	pointsGamblingBonusEndMessage: string
 	pointsGamblingBonusEndTime: number
+	pointsVaultMinBet: number
+	pointsVaultMaxBet: number
+	pointsVaultWinMinRoll: number
+	pointsVaultWinMultiplier: number
+	pointsVaultDuration: number
+	pointsVaultWarningEnabled: boolean
+	pointsVaultEndTime: number
+	pointsVaultStartMessage: string
+	pointsVaultWarningMessage: string
+	pointsVaultEndWinMessage: string
+	pointsVaultEndLoseMessage: string
 	spotifySongRequestEnabled: boolean
 	spotifySongRequestPointsCost: number
 	spotifySongRequestMaxLength: number
@@ -183,6 +194,17 @@ export function getAppSettingsSync(): AppSettings {
 			pointsGamblingBonusMessage: 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes! Everyone gets $(tickets) bonus bets!',
 			pointsGamblingBonusEndMessage: 'The limited-time gambling bonus event has ended! Win multiplier and win threshold have returned to normal.',
 			pointsGamblingBonusEndTime: 0,
+			pointsVaultMinBet: 10,
+			pointsVaultMaxBet: 100000,
+			pointsVaultWinMinRoll: 50,
+			pointsVaultWinMultiplier: 2.0,
+			pointsVaultDuration: 90,
+			pointsVaultWarningEnabled: true,
+			pointsVaultEndTime: 0,
+			pointsVaultStartMessage: '🚨 VAULT RAID INITIATED! You have $(duration)s to join the squad with !vault <amount> Win Multiplier: $(multiplier)x',
+			pointsVaultWarningMessage: '⏳ 15 seconds remaining to join the Vault Raid! Current squad: $(raidersCount) raiders with a $(pot) $(core.currency) pot!',
+			pointsVaultEndWinMessage: '💥 THE VAULT WAS CRACKED! (Rolled $(roll)) $(raidersCount) raiders successfully looted the vault for +$(totalWon) $(core.currency)! Total pool: $(pot) $(core.currency)',
+			pointsVaultEndLoseMessage: '🔒 THE VAULT DEFENSES HELD! (Rolled $(roll)) $(raidersCount) raiders were caught! A total of $(pot) $(core.currency) was wiped!',
 			spotifySongRequestEnabled: true,
 			spotifySongRequestPointsCost: 10,
 			spotifySongRequestMaxLength: 8,
@@ -318,6 +340,17 @@ export async function refreshAppSettingsCache(): Promise<void> {
 			pointsGamblingBonusMessage: getVal('points.gambling_bonus_message', 'A limited-time gambling bonus event is now active! Win multiplier is $(multiplier)x and win threshold is $(threshold)% for the next $(duration) minutes! Everyone gets $(tickets) bonus bets!'),
 			pointsGamblingBonusEndMessage: getVal('points.gambling_bonus_end_message', 'The limited-time gambling bonus event has ended! Win multiplier and win threshold have returned to normal.'),
 			pointsGamblingBonusEndTime: Number(getVal('points.gambling_bonus_end_time', '0')),
+			pointsVaultMinBet: Math.max(1, Number(getVal('points.vault_min_bet', '10'))),
+			pointsVaultMaxBet: Math.max(1, Number(getVal('points.vault_max_bet', '100000'))),
+			pointsVaultWinMinRoll: Math.max(1, Math.min(100, Number(getVal('points.vault_win_min_roll', '50')))),
+			pointsVaultWinMultiplier: Math.max(0.1, Number(getVal('points.vault_win_multiplier', '2.0'))),
+			pointsVaultDuration: Math.max(15, Math.min(300, Number(getVal('points.vault_duration', '90')))),
+			pointsVaultWarningEnabled: getVal('points.vault_warning_enabled', 'true') === 'true',
+			pointsVaultEndTime: Number(getVal('points.vault_end_time', '0')),
+			pointsVaultStartMessage: getVal('points.vault_start_message', '🚨 VAULT RAID INITIATED! You have $(duration)s to join the squad with !vault <amount> Win Multiplier: $(multiplier)x'),
+			pointsVaultWarningMessage: getVal('points.vault_warning_message', '⏳ 15 seconds remaining to join the Vault Raid! Current squad: $(raidersCount) raiders with a $(pot) $(core.currency) pot!'),
+			pointsVaultEndWinMessage: getVal('points.vault_end_win_message', '💥 THE VAULT WAS CRACKED! (Rolled $(roll)) $(raidersCount) raiders successfully looted the vault for +$(totalWon) $(core.currency)! Total pool: $(pot) $(core.currency)'),
+			pointsVaultEndLoseMessage: getVal('points.vault_end_lose_message', '🔒 THE VAULT DEFENSES HELD! (Rolled $(roll)) $(raidersCount) raiders were caught! A total of $(pot) $(core.currency) was wiped!'),
 			spotifySongRequestEnabled: getVal('spotify.sr.enabled', 'true') === 'true',
 			spotifySongRequestPointsCost: Math.max(0, Number(getVal('spotify.sr.points_cost', '10'))),
 			spotifySongRequestMaxLength: Math.max(0, Number(getVal('spotify.sr.max_length', '8'))),

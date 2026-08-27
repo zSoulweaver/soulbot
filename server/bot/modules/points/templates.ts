@@ -183,6 +183,79 @@ export const definitions = {
 			netAmount: 'Your net points won or lost from gambling.',
 		},
 	},
+	'points.vault.joined': {
+		default: 'you joined the Vault Raid with $(betAmount) $(core.currency)! (Win: +$(potentialWin), Lose: -$(betAmount))',
+		params: { sender: '', betAmount: 0, potentialWin: 0 } as { sender: string, betAmount: number, potentialWin: number },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user.',
+			betAmount: 'The amount of points bet on the raid.',
+			potentialWin: 'The net points the user will win if the vault is cracked.',
+		},
+	},
+	'points.vault.updated': {
+		default: 'updated your Vault Raid bet to $(betAmount) $(core.currency)! (Win: +$(potentialWin), Lose: -$(betAmount))',
+		params: { sender: '', betAmount: 0, potentialWin: 0 } as { sender: string, betAmount: number, potentialWin: number },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user.',
+			betAmount: 'The updated amount of points bet on the raid.',
+			potentialWin: 'The updated net points the user will win if the vault is cracked.',
+		},
+	},
+	'points.vault.opt-out': {
+		default: 'you have left the Vault Raid squad and your bet was refunded.',
+		params: { sender: '' } as { sender: string },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user.',
+		},
+	},
+	'points.vault.not-joined': {
+		default: 'you are not currently in the Vault Raid squad.',
+		params: { sender: '' } as { sender: string },
+		paramDescriptions: {
+			sender: 'The Twitch username of the user.',
+		},
+	},
+	'points.vault.not-active': {
+		default: 'There is no active Vault Raid right now.',
+		params: undefined,
+	},
+	'points.vault.already-active': {
+		default: 'A Vault Raid is already active!',
+		params: undefined,
+	},
+	'points.vault.cancelled': {
+		default: 'The Vault Raid has been cancelled by @$(sender). All bets have been refunded.',
+		params: { sender: '' } as { sender: string },
+		paramDescriptions: {
+			sender: 'The moderator who cancelled the raid.',
+		},
+	},
+	'points.vault.min-bet': {
+		default: 'The minimum amount to join the Vault Raid is $(minBet) $(core.currency).',
+		params: { minBet: 0 } as { minBet: number },
+		paramDescriptions: {
+			minBet: 'The minimum bet required to join the vault raid.',
+		},
+	},
+	'points.vault.max-bet': {
+		default: 'The maximum amount to join the Vault Raid is $(maxBet) $(core.currency).',
+		params: { maxBet: 0 } as { maxBet: number },
+		paramDescriptions: {
+			maxBet: 'The maximum bet allowed to join the vault raid.',
+		},
+	},
+	'points.vault.not-enough-points': {
+		default: 'You only have $(current) $(core.currency) (tried to bet: $(bet)).',
+		params: { current: 0, bet: 0 } as { current: number, bet: number },
+		paramDescriptions: {
+			current: 'Your current points balance.',
+			bet: 'The amount you attempted to bet.',
+		},
+	},
+	'points.vault.invalid-amount': {
+		default: 'Invalid bet amount. Please use !vault <amount|all|half|0>',
+		params: undefined,
+	},
 } as const satisfies TemplateSourceMap
 
 export function registerPointsTemplates() {

@@ -20,3 +20,6 @@ export const PointsGetTopArgs = z.tuple([
 
 export const GambleArgs = z.tuple([z.string().describe('amount')])
 export const GambleStatsArgs = z.tuple([z.string().optional().describe('user')])
+
+export const VaultArgs = z.tuple([z.string().describe('amount')])
+export const VaultStartArgs = z.tuple([NumberParsed.optional().describe('duration')])

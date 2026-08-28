@@ -281,7 +281,7 @@ describe('Bot Gamble Command Integration', () => {
 				displayName: 'Alice',
 				points: 500,
 			})
-			expect(replies1[0]).toBe('@Alice, rolled a 75 and lost 100 points. (Bonus Ticket Used - 1 left) You went from 500 to 400 points.')
+			expect(replies1[0]).toBe('@Alice, rolled a 75 and lost 100 points. (Bonus Ticket Used, 1 left) You went from 500 to 400 points.')
 
 			// Ticket 2: roll a 85 (85 >= 80 => bonus win with 3x multiplier, 0 tickets remaining)
 			mockRandom.mockReturnValue(0.84)
@@ -291,7 +291,7 @@ describe('Bot Gamble Command Integration', () => {
 				displayName: 'Alice',
 				points: 400,
 			})
-			expect(replies2[0]).toBe('@Alice, rolled a 85 and won 300 bonus points! (Bonus Ticket Used - 0 left) You went from 400 to 700 points.')
+			expect(replies2[0]).toBe('@Alice, rolled a 85 and won 300 bonus points! (Bonus Ticket Used, 0 left) You went from 400 to 700 points.')
 
 			// Ticket 3 (exhausted tickets): roll 75 (75 >= 50 normal threshold => normal win with 1x multiplier, normal template)
 			mockRandom.mockReturnValue(0.74)

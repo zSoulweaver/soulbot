@@ -21,7 +21,7 @@ describe('Bot Vault Command Integration', () => {
 			points: 500,
 		})
 		expect(replies).toHaveLength(1)
-		expect(replies[0]).toBe('@Alice, There is no active Vault Raid right now. A moderator can start one with !vault start')
+		expect(replies[0]).toBe('@Alice, There is no active Vault Raid right now.')
 	})
 
 	it('should silently drop !vault start if executed by a regular viewer', async () => {

@@ -64,6 +64,7 @@ export async function createTestUser(options: {
 	gambleWins?: number
 	gambleLosses?: number
 	gambleNetPoints?: number
+	image?: string | null
 }) {
 	const now = new Date()
 	const username = cleanUsername(options.username)
@@ -74,6 +75,7 @@ export async function createTestUser(options: {
 		id,
 		username,
 		displayName,
+		image: options.image || null,
 		role: options.role || 'viewer',
 		isVip: options.isVip || false,
 		isSubscriber: options.isSubscriber || false,

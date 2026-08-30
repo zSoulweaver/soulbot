@@ -118,7 +118,7 @@ const sideboards = computed(() => {
 						<template v-if="pendingGambling">
 							<div v-for="i in 5" :key="i" class="flex items-center gap-3">
 								<Skeleton class="size-4 rounded-full" />
-								<Skeleton class="size-8 rounded-full" />
+								<Skeleton class="size-7 rounded-full" />
 								<Skeleton class="h-4 w-20" />
 								<Skeleton class="ml-auto h-4 w-12" />
 							</div>
@@ -137,6 +137,7 @@ const sideboards = computed(() => {
 									{{ index + 1 }}
 								</span>
 								<Avatar class="size-7">
+									<AvatarImage v-if="user.image" :src="user.image" :alt="user.displayName" />
 									<AvatarFallback class="text-xs">
 										{{ user.displayName[0] }}
 									</AvatarFallback>
@@ -189,7 +190,12 @@ const sideboards = computed(() => {
 							<template v-if="pendingLeaderboard">
 								<TableRow v-for="i in 10" :key="i">
 									<TableCell><Skeleton class="mx-auto h-6 w-8" /></TableCell>
-									<TableCell><Skeleton class="h-6 w-32" /></TableCell>
+									<TableCell>
+										<div class="flex items-center gap-3">
+											<Skeleton class="size-8 rounded-full" />
+											<Skeleton class="h-6 w-32" />
+										</div>
+									</TableCell>
 									<TableCell><Skeleton class="mr-4 ml-auto h-6 w-20" /></TableCell>
 								</TableRow>
 							</template>
@@ -214,6 +220,7 @@ const sideboards = computed(() => {
 									<TableCell>
 										<div class="flex items-center gap-3">
 											<Avatar class="size-8">
+												<AvatarImage v-if="user.image" :src="user.image" :alt="user.displayName" />
 												<AvatarFallback>{{ user.displayName[0] }}</AvatarFallback>
 											</Avatar>
 											<span class="text-base font-medium text-foreground">{{ user.displayName }}</span>
@@ -257,7 +264,7 @@ const sideboards = computed(() => {
 						<template v-if="pendingGambling">
 							<div v-for="i in 5" :key="i" class="flex items-center gap-3">
 								<Skeleton class="size-4 rounded-full" />
-								<Skeleton class="size-8 rounded-full" />
+								<Skeleton class="size-7 rounded-full" />
 								<Skeleton class="h-4 w-20" />
 								<Skeleton class="ml-auto h-4 w-12" />
 							</div>
@@ -276,6 +283,7 @@ const sideboards = computed(() => {
 									{{ index + 1 }}
 								</span>
 								<Avatar class="size-7">
+									<AvatarImage v-if="user.image" :src="user.image" :alt="user.displayName" />
 									<AvatarFallback class="text-xs">
 										{{ user.displayName[0] }}
 									</AvatarFallback>

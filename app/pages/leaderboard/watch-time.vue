@@ -43,7 +43,12 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 					<template v-if="pending">
 						<TableRow v-for="i in 10" :key="i">
 							<TableCell><Skeleton class="mx-auto h-6 w-8" /></TableCell>
-							<TableCell><Skeleton class="h-6 w-32" /></TableCell>
+							<TableCell>
+								<div class="flex items-center gap-3">
+									<Skeleton class="size-8 rounded-full" />
+									<Skeleton class="h-6 w-32" />
+								</div>
+							</TableCell>
 							<TableCell><Skeleton class="mr-4 ml-auto h-6 w-20" /></TableCell>
 						</TableRow>
 					</template>
@@ -68,9 +73,10 @@ const { data: leaderboard, pending } = useFetch<any[]>('/api/loyalty/watchtime/l
 							<TableCell>
 								<div class="flex items-center gap-3">
 									<Avatar class="size-8">
+										<AvatarImage v-if="user.image" :src="user.image" :alt="user.displayName" />
 										<AvatarFallback>{{ user.displayName[0] }}</AvatarFallback>
 									</Avatar>
-									<span class="text-lg">{{ user.displayName }}</span>
+									<span class="text-base font-medium text-foreground">{{ user.displayName }}</span>
 								</div>
 							</TableCell>
 							<TableCell class="pr-8 text-right text-xl font-bold tabular-nums">

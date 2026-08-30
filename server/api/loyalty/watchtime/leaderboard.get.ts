@@ -22,6 +22,7 @@ export default defineCachedEventHandler(async () => {
 			id: users.id,
 			username: users.username,
 			displayName: users.displayName,
+			image: users.image,
 			watchTime: users.watchTime,
 		})
 		.from(users)

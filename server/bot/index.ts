@@ -22,6 +22,7 @@ import { startTimerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
 import { registerTwitchEventSubHandlers } from './modules/twitch/eventsub'
 import { watchtimeModule } from './modules/watchtime'
+import { startAvatarSyncEngine } from './services/avatar-sync'
 
 let isRegistryInitialized = false
 let isBotInitialized = false
@@ -83,6 +84,7 @@ export function initBot() {
 		startTimerEngine()
 		startSpotifyQueueEngine()
 		startAdsEngine()
+		startAvatarSyncEngine()
 	}
 }
 

@@ -82,6 +82,14 @@ export const mockApiClient = {
 					displayName: u.charAt(0).toUpperCase() + u.slice(1),
 				}))
 		}),
+		getUsersByIds: vi.fn(async (userIds: string[]) => {
+			return userIds.map(id => ({
+				id,
+				name: `user_${id}`,
+				displayName: `User_${id}`,
+				profilePictureUrl: `https://static-cdn.jtvnw.net/user_${id}.jpg`,
+			}))
+		}),
 	},
 	channels: {
 		getChannelFollowers: vi.fn(async (_broadcasterId: string, _userId: string): Promise<{ data: any[], total: number }> => {

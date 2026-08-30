@@ -1,7 +1,7 @@
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import { gamblingSettings } from '~~/server/settings'
 import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
-import { getAppSettings, updateAppSetting } from '~~/server/utils/settings'
 import { getStreamerChannelName } from '~~/server/utils/twurple'
 
 let bonusTimeout: NodeJS.Timeout | null = null
@@ -53,23 +53,23 @@ export async function endBonusEvent() {
 	bonusTimeout = null
 	resetBonusTickets()
 	try {
-		const settings = await getAppSettings()
-		if (Number(settings.pointsGamblingBonusEndTime) === 0) {
+		const settings = gamblingSettings.get()
+		if (Number(settings.bonusEndTime) === 0) {
 			return // Already ended or not active
 		}
 
 		// Clear end time in database
-		await updateAppSetting('points.gambling_bonus_end_time', '0')
+		await gamblingSettings.update({ bonusEndTime: 0 })
 
 		// Broadcast end message to chat
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.pointsGamblingBonusEndMessage, ctx, {
-				multiplier: settings.pointsGamblingBonusWinMultiplier,
-				threshold: settings.pointsGamblingBonusWinMinRoll,
-				duration: settings.pointsGamblingBonusDuration,
-				tickets: settings.pointsGamblingBonusTicketsPerUser,
+			const rendered = await renderCustomTemplate(settings.bonusEndMessage, ctx, {
+				multiplier: settings.bonusWinMultiplier,
+				threshold: settings.bonusWinMinRoll,
+				duration: settings.bonusDuration,
+				tickets: settings.bonusTicketsPerUser,
 			})
 			await sendRawChatMessage(channel, rendered)
 		}
@@ -82,14 +82,14 @@ export async function endBonusEvent() {
 
 export async function initBonusManager() {
 	try {
-		const settings = await getAppSettings()
-		const endTime = Number(settings.pointsGamblingBonusEndTime)
+		const settings = gamblingSettings.get()
+		const endTime = Number(settings.bonusEndTime)
 		if (endTime > Date.now()) {
 			await scheduleBonusEnd(endTime)
 		}
 		else if (endTime > 0) {
 			// Clean up stale end time
-			await updateAppSetting('points.gambling_bonus_end_time', '0')
+			await gamblingSettings.update({ bonusEndTime: 0 })
 		}
 	}
 	catch (err) {

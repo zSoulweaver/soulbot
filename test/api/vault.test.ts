@@ -134,7 +134,7 @@ describe('Loyalty Vault Settings API Routes', () => {
 			const dbMinBet = await db
 				.select()
 				.from(settings)
-				.where(eq(settings.key, 'points.vault_min_bet'))
+				.where(eq(settings.key, 'points.vault.min_bet'))
 				.then(res => res[0])
 			expect(dbMinBet?.value).toBe('25')
 

@@ -1,6 +1,6 @@
+import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 import { isDiscordConnected, isDiscordTokenConfigured, startDiscord } from '~~/server/utils/discord'
-import { getAppSettings } from '~~/server/utils/settings'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
@@ -9,53 +9,53 @@ export default defineEventHandler(async (event) => {
 		await startDiscord()
 	}
 
-	const settings = await getAppSettings()
+	const settings = discordSettings.get()
 
 	return {
-		discordAlertFollowEnabled: settings.discordAlertFollowEnabled,
-		discordAlertFollowChannelId: settings.discordAlertFollowChannelId,
-		discordAlertFollowTemplate: settings.discordAlertFollowTemplate,
+		discordAlertFollowEnabled: settings.alertFollowEnabled,
+		discordAlertFollowChannelId: settings.alertFollowChannelId,
+		discordAlertFollowTemplate: settings.alertFollowTemplate,
 
-		discordAlertSubEnabled: settings.discordAlertSubEnabled,
-		discordAlertSubChannelId: settings.discordAlertSubChannelId,
-		discordAlertSubTemplate: settings.discordAlertSubTemplate,
+		discordAlertSubEnabled: settings.alertSubEnabled,
+		discordAlertSubChannelId: settings.alertSubChannelId,
+		discordAlertSubTemplate: settings.alertSubTemplate,
 
-		discordAlertGiftEnabled: settings.discordAlertGiftEnabled,
-		discordAlertGiftChannelId: settings.discordAlertGiftChannelId,
-		discordAlertGiftTemplate: settings.discordAlertGiftTemplate,
+		discordAlertGiftEnabled: settings.alertGiftEnabled,
+		discordAlertGiftChannelId: settings.alertGiftChannelId,
+		discordAlertGiftTemplate: settings.alertGiftTemplate,
 
-		discordAlertCheerEnabled: settings.discordAlertCheerEnabled,
-		discordAlertCheerChannelId: settings.discordAlertCheerChannelId,
-		discordAlertCheerTemplate: settings.discordAlertCheerTemplate,
+		discordAlertCheerEnabled: settings.alertCheerEnabled,
+		discordAlertCheerChannelId: settings.alertCheerChannelId,
+		discordAlertCheerTemplate: settings.alertCheerTemplate,
 
-		discordAlertRaidEnabled: settings.discordAlertRaidEnabled,
-		discordAlertRaidChannelId: settings.discordAlertRaidChannelId,
-		discordAlertRaidTemplate: settings.discordAlertRaidTemplate,
+		discordAlertRaidEnabled: settings.alertRaidEnabled,
+		discordAlertRaidChannelId: settings.alertRaidChannelId,
+		discordAlertRaidTemplate: settings.alertRaidTemplate,
 
-		discordAlertLiveEnabled: settings.discordAlertLiveEnabled,
-		discordAlertLiveChannelId: settings.discordAlertLiveChannelId,
-		discordAlertLiveTemplate: settings.discordAlertLiveTemplate,
-		discordAlertLiveRemoveOffline: settings.discordAlertLiveRemoveOffline,
+		discordAlertLiveEnabled: settings.alertLiveEnabled,
+		discordAlertLiveChannelId: settings.alertLiveChannelId,
+		discordAlertLiveTemplate: settings.alertLiveTemplate,
+		discordAlertLiveRemoveOffline: settings.alertLiveRemoveOffline,
 
-		discordAlertOfflineEnabled: settings.discordAlertOfflineEnabled,
-		discordAlertOfflineChannelId: settings.discordAlertOfflineChannelId,
-		discordAlertOfflineTemplate: settings.discordAlertOfflineTemplate,
+		discordAlertOfflineEnabled: settings.alertOfflineEnabled,
+		discordAlertOfflineChannelId: settings.alertOfflineChannelId,
+		discordAlertOfflineTemplate: settings.alertOfflineTemplate,
 
-		discordAlertBanEnabled: settings.discordAlertBanEnabled,
-		discordAlertBanChannelId: settings.discordAlertBanChannelId,
-		discordAlertBanTemplate: settings.discordAlertBanTemplate,
+		discordAlertBanEnabled: settings.alertBanEnabled,
+		discordAlertBanChannelId: settings.alertBanChannelId,
+		discordAlertBanTemplate: settings.alertBanTemplate,
 
-		discordAlertTimeoutEnabled: settings.discordAlertTimeoutEnabled,
-		discordAlertTimeoutChannelId: settings.discordAlertTimeoutChannelId,
-		discordAlertTimeoutTemplate: settings.discordAlertTimeoutTemplate,
+		discordAlertTimeoutEnabled: settings.alertTimeoutEnabled,
+		discordAlertTimeoutChannelId: settings.alertTimeoutChannelId,
+		discordAlertTimeoutTemplate: settings.alertTimeoutTemplate,
 
-		discordAlertUnbanEnabled: settings.discordAlertUnbanEnabled,
-		discordAlertUnbanChannelId: settings.discordAlertUnbanChannelId,
-		discordAlertUnbanTemplate: settings.discordAlertUnbanTemplate,
+		discordAlertUnbanEnabled: settings.alertUnbanEnabled,
+		discordAlertUnbanChannelId: settings.alertUnbanChannelId,
+		discordAlertUnbanTemplate: settings.alertUnbanTemplate,
 
-		discordAlertMessageDeleteEnabled: settings.discordAlertMessageDeleteEnabled,
-		discordAlertMessageDeleteChannelId: settings.discordAlertMessageDeleteChannelId,
-		discordAlertMessageDeleteTemplate: settings.discordAlertMessageDeleteTemplate,
+		discordAlertMessageDeleteEnabled: settings.alertMessageDeleteEnabled,
+		discordAlertMessageDeleteChannelId: settings.alertMessageDeleteChannelId,
+		discordAlertMessageDeleteTemplate: settings.alertMessageDeleteTemplate,
 
 		isDiscordConnected: isDiscordConnected(),
 	}

@@ -1,7 +1,7 @@
 import { db } from '~~/server/database'
 import { commandTemplates } from '~~/server/database/schema'
+import { pointsSettings } from '~~/server/settings'
 import { botLogger } from '~~/server/utils/logger'
-import { getAppSettingsSync } from '~~/server/utils/settings'
 
 /**
  * Helper type to extract parameters from template definitions
@@ -39,7 +39,7 @@ export function getGlobalTemplateVariables(data: Record<string, string | number>
 	const vars: Record<string, string | number> = {}
 
 	// Currency Names
-	const settings = getAppSettingsSync()
+	const settings = pointsSettings.get()
 	vars['core.currency_singular'] = settings.currencyName
 	vars['core.currency_plural'] = settings.currencyNamePlural
 

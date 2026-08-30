@@ -1,9 +1,6 @@
-import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/database'
-import { settings } from '~~/server/database/schema'
+import { spotifySettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getAppSettings, refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveSpotifySettingsSchema = z.object({
 	active: z.boolean(),
@@ -38,64 +35,45 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const d = parsed.data
+	const current = spotifySettings.get()
 
-	const appSettings = await getAppSettings()
-	if (d.active && !appSettings.spotifyRequestPlaylistId) {
+	if (d.active && !current.requestPlaylistId) {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'Cannot enable song requests without a song request playlist.',
 		})
 	}
 
-	if (appSettings.spotifyRequestPlaylistId && d.targetPlaylist === appSettings.spotifyRequestPlaylistId) {
+	if (current.requestPlaylistId && d.targetPlaylist === current.requestPlaylistId) {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'Cannot set target playlist to the song request/bot playlist.',
 		})
 	}
 
-	const keysToUpsert = [
-		{ key: 'spotify.sr.enabled', value: String(d.active), updatedAt: new Date() },
-		{ key: 'spotify.sr.points_cost', value: String(d.pointsCost), updatedAt: new Date() },
-		{ key: 'spotify.sr.max_length', value: String(d.maxLength), updatedAt: new Date() },
-		{ key: 'spotify.sr.max_queue', value: String(d.maxQueue), updatedAt: new Date() },
-		{ key: 'spotify.sr.max_user_requests', value: String(d.maxUserRequests), updatedAt: new Date() },
-		{ key: 'spotify.sr.mods_bypass_limits', value: String(d.modsBypassLimits), updatedAt: new Date() },
-		{ key: 'spotify.sr.followers_only', value: String(d.followersOnly), updatedAt: new Date() },
-		{ key: 'spotify.sr.permit_explicit', value: String(d.permitExplicit), updatedAt: new Date() },
-		{ key: 'spotify.sr.offline_override', value: String(d.offlineOverride), updatedAt: new Date() },
-		{ key: 'spotify.playlist.target_id', value: d.targetPlaylist, updatedAt: new Date() },
-		{ key: 'spotify.playlist.target_name', value: d.targetPlaylistName, updatedAt: new Date() },
-		{ key: 'spotify.playlist.allow_mods', value: String(d.allowModerators), updatedAt: new Date() },
-		{ key: 'spotify.playlist.whisper', value: String(d.whisperNotifications), updatedAt: new Date() },
-		{ key: 'spotify.playlist.announce_delete_webui', value: String(d.announceDeleteWebui), updatedAt: new Date() },
-		{ key: 'spotify.sr.alert_queue_low_enabled', value: String(d.alertQueueLowEnabled), updatedAt: new Date() },
-		{ key: 'spotify.sr.alert_queue_empty_enabled', value: String(d.alertQueueEmptyEnabled), updatedAt: new Date() },
-	]
-
-	if (d.targetPlaylist !== appSettings.spotifyPlaylistTargetId) {
-		keysToUpsert.push({
-			key: 'spotify.playlist.cache_synced_at',
-			value: '0',
-			updatedAt: new Date(),
-		})
-
+	if (d.targetPlaylist !== current.playlistTargetId) {
 		const { clearSpotifyTokenCache } = await import('~~/server/utils/spotify')
 		clearSpotifyTokenCache()
 	}
 
-	await db
-		.insert(settings)
-		.values(keysToUpsert)
-		.onConflictDoUpdate({
-			target: settings.key,
-			set: {
-				value: sql`excluded.value`,
-				updatedAt: sql`excluded.updated_at`,
-			},
-		})
-
-	await refreshAppSettingsCache()
+	await spotifySettings.update({
+		songRequestEnabled: d.active,
+		songRequestPointsCost: d.pointsCost,
+		songRequestMaxLength: d.maxLength,
+		songRequestMaxQueue: d.maxQueue,
+		songRequestMaxUserRequests: d.maxUserRequests,
+		songRequestModsBypassLimits: d.modsBypassLimits,
+		songRequestFollowersOnly: d.followersOnly,
+		songRequestPermitExplicit: d.permitExplicit,
+		songRequestOfflineOverride: d.offlineOverride,
+		playlistTargetId: d.targetPlaylist,
+		playlistTargetName: d.targetPlaylistName,
+		playlistAllowMods: d.allowModerators,
+		playlistWhisper: d.whisperNotifications,
+		playlistAnnounceDeleteWebui: d.announceDeleteWebui,
+		songRequestAlertQueueLowEnabled: d.alertQueueLowEnabled,
+		songRequestAlertQueueEmptyEnabled: d.alertQueueEmptyEnabled,
+	})
 
 	if (d.targetPlaylist) {
 		const { syncTargetPlaylist } = await import('~~/server/utils/spotify')

@@ -46,13 +46,20 @@
   - **API Endpoints**: Add endpoint tests in `test/api/` (e.g., `test/api/points.test.ts`). Test the exported Nitro route handlers **directly and in-process** by invoking them with a mocked event object (bypassing slow E2E compile builds). Use the global mocks set up in `test/setup.ts` to manage parameters and validation bodies.
 - **Sequential Execution**: Run `pnpm test:run` sequentially to confirm all tests pass cleanly, and execute `pnpm typecheck` to verify complete type safety.
 
-## Backend & Bot Coding Standards
+## Domain-Scoped Application Settings Guidelines
 
-- **Twitch Token Access**: Never perform raw database queries to select broadcaster or bot credentials (`twitchTokens`). Always use the cached helper functions `getStreamerToken()`, `getBotToken()`, and `getStreamerChannelName()` imported from `~~/server/utils/twurple`. If you write new tokens, call them with `true` (e.g. `getStreamerToken(true)`) to force-refresh the in-memory cache.
-- **Username Cleaning**: Always use the standard `cleanUsername(username)` helper function from `~~/server/bot/core/utils` to standardize user names (removing leading `@` and lowercasing) instead of inline `.replace(...)` or `.toLowerCase()`.
-- **Explicit Imports**: Always explicitly import route authorization helpers like `requireUserRole` from `~~/server/utils/auth` instead of relying on Nitro's virtual auto-imports. This keeps IDE indexers and offline type-checkers accurate.
-- **Minimal Code Comments**: Avoid verbose step-by-step numbering comments (e.g. `// 1. do this`, `// 2. do that`). Write self-documenting code. Keep comments focused only on explaining non-obvious architecture or complex domain rules.
-- **EventSub Sequential Async Emission**: EventSub listeners are executed sequentially and asynchronously via `emitAsync`. Make sure modules that perform database writes (like the points module) register their event handlers _before_ modules that read that data (like the alerts module) to ensure database changes settle before rendering/reading. Do not use arbitrary delays like `setTimeout` to handle timing.
+- **Always Use `defineSettingsDomain`**: Never create raw key-value database queries or flat global settings objects. Every feature/domain MUST define its configuration inside `server/settings/domains/<domain>.ts` using a Zod schema.
+- **Strict Naming & Namespaces**:
+  - Domain namespaces must use dot-notation matching the domain hierarchy (e.g., `points.vault`, `points.gambling`, `spotify`, `discord`, `eventsub`).
+  - Fields in Zod schemas MUST be `camelCase`. The engine will automatically map them to `snake_case` in SQLite (or use `customKeys` when explicit mapping is needed).
+- **Single Source of Truth**:
+  - Always define default values directly in the Zod schema using `.default(...)`. Do not create separate fallback objects.
+  - Export the inferred TypeScript type from the Zod schema (`export type MySettings = z.infer<typeof MySchema>`).
+- **Synchronous Bot Access**:
+  - Bot commands, chat handlers, and background loops must access settings synchronously via `<domain>Settings.get()`.
+- **Standardized API Handlers**:
+  - Settings GET endpoints must return `<domain>Settings.get()`.
+  - Settings PUT endpoints must validate and persist via `await <domain>Settings.update(body)`.
 
 ## Unified Frontend Page & Table Layout Standards
 

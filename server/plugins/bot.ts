@@ -1,4 +1,5 @@
 import { initRegistry, registry, templateRegistry } from '~~/server/bot'
+import { settingsRegistry } from '~~/server/settings'
 
 export default defineNitroPlugin(() => {
 	const config = useRuntimeConfig()
@@ -11,8 +12,9 @@ export default defineNitroPlugin(() => {
 			await Promise.all([
 				registry.syncWithDb(),
 				templateRegistry.syncWithDb(),
+				settingsRegistry.warmup(),
 			])
-			botLogger.info('Registry and templates synchronized with DB on startup.')
+			botLogger.info('Registry, templates, and settings synchronized with DB on startup.')
 		}
 		catch (err) {
 			botLogger.error({ err }, 'Failed to synchronize registry with DB on startup')

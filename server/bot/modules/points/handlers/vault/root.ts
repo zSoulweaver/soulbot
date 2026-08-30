@@ -1,7 +1,7 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import type { VaultArgs } from '../../schema'
 import { cleanUsername } from '~~/server/bot/core/utils'
-import { getAppSettingsSync } from '~~/server/utils/settings'
+import { vaultSettings } from '~~/server/settings'
 import { getUserPoints } from '../../service'
 import { isVaultActive, joinVaultRaid } from '../../vault-manager'
 
@@ -27,9 +27,9 @@ export const handleVaultRoot: CommandHandler<typeof VaultArgs> = async (ctx, [am
 		return ctx.reply('points.user-no-points-self')
 	}
 
-	const settings = getAppSettingsSync()
-	const minBet = settings.pointsVaultMinBet
-	const maxBet = settings.pointsVaultMaxBet
+	const settings = vaultSettings.get()
+	const minBet = settings.minBet
+	const maxBet = settings.maxBet
 
 	let betAmount = 0
 	if (lowerInput === 'all') {
@@ -59,7 +59,7 @@ export const handleVaultRoot: CommandHandler<typeof VaultArgs> = async (ctx, [am
 	}
 
 	const result = joinVaultRaid({ username, displayName: ctx.user.displayName }, betAmount)
-	const potentialWin = Math.floor(betAmount * settings.pointsVaultWinMultiplier)
+	const potentialWin = Math.floor(betAmount * settings.winMultiplier)
 
 	if (result.action === 'updated') {
 		return ctx.reply('points.vault.updated', {

@@ -1,7 +1,7 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import type { GambleArgs } from '../../schema'
 import { cleanUsername } from '~~/server/bot/core/utils'
-import { getAppSettingsSync } from '~~/server/utils/settings'
+import { gamblingSettings } from '~~/server/settings'
 import { getBonusBetsUsed, incrementBonusBetsUsed } from '../../bonus-manager'
 import { getUserPoints, updateUserPointsAndGambleStats } from '../../service'
 
@@ -13,9 +13,9 @@ export const handleGambleRoot: CommandHandler<typeof GambleArgs> = async (ctx, [
 		return ctx.reply('points.user-no-points-self')
 	}
 
-	const settings = getAppSettingsSync()
-	const minBet = settings.pointsGamblingMinBet
-	const maxBet = settings.pointsGamblingMaxBet
+	const settings = gamblingSettings.get()
+	const minBet = settings.minBet
+	const maxBet = settings.maxBet
 
 	let betAmount = 0
 	const lowerInput = amountStr.toLowerCase()
@@ -47,8 +47,8 @@ export const handleGambleRoot: CommandHandler<typeof GambleArgs> = async (ctx, [
 	}
 
 	// Determine if this roll is eligible for a bonus ticket
-	const isBonusActive = settings.pointsGamblingBonusEndTime > Date.now()
-	const maxBonusTickets = settings.pointsGamblingBonusTicketsPerUser
+	const isBonusActive = settings.bonusEndTime > Date.now()
+	const maxBonusTickets = settings.bonusTicketsPerUser
 	const usedBonusTickets = getBonusBetsUsed(username)
 	const isBonusRoll = isBonusActive && usedBonusTickets < maxBonusTickets
 
@@ -60,8 +60,8 @@ export const handleGambleRoot: CommandHandler<typeof GambleArgs> = async (ctx, [
 
 	// Roll between 1 and 100 inclusive
 	const roll = Math.floor(Math.random() * 100) + 1
-	const winMinRoll = isBonusRoll ? settings.pointsGamblingBonusWinMinRoll : settings.pointsGamblingWinMinRoll
-	const winMultiplier = isBonusRoll ? settings.pointsGamblingBonusWinMultiplier : settings.pointsGamblingWinMultiplier
+	const winMinRoll = isBonusRoll ? settings.bonusWinMinRoll : settings.winMinRoll
+	const winMultiplier = isBonusRoll ? settings.bonusWinMultiplier : settings.winMultiplier
 
 	if (roll >= winMinRoll) {
 		const winAmount = Math.floor(betAmount * winMultiplier)

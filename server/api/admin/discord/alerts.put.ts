@@ -1,9 +1,6 @@
-import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/database'
-import { settings } from '~~/server/database/schema'
+import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveDiscordAlertsSchema = z.object({
 	discordAlertFollowEnabled: z.boolean(),
@@ -60,116 +57,105 @@ export default defineEventHandler(async (event) => {
 	if (!parsed.success) {
 		throw createError({
 			statusCode: 400,
-			statusMessage: 'Invalid Discord alerts settings data',
+			statusMessage: 'Invalid Discord alert settings data',
 			data: parsed.error.format(),
 		})
 	}
 
 	const d = parsed.data
 
-	const keysToUpsert = [
-		{ key: 'discord.alerts.follow.enabled', value: String(d.discordAlertFollowEnabled), updatedAt: new Date() },
-		{ key: 'discord.alerts.follow.channel_id', value: d.discordAlertFollowChannelId, updatedAt: new Date() },
-		{ key: 'discord.alerts.follow.template', value: d.discordAlertFollowTemplate, updatedAt: new Date() },
+	const updatePayload: Record<string, any> = {
+		alertFollowEnabled: d.discordAlertFollowEnabled,
+		alertFollowChannelId: d.discordAlertFollowChannelId,
+		alertFollowTemplate: d.discordAlertFollowTemplate,
 
-		{ key: 'discord.alerts.sub.enabled', value: String(d.discordAlertSubEnabled), updatedAt: new Date() },
-		{ key: 'discord.alerts.sub.channel_id', value: d.discordAlertSubChannelId, updatedAt: new Date() },
-		{ key: 'discord.alerts.sub.template', value: d.discordAlertSubTemplate, updatedAt: new Date() },
+		alertSubEnabled: d.discordAlertSubEnabled,
+		alertSubChannelId: d.discordAlertSubChannelId,
+		alertSubTemplate: d.discordAlertSubTemplate,
 
-		{ key: 'discord.alerts.gift.enabled', value: String(d.discordAlertGiftEnabled), updatedAt: new Date() },
-		{ key: 'discord.alerts.gift.channel_id', value: d.discordAlertGiftChannelId, updatedAt: new Date() },
-		{ key: 'discord.alerts.gift.template', value: d.discordAlertGiftTemplate, updatedAt: new Date() },
+		alertGiftEnabled: d.discordAlertGiftEnabled,
+		alertGiftChannelId: d.discordAlertGiftChannelId,
+		alertGiftTemplate: d.discordAlertGiftTemplate,
 
-		{ key: 'discord.alerts.cheer.enabled', value: String(d.discordAlertCheerEnabled), updatedAt: new Date() },
-		{ key: 'discord.alerts.cheer.channel_id', value: d.discordAlertCheerChannelId, updatedAt: new Date() },
-		{ key: 'discord.alerts.cheer.template', value: d.discordAlertCheerTemplate, updatedAt: new Date() },
-	]
+		alertCheerEnabled: d.discordAlertCheerEnabled,
+		alertCheerChannelId: d.discordAlertCheerChannelId,
+		alertCheerTemplate: d.discordAlertCheerTemplate,
+	}
 
 	if (d.discordAlertRaidEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.raid.enabled', value: String(d.discordAlertRaidEnabled), updatedAt: new Date() })
+		updatePayload.alertRaidEnabled = d.discordAlertRaidEnabled
 	}
 	if (d.discordAlertRaidChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.raid.channel_id', value: d.discordAlertRaidChannelId, updatedAt: new Date() })
+		updatePayload.alertRaidChannelId = d.discordAlertRaidChannelId
 	}
 	if (d.discordAlertRaidTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.raid.template', value: d.discordAlertRaidTemplate, updatedAt: new Date() })
+		updatePayload.alertRaidTemplate = d.discordAlertRaidTemplate
 	}
 
 	if (d.discordAlertLiveEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.live.enabled', value: String(d.discordAlertLiveEnabled), updatedAt: new Date() })
+		updatePayload.alertLiveEnabled = d.discordAlertLiveEnabled
 	}
 	if (d.discordAlertLiveChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.live.channel_id', value: d.discordAlertLiveChannelId, updatedAt: new Date() })
+		updatePayload.alertLiveChannelId = d.discordAlertLiveChannelId
 	}
 	if (d.discordAlertLiveTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.live.template', value: d.discordAlertLiveTemplate, updatedAt: new Date() })
+		updatePayload.alertLiveTemplate = d.discordAlertLiveTemplate
 	}
 	if (d.discordAlertLiveRemoveOffline !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.live.remove_offline', value: String(d.discordAlertLiveRemoveOffline), updatedAt: new Date() })
+		updatePayload.alertLiveRemoveOffline = d.discordAlertLiveRemoveOffline
 	}
 
 	if (d.discordAlertOfflineEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.offline.enabled', value: String(d.discordAlertOfflineEnabled), updatedAt: new Date() })
+		updatePayload.alertOfflineEnabled = d.discordAlertOfflineEnabled
 	}
 	if (d.discordAlertOfflineChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.offline.channel_id', value: d.discordAlertOfflineChannelId, updatedAt: new Date() })
+		updatePayload.alertOfflineChannelId = d.discordAlertOfflineChannelId
 	}
 	if (d.discordAlertOfflineTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.offline.template', value: d.discordAlertOfflineTemplate, updatedAt: new Date() })
+		updatePayload.alertOfflineTemplate = d.discordAlertOfflineTemplate
 	}
 
 	if (d.discordAlertBanEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.ban.enabled', value: String(d.discordAlertBanEnabled), updatedAt: new Date() })
+		updatePayload.alertBanEnabled = d.discordAlertBanEnabled
 	}
 	if (d.discordAlertBanChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.ban.channel_id', value: d.discordAlertBanChannelId, updatedAt: new Date() })
+		updatePayload.alertBanChannelId = d.discordAlertBanChannelId
 	}
 	if (d.discordAlertBanTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.ban.template', value: d.discordAlertBanTemplate, updatedAt: new Date() })
+		updatePayload.alertBanTemplate = d.discordAlertBanTemplate
 	}
 
 	if (d.discordAlertTimeoutEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.timeout.enabled', value: String(d.discordAlertTimeoutEnabled), updatedAt: new Date() })
+		updatePayload.alertTimeoutEnabled = d.discordAlertTimeoutEnabled
 	}
 	if (d.discordAlertTimeoutChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.timeout.channel_id', value: d.discordAlertTimeoutChannelId, updatedAt: new Date() })
+		updatePayload.alertTimeoutChannelId = d.discordAlertTimeoutChannelId
 	}
 	if (d.discordAlertTimeoutTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.timeout.template', value: d.discordAlertTimeoutTemplate, updatedAt: new Date() })
+		updatePayload.alertTimeoutTemplate = d.discordAlertTimeoutTemplate
 	}
 
 	if (d.discordAlertUnbanEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.unban.enabled', value: String(d.discordAlertUnbanEnabled), updatedAt: new Date() })
+		updatePayload.alertUnbanEnabled = d.discordAlertUnbanEnabled
 	}
 	if (d.discordAlertUnbanChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.unban.channel_id', value: d.discordAlertUnbanChannelId, updatedAt: new Date() })
+		updatePayload.alertUnbanChannelId = d.discordAlertUnbanChannelId
 	}
 	if (d.discordAlertUnbanTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.unban.template', value: d.discordAlertUnbanTemplate, updatedAt: new Date() })
+		updatePayload.alertUnbanTemplate = d.discordAlertUnbanTemplate
 	}
 
 	if (d.discordAlertMessageDeleteEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.message_delete.enabled', value: String(d.discordAlertMessageDeleteEnabled), updatedAt: new Date() })
+		updatePayload.alertMessageDeleteEnabled = d.discordAlertMessageDeleteEnabled
 	}
 	if (d.discordAlertMessageDeleteChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.message_delete.channel_id', value: d.discordAlertMessageDeleteChannelId, updatedAt: new Date() })
+		updatePayload.alertMessageDeleteChannelId = d.discordAlertMessageDeleteChannelId
 	}
 	if (d.discordAlertMessageDeleteTemplate !== undefined) {
-		keysToUpsert.push({ key: 'discord.alerts.message_delete.template', value: d.discordAlertMessageDeleteTemplate, updatedAt: new Date() })
+		updatePayload.alertMessageDeleteTemplate = d.discordAlertMessageDeleteTemplate
 	}
 
-	await db
-		.insert(settings)
-		.values(keysToUpsert)
-		.onConflictDoUpdate({
-			target: settings.key,
-			set: {
-				value: sql`excluded.value`,
-				updatedAt: sql`excluded.updated_at`,
-			},
-		})
-
-	await refreshAppSettingsCache()
+	await discordSettings.update(updatePayload)
 
 	return { success: true }
 })

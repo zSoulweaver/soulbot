@@ -1,12 +1,12 @@
+import { spotifySettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getAppSettings } from '~~/server/utils/settings'
 import { getSpotifyToken, playlistExists } from '~~/server/utils/spotify'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'caster')
-	const appSettings = await getAppSettings()
+	const settings = spotifySettings.get()
 
-	const playlistId = appSettings.spotifyRequestPlaylistId
+	const playlistId = settings.requestPlaylistId
 	const token = await getSpotifyToken()
 	const connected = !!token
 
@@ -16,22 +16,22 @@ export default defineEventHandler(async (event) => {
 	}
 
 	return {
-		active: playlistId ? appSettings.spotifySongRequestEnabled : false,
-		pointsCost: appSettings.spotifySongRequestPointsCost,
-		maxLength: appSettings.spotifySongRequestMaxLength,
-		maxQueue: appSettings.spotifySongRequestMaxQueue,
-		maxUserRequests: appSettings.spotifySongRequestMaxUserRequests,
-		modsBypassLimits: appSettings.spotifySongRequestModsBypassLimits,
-		followersOnly: appSettings.spotifySongRequestFollowersOnly,
-		permitExplicit: appSettings.spotifySongRequestPermitExplicit,
-		offlineOverride: appSettings.spotifySongRequestOfflineOverride,
-		targetPlaylist: appSettings.spotifyPlaylistTargetId,
-		targetPlaylistName: appSettings.spotifyPlaylistTargetName,
-		allowModerators: appSettings.spotifyPlaylistAllowMods,
-		whisperNotifications: appSettings.spotifyPlaylistWhisper,
-		announceDeleteWebui: appSettings.spotifyPlaylistAnnounceDeleteWebui,
-		alertQueueLowEnabled: appSettings.spotifySongRequestAlertQueueLowEnabled,
-		alertQueueEmptyEnabled: appSettings.spotifySongRequestAlertQueueEmptyEnabled,
+		active: playlistId ? settings.songRequestEnabled : false,
+		pointsCost: settings.songRequestPointsCost,
+		maxLength: settings.songRequestMaxLength,
+		maxQueue: settings.songRequestMaxQueue,
+		maxUserRequests: settings.songRequestMaxUserRequests,
+		modsBypassLimits: settings.songRequestModsBypassLimits,
+		followersOnly: settings.songRequestFollowersOnly,
+		permitExplicit: settings.songRequestPermitExplicit,
+		offlineOverride: settings.songRequestOfflineOverride,
+		targetPlaylist: settings.playlistTargetId,
+		targetPlaylistName: settings.playlistTargetName,
+		allowModerators: settings.playlistAllowMods,
+		whisperNotifications: settings.playlistWhisper,
+		announceDeleteWebui: settings.playlistAnnounceDeleteWebui,
+		alertQueueLowEnabled: settings.songRequestAlertQueueLowEnabled,
+		alertQueueEmptyEnabled: settings.songRequestAlertQueueEmptyEnabled,
 		playlistId,
 		playlistExists: playlistExistsVal,
 	}

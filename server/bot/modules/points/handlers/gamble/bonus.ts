@@ -1,33 +1,30 @@
 import type { CommandHandler } from '~~/server/bot/core/types'
 import { renderCustomTemplate } from '~~/server/bot/core/variables-engine'
-import { getAppSettings, refreshAppSettingsCache, updateAppSetting } from '~~/server/utils/settings'
+import { gamblingSettings } from '~~/server/settings'
 
 export const handleGambleBonus: CommandHandler = async (ctx) => {
-	const settings = await getAppSettings()
+	const settings = gamblingSettings.get()
 	const now = Date.now()
 
 	// Prevent starting a new bonus event if one is already active
-	if (Number(settings.pointsGamblingBonusEndTime) > now) {
+	if (Number(settings.bonusEndTime) > now) {
 		return ctx.reply('A gambling bonus event is already active!')
 	}
 
-	const duration = settings.pointsGamblingBonusDuration
-	const multiplier = settings.pointsGamblingBonusWinMultiplier
-	const threshold = settings.pointsGamblingBonusWinMinRoll
-	const bonusMessage = settings.pointsGamblingBonusMessage
+	const duration = settings.bonusDuration
+	const multiplier = settings.bonusWinMultiplier
+	const threshold = settings.bonusWinMinRoll
+	const bonusMessage = settings.bonusMessage
 	const endTime = now + duration * 60 * 1000
 
-	// Persist the end time to the database settings
-	await updateAppSetting('points.gambling_bonus_end_time', String(endTime))
-
-	// Refresh the cache
-	await refreshAppSettingsCache()
+	// Persist the end time to the database settings and memory cache
+	await gamblingSettings.update({ bonusEndTime: endTime })
 
 	// Schedule the natural expiration timer
 	const { scheduleBonusEnd } = await import('~~/server/bot/modules/points/bonus-manager')
 	await scheduleBonusEnd(endTime)
 
-	const tickets = settings.pointsGamblingBonusTicketsPerUser
+	const tickets = settings.bonusTicketsPerUser
 
 	// Render customizable start message
 	const rendered = await renderCustomTemplate(bonusMessage, ctx, {

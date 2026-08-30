@@ -1,6 +1,6 @@
+import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 import { isDiscordConnected, isDiscordTokenConfigured, startDiscord } from '~~/server/utils/discord'
-import { getAppSettings } from '~~/server/utils/settings'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
@@ -9,19 +9,19 @@ export default defineEventHandler(async (event) => {
 		await startDiscord()
 	}
 
-	const settings = await getAppSettings()
+	const settings = discordSettings.get()
 
 	return {
-		discordEventJoinEnabled: settings.discordEventJoinEnabled,
-		discordEventJoinChannelId: settings.discordEventJoinChannelId,
-		discordEventJoinTemplate: settings.discordEventJoinTemplate,
+		discordEventJoinEnabled: settings.eventJoinEnabled,
+		discordEventJoinChannelId: settings.eventJoinChannelId,
+		discordEventJoinTemplate: settings.eventJoinTemplate,
 
-		discordRolesAutoBestowEnabled: settings.discordRolesAutoBestowEnabled,
-		discordRolesAutoBestowRoles: settings.discordRolesAutoBestowRoles,
+		discordRolesAutoBestowEnabled: settings.rolesAutoBestowEnabled,
+		discordRolesAutoBestowRoles: settings.rolesAutoBestowRoles,
 
-		discordEventLeaveEnabled: settings.discordEventLeaveEnabled,
-		discordEventLeaveChannelId: settings.discordEventLeaveChannelId,
-		discordEventLeaveTemplate: settings.discordEventLeaveTemplate,
+		discordEventLeaveEnabled: settings.eventLeaveEnabled,
+		discordEventLeaveChannelId: settings.eventLeaveChannelId,
+		discordEventLeaveTemplate: settings.eventLeaveTemplate,
 
 		isDiscordConnected: isDiscordConnected(),
 	}

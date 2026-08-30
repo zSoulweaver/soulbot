@@ -1,9 +1,6 @@
-import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/database'
-import { settings } from '~~/server/database/schema'
+import { botSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveBotSettingsSchema = z.object({
 	chatMode: z.enum(['normal', 'action']),
@@ -23,25 +20,10 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const { chatMode, muted } = parsed.data
-
-	const keysToUpsert = [
-		{ key: 'bot.chat_mode', value: chatMode, updatedAt: new Date() },
-		{ key: 'bot.muted', value: String(muted), updatedAt: new Date() },
-	]
-
-	await db
-		.insert(settings)
-		.values(keysToUpsert)
-		.onConflictDoUpdate({
-			target: settings.key,
-			set: {
-				value: sql`excluded.value`,
-				updatedAt: sql`excluded.updated_at`,
-			},
-		})
-
-	await refreshAppSettingsCache()
+	await botSettings.update({
+		botChatMode: parsed.data.chatMode,
+		botMuted: parsed.data.muted,
+	})
 
 	return { success: true }
 })

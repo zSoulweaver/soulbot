@@ -1,35 +1,32 @@
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import { gamblingSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 import { sendRawChatMessage } from '~~/server/utils/chat'
-import { getAppSettings, refreshAppSettingsCache, updateAppSetting } from '~~/server/utils/settings'
 import { getStreamerChannelName } from '~~/server/utils/twurple'
 
 export default defineEventHandler(async (event) => {
 	// Allow moderators and casters to trigger the bonus event
 	await requireUserRole(event, 'moderator')
 
-	const settings = await getAppSettings()
+	const settings = gamblingSettings.get()
 	const now = Date.now()
 
 	// Prevent starting a new bonus event if one is already active
-	if (Number(settings.pointsGamblingBonusEndTime) > now) {
+	if (Number(settings.bonusEndTime) > now) {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'A gambling bonus event is already active.',
 		})
 	}
 
-	const duration = settings.pointsGamblingBonusDuration
-	const multiplier = settings.pointsGamblingBonusWinMultiplier
-	const threshold = settings.pointsGamblingBonusWinMinRoll
-	const bonusMessage = settings.pointsGamblingBonusMessage
+	const duration = settings.bonusDuration
+	const multiplier = settings.bonusWinMultiplier
+	const threshold = settings.bonusWinMinRoll
+	const bonusMessage = settings.bonusMessage
 	const endTime = now + duration * 60 * 1000
 
-	// Persist the end time to the database settings
-	await updateAppSetting('points.gambling_bonus_end_time', String(endTime))
-
-	// Refresh the cache
-	await refreshAppSettingsCache()
+	// Persist the end time to the database settings and memory cache
+	await gamblingSettings.update({ bonusEndTime: endTime })
 
 	// Schedule the natural expiration timer
 	const { scheduleBonusEnd } = await import('~~/server/bot/modules/points/bonus-manager')
@@ -43,7 +40,7 @@ export default defineEventHandler(async (event) => {
 			multiplier,
 			threshold,
 			duration,
-			tickets: settings.pointsGamblingBonusTicketsPerUser,
+			tickets: settings.bonusTicketsPerUser,
 		})
 		await sendRawChatMessage(channel, rendered)
 	}

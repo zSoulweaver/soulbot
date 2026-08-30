@@ -1,10 +1,7 @@
-import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/database'
-import { settings } from '~~/server/database/schema'
+import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 import { startDiscord, stopDiscord } from '~~/server/utils/discord'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveDiscordSettingsSchema = z.object({
 	discordEnabled: z.boolean(),
@@ -35,30 +32,19 @@ export default defineEventHandler(async (event) => {
 		})
 	}
 
-	const keysToUpsert = [
-		{ key: 'discord.enabled', value: String(d.discordEnabled), updatedAt: new Date() },
-		{ key: 'discord.guild_id', value: d.discordGuildId, updatedAt: new Date() },
-	]
+	const updatePayload: Record<string, any> = {
+		enabled: d.discordEnabled,
+		guildId: d.discordGuildId,
+	}
 
 	if (d.discordModerationLogEnabled !== undefined) {
-		keysToUpsert.push({ key: 'discord.moderation.log.enabled', value: String(d.discordModerationLogEnabled), updatedAt: new Date() })
+		updatePayload.moderationLogEnabled = d.discordModerationLogEnabled
 	}
 	if (d.discordModerationLogChannelId !== undefined) {
-		keysToUpsert.push({ key: 'discord.moderation.log.channel_id', value: d.discordModerationLogChannelId, updatedAt: new Date() })
+		updatePayload.moderationLogChannelId = d.discordModerationLogChannelId
 	}
 
-	await db
-		.insert(settings)
-		.values(keysToUpsert)
-		.onConflictDoUpdate({
-			target: settings.key,
-			set: {
-				value: sql`excluded.value`,
-				updatedAt: sql`excluded.updated_at`,
-			},
-		})
-
-	await refreshAppSettingsCache()
+	await discordSettings.update(updatePayload)
 
 	if (d.discordEnabled) {
 		await startDiscord()

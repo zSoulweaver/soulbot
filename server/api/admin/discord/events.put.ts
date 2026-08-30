@@ -1,9 +1,6 @@
-import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { db } from '~~/server/database'
-import { settings } from '~~/server/database/schema'
+import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { refreshAppSettingsCache } from '~~/server/utils/settings'
 
 const saveDiscordEventsSchema = z.object({
 	discordEventJoinEnabled: z.boolean(),
@@ -33,33 +30,16 @@ export default defineEventHandler(async (event) => {
 
 	const d = parsed.data
 
-	const keysToUpsert = [
-		{ key: 'discord.events.join.enabled', value: String(d.discordEventJoinEnabled), updatedAt: new Date() },
-		{ key: 'discord.events.join.channel_id', value: d.discordEventJoinChannelId, updatedAt: new Date() },
-		{ key: 'discord.events.join.template', value: d.discordEventJoinTemplate, updatedAt: new Date() },
-
-		{ key: 'discord.roles.auto_bestow_enabled', value: String(d.discordRolesAutoBestowEnabled), updatedAt: new Date() },
-		{ key: 'discord.roles.auto_bestow_roles', value: d.discordRolesAutoBestowRoles, updatedAt: new Date() },
-
-		{ key: 'discord.events.leave.enabled', value: String(d.discordEventLeaveEnabled), updatedAt: new Date() },
-		{ key: 'discord.events.leave.channel_id', value: d.discordEventLeaveChannelId, updatedAt: new Date() },
-		{ key: 'discord.events.leave.template', value: d.discordEventLeaveTemplate, updatedAt: new Date() },
-	]
-
-	for (const item of keysToUpsert) {
-		await db
-			.insert(settings)
-			.values(item)
-			.onConflictDoUpdate({
-				target: settings.key,
-				set: {
-					value: item.value,
-					updatedAt: sql`EXCLUDED.updated_at`,
-				},
-			})
-	}
-
-	await refreshAppSettingsCache()
+	await discordSettings.update({
+		eventJoinEnabled: d.discordEventJoinEnabled,
+		eventJoinChannelId: d.discordEventJoinChannelId,
+		eventJoinTemplate: d.discordEventJoinTemplate,
+		rolesAutoBestowEnabled: d.discordRolesAutoBestowEnabled,
+		rolesAutoBestowRoles: d.discordRolesAutoBestowRoles,
+		eventLeaveEnabled: d.discordEventLeaveEnabled,
+		eventLeaveChannelId: d.discordEventLeaveChannelId,
+		eventLeaveTemplate: d.discordEventLeaveTemplate,
+	})
 
 	return { success: true }
 })

@@ -1,9 +1,9 @@
+import { botSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getAppSettings } from '~~/server/utils/settings'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
-	const settings = await getAppSettings()
+	const settings = botSettings.get()
 
 	return {
 		chatMode: settings.botChatMode,

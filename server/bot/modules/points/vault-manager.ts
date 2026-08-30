@@ -1,7 +1,7 @@
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import { vaultSettings } from '~~/server/settings'
 import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
-import { getAppSettings, getAppSettingsSync, refreshAppSettingsCache, updateAppSetting } from '~~/server/utils/settings'
 import { getStreamerChannelName } from '~~/server/utils/twurple'
 import { updateUserPointsAndGambleStats } from './service'
 
@@ -16,8 +16,8 @@ let vaultTimeout: NodeJS.Timeout | null = null
 let warningTimeout: NodeJS.Timeout | null = null
 
 export function isVaultActive(): boolean {
-	const settings = getAppSettingsSync()
-	return Number(settings.pointsVaultEndTime) > Date.now()
+	const settings = vaultSettings.get()
+	return Number(settings.endTime) > Date.now()
 }
 
 export function getRaiders(): VaultRaider[] {
@@ -48,24 +48,23 @@ export function clearVaultTimers(): void {
 }
 
 export async function startVaultRaid(durationSec?: number, commandCtx?: any): Promise<{ success: boolean, endTime: number }> {
-	const settings = await getAppSettings()
+	const settings = vaultSettings.get()
 	const now = Date.now()
 
-	if (Number(settings.pointsVaultEndTime) > now) {
+	if (Number(settings.endTime) > now) {
 		throw new Error('A Vault Raid is already active')
 	}
 
-	const duration = durationSec ?? settings.pointsVaultDuration
+	const duration = durationSec ?? settings.duration
 	const endTime = now + duration * 1000
 
 	clearVaultTimers()
 	raiders.clear()
 
-	await updateAppSetting('points.vault_end_time', String(endTime))
-	await refreshAppSettingsCache()
+	await vaultSettings.update({ endTime })
 
 	// Schedule 15-second warning if enabled and duration allows
-	if (settings.pointsVaultWarningEnabled && duration > 15) {
+	if (settings.warningEnabled && duration > 15) {
 		const warningDelay = (duration - 15) * 1000
 		warningTimeout = setTimeout(async () => {
 			await broadcastVaultWarning()
@@ -79,11 +78,11 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any): Pr
 
 	// Broadcast start message
 	if (commandCtx) {
-		const rendered = await renderCustomTemplate(settings.pointsVaultStartMessage, commandCtx, {
+		const rendered = await renderCustomTemplate(settings.startMessage, commandCtx, {
 			duration,
-			multiplier: settings.pointsVaultWinMultiplier,
-			minBet: settings.pointsVaultMinBet,
-			maxBet: settings.pointsVaultMaxBet,
+			multiplier: settings.winMultiplier,
+			minBet: settings.minBet,
+			maxBet: settings.maxBet,
 		})
 		await commandCtx.say(rendered)
 	}
@@ -91,11 +90,11 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any): Pr
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.pointsVaultStartMessage, ctx, {
+			const rendered = await renderCustomTemplate(settings.startMessage, ctx, {
 				duration,
-				multiplier: settings.pointsVaultWinMultiplier,
-				minBet: settings.pointsVaultMinBet,
-				maxBet: settings.pointsVaultMaxBet,
+				multiplier: settings.winMultiplier,
+				minBet: settings.minBet,
+				maxBet: settings.maxBet,
 			})
 			await sendRawChatMessage(channel, rendered)
 		}
@@ -108,19 +107,19 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any): Pr
 export async function broadcastVaultWarning(): Promise<void> {
 	warningTimeout = null
 	try {
-		const settings = await getAppSettings()
-		if (Number(settings.pointsVaultEndTime) <= Date.now()) {
+		const settings = vaultSettings.get()
+		if (Number(settings.endTime) <= Date.now()) {
 			return
 		}
 
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.pointsVaultWarningMessage, ctx, {
+			const rendered = await renderCustomTemplate(settings.warningMessage, ctx, {
 				secondsLeft: 15,
 				raidersCount: raiders.size,
 				pot: getTotalPot(),
-				multiplier: settings.pointsVaultWinMultiplier,
+				multiplier: settings.winMultiplier,
 			})
 			await sendRawChatMessage(channel, rendered)
 		}
@@ -157,8 +156,7 @@ export async function cancelVaultRaid(cancelledBy?: string, commandCtx?: any): P
 	raiders.clear()
 
 	try {
-		await updateAppSetting('points.vault_end_time', '0')
-		await refreshAppSettingsCache()
+		await vaultSettings.update({ endTime: 0 })
 
 		if (cancelledBy) {
 			if (commandCtx) {
@@ -192,14 +190,13 @@ export async function cancelVaultRaid(cancelledBy?: string, commandCtx?: any): P
 export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean, raidersCount: number, pot: number, totalWon: number }> {
 	clearVaultTimers()
 
-	const settings = await getAppSettings()
+	const settings = vaultSettings.get()
 	const raidersList = getRaiders()
 	const pot = getTotalPot()
 	const raidersCount = raidersList.length
 
 	// Clear active end time
-	await updateAppSetting('points.vault_end_time', '0')
-	await refreshAppSettingsCache()
+	await vaultSettings.update({ endTime: 0 })
 
 	// If no one joined, just notify chat
 	if (raidersCount === 0) {
@@ -213,12 +210,12 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 
 	// Roll 1 to 100
 	const roll = Math.floor(Math.random() * 100) + 1
-	const isWin = roll >= settings.pointsVaultWinMinRoll
+	const isWin = roll >= settings.winMinRoll
 	let totalWon = 0
 
 	for (const raider of raidersList) {
 		if (isWin) {
-			const winGain = Math.floor(raider.betAmount * settings.pointsVaultWinMultiplier)
+			const winGain = Math.floor(raider.betAmount * settings.winMultiplier)
 			totalWon += winGain
 			await updateUserPointsAndGambleStats(raider.username, winGain, true)
 		}
@@ -232,14 +229,14 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 	const channel = await getStreamerChannelName()
 	if (channel) {
 		const ctx = createTemplateContext(channel)
-		const template = isWin ? settings.pointsVaultEndWinMessage : settings.pointsVaultEndLoseMessage
+		const template = isWin ? settings.endWinMessage : settings.endLoseMessage
 		const rendered = await renderCustomTemplate(template, ctx, {
 			roll,
-			threshold: settings.pointsVaultWinMinRoll,
+			threshold: settings.winMinRoll,
 			raidersCount,
 			pot,
 			totalWon,
-			multiplier: settings.pointsVaultWinMultiplier,
+			multiplier: settings.winMultiplier,
 		})
 		await sendRawChatMessage(channel, rendered)
 	}
@@ -250,15 +247,15 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 
 export async function initVaultManager(): Promise<void> {
 	try {
-		const settings = await getAppSettings()
-		const endTime = Number(settings.pointsVaultEndTime)
+		const settings = vaultSettings.get()
+		const endTime = Number(settings.endTime)
 		if (endTime > Date.now()) {
 			// Reschedule remaining duration
 			const remaining = Math.round((endTime - Date.now()) / 1000)
 			await startVaultRaid(remaining)
 		}
 		else if (endTime > 0) {
-			await updateAppSetting('points.vault_end_time', '0')
+			await vaultSettings.update({ endTime: 0 })
 		}
 	}
 	catch (err) {

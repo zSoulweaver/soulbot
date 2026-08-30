@@ -1,42 +1,7 @@
+import { alertsSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
-import { getAppSettings } from '~~/server/utils/settings'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
-	const appSettings = await getAppSettings()
-
-	return {
-		eventsubAlertFollowEnabled: appSettings.eventsubAlertFollowEnabled,
-		eventsubAlertSubEnabled: appSettings.eventsubAlertSubEnabled,
-		eventsubAlertGiftEnabled: appSettings.eventsubAlertGiftEnabled,
-		eventsubAlertCheerEnabled: appSettings.eventsubAlertCheerEnabled,
-		eventsubAlertRaidEnabled: appSettings.eventsubAlertRaidEnabled,
-		eventsubAlertLiveEnabled: appSettings.eventsubAlertLiveEnabled,
-		eventsubAlertOfflineEnabled: appSettings.eventsubAlertOfflineEnabled,
-		eventsubPointsFollowEnabled: appSettings.eventsubPointsFollowEnabled,
-		eventsubPointsSubEnabled: appSettings.eventsubPointsSubEnabled,
-		eventsubPointsGiftEnabled: appSettings.eventsubPointsGiftEnabled,
-		eventsubPointsCheerEnabled: appSettings.eventsubPointsCheerEnabled,
-		eventsubAlertFollow: appSettings.eventsubAlertFollow,
-		eventsubAlertSub: appSettings.eventsubAlertSub,
-		eventsubAlertGift: appSettings.eventsubAlertGift,
-		eventsubAlertCheer: appSettings.eventsubAlertCheer,
-		eventsubAlertRaid: appSettings.eventsubAlertRaid,
-		eventsubAlertLive: appSettings.eventsubAlertLive,
-		eventsubAlertOffline: appSettings.eventsubAlertOffline,
-		eventsubPointsFollow: appSettings.eventsubPointsFollow,
-		eventsubPointsSub: appSettings.eventsubPointsSub,
-		eventsubPointsGift: appSettings.eventsubPointsGift,
-		eventsubPointsCheer: appSettings.eventsubPointsCheer,
-		eventsubAlertAdBreakEnabled: appSettings.eventsubAlertAdBreakEnabled,
-		eventsubAlertAdBreak: appSettings.eventsubAlertAdBreak,
-		eventsubAlertBanEnabled: appSettings.eventsubAlertBanEnabled,
-		eventsubAlertBan: appSettings.eventsubAlertBan,
-		eventsubAlertTimeoutEnabled: appSettings.eventsubAlertTimeoutEnabled,
-		eventsubAlertTimeout: appSettings.eventsubAlertTimeout,
-		eventsubAlertUnbanEnabled: appSettings.eventsubAlertUnbanEnabled,
-		eventsubAlertUnban: appSettings.eventsubAlertUnban,
-		eventsubAlertMessageDeleteEnabled: appSettings.eventsubAlertMessageDeleteEnabled,
-		eventsubAlertMessageDelete: appSettings.eventsubAlertMessageDelete,
-	}
+	return alertsSettings.get()
 })

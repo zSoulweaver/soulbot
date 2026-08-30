@@ -155,14 +155,14 @@ describe('Loyalty Gambling Settings API Routes', () => {
 			const dbMinBet = await db
 				.select()
 				.from(settings)
-				.where(eq(settings.key, 'points.gambling_min_bet'))
+				.where(eq(settings.key, 'points.gambling.min_bet'))
 				.then(res => res[0])
 			expect(dbMinBet?.value).toBe('20')
 
 			const dbTickets = await db
 				.select()
 				.from(settings)
-				.where(eq(settings.key, 'points.gambling_bonus_tickets_per_user'))
+				.where(eq(settings.key, 'points.gambling.bonus_tickets_per_user'))
 				.then(res => res[0])
 			expect(dbTickets?.value).toBe('8')
 

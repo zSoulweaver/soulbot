@@ -1,34 +1,33 @@
 import { and, asc, eq, or, sql } from 'drizzle-orm'
+import { PollingEngine } from '~~/server/bot/core/polling-engine'
 import { db } from '~~/server/database'
 import { settings, spotifyQueue } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
 import { addTracksToPlaylist, getCurrentlyPlaying, getPlaylistTracks, getValidSpotifyToken, playlistExists, removeTracksFromPlaylist, replacePlaylistTracks } from '~~/server/utils/spotify'
 
-let intervalId: any = null
 let lastPlaylistSyncTime = 0
 let lastUserQueueCount: number | null = null
 let lastTrackId: string | null = null
 let lastTrackProgress = 0
 
+export const spotifyQueueEngine = new PollingEngine({
+	name: 'spotify-queue',
+	intervalMs: 10000,
+	action: () => tick(),
+})
+
 export function startSpotifyQueueEngine() {
-	if (intervalId)
-		return
-	botLogger.info('[Spotify Queue] Starting queue engine loop...')
-	intervalId = setInterval(tick, 10000)
+	spotifyQueueEngine.start()
 }
 
 export function stopSpotifyQueueEngine() {
-	if (intervalId) {
-		botLogger.info('[Spotify Queue] Stopping queue engine loop...')
-		clearInterval(intervalId)
-		intervalId = null
-	}
+	spotifyQueueEngine.stop()
 }
 
 export async function triggerQueueEngineTick() {
 	botLogger.info('[Spotify Queue] Manual queue engine tick triggered')
-	await tick()
+	await spotifyQueueEngine.triggerTick()
 }
 
 export async function clearRequestPlaylistId(reason?: string) {

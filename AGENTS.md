@@ -106,3 +106,10 @@ To guarantee a clean, predictability-driven, and highly professional layout acro
    - Use the `#header-actions` slot for any header controls (e.g., refresh buttons, save triggers, or action triggers).
    - The default slot content is automatically wrapped inside `<AppPageContainer class="flex-1">`. This guarantees that the page container stretches to fill the vertical viewport height, allowing components with `mt-auto` (like `AppFloatingSaveBar`) to cleanly stick or float at the bottom of the page.
    - Customize container classes if necessary by passing them via the `containerClass` prop (e.g., `containerClass="p-4 flex flex-col"`).
+
+## Background Engines & Polling Guidelines
+
+- **No Raw `setInterval`**: Never start unmanaged `setInterval` loops or root-level module timers. All background polling tasks MUST extend or instantiate `PollingEngine` (`server/bot/core/polling-engine.ts`) or implement `BackgroundEngine` (`server/bot/core/engine-registry.ts`).
+- **Centralized Engine Registration**: Every background engine must be registered in `engineRegistry` (`server/bot/core/engine-registry.ts`) so it is cleanly managed across `startBot()`, `stopBot()`, and Nitro server teardown hooks.
+- **Tick-Safety & Non-Overlapping Scheduling**: `PollingEngine` uses recursive timeout scheduling to ensure that long-running async operations never overlap. Always place try/catch blocks within custom actions or let `PollingEngine` capture tick errors safely.
+- **In-Memory Cache Bounds**: For module-level caches, use size-bounded inline sweeps (e.g. prune when cache size exceeds a threshold) rather than unmanaged background interval sweeps.

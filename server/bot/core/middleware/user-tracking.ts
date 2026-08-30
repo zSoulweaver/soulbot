@@ -9,15 +9,14 @@ import { cleanUsername } from '../utils'
 const lastSeenCache = new Map<string, number>()
 const USER_TRACKING_THROTTLE_MS = 5 * 60 * 1000
 
-// Periodically sweep the user-tracking cache to keep memory footprint bounded
-setInterval(() => {
+function pruneStaleUserTrackingCache(): void {
 	const expireTime = Date.now() - USER_TRACKING_THROTTLE_MS * 2
 	for (const [userId, lastSeen] of lastSeenCache.entries()) {
 		if (lastSeen < expireTime) {
 			lastSeenCache.delete(userId)
 		}
 	}
-}, 10 * 60 * 1000).unref()
+}
 
 /**
  * Upserts users in Drizzle and updates live role parameters when they chat.
@@ -27,6 +26,11 @@ export const userTrackingMiddleware: ChatMiddleware = async (event, next) => {
 	const userId = event.raw.userInfo.userId
 	const nowTime = Date.now()
 	const lastUpdated = lastSeenCache.get(userId)
+
+	// Keep cache bounded
+	if (lastSeenCache.size > 2000) {
+		pruneStaleUserTrackingCache()
+	}
 
 	// Record chat message for recent history buffer
 	trackUserChatMessage(userId, event.message)

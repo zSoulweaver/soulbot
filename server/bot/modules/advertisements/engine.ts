@@ -1,3 +1,4 @@
+import { PollingEngine } from '~~/server/bot/core/polling-engine'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { sendRawChatMessage } from '~~/server/utils/chat'
@@ -13,7 +14,12 @@ interface AdAlertState {
 }
 
 let adAlertState: AdAlertState | null = null
-let adsIntervalId: NodeJS.Timeout | null = null
+
+export const adsEngine = new PollingEngine({
+	name: 'advertisements',
+	intervalMs: 60000,
+	action: () => executeAdsCheck(),
+})
 
 export async function executeAdsCheck() {
 	try {
@@ -23,8 +29,8 @@ export async function executeAdsCheck() {
 		}
 
 		// Only check if stream is online
-		const streamInfo = await getStreamInfo()
-		if (!streamInfo.isOnline) {
+		const stream = await getStreamInfo()
+		if (!stream.isOnline) {
 			adAlertState = null
 			return
 		}
@@ -34,64 +40,53 @@ export async function executeAdsCheck() {
 			return
 		}
 
+		const channelName = await getStreamerChannelName()
+		if (!channelName) {
+			return
+		}
+
+		const userId = streamerToken.userId
 		const api = getApiClient()
-		let adSchedule: any = null
-		try {
-			adSchedule = await api.channels.getAdSchedule(streamerToken.userId)
-		}
-		catch (apiErr) {
-			botLogger.error({ apiErr }, '[Ads Engine] Failed to fetch ad schedule from Twitch Helix')
+		const schedule = await api.asUser(userId, ctx => ctx.channels.getAdSchedule(userId))
+
+		if (!schedule || !schedule.nextAdDate) {
 			return
 		}
 
-		if (!adSchedule || !adSchedule.nextAdDate) {
-			adAlertState = null
-			return
-		}
-
-		const nextAdTime = adSchedule.nextAdDate.getTime()
+		const nextAdTimestamp = schedule.nextAdDate.getTime()
 		const now = Date.now()
-		const remainingSeconds = Math.floor((nextAdTime - now) / 1000)
+		const secondsRemaining = Math.round((nextAdTimestamp - now) / 1000)
 
-		if (remainingSeconds <= 0) {
-			adAlertState = null
-			return
-		}
-
-		// Reset warning flags if the next ad timestamp has changed
-		if (!adAlertState || adAlertState.nextAdTime !== nextAdTime) {
+		// Reset state if nextAdTimestamp changed significantly (> 60 seconds diff from recorded nextAdTime)
+		if (!adAlertState || Math.abs(adAlertState.nextAdTime - nextAdTimestamp) > 60000) {
 			adAlertState = {
-				nextAdTime,
+				nextAdTime: nextAdTimestamp,
 				warned5m: false,
 				warned3m: false,
 				warned1m: false,
 			}
 		}
 
-		const channelName = await getStreamerChannelName()
-		if (!channelName)
-			return
-
-		// 5 minutes warning (range: 240s to 300s)
-		if (settings.adsAlert5mEnabled && !adAlertState.warned5m && remainingSeconds <= 300 && remainingSeconds > 240) {
+		// 5 minute warning (between 4m 30s and 5m 30s)
+		if (settings.adsAlert5mEnabled && !adAlertState.warned5m && secondsRemaining <= 300 && secondsRemaining > 240) {
 			adAlertState.warned5m = true
-			await sendAdAlert(channelName, '5 minutes', adSchedule.duration)
+			await sendAdAlert(channelName, '5 minutes', schedule.duration)
 		}
 
-		// 3 minutes warning (range: 120s to 180s)
-		if (settings.adsAlert3mEnabled && !adAlertState.warned3m && remainingSeconds <= 180 && remainingSeconds > 120) {
+		// 3 minute warning (between 2m 30s and 3m 30s)
+		if (settings.adsAlert3mEnabled && !adAlertState.warned3m && secondsRemaining <= 180 && secondsRemaining > 120) {
 			adAlertState.warned3m = true
-			await sendAdAlert(channelName, '3 minutes', adSchedule.duration)
+			await sendAdAlert(channelName, '3 minutes', schedule.duration)
 		}
 
-		// 1 minute warning (range: 0s to 60s)
-		if (settings.adsAlert1mEnabled && !adAlertState.warned1m && remainingSeconds <= 60 && remainingSeconds > 0) {
+		// 1 minute warning (between 30s and 1m 30s)
+		if (settings.adsAlert1mEnabled && !adAlertState.warned1m && secondsRemaining <= 60 && secondsRemaining > 0) {
 			adAlertState.warned1m = true
-			await sendAdAlert(channelName, '1 minute', adSchedule.duration)
+			await sendAdAlert(channelName, '1 minute', schedule.duration)
 		}
 	}
 	catch (err) {
-		botLogger.error({ err }, '[Ads Engine] Error in ads check loop')
+		botLogger.error({ err }, '[Ads Engine] Error checking Twitch ad schedule')
 	}
 }
 
@@ -108,21 +103,11 @@ async function sendAdAlert(channelName: string, timeText: string, durationSecond
 }
 
 export function startAdsEngine() {
-	if (adsIntervalId) {
-		return
-	}
-
-	botLogger.info('[Ads Engine] Starting automated ads schedule monitor loop...')
-	adsIntervalId = setInterval(executeAdsCheck, 60000)
-	adsIntervalId.unref()
+	adsEngine.start()
 }
 
 export function stopAdsEngine() {
-	if (adsIntervalId) {
-		clearInterval(adsIntervalId)
-		adsIntervalId = null
-		botLogger.info('[Ads Engine] Automated ads schedule monitor loop stopped.')
-	}
+	adsEngine.stop()
 }
 
 // Test helper to reset warnings

@@ -4,28 +4,37 @@ import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/set
 import { activityTracker } from './core/activity-tracker'
 import { handleChatMessage } from './core/chat-dispatcher'
 import { handleCommand } from './core/command-dispatcher'
+import { engineRegistry } from './core/engine-registry'
 import { registry } from './core/registry'
 import { templateRegistry } from './core/templates'
 import { adsModule } from './modules/advertisements'
-import { startAdsEngine } from './modules/advertisements/engine'
+import { adsEngine, startAdsEngine, stopAdsEngine } from './modules/advertisements/engine'
 import { registerAlertsEventSubHandlers } from './modules/alerts/eventsub'
 import { commandsModule } from './modules/commands'
 import { deathsModule } from './modules/deaths'
 import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
-import { seedDefaultExclusions, startPayoutEngine } from './modules/points/payout'
+import { payoutEngine, seedDefaultExclusions, startPayoutEngine, stopPayoutEngine } from './modules/points/payout'
 import { vaultModule } from './modules/points/vault'
 import { spotifyModule } from './modules/spotify'
-import { startSpotifyQueueEngine } from './modules/spotify/queue-engine'
-import { startTimerEngine } from './modules/timers'
+import { spotifyQueueEngine, startSpotifyQueueEngine, stopSpotifyQueueEngine } from './modules/spotify/queue-engine'
+import { startTimerEngine, stopTimerEngine, timerEngine } from './modules/timers'
 import { twitchModule } from './modules/twitch'
 import { registerTwitchEventSubHandlers } from './modules/twitch/eventsub'
 import { watchtimeModule } from './modules/watchtime'
-import { startAvatarSyncEngine } from './services/avatar-sync'
+import { avatarSyncEngine, startAvatarSyncEngine, stopAvatarSyncEngine } from './services/avatar-sync'
 
 let isRegistryInitialized = false
 let isBotInitialized = false
+
+// Register all background engines once into the central EngineRegistry
+engineRegistry.register(activityTracker)
+engineRegistry.register(payoutEngine)
+engineRegistry.register(timerEngine)
+engineRegistry.register(spotifyQueueEngine)
+engineRegistry.register(adsEngine)
+engineRegistry.register(avatarSyncEngine)
 
 export function initRegistry() {
 	if (isRegistryInitialized)
@@ -77,15 +86,31 @@ export function initBot() {
 		botLogger.error({ err }, 'Failed to warm up settings cache on initBot')
 	})
 
-	// Start the active chatter watch-time points payout engine
+	// Start all background engines via EngineRegistry
 	if (process.env.NODE_ENV !== 'test') {
-		startPayoutEngine()
-		activityTracker.start()
-		startTimerEngine()
-		startSpotifyQueueEngine()
-		startAdsEngine()
-		startAvatarSyncEngine()
+		engineRegistry.startAll().catch(err => botLogger.error({ err }, 'Failed to start engines on initBot'))
 	}
 }
 
-export { handleChatMessage, handleCommand, registry, startPayoutEngine, templateRegistry }
+export {
+	adsEngine,
+	avatarSyncEngine,
+	engineRegistry,
+	handleChatMessage,
+	handleCommand,
+	payoutEngine,
+	registry,
+	spotifyQueueEngine,
+	startAdsEngine,
+	startAvatarSyncEngine,
+	startPayoutEngine,
+	startSpotifyQueueEngine,
+	startTimerEngine,
+	stopAdsEngine,
+	stopAvatarSyncEngine,
+	stopPayoutEngine,
+	stopSpotifyQueueEngine,
+	stopTimerEngine,
+	templateRegistry,
+	timerEngine,
+}

@@ -1,12 +1,10 @@
 import { and, desc, eq, gt, lt, notInArray } from 'drizzle-orm'
+import { PollingEngine } from '~~/server/bot/core/polling-engine'
 import { db } from '~~/server/database'
 import { excludedUsers, users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 import { getApiClient, getBotToken, getStreamerToken } from '~~/server/utils/twurple'
 import { cleanUsername } from '../core/utils'
-
-let missingCheckIntervalId: NodeJS.Timeout | null = null
-let fullRefreshIntervalId: NodeJS.Timeout | null = null
 
 const MISSING_CHECK_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 const FULL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000 // 6 hours
@@ -141,48 +139,62 @@ export async function syncLeaderboardAvatars(options: { missingOnly?: boolean } 
 	}
 }
 
+export const avatarSyncMissingEngine = new PollingEngine({
+	name: 'avatar-sync-missing',
+	intervalMs: MISSING_CHECK_INTERVAL_MS,
+	runImmediately: true,
+	action: async () => {
+		try {
+			await syncLeaderboardAvatars({ missingOnly: true })
+		}
+		catch (err) {
+			botLogger.error({ err }, 'Error during scheduled 10-minute avatar sync')
+		}
+	},
+})
+
+export const avatarSyncFullEngine = new PollingEngine({
+	name: 'avatar-sync-full',
+	intervalMs: FULL_REFRESH_INTERVAL_MS,
+	action: async () => {
+		try {
+			await syncLeaderboardAvatars({ missingOnly: false })
+		}
+		catch (err) {
+			botLogger.error({ err }, 'Error during scheduled 6-hour avatar sync')
+		}
+	},
+})
+
+export const avatarSyncEngine = {
+	name: 'avatar-sync',
+	start: () => {
+		avatarSyncMissingEngine.start()
+		avatarSyncFullEngine.start()
+		botLogger.info('Leaderboard avatar sync engine started.')
+	},
+	stop: () => {
+		avatarSyncMissingEngine.stop()
+		avatarSyncFullEngine.stop()
+		botLogger.info('Leaderboard avatar sync engine stopped.')
+	},
+	getStatus: () => ({
+		name: 'avatar-sync',
+		missing: avatarSyncMissingEngine.getStatus(),
+		full: avatarSyncFullEngine.getStatus(),
+	}),
+}
+
 /**
  * Starts the avatar synchronization background intervals.
  */
 export function startAvatarSyncEngine() {
-	if (missingCheckIntervalId || fullRefreshIntervalId) {
-		return
-	}
-
-	// 10-minute check for any missing pictures
-	missingCheckIntervalId = setInterval(() => {
-		syncLeaderboardAvatars({ missingOnly: true }).catch(err =>
-			botLogger.error({ err }, 'Error during scheduled 10-minute avatar sync'),
-		)
-	}, MISSING_CHECK_INTERVAL_MS)
-
-	// 6-hour full refresh to ensure avatar changes on Twitch are kept up to date
-	fullRefreshIntervalId = setInterval(() => {
-		syncLeaderboardAvatars({ missingOnly: false }).catch(err =>
-			botLogger.error({ err }, 'Error during scheduled 6-hour avatar sync'),
-		)
-	}, FULL_REFRESH_INTERVAL_MS)
-
-	// Trigger initial missing sync asynchronously
-	Promise.resolve().then(() => {
-		syncLeaderboardAvatars({ missingOnly: true }).catch(err =>
-			botLogger.error({ err }, 'Error during initial avatar sync'),
-		)
-	})
-
-	botLogger.info('Leaderboard avatar sync engine started.')
+	avatarSyncEngine.start()
 }
 
 /**
  * Stops the avatar synchronization intervals (useful for test teardown / reloading).
  */
 export function stopAvatarSyncEngine() {
-	if (missingCheckIntervalId) {
-		clearInterval(missingCheckIntervalId)
-		missingCheckIntervalId = null
-	}
-	if (fullRefreshIntervalId) {
-		clearInterval(fullRefreshIntervalId)
-		fullRefreshIntervalId = null
-	}
+	avatarSyncEngine.stop()
 }

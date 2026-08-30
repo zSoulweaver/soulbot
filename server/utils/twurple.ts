@@ -4,6 +4,7 @@ import { RefreshingAuthProvider } from '@twurple/auth'
 import { ChatClient } from '@twurple/chat'
 import { and, eq, inArray, ne } from 'drizzle-orm'
 import { handleChatMessage, initBot, registry, templateRegistry } from '../bot'
+import { engineRegistry } from '../bot/core/engine-registry'
 import { eventSubManager } from '../bot/core/eventsub'
 import { db } from '../database'
 import { twitchTokens, users } from '../database/schema'
@@ -207,10 +208,18 @@ export async function startBot() {
 		})
 	}
 
+	// Start all managed background engines
+	if (process.env.NODE_ENV !== 'test') {
+		await engineRegistry.startAll()
+	}
+
 	return 'started'
 }
 
 export async function stopBot() {
+	// Stop all managed background engines
+	await engineRegistry.stopAll()
+
 	// Stop EventSub WebSocket connection
 	eventSubManager.stop()
 

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { handleCommand } from '~~/server/bot/core/command-dispatcher'
 import { botEventBus } from '~~/server/bot/core/events'
+import { PollingEngine } from '~~/server/bot/core/polling-engine'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { timers } from '~~/server/database/schema'
@@ -10,7 +11,12 @@ import { getBotToken, getChatClient, getStreamerChannelName, getStreamerToken } 
 
 let globalMessageCount = 0
 export const lastTriggerMessageCountMap = new Map<string, number>()
-let timerIntervalId: NodeJS.Timeout | null = null
+
+export const timerEngine = new PollingEngine({
+	name: 'timers',
+	intervalMs: 60000,
+	action: () => executeTimerCheck(),
+})
 
 botEventBus.on('chat', () => {
 	globalMessageCount++
@@ -167,19 +173,9 @@ export async function executeTimerCheck() {
 }
 
 export function startTimerEngine() {
-	if (timerIntervalId) {
-		return
-	}
-
-	botLogger.info('[Timer Engine] Starting automated chat message timers loop...')
-	timerIntervalId = setInterval(executeTimerCheck, 60000)
-	timerIntervalId.unref()
+	timerEngine.start()
 }
 
 export function stopTimerEngine() {
-	if (timerIntervalId) {
-		clearInterval(timerIntervalId)
-		timerIntervalId = null
-		botLogger.info('[Timer Engine] Automated chat message timers loop stopped.')
-	}
+	timerEngine.stop()
 }

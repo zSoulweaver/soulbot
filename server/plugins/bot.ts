@@ -1,7 +1,7 @@
 import { initRegistry, registry, templateRegistry } from '~~/server/bot'
 import { settingsRegistry } from '~~/server/settings'
 
-export default defineNitroPlugin(() => {
+export default defineNitroPlugin((nitroApp) => {
 	const config = useRuntimeConfig()
 
 	// Always initialize registry in memory and sync with SQLite so the Web UI always has command definitions loaded
@@ -19,6 +19,12 @@ export default defineNitroPlugin(() => {
 		catch (err) {
 			botLogger.error({ err }, 'Failed to synchronize registry with DB on startup')
 		}
+	})
+
+	// Gracefully stop bot and all background engines on Nitro shutdown
+	nitroApp.hooks.hook('close', async () => {
+		botLogger.info('Nitro server closing: stopping bot and background engines...')
+		await stopBot()
 	})
 
 	if (!config.enableBot) {

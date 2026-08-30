@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { getUserRecord } from '../../services/user'
@@ -14,15 +14,46 @@ export async function updateUserPoints(username: string, amount: number, mode: '
 		return null
 	}
 
-	const newAmount = mode === 'add' ? dbUser.points + amount : amount
+	const now = new Date()
 
-	await db.update(users)
-		.set({ points: newAmount })
-		.where(eq(users.id, dbUser.id))
+	if (mode === 'set') {
+		const [updated] = await db
+			.update(users)
+			.set({
+				points: Math.max(0, Math.floor(amount)),
+				updatedAt: now,
+			})
+			.where(eq(users.id, dbUser.id))
+			.returning()
 
-	return {
-		...dbUser,
-		points: newAmount,
+		return updated ?? null
+	}
+
+	// mode === 'add'
+	if (amount >= 0) {
+		const [updated] = await db
+			.update(users)
+			.set({
+				points: sql`${users.points} + ${Math.floor(amount)}`,
+				updatedAt: now,
+			})
+			.where(eq(users.id, dbUser.id))
+			.returning()
+
+		return updated ?? null
+	}
+	else {
+		const cost = Math.abs(Math.floor(amount))
+		const [updated] = await db
+			.update(users)
+			.set({
+				points: sql`${users.points} - ${cost}`,
+				updatedAt: now,
+			})
+			.where(and(eq(users.id, dbUser.id), gte(users.points, cost)))
+			.returning()
+
+		return updated ?? null
 	}
 }
 
@@ -32,30 +63,45 @@ export async function updateUserPointsAndGambleStats(username: string, pointsDif
 		return null
 	}
 
-	const newPoints = dbUser.points + pointsDiff
-	const newWins = dbUser.gambleWins + (isWin ? 1 : 0)
-	const newLosses = dbUser.gambleLosses + (isWin ? 0 : 1)
-	const newNet = dbUser.gambleNetPoints + pointsDiff
+	const now = new Date()
 
-	await db.update(users)
-		.set({
-			points: newPoints,
-			gambleWins: newWins,
-			gambleLosses: newLosses,
-			gambleNetPoints: newNet,
-		})
-		.where(eq(users.id, dbUser.id))
+	if (isWin) {
+		const winGain = Math.max(0, Math.floor(pointsDiff))
+		const [updated] = await db
+			.update(users)
+			.set({
+				points: sql`${users.points} + ${winGain}`,
+				gambleWins: sql`${users.gambleWins} + 1`,
+				gambleNetPoints: sql`${users.gambleNetPoints} + ${winGain}`,
+				updatedAt: now,
+			})
+			.where(eq(users.id, dbUser.id))
+			.returning()
 
-	return {
-		...dbUser,
-		points: newPoints,
-		gambleWins: newWins,
-		gambleLosses: newLosses,
-		gambleNetPoints: newNet,
+		return updated ?? null
+	}
+	else {
+		const lossAmount = Math.abs(Math.floor(pointsDiff))
+		const [updated] = await db
+			.update(users)
+			.set({
+				points: sql`MAX(0, ${users.points} - ${lossAmount})`,
+				gambleLosses: sql`${users.gambleLosses} + 1`,
+				gambleNetPoints: sql`${users.gambleNetPoints} - ${lossAmount}`,
+				updatedAt: now,
+			})
+			.where(eq(users.id, dbUser.id))
+			.returning()
+
+		return updated ?? null
 	}
 }
 
 export async function transferPoints(senderUsername: string, targetUsername: string, amount: number) {
+	if (amount <= 0 || !Number.isInteger(amount)) {
+		return { success: false, error: 'invalid-amount' } as const
+	}
+
 	const dbSender = await getUserRecord(senderUsername)
 	const dbTarget = await getUserRecord(targetUsername)
 
@@ -66,34 +112,39 @@ export async function transferPoints(senderUsername: string, targetUsername: str
 		return { success: false, error: 'target-not-found' } as const
 	}
 
-	if (dbSender.points < amount) {
-		return { success: false, error: 'not-enough-points', senderPoints: dbSender.points } as const
-	}
+	const now = new Date()
 
-	const newSenderPoints = dbSender.points - amount
-	const newTargetPoints = dbTarget.points + amount
+	return db.transaction((tx) => {
+		// Atomic deduction from sender ONLY IF they currently have sufficient points
+		const [senderUpdate] = tx
+			.update(users)
+			.set({
+				points: sql`${users.points} - ${amount}`,
+				updatedAt: now,
+			})
+			.where(and(eq(users.id, dbSender.id), gte(users.points, amount)))
+			.returning()
+			.all()
 
-	db.transaction((tx) => {
-		tx.update(users)
-			.set({ points: newSenderPoints })
-			.where(eq(users.id, dbSender.id))
-			.run()
+		if (!senderUpdate) {
+			return { success: false, error: 'not-enough-points', senderPoints: dbSender.points } as const
+		}
 
-		tx.update(users)
-			.set({ points: newTargetPoints })
+		// Atomic addition to target
+		const [targetUpdate] = tx
+			.update(users)
+			.set({
+				points: sql`${users.points} + ${amount}`,
+				updatedAt: now,
+			})
 			.where(eq(users.id, dbTarget.id))
-			.run()
-	})
+			.returning()
+			.all()
 
-	return {
-		success: true,
-		sender: {
-			...dbSender,
-			points: newSenderPoints,
-		},
-		target: {
-			...dbTarget,
-			points: newTargetPoints,
-		},
-	} as const
+		return {
+			success: true,
+			sender: senderUpdate,
+			target: targetUpdate || { ...dbTarget, points: dbTarget.points + amount },
+		} as const
+	})
 }

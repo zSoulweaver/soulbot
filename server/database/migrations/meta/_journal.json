@@ -57,6 +57,13 @@
 			"when": 1788082091354,
 			"tag": "0007_normalize_settings_keys",
 			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "6",
+			"when": 1788092038436,
+			"tag": "0008_slim_morg",
+			"breakpoints": true
 		}
 	]
 }

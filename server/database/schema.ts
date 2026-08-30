@@ -210,3 +210,11 @@ export const eventsLog = sqliteTable('events_log', {
 	}>(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 })
+
+export const vaultRaiders = sqliteTable('vault_raiders', {
+	userId: text('user_id').primaryKey(),
+	username: text('username').notNull(),
+	displayName: text('display_name').notNull(),
+	betAmount: integer('bet_amount').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+})

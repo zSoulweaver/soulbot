@@ -15,7 +15,7 @@ export const handleVaultRoot: CommandHandler<typeof VaultArgs> = async (ctx, [am
 
 	// Handle opt-out
 	if (lowerInput === '0') {
-		const result = joinVaultRaid({ username, displayName: ctx.user.displayName }, 0)
+		const result = await joinVaultRaid({ id: ctx.user.id, username, displayName: ctx.user.displayName }, 0)
 		if (result.action === 'opt-out') {
 			return ctx.reply('points.vault.opt-out', { sender: ctx.user.displayName })
 		}
@@ -58,7 +58,12 @@ export const handleVaultRoot: CommandHandler<typeof VaultArgs> = async (ctx, [am
 		return ctx.reply('points.vault.not-enough-points', { current: currentPoints, bet: betAmount })
 	}
 
-	const result = joinVaultRaid({ username, displayName: ctx.user.displayName }, betAmount)
+	const result = await joinVaultRaid({ id: ctx.user.id, username, displayName: ctx.user.displayName }, betAmount)
+
+	if (result.action === 'not-enough-points') {
+		return ctx.reply('points.vault.not-enough-points', { current: result.currentPoints ?? currentPoints, bet: betAmount })
+	}
+
 	const potentialWin = Math.floor(betAmount * settings.winMultiplier)
 
 	if (result.action === 'updated') {

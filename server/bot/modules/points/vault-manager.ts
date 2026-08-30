@@ -1,17 +1,19 @@
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import { db } from '~~/server/database'
+import { users, vaultRaiders } from '~~/server/database/schema'
 import { vaultSettings } from '~~/server/settings'
 import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
 import { getStreamerChannelName } from '~~/server/utils/twurple'
-import { updateUserPointsAndGambleStats } from './service'
 
 export interface VaultRaider {
+	userId: string
 	username: string
 	displayName: string
 	betAmount: number
 }
 
-const raiders = new Map<string, VaultRaider>()
 let vaultTimeout: NodeJS.Timeout | null = null
 let warningTimeout: NodeJS.Timeout | null = null
 
@@ -20,20 +22,32 @@ export function isVaultActive(): boolean {
 	return Number(settings.endTime) > Date.now()
 }
 
-export function getRaiders(): VaultRaider[] {
-	return Array.from(raiders.values())
+export async function getRaiders(): Promise<VaultRaider[]> {
+	const rows = await db.select().from(vaultRaiders)
+	return rows.map(r => ({
+		userId: r.userId,
+		username: r.username,
+		displayName: r.displayName,
+		betAmount: r.betAmount,
+	}))
 }
 
-export function getRaider(username: string): VaultRaider | undefined {
-	return raiders.get(username)
-}
-
-export function getTotalPot(): number {
-	let total = 0
-	for (const raider of raiders.values()) {
-		total += raider.betAmount
+export async function getRaider(username: string): Promise<VaultRaider | undefined> {
+	const [row] = await db.select().from(vaultRaiders).where(eq(vaultRaiders.username, username.toLowerCase()))
+	if (!row) {
+		return undefined
 	}
-	return total
+	return {
+		userId: row.userId,
+		username: row.username,
+		displayName: row.displayName,
+		betAmount: row.betAmount,
+	}
+}
+
+export async function getTotalPot(): Promise<number> {
+	const rows = await db.select().from(vaultRaiders)
+	return rows.reduce((sum, r) => sum + r.betAmount, 0)
 }
 
 export function clearVaultTimers(): void {
@@ -47,11 +61,11 @@ export function clearVaultTimers(): void {
 	}
 }
 
-export async function startVaultRaid(durationSec?: number, commandCtx?: any): Promise<{ success: boolean, endTime: number }> {
+export async function startVaultRaid(durationSec?: number, commandCtx?: any, isResume = false): Promise<{ success: boolean, endTime: number }> {
 	const settings = vaultSettings.get()
 	const now = Date.now()
 
-	if (Number(settings.endTime) > now) {
+	if (!isResume && Number(settings.endTime) > now) {
 		throw new Error('A Vault Raid is already active')
 	}
 
@@ -59,7 +73,11 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any): Pr
 	const endTime = now + duration * 1000
 
 	clearVaultTimers()
-	raiders.clear()
+
+	if (!isResume) {
+		// Clean any stale raiders if starting fresh
+		await db.delete(vaultRaiders)
+	}
 
 	await vaultSettings.update({ endTime })
 
@@ -76,31 +94,33 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any): Pr
 		await resolveVaultRaid()
 	}, duration * 1000)
 
-	// Broadcast start message
-	if (commandCtx) {
-		const rendered = await renderCustomTemplate(settings.startMessage, commandCtx, {
-			duration,
-			multiplier: settings.winMultiplier,
-			minBet: settings.minBet,
-			maxBet: settings.maxBet,
-		})
-		await commandCtx.say(rendered)
-	}
-	else {
-		const channel = await getStreamerChannelName()
-		if (channel) {
-			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.startMessage, ctx, {
+	if (!isResume) {
+		// Broadcast start message
+		if (commandCtx) {
+			const rendered = await renderCustomTemplate(settings.startMessage, commandCtx, {
 				duration,
 				multiplier: settings.winMultiplier,
 				minBet: settings.minBet,
 				maxBet: settings.maxBet,
 			})
-			await sendRawChatMessage(channel, rendered)
+			await commandCtx.say(rendered)
+		}
+		else {
+			const channel = await getStreamerChannelName()
+			if (channel) {
+				const ctx = createTemplateContext(channel)
+				const rendered = await renderCustomTemplate(settings.startMessage, ctx, {
+					duration,
+					multiplier: settings.winMultiplier,
+					minBet: settings.minBet,
+					maxBet: settings.maxBet,
+				})
+				await sendRawChatMessage(channel, rendered)
+			}
 		}
 	}
 
-	botLogger.info(`[Vault Manager] Vault raid started for ${duration}s`)
+	botLogger.info(`[Vault Manager] Vault raid ${isResume ? 'resumed' : 'started'} for ${duration}s`)
 	return { success: true, endTime }
 }
 
@@ -112,13 +132,16 @@ export async function broadcastVaultWarning(): Promise<void> {
 			return
 		}
 
+		const raidersList = await getRaiders()
+		const pot = raidersList.reduce((sum, r) => sum + r.betAmount, 0)
+
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
 			const rendered = await renderCustomTemplate(settings.warningMessage, ctx, {
 				secondsLeft: 15,
-				raidersCount: raiders.size,
-				pot: getTotalPot(),
+				raidersCount: raidersList.length,
+				pot,
 				multiplier: settings.winMultiplier,
 			})
 			await sendRawChatMessage(channel, rendered)
@@ -129,31 +152,109 @@ export async function broadcastVaultWarning(): Promise<void> {
 	}
 }
 
-export function joinVaultRaid(
-	user: { username: string, displayName: string },
+export async function joinVaultRaid(
+	user: { id: string, username: string, displayName: string },
 	betAmount: number,
-): { action: 'joined' | 'updated' | 'opt-out' | 'not-joined', raider?: VaultRaider } {
-	if (betAmount === 0) {
-		if (raiders.has(user.username)) {
-			raiders.delete(user.username)
-			return { action: 'opt-out' }
-		}
-		return { action: 'not-joined' }
-	}
+): Promise<{ action: 'joined' | 'updated' | 'opt-out' | 'not-joined' | 'not-enough-points', raider?: VaultRaider, currentPoints?: number }> {
+	const now = new Date()
 
-	const isUpdate = raiders.has(user.username)
-	const raider: VaultRaider = {
-		username: user.username,
-		displayName: user.displayName,
-		betAmount,
-	}
-	raiders.set(user.username, raider)
-	return { action: isUpdate ? 'updated' : 'joined', raider }
+	return db.transaction((tx) => {
+		const [existing] = tx.select().from(vaultRaiders).where(eq(vaultRaiders.userId, user.id)).all()
+
+		if (betAmount === 0) {
+			if (existing) {
+				// Refund escrowed bet
+				tx.update(users)
+					.set({
+						points: sql`${users.points} + ${existing.betAmount}`,
+						updatedAt: now,
+					})
+					.where(eq(users.id, user.id))
+					.run()
+
+				tx.delete(vaultRaiders).where(eq(vaultRaiders.userId, user.id)).run()
+				return { action: 'opt-out' }
+			}
+			return { action: 'not-joined' }
+		}
+
+		const existingBet = existing ? existing.betAmount : 0
+		const delta = betAmount - existingBet
+
+		if (delta > 0) {
+			// Deduct delta atomically
+			const [senderUpdate] = tx.update(users)
+				.set({
+					points: sql`${users.points} - ${delta}`,
+					updatedAt: now,
+				})
+				.where(and(eq(users.id, user.id), gte(users.points, delta)))
+				.returning()
+				.all()
+
+			if (!senderUpdate) {
+				const [userRow] = tx.select().from(users).where(eq(users.id, user.id)).all()
+				return { action: 'not-enough-points', currentPoints: userRow?.points ?? 0 }
+			}
+		}
+		else if (delta < 0) {
+			// Refund excess bet
+			const refund = Math.abs(delta)
+			tx.update(users)
+				.set({
+					points: sql`${users.points} + ${refund}`,
+					updatedAt: now,
+				})
+				.where(eq(users.id, user.id))
+				.run()
+		}
+
+		const raider: VaultRaider = {
+			userId: user.id,
+			username: user.username.toLowerCase(),
+			displayName: user.displayName,
+			betAmount,
+		}
+
+		tx.insert(vaultRaiders)
+			.values({
+				userId: user.id,
+				username: user.username.toLowerCase(),
+				displayName: user.displayName,
+				betAmount,
+				createdAt: now,
+			})
+			.onConflictDoUpdate({
+				target: vaultRaiders.userId,
+				set: {
+					betAmount,
+					username: user.username.toLowerCase(),
+					displayName: user.displayName,
+				},
+			})
+			.run()
+
+		return { action: existing ? 'updated' : 'joined', raider }
+	})
 }
 
 export async function cancelVaultRaid(cancelledBy?: string, commandCtx?: any): Promise<void> {
 	clearVaultTimers()
-	raiders.clear()
+
+	const now = new Date()
+	db.transaction((tx) => {
+		const allRaiders = tx.select().from(vaultRaiders).all()
+		for (const raider of allRaiders) {
+			tx.update(users)
+				.set({
+					points: sql`${users.points} + ${raider.betAmount}`,
+					updatedAt: now,
+				})
+				.where(eq(users.id, raider.userId))
+				.run()
+		}
+		tx.delete(vaultRaiders).run()
+	})
 
 	try {
 		await vaultSettings.update({ endTime: 0 })
@@ -180,7 +281,7 @@ export async function cancelVaultRaid(cancelledBy?: string, commandCtx?: any): P
 				}
 			}
 		}
-		botLogger.info('[Vault Manager] Vault raid cancelled')
+		botLogger.info('[Vault Manager] Vault raid cancelled and all bets refunded')
 	}
 	catch (err) {
 		botLogger.error({ err }, '[Vault Manager] Error cancelling vault raid')
@@ -191,8 +292,8 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 	clearVaultTimers()
 
 	const settings = vaultSettings.get()
-	const raidersList = getRaiders()
-	const pot = getTotalPot()
+	const raidersList = await db.select().from(vaultRaiders)
+	const pot = raidersList.reduce((sum, r) => sum + r.betAmount, 0)
 	const raidersCount = raidersList.length
 
 	// Clear active end time
@@ -200,7 +301,6 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 
 	// If no one joined, just notify chat
 	if (raidersCount === 0) {
-		raiders.clear()
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			await sendRawChatMessage(channel, 'The Vault Raid has ended with 0 raiders. The vault remains locked!')
@@ -212,19 +312,39 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 	const roll = Math.floor(Math.random() * 100) + 1
 	const isWin = roll >= settings.winMinRoll
 	let totalWon = 0
+	const now = new Date()
 
-	for (const raider of raidersList) {
-		if (isWin) {
-			const winGain = Math.floor(raider.betAmount * settings.winMultiplier)
-			totalWon += winGain
-			await updateUserPointsAndGambleStats(raider.username, winGain, true)
-		}
-		else {
-			await updateUserPointsAndGambleStats(raider.username, -raider.betAmount, false)
-		}
-	}
+	db.transaction((tx) => {
+		for (const raider of raidersList) {
+			if (isWin) {
+				const winGain = Math.floor(raider.betAmount * settings.winMultiplier)
+				const payoutTotal = raider.betAmount + winGain
+				totalWon += winGain
 
-	raiders.clear()
+				tx.update(users)
+					.set({
+						points: sql`${users.points} + ${payoutTotal}`,
+						gambleWins: sql`${users.gambleWins} + 1`,
+						gambleNetPoints: sql`${users.gambleNetPoints} + ${winGain}`,
+						updatedAt: now,
+					})
+					.where(eq(users.id, raider.userId))
+					.run()
+			}
+			else {
+				// Bet was already deducted into escrow on join! Simply update loss statistics
+				tx.update(users)
+					.set({
+						gambleLosses: sql`${users.gambleLosses} + 1`,
+						gambleNetPoints: sql`${users.gambleNetPoints} - ${raider.betAmount}`,
+						updatedAt: now,
+					})
+					.where(eq(users.id, raider.userId))
+					.run()
+			}
+		}
+		tx.delete(vaultRaiders).run()
+	})
 
 	const channel = await getStreamerChannelName()
 	if (channel) {
@@ -249,13 +369,36 @@ export async function initVaultManager(): Promise<void> {
 	try {
 		const settings = vaultSettings.get()
 		const endTime = Number(settings.endTime)
-		if (endTime > Date.now()) {
+		const now = Date.now()
+		const existingRaiders = await db.select().from(vaultRaiders)
+
+		if (endTime > now) {
 			// Reschedule remaining duration
-			const remaining = Math.round((endTime - Date.now()) / 1000)
-			await startVaultRaid(remaining)
+			const remaining = Math.round((endTime - now) / 1000)
+			await startVaultRaid(remaining, undefined, true)
 		}
-		else if (endTime > 0) {
-			await vaultSettings.update({ endTime: 0 })
+		else {
+			// If raid expired while offline, auto-refund all escrowed bets
+			if (existingRaiders.length > 0) {
+				const nowDate = new Date()
+				db.transaction((tx) => {
+					for (const raider of existingRaiders) {
+						tx.update(users)
+							.set({
+								points: sql`${users.points} + ${raider.betAmount}`,
+								updatedAt: nowDate,
+							})
+							.where(eq(users.id, raider.userId))
+							.run()
+					}
+					tx.delete(vaultRaiders).run()
+				})
+				botLogger.info('[Vault Manager] Refunded %d raiders from interrupted Vault raid upon boot.', existingRaiders.length)
+			}
+
+			if (endTime > 0) {
+				await vaultSettings.update({ endTime: 0 })
+			}
 		}
 	}
 	catch (err) {

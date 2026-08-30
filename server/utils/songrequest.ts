@@ -188,7 +188,15 @@ export async function requestSong(options: {
 
 	// Deduct points
 	if (appSettings.spotifySongRequestPointsCost > 0) {
-		await updateUserPoints(cleanUser, -appSettings.spotifySongRequestPointsCost, 'add')
+		const updated = await updateUserPoints(cleanUser, -appSettings.spotifySongRequestPointsCost, 'add')
+		if (!updated) {
+			throw new SongRequestError(
+				`You do not have enough points. Cost: ${appSettings.spotifySongRequestPointsCost} points.`,
+				400,
+				'spotify.sr.no-points',
+				{ cost: appSettings.spotifySongRequestPointsCost },
+			)
+		}
 	}
 
 	// Fetch active tracks ordered identically to the queue engine

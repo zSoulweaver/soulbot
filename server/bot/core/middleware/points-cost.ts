@@ -1,5 +1,5 @@
 import type { CommandMiddleware } from '../types'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
 import { users } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
@@ -32,13 +32,22 @@ export const pointsCostMiddleware: CommandMiddleware = async (ctx, next) => {
 
 	await next()
 
-	// Deduct points after successful downstream execution
+	// Atomically deduct points after successful downstream execution
 	if (cost > 0 && ctx.state.success !== false) {
-		await db.update(users)
+		const [updated] = await db.update(users)
 			.set({
-				points: sql`${users.points} - ${cost}`,
+				points: sql`MAX(0, ${users.points} - ${cost})`,
 				updatedAt: new Date(),
 			})
-			.where(eq(users.id, ctx.user.id))
+			.where(and(eq(users.id, ctx.user.id), gte(users.points, cost)))
+			.returning()
+
+		if (!updated) {
+			botLogger.warn({
+				command: ctx.state.trigger,
+				userId: ctx.user.id,
+				cost,
+			}, 'Command post-deduction skipped because points were spent concurrently')
+		}
 	}
 }

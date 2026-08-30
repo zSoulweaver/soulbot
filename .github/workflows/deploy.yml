@@ -58,13 +58,3 @@ jobs:
             ghcr.io/${{ env.REPO_LOWER }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Trigger Arcane Redeploy Webhook
-        env:
-          ARCANE_WEBHOOK_URL: ${{ secrets.ARCANE_WEBHOOK_URL }}
-        run: |
-          if [ -n "$ARCANE_WEBHOOK_URL" ]; then
-            curl -X POST "$ARCANE_WEBHOOK_URL"
-          else
-            echo "Arcane webhook URL not configured. Skipping trigger."
-          fi

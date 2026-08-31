@@ -1,12 +1,11 @@
-import type { CommandDefinition, CommandPermission } from './types'
-import { renderCustomTemplate } from '~~/server/bot/core/variables-engine'
+import type { CommandDefinition, CommandTarget } from './types'
 import { db } from '~~/server/database'
 import { commandAliases, commands, customCommands } from '~~/server/database/schema'
 import { botLogger } from '~~/server/utils/logger'
 
 class CommandRegistry {
 	private commands = new Map<string, CommandDefinition>()
-	private triggerMap = new Map<string, { commandId: string, subcommand?: string, overrideArgs?: string[] }>()
+	private triggerMap = new Map<string, CommandTarget>()
 	private dbConfigs = new Map<string, typeof commands.$inferSelect>()
 	private subcommandTriggers = new Map<string, string>()
 	private syncPromise: Promise<void> | null = null
@@ -35,68 +34,15 @@ class CommandRegistry {
 	private async performSyncWithDb() {
 		const dbCommands = await db.select().from(commands)
 		const dbAliases = await db.select().from(commandAliases)
+		const dbCustomCommands = await db.select().from(customCommands).catch(() => [])
 
-		// Clear existing memory caches
+		// Clear only dynamic runtime trigger and config caches (preserving static code definitions)
 		this.triggerMap.clear()
 		this.dbConfigs.clear()
 		this.subcommandTriggers.clear()
 
-		// Clear existing dynamic custom commands from registry map before rebuilding
-		for (const [key] of this.commands.entries()) {
-			if (key.startsWith('custom:')) {
-				this.commands.delete(key)
-			}
-		}
-
-		const dbCustomCommands = await db.select().from(customCommands).catch(() => [])
-
-		// Register custom commands dynamically in memory
-		for (const custom of dbCustomCommands) {
-			const commandId = `custom:${custom.id}`
-			this.commands.set(commandId, {
-				id: commandId,
-				description: custom.description || `Custom command !${custom.trigger}`,
-				permission: custom.permission as CommandPermission,
-				cost: custom.cost,
-				globalCooldown: custom.globalCooldown,
-				userCooldown: custom.userCooldown,
-				handler: async (ctx) => {
-					const response = await renderCustomTemplate(custom.response, ctx)
-					if (response) {
-						const lines = response.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
-						await Promise.all(lines.map(line => ctx.say(line)))
-					}
-				},
-			})
-		}
-
-		// Core commands & database config synchronization
+		// 1. Core commands & database config synchronization
 		for (const def of this.commands.values()) {
-			if (def.id.startsWith('custom:')) {
-				const custom = dbCustomCommands.find(c => `custom:${c.id}` === def.id)
-				if (custom) {
-					const mockDbRow = {
-						id: def.id,
-						trigger: custom.trigger,
-						enabled: custom.enabled,
-						cost: custom.cost,
-						cooldown: 0,
-						globalCooldown: custom.globalCooldown,
-						userCooldown: custom.userCooldown,
-						permission: custom.permission,
-						allowWhisper: false,
-						whisperSilentResponse: false,
-						hidden: Boolean(custom.hidden),
-					}
-					// Populate dbConfigs map so other middlewares (cooldown, cost, role checks) read the config
-					this.dbConfigs.set(def.id, mockDbRow as any)
-
-					if (custom.enabled) {
-						this.triggerMap.set(custom.trigger.toLowerCase(), { commandId: def.id })
-					}
-				}
-				continue
-			}
 			let dbCmd = dbCommands.find(c => c.id === def.id)
 			if (!dbCmd) {
 				const newRow = {
@@ -118,10 +64,15 @@ class CommandRegistry {
 
 			this.dbConfigs.set(def.id, dbCmd!)
 
-			// Only map the trigger if the command itself is active/enabled in the DB
+			// Map root trigger if active
 			if (dbCmd!.enabled) {
-				const triggerWord = dbCmd!.trigger || def.id
-				this.triggerMap.set(triggerWord, { commandId: def.id })
+				const triggerWord = (dbCmd!.trigger || def.id).toLowerCase()
+				this.triggerMap.set(triggerWord, {
+					type: 'core',
+					commandId: def.id,
+					def,
+					config: dbCmd!,
+				})
 			}
 
 			// Synchronize all nested subcommands recursively in Drizzle SQLite
@@ -164,37 +115,51 @@ class CommandRegistry {
 			}
 		}
 
-		// Dynamic trigger aliases
+		// 2. Dynamic trigger aliases for core commands
 		for (const alias of dbAliases) {
 			const targetDbCmd = this.dbConfigs.get(alias.commandId)
+			const def = this.commands.get(alias.commandId)
 			// Only register alias if the target command exists and is enabled
-			if (targetDbCmd && targetDbCmd.enabled) {
-				this.triggerMap.set(alias.trigger, {
+			if (targetDbCmd && targetDbCmd.enabled && def) {
+				this.triggerMap.set(alias.trigger.toLowerCase(), {
+					type: 'core',
 					commandId: alias.commandId,
+					def,
+					config: targetDbCmd,
 					subcommand: alias.subcommand ?? undefined,
 					overrideArgs: alias.overrideArgs ?? undefined,
 				})
 			}
 		}
+
+		// 3. Dynamic custom commands from database
+		for (const custom of dbCustomCommands) {
+			if (custom.enabled) {
+				this.triggerMap.set(custom.trigger.toLowerCase(), {
+					type: 'custom',
+					record: custom,
+				})
+			}
+		}
 	}
 
-	getCommand(id: string) {
+	getCommand(id: string): CommandDefinition | undefined {
 		return this.commands.get(id)
 	}
 
-	getCommandConfig(id: string) {
+	getCommandConfig(id: string): typeof commands.$inferSelect | undefined {
 		return this.dbConfigs.get(id)
 	}
 
-	resolveTrigger(trigger: string) {
-		return this.triggerMap.get(trigger)
+	resolveTrigger(trigger: string): CommandTarget | undefined {
+		return this.triggerMap.get(trigger.toLowerCase())
 	}
 
 	resolveSubcommandKey(parentPrefix: string, triggerWord: string): string | null {
 		return this.subcommandTriggers.get(`${parentPrefix}:${triggerWord.toLowerCase()}`) || null
 	}
 
-	getAllCommands() {
+	getAllCommands(): CommandDefinition[] {
 		return Array.from(this.commands.values())
 	}
 }

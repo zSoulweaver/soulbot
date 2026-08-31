@@ -1,5 +1,5 @@
 import type { ChatMessage } from '@twurple/chat'
-import type { CommandContext, CommandMiddleware } from './types'
+import type { CommandContext, CommandMiddleware, CommandPermission, CommandState } from './types'
 import { sendRawChatMessage } from '~~/server/utils/chat'
 import { botLogger } from '~~/server/utils/logger'
 import { getChatClient } from '~~/server/utils/twurple'
@@ -47,22 +47,60 @@ export async function handleCommand(
 	if (!trigger)
 		return
 
-	const resolved = registry.resolveTrigger(trigger)
-	if (!resolved)
+	const target = registry.resolveTrigger(trigger)
+	if (!target)
 		return // Silently drop if command trigger is not found or is disabled in the DB
-
-	const command = registry.getCommand(resolved.commandId)
-	if (!command)
-		return
 
 	const chatClient = await getChatClient()
 	if (!chatClient)
 		return
 
-	const dbCmd = registry.getCommandConfig(command.id)
 	const isWhisper = Boolean(options?.isWhisper)
 
-	// Initialize state and context, fetching DB config synchronously from registry
+	// Construct standardized state based on target type
+	let state: CommandState
+	if (target.type === 'core') {
+		const { def, config } = target
+		state = {
+			target,
+			commandId: def.id,
+			trigger,
+			cost: config.cost ?? def.cost ?? 0,
+			permission: (config.permission as CommandPermission) || def.permission,
+			globalCooldown: config.globalCooldown ?? def.globalCooldown ?? 0,
+			userCooldown: config.userCooldown ?? def.userCooldown ?? 0,
+			allowWhisper: Boolean(config.allowWhisper ?? def.allowWhisper),
+			whisperSilentResponse: Boolean(config.whisperSilentResponse),
+			handler: def.handler,
+			subcommand: target.subcommand,
+			dbCmd: config,
+			command: def,
+			resolved: target,
+		}
+	}
+	else {
+		const { record } = target
+		state = {
+			target,
+			commandId: `custom:${record.id}`,
+			trigger: record.trigger,
+			cost: record.cost,
+			permission: record.permission as CommandPermission,
+			globalCooldown: record.globalCooldown,
+			userCooldown: record.userCooldown,
+			allowWhisper: false,
+			whisperSilentResponse: false,
+			handler: async (ctx) => {
+				const response = await renderCustomTemplate(record.response, ctx)
+				if (response) {
+					const lines = response.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+					await Promise.all(lines.map(line => ctx.say(line)))
+				}
+			},
+			resolved: target,
+		}
+	}
+
 	const ctx: CommandContext = {
 		user: {
 			id: raw.userInfo.userId,
@@ -72,7 +110,7 @@ export async function handleCommand(
 		channel,
 		isWhisper,
 		reply: async (textOrTemplate: string, ...args: any[]) => {
-			const isSilent = isWhisper && Boolean(ctx.state.dbCmd?.whisperSilentResponse || dbCmd?.whisperSilentResponse)
+			const isSilent = isWhisper && ctx.state.whisperSilentResponse
 			if (isSilent) {
 				botLogger.info({ command: trigger, user }, '[Chat Utils] Whisper command executed with chat reply suppressed (silent mode)')
 				return
@@ -85,7 +123,7 @@ export async function handleCommand(
 			await sendRawChatMessage(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
 		say: async (textOrTemplate: string, ...args: any[]) => {
-			const isSilent = isWhisper && Boolean(ctx.state.dbCmd?.whisperSilentResponse || dbCmd?.whisperSilentResponse)
+			const isSilent = isWhisper && ctx.state.whisperSilentResponse
 			if (isSilent) {
 				botLogger.info({ command: trigger, user }, '[Chat Utils] Whisper command executed with chat message suppressed (silent mode)')
 				return
@@ -99,12 +137,7 @@ export async function handleCommand(
 		},
 		raw,
 		rawArgs: parts.slice(1),
-		state: {
-			command,
-			resolved,
-			trigger,
-			dbCmd,
-		},
+		state,
 	}
 
 	let index = 0
@@ -127,6 +160,6 @@ export async function handleCommand(
 			user: raw.userInfo.userName,
 			channel,
 			originalMessage: message,
-		}, `Error executing command middleware pipeline for ${command.id}`)
+		}, `Error executing command middleware pipeline for ${state.commandId}`)
 	}
 }

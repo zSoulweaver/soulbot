@@ -7,7 +7,14 @@ import { registry } from '../registry'
  * Resolves potential subcommands, overrides raw arguments, and validates arguments against Zod schemas.
  */
 export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
-	const command = ctx.state.command
+	// Custom commands have no subcommands or Zod schemas
+	if (ctx.state.target.type === 'custom') {
+		ctx.args = ctx.rawArgs
+		await next()
+		return
+	}
+
+	const { def: command, config: rootDbConfig } = ctx.state.target
 	const resolved = ctx.state.resolved
 	const rawArgs = ctx.rawArgs
 
@@ -18,8 +25,7 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 		finalArgs = [...resolved.overrideArgs, ...finalArgs]
 	}
 
-	const rootDbConfig = registry.getCommandConfig(command.id)
-	let finalPermission = rootDbConfig?.permission || command.permission
+	let finalPermission = (rootDbConfig?.permission as any) || command.permission
 	let finalZodSchema = command.args as z.ZodTypeAny | undefined
 	let finalUsage = command.usage
 
@@ -80,10 +86,18 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 			finalHandler = currentScope.handler
 		}
 		finalArgs = currentArgs
-		finalPermission = subDbConfig?.permission || currentScope.permission
+		finalPermission = (subDbConfig?.permission as any) || currentScope.permission
 		finalZodSchema = currentScope.args as z.ZodTypeAny | undefined
 		finalUsage = currentScope.usage
+
+		ctx.state.commandId = subId
 		ctx.state.subcommand = subPath.join('.')
+		ctx.state.permission = finalPermission
+		ctx.state.cost = subDbConfig?.cost ?? currentScope.cost ?? 0
+		ctx.state.globalCooldown = subDbConfig?.globalCooldown ?? currentScope.globalCooldown ?? 0
+		ctx.state.userCooldown = subDbConfig?.userCooldown ?? currentScope.userCooldown ?? 0
+		ctx.state.allowWhisper = Boolean(subDbConfig?.allowWhisper || rootDbConfig?.allowWhisper || currentScope.allowWhisper || command.allowWhisper)
+		ctx.state.whisperSilentResponse = Boolean(subDbConfig?.whisperSilentResponse || rootDbConfig?.whisperSilentResponse)
 
 		if (subDbConfig) {
 			ctx.state.dbCmd = subDbConfig
@@ -92,7 +106,7 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 
 	// If invoked via whisper, verify that either the resolved subcommand or root command allows whispers
 	if (ctx.isWhisper) {
-		const isWhisperAllowed = Boolean(ctx.state.dbCmd?.allowWhisper || rootDbConfig?.allowWhisper)
+		const isWhisperAllowed = ctx.state.allowWhisper
 		if (!isWhisperAllowed) {
 			botLogger.warn({
 				command: ctx.state.trigger,
@@ -102,9 +116,6 @@ export const argumentsMiddleware: CommandMiddleware = async (ctx, next) => {
 			return
 		}
 	}
-
-	// Store permission level downstream
-	ctx.state.permission = finalPermission
 
 	// Parse arguments using Zod
 	let parsedArgs: any = finalArgs

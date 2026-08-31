@@ -162,6 +162,6 @@ export function createTemplateContext(
 		say: mockSay as any,
 		reply: mockSay as any,
 		raw: {} as any, // Mock ChatMessage
-		state: {},
+		state: {} as any,
 	}
 }

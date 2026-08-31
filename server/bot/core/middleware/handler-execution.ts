@@ -19,5 +19,5 @@ export const handlerExecutionMiddleware: CommandMiddleware = async (ctx) => {
 		userId: ctx.user.id,
 		args: ctx.args,
 		durationMs: duration,
-	}, `Command executed successfully: ${ctx.state.command.id}`)
+	}, `Command executed successfully: ${ctx.state.commandId}`)
 }

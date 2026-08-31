@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@twurple/chat'
+import type { commands, customCommands } from '~~/server/database/schema'
 import type { CommandTemplates } from './templates'
 
 export type TemplateName = keyof CommandTemplates
@@ -10,6 +11,39 @@ export type CommandPermission
 		| 'vip'
 		| 'subscriber'
 		| 'everyone'
+
+export type CommandTarget
+	= | {
+		type: 'core'
+		commandId: string
+		def: CommandDefinition
+		config: typeof commands.$inferSelect
+		subcommand?: string
+		overrideArgs?: string[]
+	}
+	| {
+		type: 'custom'
+		record: typeof customCommands.$inferSelect
+	}
+
+export interface CommandState {
+	target: CommandTarget
+	commandId: string
+	trigger: string
+	cost: number
+	permission: CommandPermission
+	globalCooldown: number
+	userCooldown: number
+	allowWhisper: boolean
+	whisperSilentResponse: boolean
+	handler: CommandHandler
+	success?: boolean
+	subcommand?: string
+	dbCmd?: typeof commands.$inferSelect
+	command?: CommandDefinition
+	resolved?: any
+	dbUser?: any
+}
 
 export interface CommandContext {
 	user: {
@@ -29,7 +63,7 @@ export interface CommandContext {
 	raw: ChatMessage
 	args?: any // Validated/transformed argument results from Zod parser
 	rawArgs: string[] // Raw string arguments
-	state: Record<string, any> // Stateful context passed between middlewares
+	state: CommandState // Standardized state passed between middlewares
 	isWhisper?: boolean
 }
 

@@ -29,7 +29,7 @@ export default defineCachedEventHandler(
 			db.select().from(customCommands).orderBy(asc(customCommands.trigger)),
 		])
 
-		const allCoreCommands = registry.getAllCommands().filter(cmd => !cmd.id.startsWith('custom:'))
+		const allCoreCommands = registry.getAllCommands()
 
 		const publicCoreCommands: any[] = []
 

@@ -7,7 +7,7 @@ import { commandAliases, commands } from '~~/server/database/schema'
 
 export const handleRename: CommandHandler<typeof RenameArgs> = async (ctx, [oldTrigger, newTrigger]) => {
 	const resolved = registry.resolveTrigger(oldTrigger)
-	if (!resolved)
+	if (!resolved || resolved.type !== 'core')
 		return ctx.reply('command.rename-not-found', { trigger: oldTrigger })
 
 	// Check if it's an alias

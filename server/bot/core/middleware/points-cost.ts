@@ -13,8 +13,7 @@ export const pointsCostMiddleware: CommandMiddleware = async (ctx, next) => {
 		return
 	}
 
-	const dbCmd = ctx.state.dbCmd
-	const cost = dbCmd?.cost ?? 0
+	const cost = ctx.state.cost ?? 0
 
 	if (cost > 0) {
 		const [dbUser] = await db.select().from(users).where(eq(users.id, ctx.user.id))

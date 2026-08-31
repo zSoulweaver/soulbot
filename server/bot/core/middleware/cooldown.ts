@@ -21,13 +21,10 @@ export const cooldownMiddleware: CommandMiddleware = async (ctx, next) => {
 		return
 	}
 
-	const dbCmd = ctx.state.dbCmd
-	const command = ctx.state.command
 	const userId = ctx.user.id
-	const commandId = command.id
-
-	const globalCdSec = dbCmd?.globalCooldown ?? command.globalCooldown ?? 0
-	const userCdSec = dbCmd?.userCooldown ?? command.userCooldown ?? 0
+	const commandId = ctx.state.commandId
+	const globalCdSec = ctx.state.globalCooldown
+	const userCdSec = ctx.state.userCooldown
 
 	const now = Date.now()
 

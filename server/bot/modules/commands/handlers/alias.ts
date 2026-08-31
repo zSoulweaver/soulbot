@@ -12,7 +12,7 @@ export const handleAlias: CommandHandler<typeof AliasArgs> = async (ctx, [aliasN
 		return ctx.reply('command.alias-exists', { name: aliasName })
 
 	const resolvedTarget = registry.resolveTrigger(targetTrigger)
-	if (!resolvedTarget)
+	if (!resolvedTarget || resolvedTarget.type !== 'core')
 		return ctx.reply('command.alias-target-not-found', { target: targetTrigger })
 
 	const command = registry.getCommand(resolvedTarget.commandId)

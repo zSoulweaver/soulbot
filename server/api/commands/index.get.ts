@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 		db.select().from(commandTemplates),
 	])
 
-	const allCoreCommands = registry.getAllCommands().filter(cmd => !cmd.id.startsWith('custom:'))
+	const allCoreCommands = registry.getAllCommands()
 
 	const result = allCoreCommands.map((command) => {
 		const databaseConfig = databaseCommands.find(cmd => cmd.id === command.id) || {

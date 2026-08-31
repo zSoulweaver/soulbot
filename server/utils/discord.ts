@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { ChannelType, Client, EmbedBuilder, GatewayIntentBits, PermissionFlagsBits } from 'discord.js'
+import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { botLogger } from './logger'
 import { getAppSettings } from './settings'
 
@@ -113,11 +114,21 @@ export async function startDiscord(): Promise<void> {
 					}
 
 					if (currentSettings.discordEventJoinEnabled && currentSettings.discordEventJoinChannelId) {
-						const text = currentSettings.discordEventJoinTemplate
-							.replace(/\{user\}/g, `<@${member.id}>`)
-							.replace(/\{username\}/g, member.user.username)
-							.replace(/\{server\}/g, member.guild.name)
-							.replace(/\{memberCount\}/g, String(member.guild.memberCount))
+						const ctx = createTemplateContext(member.guild.name, {
+							id: member.id,
+							name: member.user.username,
+							displayName: `<@${member.id}>`,
+						})
+						const text = await renderCustomTemplate(
+							currentSettings.discordEventJoinTemplate,
+							ctx,
+							{
+								user: `<@${member.id}>`,
+								username: member.user.username,
+								server: member.guild.name,
+								memberCount: String(member.guild.memberCount),
+							},
+						)
 
 						botLogger.info({ userId: member.id, channelId: currentSettings.discordEventJoinChannelId }, '[Discord Bot] Sending member join alert')
 						await sendDiscordMessage(currentSettings.discordEventJoinChannelId, text)
@@ -140,11 +151,22 @@ export async function startDiscord(): Promise<void> {
 					}
 
 					if (currentSettings.discordEventLeaveEnabled && currentSettings.discordEventLeaveChannelId) {
-						const text = currentSettings.discordEventLeaveTemplate
-							.replace(/\{user\}/g, member.user.displayName || member.user.username)
-							.replace(/\{username\}/g, member.user.username)
-							.replace(/\{server\}/g, member.guild.name)
-							.replace(/\{memberCount\}/g, String(member.guild.memberCount))
+						const displayName = member.user.displayName || member.user.username
+						const ctx = createTemplateContext(member.guild.name, {
+							id: member.id,
+							name: member.user.username,
+							displayName,
+						})
+						const text = await renderCustomTemplate(
+							currentSettings.discordEventLeaveTemplate,
+							ctx,
+							{
+								user: displayName,
+								username: member.user.username,
+								server: member.guild.name,
+								memberCount: String(member.guild.memberCount),
+							},
+						)
 
 						botLogger.info({ userId: member.id, channelId: currentSettings.discordEventLeaveChannelId }, '[Discord Bot] Sending member leave alert')
 						await sendDiscordMessage(currentSettings.discordEventLeaveChannelId, text)

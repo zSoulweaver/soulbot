@@ -31,13 +31,13 @@ export async function renderCustomTemplate(
 	ctx: CommandContext,
 	extraVars?: Record<string, string | number>,
 ): Promise<string> {
-	// Pre-process Phantombot syntax: (#) -> $(randint), (followage) -> $(followage), (uptime) -> $(uptime)
+	// Pre-process legacy Phantombot syntax: (#) -> $(randint), (followage) -> $(followage), (uptime) -> $(uptime)
 	let text = template
 		.replace(/(?<!\$)\(#\)/g, '$(randint)')
 		.replace(/(?<!\$)\(followage\)/gi, '$(followage)')
 		.replace(/(?<!\$)\(uptime\)/gi, '$(uptime)')
-	let depth = 0
 
+	let depth = 0
 	const maxDepth = 10
 
 	// Dynamic values state cache per resolution run to avoid redundant queries (e.g. points check)
@@ -72,7 +72,8 @@ async function resolveVariableExpression(
 	cache: Record<string, any>,
 	extraVars?: Record<string, string | number>,
 ): Promise<string> {
-	const parts = expr.trim().split(/\s+/)
+	const trimmedExpr = expr.trim()
+	const parts = trimmedExpr.split(/\s+/)
 	const rawName = parts[0]
 
 	if (!rawName)
@@ -80,7 +81,15 @@ async function resolveVariableExpression(
 
 	const args = parts.slice(1)
 
-	// Find registered variable by exact rawName first (handles direct aliases like user.points)
+	// 1. Check if the exact expression is explicitly defined in extraVars (caller-passed parameters)
+	if (extraVars && (trimmedExpr in extraVars || rawName in extraVars)) {
+		const val = extraVars[trimmedExpr] ?? extraVars[rawName]
+		if (val !== undefined) {
+			return String(val)
+		}
+	}
+
+	// 2. Check registered variables by exact rawName (e.g. user.points, sender, uptime)
 	const exactMatch = registeredVariables.find(
 		v => v.name === rawName.toLowerCase() || v.aliases?.map(a => a.toLowerCase()).includes(rawName.toLowerCase()),
 	)
@@ -95,7 +104,7 @@ async function resolveVariableExpression(
 		}
 	}
 
-	// Fallback: Support period/dot-notation (e.g. $(user.name), $(user.id)) by splitting
+	// 3. Fallback: Support period/dot-notation (e.g. $(user.name), $(user.id)) by splitting
 	const dotParts = rawName.split('.')
 	const rootName = dotParts[0]?.toLowerCase() || ''
 	let extendedArgs = [...args]
@@ -126,15 +135,10 @@ async function resolveVariableExpression(
 		}
 	}
 
-	// Check if the expression is defined in the extraVars (e.g. alert template custom variables)
-	if (extraVars && expr in extraVars) {
-		return String(extraVars[expr])
-	}
-
-	// Check if it's a global template variable from templates.ts (e.g. core.currency)
-	const globalVars = getGlobalTemplateVariables({})
-	if (expr in globalVars) {
-		return String(globalVars[expr])
+	// 4. Check global template variables (e.g. core.currency, core.currency_singular, core.currency_plural)
+	const globalVars = getGlobalTemplateVariables(extraVars || {})
+	if (trimmedExpr in globalVars) {
+		return String(globalVars[trimmedExpr])
 	}
 
 	// Return the original tag so it's not silently swallowed if it's invalid/unrecognized

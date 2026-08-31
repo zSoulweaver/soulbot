@@ -12,6 +12,7 @@ import { pointsCostMiddleware } from './middleware/points-cost'
 import { registry } from './registry'
 import { templateRegistry } from './templates'
 import { sanitizeChatText } from './utils'
+import { renderCustomTemplate } from './variables-engine'
 
 // Sequential composition of onion execution middlewares
 const commandMiddlewares: CommandMiddleware[] = [
@@ -78,8 +79,8 @@ export async function handleCommand(
 			}
 			const data = args[0]
 			const text = templateRegistry.get(textOrTemplate)
-				? templateRegistry.render(textOrTemplate, data || {})
-				: textOrTemplate
+				? await templateRegistry.renderAsync(textOrTemplate, ctx, data || {})
+				: await renderCustomTemplate(textOrTemplate, ctx, data || {})
 			trackOutboundMessage()
 			await sendRawChatMessage(channel, `@${raw.userInfo.displayName}, ${text}`)
 		},
@@ -91,8 +92,8 @@ export async function handleCommand(
 			}
 			const data = args[0]
 			const text = templateRegistry.get(textOrTemplate)
-				? templateRegistry.render(textOrTemplate, data || {})
-				: textOrTemplate
+				? await templateRegistry.renderAsync(textOrTemplate, ctx, data || {})
+				: await renderCustomTemplate(textOrTemplate, ctx, data || {})
 			trackOutboundMessage()
 			await sendRawChatMessage(channel, text)
 		},

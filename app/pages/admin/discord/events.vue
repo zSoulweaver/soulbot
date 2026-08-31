@@ -178,10 +178,10 @@ async function saveSettings() {
 					title="Member Join Alert & Auto-Roles"
 					description="Trigger welcome messages and automatically assign server roles when a user joins."
 					:variables="[
-						'{user} (User Mention)',
-						'{username} (Plain Username)',
-						'{server} (Server Name)',
-						'{memberCount} (Total Server Members)',
+						'$(user) (User Mention)',
+						'$(username) (Plain Username)',
+						'$(server) (Server Name)',
+						'$(memberCount) (Total Server Members)',
 					]"
 					:channels="channels"
 					:disabled="!form.isDiscordConnected"
@@ -240,10 +240,10 @@ async function saveSettings() {
 					title="Member Leave Alert"
 					description="Send a message to a text channel when a member leaves your Discord server."
 					:variables="[
-						'{user} (Member Display Name)',
-						'{username} (Plain Username)',
-						'{server} (Server Name)',
-						'{memberCount} (Total Server Members)',
+						'$(user) (Member Display Name)',
+						'$(username) (Plain Username)',
+						'$(server) (Server Name)',
+						'$(memberCount) (Total Server Members)',
 					]"
 					:channels="channels"
 					:disabled="!form.isDiscordConnected"

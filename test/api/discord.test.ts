@@ -138,9 +138,9 @@ describe('Discord API Routes', () => {
 		it('gET should return native event and auto-role settings', async () => {
 			const res = await eventsGetHandler({} as any)
 			expect(res.discordEventJoinEnabled).toBe(false)
-			expect(res.discordEventJoinTemplate).toBe('Welcome to {server}, {user}!')
+			expect(res.discordEventJoinTemplate).toBe('Welcome to $(server), $(user)!')
 			expect(res.discordEventLeaveEnabled).toBe(false)
-			expect(res.discordEventLeaveTemplate).toBe('{username} has left the server.')
+			expect(res.discordEventLeaveTemplate).toBe('$(username) has left the server.')
 			expect(res.isDiscordConnected).toBe(true)
 		})
 
@@ -149,14 +149,14 @@ describe('Discord API Routes', () => {
 				body: {
 					discordEventJoinEnabled: true,
 					discordEventJoinChannelId: 'ch-join',
-					discordEventJoinTemplate: 'Welcome {user}!',
+					discordEventJoinTemplate: 'Welcome $(user)!',
 
 					discordRolesAutoBestowEnabled: true,
 					discordRolesAutoBestowRoles: 'role-123',
 
 					discordEventLeaveEnabled: true,
 					discordEventLeaveChannelId: 'ch-leave',
-					discordEventLeaveTemplate: 'Goodbye {username}!',
+					discordEventLeaveTemplate: 'Goodbye $(username)!',
 				},
 			} as any)
 
@@ -176,7 +176,7 @@ describe('Discord API Routes', () => {
 				.where(eq(settings.key, 'discord.events.leave.template'))
 				.then(r => r[0])
 
-			expect(leaveVal?.value).toBe('Goodbye {username}!')
+			expect(leaveVal?.value).toBe('Goodbye $(username)!')
 		})
 	})
 

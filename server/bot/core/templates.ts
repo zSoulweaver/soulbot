@@ -2,6 +2,7 @@ import { db } from '~~/server/database'
 import { commandTemplates } from '~~/server/database/schema'
 import { pointsSettings } from '~~/server/settings'
 import { botLogger } from '~~/server/utils/logger'
+import { createTemplateContext, renderCustomTemplate } from './variables-engine'
 
 /**
  * Helper type to extract parameters from template definitions
@@ -96,7 +97,7 @@ class TemplateRegistry {
 		}))
 	}
 
-	render(id: string, data: Record<string, string | number>) {
+	render(id: string, data: Record<string, string | number> = {}) {
 		const definition = this.get(id)
 		if (!definition) {
 			console.warn(`[Templates] Template "${id}" not found. Falling back to key/value dump.`)
@@ -115,6 +116,20 @@ class TemplateRegistry {
 			text = text.replaceAll(`$(${key})`, String(value))
 		}
 		return text
+	}
+
+	async renderAsync(id: string, ctx?: any, data: Record<string, string | number> = {}): Promise<string> {
+		const definition = this.get(id)
+		if (!definition) {
+			console.warn(`[Templates] Template "${id}" not found. Falling back to key/value dump.`)
+			return `${id}: ${JSON.stringify(data)}`
+		}
+
+		const text = this.overrides.get(id) || definition.default
+		const channel = ctx?.channel || 'streamer'
+		const effectiveCtx = ctx || createTemplateContext(channel)
+
+		return renderCustomTemplate(text, effectiveCtx, data)
 	}
 }
 

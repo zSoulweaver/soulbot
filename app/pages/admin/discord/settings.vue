@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { toast } from 'vue-sonner'
+import { computed } from 'vue'
 import {
 	SettingsGroup,
 	SettingsGroupAction,
@@ -15,9 +14,24 @@ useRequireUserRole(['caster'])
 
 type DiscordSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/settings.get').default>>
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<DiscordSettings>('/api/admin/discord/settings')
 const { data: guildsResponse, refresh: refreshGuilds } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/guilds')
 const { data: channelsResponse, refresh: refreshChannels } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
+
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<DiscordSettings>('/api/admin/discord/settings', {
+	ignoreKeys: ['isTokenConfigured', 'isDiscordConnected'],
+	successMessage: 'Discord settings updated successfully!',
+	onSuccess: async () => {
+		await Promise.all([refreshGuilds(), refreshChannels()])
+	},
+})
 
 const guilds = computed(() => guildsResponse.value || [])
 const channels = computed(() => channelsResponse.value || [])
@@ -25,71 +39,6 @@ const channels = computed(() => channelsResponse.value || [])
 useHead({
 	title: 'Discord Settings',
 })
-
-const form = ref<DiscordSettings>({
-	discordEnabled: false,
-	discordGuildId: '',
-	discordModerationLogEnabled: false,
-	discordModerationLogChannelId: '',
-	isTokenConfigured: false,
-	isDiscordConnected: false,
-})
-
-const isSaving = ref(false)
-
-// Sync form values on fetch
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.discordEnabled !== settingsData.value.discordEnabled
-		|| form.value.discordGuildId !== settingsData.value.discordGuildId
-		|| form.value.discordModerationLogEnabled !== settingsData.value.discordModerationLogEnabled
-		|| form.value.discordModerationLogChannelId !== settingsData.value.discordModerationLogChannelId
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/admin/discord/settings', {
-			method: 'PUT',
-			body: {
-				discordEnabled: form.value.discordEnabled,
-				discordGuildId: form.value.discordGuildId,
-				discordModerationLogEnabled: form.value.discordModerationLogEnabled,
-				discordModerationLogChannelId: form.value.discordModerationLogChannelId,
-			},
-		})
-		toast.success('Discord settings updated successfully!')
-		await refreshSettings()
-		await refreshGuilds()
-		await refreshChannels()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save settings')
-		console.error(err)
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 
 async function refreshAll() {
 	await Promise.all([

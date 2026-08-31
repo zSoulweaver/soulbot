@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Clock, HelpCircle, Sparkles } from '@lucide/vue'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Progress } from '~/components/ui/progress'
@@ -16,106 +16,22 @@ interface PointsSettings {
 	activeBonus: number
 }
 
-// Fetch active settings
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<PointsSettings>('/api/loyalty/settings')
+const {
+	form,
+	initialData: settingsData,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<PointsSettings>('/api/loyalty/settings', {
+	successMessage: 'Points payout settings saved successfully!',
+})
 
 useHead({
 	title: 'Points Settings',
 })
-
-const form = ref<PointsSettings>({
-	currencyName: 'point',
-	currencyNamePlural: 'points',
-	payoutInterval: 5,
-	payoutIntervalOffline: 10,
-	payoutAmount: 5,
-	payoutAmountOffline: 0,
-	activeBonus: 5,
-})
-const isSaving = ref(false)
-
-// Synchronize values once loaded
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.currencyName !== settingsData.value.currencyName
-		|| form.value.currencyNamePlural !== settingsData.value.currencyNamePlural
-		|| form.value.payoutInterval !== settingsData.value.payoutInterval
-		|| form.value.payoutIntervalOffline !== settingsData.value.payoutIntervalOffline
-		|| form.value.payoutAmount !== settingsData.value.payoutAmount
-		|| form.value.payoutAmountOffline !== settingsData.value.payoutAmountOffline
-		|| form.value.activeBonus !== settingsData.value.activeBonus
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (!form.value.currencyName.trim()) {
-		toast.error('Currency singular name is required')
-		return
-	}
-	if (!form.value.currencyNamePlural.trim()) {
-		toast.error('Currency plural name is required')
-		return
-	}
-	if (form.value.payoutInterval < 1) {
-		toast.error('Online payout interval must be at least 1 minute')
-		return
-	}
-	if (form.value.payoutIntervalOffline < 1) {
-		toast.error('Offline payout interval must be at least 1 minute')
-		return
-	}
-	if (form.value.payoutAmount < 0) {
-		toast.error('Online payout amount cannot be negative')
-		return
-	}
-	if (form.value.payoutAmountOffline < 0) {
-		toast.error('Offline payout amount cannot be negative')
-		return
-	}
-	if (form.value.activeBonus < 0) {
-		toast.error('Active chatter bonus cannot be negative')
-		return
-	}
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/loyalty/settings', {
-			method: 'PUT',
-			body: {
-				currencyName: form.value.currencyName,
-				currencyNamePlural: form.value.currencyNamePlural,
-				payoutInterval: Number(form.value.payoutInterval),
-				payoutIntervalOffline: Number(form.value.payoutIntervalOffline),
-				payoutAmount: Number(form.value.payoutAmount),
-				payoutAmountOffline: Number(form.value.payoutAmountOffline),
-				activeBonus: Number(form.value.activeBonus),
-			},
-		})
-		toast.success('Points payout settings saved successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save settings')
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 
 // Next Payout live monitor state
 const { data: nextPayoutData, refresh: refreshNextPayout } = useFetch('/api/loyalty/next-payout')

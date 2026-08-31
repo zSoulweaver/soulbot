@@ -1,182 +1,23 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'
 
 type AlertSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/alerts/settings.get').default>>
-
-// Fetch active settings using non-blocking useFetch
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<AlertSettings>('/api/admin/alerts/settings')
 
 useHead({
 	title: 'Event Alerts & Rewards',
 })
 
-const form = ref<AlertSettings>({
-	eventsubAlertFollowEnabled: false,
-	eventsubAlertFollow: '',
-	eventsubPointsFollowEnabled: false,
-	eventsubPointsFollow: 0,
-
-	eventsubAlertSubEnabled: false,
-	eventsubAlertSub: '',
-	eventsubPointsSubEnabled: false,
-	eventsubPointsSub: 0,
-
-	eventsubAlertGiftEnabled: false,
-	eventsubAlertGift: '',
-	eventsubPointsGiftEnabled: false,
-	eventsubPointsGift: 0,
-
-	eventsubAlertCheerEnabled: false,
-	eventsubAlertCheer: '',
-	eventsubPointsCheerEnabled: false,
-	eventsubPointsCheer: 0,
-
-	eventsubAlertRaidEnabled: false,
-	eventsubAlertRaid: '',
-
-	eventsubAlertLiveEnabled: false,
-	eventsubAlertLive: '',
-
-	eventsubAlertOfflineEnabled: false,
-	eventsubAlertOffline: '',
-	eventsubAlertAdBreakEnabled: false,
-	eventsubAlertAdBreak: '',
-	eventsubAlertBanEnabled: false,
-	eventsubAlertBan: '',
-	eventsubAlertTimeoutEnabled: false,
-	eventsubAlertTimeout: '',
-	eventsubAlertUnbanEnabled: false,
-	eventsubAlertUnban: '',
-	eventsubAlertMessageDeleteEnabled: false,
-	eventsubAlertMessageDelete: '',
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveAlertSettings,
+} = useSettingsForm<AlertSettings>('/api/admin/alerts/settings', {
+	successMessage: 'Event alert settings updated successfully!',
 })
-
-const isSaving = ref(false)
-
-// Synchronize values once loaded
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.eventsubAlertFollowEnabled !== settingsData.value.eventsubAlertFollowEnabled
-		|| form.value.eventsubAlertFollow !== settingsData.value.eventsubAlertFollow
-		|| form.value.eventsubPointsFollowEnabled !== settingsData.value.eventsubPointsFollowEnabled
-		|| form.value.eventsubPointsFollow !== settingsData.value.eventsubPointsFollow
-
-		|| form.value.eventsubAlertSubEnabled !== settingsData.value.eventsubAlertSubEnabled
-		|| form.value.eventsubAlertSub !== settingsData.value.eventsubAlertSub
-		|| form.value.eventsubPointsSubEnabled !== settingsData.value.eventsubPointsSubEnabled
-		|| form.value.eventsubPointsSub !== settingsData.value.eventsubPointsSub
-
-		|| form.value.eventsubAlertGiftEnabled !== settingsData.value.eventsubAlertGiftEnabled
-		|| form.value.eventsubAlertGift !== settingsData.value.eventsubAlertGift
-		|| form.value.eventsubPointsGiftEnabled !== settingsData.value.eventsubPointsGiftEnabled
-		|| form.value.eventsubPointsGift !== settingsData.value.eventsubPointsGift
-
-		|| form.value.eventsubAlertCheerEnabled !== settingsData.value.eventsubAlertCheerEnabled
-		|| form.value.eventsubAlertCheer !== settingsData.value.eventsubAlertCheer
-		|| form.value.eventsubPointsCheerEnabled !== settingsData.value.eventsubPointsCheerEnabled
-		|| form.value.eventsubPointsCheer !== settingsData.value.eventsubPointsCheer
-
-		|| form.value.eventsubAlertRaidEnabled !== settingsData.value.eventsubAlertRaidEnabled
-		|| form.value.eventsubAlertRaid !== settingsData.value.eventsubAlertRaid
-
-		|| form.value.eventsubAlertLiveEnabled !== settingsData.value.eventsubAlertLiveEnabled
-		|| form.value.eventsubAlertLive !== settingsData.value.eventsubAlertLive
-
-		|| form.value.eventsubAlertOfflineEnabled !== settingsData.value.eventsubAlertOfflineEnabled
-		|| form.value.eventsubAlertOffline !== settingsData.value.eventsubAlertOffline
-		|| form.value.eventsubAlertAdBreakEnabled !== settingsData.value.eventsubAlertAdBreakEnabled
-		|| form.value.eventsubAlertAdBreak !== settingsData.value.eventsubAlertAdBreak
-
-		|| form.value.eventsubAlertBanEnabled !== settingsData.value.eventsubAlertBanEnabled
-		|| form.value.eventsubAlertBan !== settingsData.value.eventsubAlertBan
-		|| form.value.eventsubAlertTimeoutEnabled !== settingsData.value.eventsubAlertTimeoutEnabled
-		|| form.value.eventsubAlertTimeout !== settingsData.value.eventsubAlertTimeout
-		|| form.value.eventsubAlertUnbanEnabled !== settingsData.value.eventsubAlertUnbanEnabled
-		|| form.value.eventsubAlertUnban !== settingsData.value.eventsubAlertUnban
-		|| form.value.eventsubAlertMessageDeleteEnabled !== settingsData.value.eventsubAlertMessageDeleteEnabled
-		|| form.value.eventsubAlertMessageDelete !== settingsData.value.eventsubAlertMessageDelete
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-// Update settings via PUT API
-async function saveAlertSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/admin/alerts/settings', {
-			method: 'PUT',
-			body: {
-				eventsubAlertFollowEnabled: form.value.eventsubAlertFollowEnabled,
-				eventsubAlertFollow: form.value.eventsubAlertFollow,
-				eventsubPointsFollowEnabled: form.value.eventsubPointsFollowEnabled,
-				eventsubPointsFollow: Number(form.value.eventsubPointsFollow) || 0,
-
-				eventsubAlertSubEnabled: form.value.eventsubAlertSubEnabled,
-				eventsubAlertSub: form.value.eventsubAlertSub,
-				eventsubPointsSubEnabled: form.value.eventsubPointsSubEnabled,
-				eventsubPointsSub: Number(form.value.eventsubPointsSub) || 0,
-
-				eventsubAlertGiftEnabled: form.value.eventsubAlertGiftEnabled,
-				eventsubAlertGift: form.value.eventsubAlertGift,
-				eventsubPointsGiftEnabled: form.value.eventsubPointsGiftEnabled,
-				eventsubPointsGift: Number(form.value.eventsubPointsGift) || 0,
-
-				eventsubAlertCheerEnabled: form.value.eventsubAlertCheerEnabled,
-				eventsubAlertCheer: form.value.eventsubAlertCheer,
-				eventsubPointsCheerEnabled: form.value.eventsubPointsCheerEnabled,
-				eventsubPointsCheer: Number(form.value.eventsubPointsCheer) || 0,
-
-				eventsubAlertRaidEnabled: form.value.eventsubAlertRaidEnabled,
-				eventsubAlertRaid: form.value.eventsubAlertRaid,
-
-				eventsubAlertLiveEnabled: form.value.eventsubAlertLiveEnabled,
-				eventsubAlertLive: form.value.eventsubAlertLive,
-
-				eventsubAlertOfflineEnabled: form.value.eventsubAlertOfflineEnabled,
-				eventsubAlertOffline: form.value.eventsubAlertOffline,
-				eventsubAlertAdBreakEnabled: form.value.eventsubAlertAdBreakEnabled,
-				eventsubAlertAdBreak: form.value.eventsubAlertAdBreak,
-
-				eventsubAlertBanEnabled: form.value.eventsubAlertBanEnabled,
-				eventsubAlertBan: form.value.eventsubAlertBan,
-				eventsubAlertTimeoutEnabled: form.value.eventsubAlertTimeoutEnabled,
-				eventsubAlertTimeout: form.value.eventsubAlertTimeout,
-				eventsubAlertUnbanEnabled: form.value.eventsubAlertUnbanEnabled,
-				eventsubAlertUnban: form.value.eventsubAlertUnban,
-				eventsubAlertMessageDeleteEnabled: form.value.eventsubAlertMessageDeleteEnabled,
-				eventsubAlertMessageDelete: form.value.eventsubAlertMessageDelete,
-			},
-		})
-		toast.success('Alert and reward settings updated successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save configuration settings')
-		console.error(err)
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 </script>
 
 <template>

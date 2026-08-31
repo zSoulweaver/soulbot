@@ -10,54 +10,27 @@ useRequireUserRole(['caster'])
 
 type VaultSettings = Awaited<ReturnType<typeof import('~~/server/api/loyalty/vault.get').default>>
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<VaultSettings>('/api/loyalty/vault')
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<VaultSettings>('/api/loyalty/vault', {
+	ignoreKeys: ['endTime', 'vaultState'],
+	successMessage: 'Vault settings saved successfully!',
+})
 
 useHead({
 	title: 'Vault Game Settings',
 })
 
-const form = ref<VaultSettings>({
-	minBet: 10,
-	maxBet: 100000,
-	winMinRoll: 50,
-	winMultiplier: 2.0,
-	duration: 90,
-	warningEnabled: true,
-	endTime: 0,
-	startMessage: '',
-	warningMessage: '',
-	endWinMessage: '',
-	endLoseMessage: '',
-})
-
-const isSaving = ref(false)
 const isTriggering = ref(false)
 const isCancelling = ref(false)
 const timeRemaining = ref(0)
 let timerInterval: NodeJS.Timeout | null = null
-
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.minBet !== settingsData.value.minBet
-		|| form.value.maxBet !== settingsData.value.maxBet
-		|| form.value.winMinRoll !== settingsData.value.winMinRoll
-		|| form.value.winMultiplier !== settingsData.value.winMultiplier
-		|| form.value.duration !== settingsData.value.duration
-		|| form.value.warningEnabled !== settingsData.value.warningEnabled
-		|| form.value.startMessage !== settingsData.value.startMessage
-		|| form.value.warningMessage !== settingsData.value.warningMessage
-		|| form.value.endWinMessage !== settingsData.value.endWinMessage
-		|| form.value.endLoseMessage !== settingsData.value.endLoseMessage
-	)
-})
 
 // Bind slider's array value to form.winMinRoll
 const sliderValue = computed({
@@ -141,79 +114,6 @@ async function cancelVaultRaid() {
 	}
 	finally {
 		isCancelling.value = false
-	}
-}
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (form.value.minBet < 1) {
-		toast.error('Minimum bet must be at least 1')
-		return
-	}
-	if (form.value.maxBet < form.value.minBet) {
-		toast.error('Maximum bet must be greater than or equal to minimum bet')
-		return
-	}
-	if (form.value.winMinRoll < 1 || form.value.winMinRoll > 100) {
-		toast.error('Winning roll threshold must be between 1 and 100')
-		return
-	}
-	if (form.value.winMultiplier < 0.1) {
-		toast.error('Winning multiplier must be at least 0.1')
-		return
-	}
-	if (form.value.duration < 15 || form.value.duration > 300) {
-		toast.error('Raid duration must be between 15 and 300 seconds')
-		return
-	}
-	if (!form.value.startMessage.trim()) {
-		toast.error('Start announcement message cannot be empty')
-		return
-	}
-	if (!form.value.warningMessage.trim()) {
-		toast.error('Warning announcement message cannot be empty')
-		return
-	}
-	if (!form.value.endWinMessage.trim()) {
-		toast.error('Win announcement message cannot be empty')
-		return
-	}
-	if (!form.value.endLoseMessage.trim()) {
-		toast.error('Lose announcement message cannot be empty')
-		return
-	}
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/loyalty/vault', {
-			method: 'PUT',
-			body: {
-				minBet: Number(form.value.minBet),
-				maxBet: Number(form.value.maxBet),
-				winMinRoll: Number(form.value.winMinRoll),
-				winMultiplier: Number(form.value.winMultiplier),
-				duration: Number(form.value.duration),
-				warningEnabled: Boolean(form.value.warningEnabled),
-				startMessage: form.value.startMessage,
-				warningMessage: form.value.warningMessage,
-				endWinMessage: form.value.endWinMessage,
-				endLoseMessage: form.value.endLoseMessage,
-			},
-		})
-		toast.success('Vault settings saved successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save settings')
-	}
-	finally {
-		isSaving.value = false
 	}
 }
 </script>

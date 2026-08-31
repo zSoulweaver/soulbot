@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { toast } from 'vue-sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import {
 	SettingsGroup,
@@ -19,64 +17,21 @@ interface BotSettings {
 	muted: boolean
 }
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<BotSettings>('/api/bot/settings')
-
 useHead({
 	title: 'Bot Settings',
 })
 
-const form = ref<BotSettings>({
-	chatMode: 'action',
-	muted: false,
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<BotSettings>('/api/bot/settings', {
+	successMessage: 'Bot settings saved successfully!',
 })
-
-const isSaving = ref(false)
-
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.chatMode !== settingsData.value.chatMode
-		|| form.value.muted !== settingsData.value.muted
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/bot/settings', {
-			method: 'PUT',
-			body: {
-				chatMode: form.value.chatMode,
-				muted: form.value.muted,
-			},
-		})
-		toast.success('Bot settings saved successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save settings')
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 </script>
 
 <template>

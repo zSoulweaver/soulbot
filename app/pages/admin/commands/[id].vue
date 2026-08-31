@@ -29,9 +29,6 @@ useHead({
 
 // Sub-navigation filter selection ('root' or subcommand name)
 const activePathFilter = ref('root')
-
-// Local editable templates map (templateId -> currentTextValue)
-const editableTemplates = ref<Record<string, string>>({})
 const isSaving = ref(false)
 
 // Global variables search & copy setup
@@ -100,13 +97,19 @@ const flatSubcommands = computed(() => {
 	return list
 })
 
-// Populate templates map on load or command change
-watch(command, (newCommand) => {
-	if (newCommand) {
+// Populate templates map on load or command change with useFormDraft
+const {
+	draft: editableTemplates,
+	isModified: isAnyTemplateModified,
+	reset: resetTemplates,
+} = useFormDraft<Record<string, string>>(
+	() => {
+		if (!command.value)
+			return null
 		const initialTemplates: Record<string, string> = {}
 
 		// Map root templates
-		for (const template of newCommand.templates || []) {
+		for (const template of command.value.templates || []) {
 			initialTemplates[template.id] = template.custom !== null ? template.custom : template.default
 		}
 
@@ -123,11 +126,12 @@ watch(command, (newCommand) => {
 				}
 			}
 		}
-		mapSubcommandTemplates(newCommand.subcommands)
+		mapSubcommandTemplates(command.value.subcommands)
 
-		editableTemplates.value = initialTemplates
-	}
-}, { immediate: true })
+		return initialTemplates
+	},
+	() => ({}),
+)
 
 // Reset a template to its default value
 function resetTemplateToDefault(template: Template) {
@@ -175,30 +179,6 @@ watch(() => route.query.path, (newPath) => {
 	}
 }, { immediate: true })
 
-// Check if any template in the active set is modified
-const isAnyTemplateModified = computed(() => {
-	if (!command.value)
-		return false
-
-	// Check root
-	for (const template of command.value.templates || []) {
-		const originalContent = template.custom !== null ? template.custom : template.default
-		if (editableTemplates.value[template.id] !== originalContent)
-			return true
-	}
-
-	// Check subcommands
-	for (const subcommand of flatSubcommands.value) {
-		for (const template of subcommand.templates || []) {
-			const originalContent = template.custom !== null ? template.custom : template.default
-			if (editableTemplates.value[template.id] !== originalContent)
-				return true
-		}
-	}
-
-	return false
-})
-
 async function saveTemplates() {
 	if (!command.value)
 		return
@@ -245,6 +225,11 @@ async function saveTemplates() {
 	finally {
 		isSaving.value = false
 	}
+}
+
+function discardChanges() {
+	resetTemplates()
+	toast.info('Discarded unsaved changes.')
 }
 </script>
 
@@ -515,7 +500,7 @@ async function saveTemplates() {
 				saving-text="Saving Overrides..."
 				discard-text="Discard Changes"
 				@save="saveTemplates"
-				@discard="refreshCommands"
+				@discard="discardChanges"
 			/>
 		</AppSettingsPage>
 	</div>

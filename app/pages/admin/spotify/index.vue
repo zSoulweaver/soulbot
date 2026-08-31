@@ -147,86 +147,28 @@ const progressPercent = computed(() => {
 	return (activeProgressMs.value / track.durationMs) * 100
 })
 
-const { data: settingsData, refresh: refreshSettings, pending: loadingSettings } = useFetch('/api/spotify/settings')
+type SpotifySettings = Awaited<ReturnType<typeof import('~~/server/api/spotify/settings.get').default>>
 
-const form = ref({
-	active: true,
-	pointsCost: 10,
-	maxLength: 8,
-	maxQueue: 50,
-	maxUserRequests: 0,
-	modsBypassLimits: true,
-	followersOnly: false,
-	permitExplicit: true,
-	offlineOverride: false,
-	targetPlaylist: '',
-	targetPlaylistName: '',
-	allowModerators: true,
-	whisperNotifications: false,
-	announceDeleteWebui: true,
-	alertQueueLowEnabled: false,
-	alertQueueEmptyEnabled: false,
-})
-
-// Synchronize loaded data
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-		if (!newData.playlistId || newData.playlistExists === false) {
-			form.value.active = false
+const {
+	form,
+	initialData: settingsData,
+	isModified,
+	isSaving,
+	loading: loadingSettings,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<SpotifySettings>('/api/spotify/settings', {
+	ignoreKeys: ['playlistExists'],
+	transform: (data) => {
+		if (!data.targetPlaylist || data.playlistExists === false) {
+			data.active = false
 		}
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.active !== settingsData.value.active
-		|| form.value.pointsCost !== settingsData.value.pointsCost
-		|| form.value.maxLength !== settingsData.value.maxLength
-		|| form.value.maxQueue !== settingsData.value.maxQueue
-		|| form.value.maxUserRequests !== settingsData.value.maxUserRequests
-		|| form.value.modsBypassLimits !== settingsData.value.modsBypassLimits
-		|| form.value.followersOnly !== settingsData.value.followersOnly
-		|| form.value.permitExplicit !== settingsData.value.permitExplicit
-		|| form.value.offlineOverride !== settingsData.value.offlineOverride
-		|| form.value.targetPlaylist !== settingsData.value.targetPlaylist
-		|| form.value.targetPlaylistName !== settingsData.value.targetPlaylistName
-		|| form.value.allowModerators !== settingsData.value.allowModerators
-		|| form.value.whisperNotifications !== settingsData.value.whisperNotifications
-		|| form.value.announceDeleteWebui !== settingsData.value.announceDeleteWebui
-		|| form.value.alertQueueLowEnabled !== settingsData.value.alertQueueLowEnabled
-		|| form.value.alertQueueEmptyEnabled !== settingsData.value.alertQueueEmptyEnabled
-	)
+		return data
+	},
+	successMessage: 'Spotify settings saved successfully.',
+	errorMessage: 'Failed to save Spotify settings.',
 })
-
-const isSaving = ref(false)
-
-async function saveSettings() {
-	isSaving.value = true
-	try {
-		await $fetch('/api/spotify/settings', {
-			method: 'PUT',
-			body: form.value,
-		})
-		toast.success('Spotify settings saved successfully.')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save Spotify settings.')
-	}
-	finally {
-		isSaving.value = false
-	}
-}
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
 
 function clearTargetPlaylist() {
 	form.value.targetPlaylist = ''

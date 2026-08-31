@@ -1,92 +1,34 @@
 <script setup lang="ts">
 import { AlertCircle, Megaphone, Play, Timer } from '@lucide/vue'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Spinner } from '~/components/ui/spinner'
 
 type AdSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/advertisements/settings.get').default>>
 type AdSchedule = Awaited<ReturnType<typeof import('~~/server/api/admin/advertisements/schedule.get').default>>
 
-const form = ref<AdSettings>({
-	adsAlertsEnabled: false,
-	adsAlert5mEnabled: false,
-	adsAlert3mEnabled: false,
-	adsAlert1mEnabled: false,
-	adsAlertTemplate: '',
+const {
+	form,
+	initialData: settingsData,
+	isModified,
+	isSaving,
+	loading: settingsLoading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveAdSettings,
+} = useSettingsForm<AdSettings>('/api/admin/advertisements/settings', {
+	successMessage: 'Ad alert settings updated successfully!',
 })
 
-// Fetch alert settings and schedule via non-blocking useFetch
-const { data: settingsData, refresh: refreshSettings, pending: settingsLoading } = useFetch<AdSettings>('/api/admin/advertisements/settings', {
-	transform: (data) => {
-		form.value = { ...data }
-		return data
-	},
-})
 const { data: scheduleData, refresh: refreshSchedule, pending: scheduleLoading } = useFetch<AdSchedule>('/api/admin/advertisements/schedule')
-
 const loading = computed(() => settingsLoading.value || scheduleLoading.value)
 
 useHead({
 	title: 'Advertisements Management',
 })
 
-const isSaving = ref(false)
 const isMutating = ref(false)
 const commercialLength = ref<string>('30')
-
-// Synchronize form settings once loaded
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.adsAlertsEnabled !== settingsData.value.adsAlertsEnabled
-		|| form.value.adsAlert5mEnabled !== settingsData.value.adsAlert5mEnabled
-		|| form.value.adsAlert3mEnabled !== settingsData.value.adsAlert3mEnabled
-		|| form.value.adsAlert1mEnabled !== settingsData.value.adsAlert1mEnabled
-		|| form.value.adsAlertTemplate !== settingsData.value.adsAlertTemplate
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveAdSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/admin/advertisements/settings', {
-			method: 'PUT',
-			body: {
-				adsAlertsEnabled: form.value.adsAlertsEnabled,
-				adsAlert5mEnabled: form.value.adsAlert5mEnabled,
-				adsAlert3mEnabled: form.value.adsAlert3mEnabled,
-				adsAlert1mEnabled: form.value.adsAlert1mEnabled,
-				adsAlertTemplate: form.value.adsAlertTemplate,
-			},
-		})
-		toast.success('Ad alert settings updated successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save ad settings')
-		console.error(err)
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 
 async function triggerCommercial() {
 	if (isMutating.value)

@@ -21,72 +21,83 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:open', 'saved'])
 
-// Local state fields
-const triggerName = ref('')
-const responseTemplate = ref('')
-const descriptionValue = ref('')
-const costValue = ref(0)
-const globalCooldownValue = ref(0)
-const userCooldownValue = ref(0)
-const isEnabled = ref(true)
-const isHidden = ref(false)
-const permissionValue = ref('everyone')
-
 const isSaving = ref(false)
 
 const isEditMode = computed(() => {
 	return props.command !== null && props.command !== undefined && props.command.id !== undefined
 })
 
+interface CustomCommandDraft {
+	trigger: string
+	response: string
+	description: string
+	cost: number
+	globalCooldown: number
+	userCooldown: number
+	enabled: boolean
+	hidden: boolean
+	permission: string
+}
+
+const {
+	draft,
+	isModified,
+	reset: resetDraft,
+} = useFormDraft<CustomCommandDraft>(
+	() => {
+		if (!props.command || !props.command.id)
+			return null
+		return {
+			trigger: props.command.trigger || '',
+			response: props.command.response || '',
+			description: props.command.description || '',
+			cost: props.command.cost || 0,
+			globalCooldown: props.command.globalCooldown || 0,
+			userCooldown: props.command.userCooldown || 0,
+			enabled: props.command.enabled !== false,
+			hidden: Boolean(props.command.hidden),
+			permission: props.command.permission || 'everyone',
+		}
+	},
+	() => ({
+		trigger: '',
+		response: '',
+		description: '',
+		cost: 0,
+		globalCooldown: 0,
+		userCooldown: 0,
+		enabled: true,
+		hidden: false,
+		permission: 'everyone',
+	}),
+)
+
 const responseLines = computed(() => {
-	if (!responseTemplate.value)
+	if (!draft.value.response)
 		return []
-	return responseTemplate.value.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
+	return draft.value.response.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0)
 })
 
 const lineCount = computed(() => responseLines.value.length)
-
 const isMultiLine = computed(() => lineCount.value > 1)
 
-// Populate fields on open or change
+// Reset draft on open or change
 watch(() => props.open, (isOpen) => {
 	if (isOpen) {
-		if (isEditMode.value && props.command) {
-			triggerName.value = props.command.trigger || ''
-			responseTemplate.value = props.command.response || ''
-			descriptionValue.value = props.command.description || ''
-			costValue.value = props.command.cost || 0
-			globalCooldownValue.value = props.command.globalCooldown || 0
-			userCooldownValue.value = props.command.userCooldown || 0
-			isEnabled.value = props.command.enabled !== false
-			isHidden.value = Boolean(props.command.hidden)
-			permissionValue.value = props.command.permission || 'everyone'
-		}
-		else {
-			// Clear fields for Create Mode
-			triggerName.value = ''
-			responseTemplate.value = ''
-			descriptionValue.value = ''
-			costValue.value = 0
-			globalCooldownValue.value = 0
-			userCooldownValue.value = 0
-			isEnabled.value = true
-			isHidden.value = false
-			permissionValue.value = 'everyone'
-		}
+		resetDraft()
 	}
 })
 
 async function saveConfig() {
-	if (isSaving.value)
+	if (isSaving.value || (isEditMode.value && !isModified.value))
 		return
-	const trigger = triggerName.value.trim().toLowerCase().replace(/^!/, '')
+	const trigger = draft.value.trigger.trim().toLowerCase().replace(/^!/, '')
 	if (!trigger) {
 		toast.error('Trigger word is required.')
 		return
 	}
 
-	if (!responseTemplate.value.trim()) {
+	if (!draft.value.response.trim()) {
 		toast.error('Response template is required.')
 		return
 	}
@@ -97,14 +108,14 @@ async function saveConfig() {
 		const payload = {
 			id: isEditMode.value ? props.command.id : undefined,
 			trigger,
-			response: responseTemplate.value.trim(),
-			description: descriptionValue.value.trim() || null,
-			enabled: isEnabled.value,
-			cost: costValue.value,
-			globalCooldown: globalCooldownValue.value,
-			userCooldown: userCooldownValue.value,
-			permission: permissionValue.value,
-			hidden: isHidden.value,
+			response: draft.value.response.trim(),
+			description: draft.value.description.trim() || null,
+			enabled: draft.value.enabled,
+			cost: draft.value.cost,
+			globalCooldown: draft.value.globalCooldown,
+			userCooldown: draft.value.userCooldown,
+			permission: draft.value.permission,
+			hidden: draft.value.hidden,
 		}
 
 		if (isEditMode.value) {
@@ -155,8 +166,8 @@ async function saveConfig() {
 					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Status</span>
 					<SettingsGroup>
 						<CommandStatusSettings
-							v-model:enabled="isEnabled"
-							v-model:hidden="isHidden"
+							v-model:enabled="draft.enabled"
+							v-model:hidden="draft.hidden"
 							enable-label="Enable Custom Trigger"
 							:show-whispers="false"
 						/>
@@ -178,7 +189,7 @@ async function saveConfig() {
 										!
 									</InputGroupAddon>
 									<InputGroupInput
-										v-model="triggerName"
+										v-model="draft.trigger"
 										placeholder="hello"
 									/>
 								</InputGroup>
@@ -192,14 +203,14 @@ async function saveConfig() {
 							</SettingsGroupContent>
 							<SettingsGroupAction>
 								<Input
-									v-model="descriptionValue"
+									v-model="draft.description"
 									placeholder="Returns wins count"
 									class="w-full"
 								/>
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 
-						<CommandPermissionSelect v-model="permissionValue" />
+						<CommandPermissionSelect v-model="draft.permission" />
 					</SettingsGroup>
 				</div>
 
@@ -220,7 +231,7 @@ async function saveConfig() {
 							>
 								<div class="flex w-full flex-col gap-2">
 									<Textarea
-										v-model="responseTemplate"
+										v-model="draft.response"
 										placeholder="Hello $(sender)! You have $(count wins) wins in $(channel)."
 										rows="4"
 									/>
@@ -256,9 +267,9 @@ async function saveConfig() {
 					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Limits</span>
 					<SettingsGroup>
 						<CommandLimitsFields
-							v-model:cost="costValue"
-							v-model:global-cooldown="globalCooldownValue"
-							v-model:user-cooldown="userCooldownValue"
+							v-model:cost="draft.cost"
+							v-model:global-cooldown="draft.globalCooldown"
+							v-model:user-cooldown="draft.userCooldown"
 						/>
 					</SettingsGroup>
 				</div>
@@ -271,7 +282,7 @@ async function saveConfig() {
 						Cancel
 					</Button>
 				</SheetClose>
-				<Button :disabled="isSaving" @click="saveConfig">
+				<Button :disabled="(isEditMode && !isModified) || isSaving" @click="saveConfig">
 					<Save data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>

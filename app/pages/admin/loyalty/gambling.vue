@@ -9,54 +9,27 @@ useRequireUserRole(['caster'])
 
 type GamblingSettings = Awaited<ReturnType<typeof import('~~/server/api/loyalty/gambling.get').default>>
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<GamblingSettings>('/api/loyalty/gambling')
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<GamblingSettings>('/api/loyalty/gambling', {
+	ignoreKeys: ['bonusEndTime'],
+	successMessage: 'Gambling settings saved successfully.',
+})
 
 useHead({
 	title: 'Gambling Settings',
 })
 
-const form = ref<GamblingSettings>({
-	minBet: 10,
-	maxBet: 100000,
-	winMinRoll: 50,
-	winMultiplier: 1.0,
-	bonusDuration: 5,
-	bonusWinMultiplier: 2.0,
-	bonusWinMinRoll: 50,
-	bonusTicketsPerUser: 5,
-	bonusMessage: '',
-	bonusEndMessage: '',
-	bonusEndTime: 0,
-})
-
-const isSaving = ref(false)
 const isTriggering = ref(false)
 const isCancelling = ref(false)
 const timeRemaining = ref(0)
 let timerInterval: NodeJS.Timeout | null = null
-
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.minBet !== settingsData.value.minBet
-		|| form.value.maxBet !== settingsData.value.maxBet
-		|| form.value.winMinRoll !== settingsData.value.winMinRoll
-		|| form.value.winMultiplier !== settingsData.value.winMultiplier
-		|| form.value.bonusDuration !== settingsData.value.bonusDuration
-		|| form.value.bonusWinMultiplier !== settingsData.value.bonusWinMultiplier
-		|| form.value.bonusWinMinRoll !== settingsData.value.bonusWinMinRoll
-		|| form.value.bonusTicketsPerUser !== settingsData.value.bonusTicketsPerUser
-		|| form.value.bonusMessage !== settingsData.value.bonusMessage
-		|| form.value.bonusEndMessage !== settingsData.value.bonusEndMessage
-	)
-})
 
 // Bind slider's array value to form.winMinRoll
 const sliderValue = computed({
@@ -154,83 +127,6 @@ async function cancelBonusEvent() {
 	}
 	finally {
 		isCancelling.value = false
-	}
-}
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (form.value.minBet < 1) {
-		toast.error('Minimum bet must be at least 1')
-		return
-	}
-	if (form.value.maxBet < form.value.minBet) {
-		toast.error('Maximum bet must be greater than or equal to minimum bet')
-		return
-	}
-	if (form.value.winMinRoll < 1 || form.value.winMinRoll > 100) {
-		toast.error('Winning roll threshold must be between 1 and 100')
-		return
-	}
-	if (form.value.winMultiplier < 0.1) {
-		toast.error('Winning multiplier must be at least 0.1')
-		return
-	}
-	if (form.value.bonusDuration < 1 || form.value.bonusDuration > 30) {
-		toast.error('Bonus duration must be between 1 and 30 minutes')
-		return
-	}
-	if (form.value.bonusWinMultiplier < 0.1) {
-		toast.error('Bonus win multiplier must be at least 0.1')
-		return
-	}
-	if (form.value.bonusWinMinRoll < 1 || form.value.bonusWinMinRoll > 100) {
-		toast.error('Bonus winning roll threshold must be between 1 and 100')
-		return
-	}
-	if (form.value.bonusTicketsPerUser < 1) {
-		toast.error('Bonus tickets per user must be at least 1')
-		return
-	}
-	if (!form.value.bonusMessage.trim()) {
-		toast.error('Bonus start message cannot be empty')
-		return
-	}
-	if (!form.value.bonusEndMessage.trim()) {
-		toast.error('Bonus end message cannot be empty')
-		return
-	}
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/loyalty/gambling', {
-			method: 'PUT',
-			body: {
-				minBet: Number(form.value.minBet),
-				maxBet: Number(form.value.maxBet),
-				winMinRoll: Number(form.value.winMinRoll),
-				winMultiplier: Number(form.value.winMultiplier),
-				bonusDuration: Number(form.value.bonusDuration),
-				bonusWinMultiplier: Number(form.value.bonusWinMultiplier),
-				bonusWinMinRoll: Number(form.value.bonusWinMinRoll),
-				bonusTicketsPerUser: Number(form.value.bonusTicketsPerUser),
-				bonusMessage: form.value.bonusMessage,
-				bonusEndMessage: form.value.bonusEndMessage,
-			},
-		})
-		toast.success('Gambling settings saved successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save settings')
-	}
-	finally {
-		isSaving.value = false
 	}
 }
 </script>

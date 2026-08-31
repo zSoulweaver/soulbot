@@ -19,13 +19,14 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:open', 'saved'])
 
-// Local state fields
-const timerName = ref('')
-const isEnabled = ref(true)
-const messagesList = ref<TimerMessage[]>([])
-const intervalOnlineValue = ref(10)
-const intervalOfflineValue = ref(30)
-const minMessagesValue = ref(0)
+interface TimerDraft {
+	name: string
+	enabled: boolean
+	messages: TimerMessage[]
+	intervalOnline: number
+	intervalOffline: number
+	minMessages: number
+}
 
 const isSaving = ref(false)
 
@@ -33,50 +34,61 @@ const isEditMode = computed(() => {
 	return props.timer !== null && props.timer !== undefined && props.timer.id !== undefined
 })
 
-// Populate fields on open
+const {
+	draft,
+	isModified,
+	reset: resetDraft,
+} = useFormDraft<TimerDraft>(
+	() => {
+		if (!props.timer || !props.timer.id)
+			return null
+		return {
+			name: props.timer.name || '',
+			enabled: props.timer.enabled !== false,
+			messages: props.timer.messages?.length ? props.timer.messages : [{ text: '', enabled: true }],
+			intervalOnline: props.timer.intervalOnline ?? 10,
+			intervalOffline: props.timer.intervalOffline ?? 30,
+			minMessages: props.timer.minMessages ?? 0,
+		}
+	},
+	() => ({
+		name: '',
+		enabled: true,
+		messages: [{ text: '', enabled: true }],
+		intervalOnline: 10,
+		intervalOffline: 30,
+		minMessages: 0,
+	}),
+)
+
+// Reset draft on open
 watch(() => props.open, (isOpen) => {
 	if (isOpen) {
-		if (isEditMode.value && props.timer) {
-			timerName.value = props.timer.name || ''
-			isEnabled.value = props.timer.enabled !== false
-			messagesList.value = props.timer.messages ? JSON.parse(JSON.stringify(props.timer.messages)) : []
-			intervalOnlineValue.value = props.timer.intervalOnline ?? 10
-			intervalOfflineValue.value = props.timer.intervalOffline ?? 30
-			minMessagesValue.value = props.timer.minMessages ?? 0
-		}
-		else {
-			// Clear fields for Create Mode
-			timerName.value = ''
-			isEnabled.value = true
-			messagesList.value = [{ text: '', enabled: true }]
-			intervalOnlineValue.value = 10
-			intervalOfflineValue.value = 30
-			minMessagesValue.value = 0
-		}
+		resetDraft()
 	}
 })
 
 function addMessage() {
-	messagesList.value.push({ text: '', enabled: true })
+	draft.value.messages.push({ text: '', enabled: true })
 }
 
 function removeMessage(index: number) {
-	if (messagesList.value.length <= 1)
+	if (draft.value.messages.length <= 1)
 		return
-	messagesList.value.splice(index, 1)
+	draft.value.messages.splice(index, 1)
 }
 
 async function saveConfig() {
-	if (isSaving.value)
+	if (isSaving.value || (isEditMode.value && !isModified.value))
 		return
-	const name = timerName.value.trim()
+	const name = draft.value.name.trim()
 	if (!name) {
 		toast.error('Timer name is required.')
 		return
 	}
 
 	// Filter and validate messages list
-	const cleanMessages = messagesList.value
+	const cleanMessages = draft.value.messages
 		.map(m => ({ text: m.text.trim(), enabled: m.enabled }))
 		.filter(m => m.text !== '')
 
@@ -91,11 +103,11 @@ async function saveConfig() {
 		const payload = {
 			id: isEditMode.value ? props.timer!.id : undefined,
 			name,
-			enabled: isEnabled.value,
+			enabled: draft.value.enabled,
 			messages: cleanMessages,
-			intervalOnline: intervalOnlineValue.value,
-			intervalOffline: intervalOfflineValue.value,
-			minMessages: minMessagesValue.value,
+			intervalOnline: draft.value.intervalOnline,
+			intervalOffline: draft.value.intervalOffline,
+			minMessages: draft.value.minMessages,
 		}
 
 		if (isEditMode.value) {
@@ -151,7 +163,7 @@ async function saveConfig() {
 								<SettingsGroupDescription>Toggle whether this timer runs in the background.</SettingsGroupDescription>
 							</SettingsGroupContent>
 							<SettingsGroupAction>
-								<Switch v-model:model-value="isEnabled" />
+								<Switch v-model:model-value="draft.enabled" />
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 					</SettingsGroup>
@@ -169,7 +181,7 @@ async function saveConfig() {
 							<SettingsGroupAction>
 								<Input
 									id="timer-name"
-									v-model="timerName"
+									v-model="draft.name"
 									placeholder="E.g. Socials Rotation or Rules Reminder"
 									class="w-full"
 								/>
@@ -196,7 +208,7 @@ async function saveConfig() {
 						</SettingsGroupItem>
 
 						<SettingsGroupItem
-							v-for="(msg, index) in messagesList"
+							v-for="(msg, index) in draft.messages"
 							:key="index"
 							class="sm:flex-col sm:items-stretch sm:gap-3"
 						>
@@ -224,7 +236,7 @@ async function saveConfig() {
 										<Button
 											size="sm"
 											variant="ghostDestructive"
-											:disabled="messagesList.length <= 1"
+											:disabled="draft.messages.length <= 1"
 											@click="removeMessage(index)"
 										>
 											<Trash2 data-icon="inline-start" />
@@ -249,7 +261,7 @@ async function saveConfig() {
 							<SettingsGroupAction>
 								<NumberField
 									id="timer-online-int"
-									v-model="intervalOnlineValue"
+									v-model="draft.intervalOnline"
 									:min="0"
 									class="w-full"
 								>
@@ -270,7 +282,7 @@ async function saveConfig() {
 							<SettingsGroupAction>
 								<NumberField
 									id="timer-offline-int"
-									v-model="intervalOfflineValue"
+									v-model="draft.intervalOffline"
 									:min="0"
 									class="w-full"
 								>
@@ -291,7 +303,7 @@ async function saveConfig() {
 							<SettingsGroupAction>
 								<NumberField
 									id="timer-min-msgs"
-									v-model="minMessagesValue"
+									v-model="draft.minMessages"
 									:min="0"
 									class="w-full"
 								>
@@ -314,7 +326,7 @@ async function saveConfig() {
 						Cancel
 					</Button>
 				</SheetClose>
-				<Button :disabled="isSaving" @click="saveConfig">
+				<Button :disabled="(isEditMode && !isModified) || isSaving" @click="saveConfig">
 					<Save data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>

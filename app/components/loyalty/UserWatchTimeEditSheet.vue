@@ -172,7 +172,7 @@ async function saveAdjustment() {
 					</Button>
 				</SheetClose>
 
-				<Button :disabled="isSaving" @click="saveAdjustment">
+				<Button :disabled="isSaving || (mode === 'add' && amount === 0) || (mode === 'set' && amount === props.user?.watchTime)" @click="saveAdjustment">
 					<Spinner v-if="isSaving" data-icon="inline-start" />
 					<SaveIcon v-else data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Changes' }}

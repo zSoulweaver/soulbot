@@ -22,15 +22,46 @@ const props = defineProps<{
 const emit = defineEmits(['update:open', 'saved'])
 
 // Creation / General state
-const gameName = ref<string>('')
 const newCounterName = ref<string>('')
 const newCounterDeaths = ref<number>(0)
-const twitchGameId = ref<string | null>(null)
-const boxArtUrl = ref<string | null>(null)
 const isSaving = ref(false)
 
-// Local working draft of counters
-const localCounters = ref<Array<{ id?: number, name: string, deaths: number, isActive?: boolean }>>([])
+const isEditMode = computed(() => !!props.gameRecord)
+
+interface GameDeathsDraft {
+	gameName: string
+	twitchGameId: string | null
+	boxArtUrl: string | null
+	counters: Array<{ id?: number, name: string, deaths: number, isActive?: boolean }>
+}
+
+const {
+	draft,
+	isModified,
+	reset: resetDraft,
+} = useFormDraft<GameDeathsDraft>(
+	() => {
+		if (!props.gameRecord)
+			return null
+		return {
+			gameName: props.gameRecord.gameName,
+			twitchGameId: props.gameRecord.twitchGameId || null,
+			boxArtUrl: props.gameRecord.boxArtUrl || null,
+			counters: (props.gameRecord.counters || []).map(c => ({
+				id: c.id,
+				name: c.name,
+				deaths: c.deaths,
+				isActive: c.isActive,
+			})),
+		}
+	},
+	() => ({
+		gameName: '',
+		twitchGameId: null,
+		boxArtUrl: null,
+		counters: [{ name: 'Default', deaths: 0, isActive: true }],
+	}),
+)
 
 // Twitch category search state
 const searchInput = ref('')
@@ -39,11 +70,11 @@ const searchResults = ref<{ id: string, name: string, boxArtUrl: string | null }
 const isSearching = ref(false)
 
 const computedTotalDeaths = computed(() => {
-	return localCounters.value.reduce((sum, c) => sum + (Number(c.deaths) || 0), 0)
+	return draft.value.counters.reduce((sum, c) => sum + (Number(c.deaths) || 0), 0)
 })
 
 watch(debouncedSearch, async (query) => {
-	if (!query.trim() || query.trim() === gameName.value) {
+	if (!query.trim() || query.trim() === draft.value.gameName) {
 		searchResults.value = []
 		return
 	}
@@ -64,31 +95,10 @@ watch(debouncedSearch, async (query) => {
 
 watch(() => props.open, (isOpen) => {
 	if (isOpen) {
-		if (props.gameRecord) {
-			gameName.value = props.gameRecord.gameName
-			twitchGameId.value = props.gameRecord.twitchGameId || null
-			boxArtUrl.value = props.gameRecord.boxArtUrl || null
-			searchInput.value = props.gameRecord.gameName
-			localCounters.value = (props.gameRecord.counters || []).map(c => ({
-				id: c.id,
-				name: c.name,
-				deaths: c.deaths,
-				isActive: c.isActive,
-			}))
-			newCounterName.value = ''
-			newCounterDeaths.value = 0
-		}
-		else {
-			gameName.value = ''
-			twitchGameId.value = null
-			boxArtUrl.value = null
-			searchInput.value = ''
-			localCounters.value = [
-				{ name: 'Default', deaths: 0, isActive: true },
-			]
-			newCounterName.value = ''
-			newCounterDeaths.value = 0
-		}
+		resetDraft()
+		searchInput.value = draft.value.gameName
+		newCounterName.value = ''
+		newCounterDeaths.value = 0
 		searchResults.value = []
 	}
 })
@@ -99,9 +109,9 @@ function clearSearch() {
 }
 
 function selectCategory(cat: { id: string, name: string, boxArtUrl: string | null }) {
-	gameName.value = cat.name
-	twitchGameId.value = cat.id
-	boxArtUrl.value = cat.boxArtUrl
+	draft.value.gameName = cat.name
+	draft.value.twitchGameId = cat.id
+	draft.value.boxArtUrl = cat.boxArtUrl
 	searchInput.value = cat.name
 	searchResults.value = []
 }
@@ -111,18 +121,18 @@ function onInput(e: Event) {
 }
 
 function setActiveCounter(counter: { name: string, isActive?: boolean }) {
-	localCounters.value.forEach((c) => {
+	draft.value.counters.forEach((c) => {
 		c.isActive = c === counter
 	})
 }
 
 function deleteCounter(index: number) {
-	const wasActive = localCounters.value[index]?.isActive
-	localCounters.value.splice(index, 1)
+	const wasActive = draft.value.counters[index]?.isActive
+	draft.value.counters.splice(index, 1)
 
 	// Ensure there is at least one active counter if list is not empty
-	if (wasActive && localCounters.value.length > 0) {
-		localCounters.value[0]!.isActive = true
+	if (wasActive && draft.value.counters.length > 0) {
+		draft.value.counters[0]!.isActive = true
 	}
 }
 
@@ -131,10 +141,10 @@ function addPlaythroughCounter() {
 	if (!name)
 		return
 
-	localCounters.value.push({
+	draft.value.counters.push({
 		name,
 		deaths: Number(newCounterDeaths.value || 0),
-		isActive: localCounters.value.length === 0,
+		isActive: draft.value.counters.length === 0,
 	})
 
 	newCounterName.value = ''
@@ -142,27 +152,27 @@ function addPlaythroughCounter() {
 }
 
 async function saveAll() {
-	if (!gameName.value.trim() || isSaving.value)
+	if (!draft.value.gameName.trim() || isSaving.value || (isEditMode.value && !isModified.value))
 		return
 
 	isSaving.value = true
 	try {
 		// Ensure at least one counter exists
-		const countersPayload = localCounters.value.length > 0
-			? localCounters.value
+		const countersPayload = draft.value.counters.length > 0
+			? draft.value.counters
 			: [{ name: 'Default', deaths: 0, isActive: true }]
 
 		await $fetch('/api/admin/deaths', {
 			method: 'POST',
 			body: {
-				gameName: gameName.value.trim(),
-				twitchGameId: twitchGameId.value,
-				boxArtUrl: boxArtUrl.value,
+				gameName: draft.value.gameName.trim(),
+				twitchGameId: draft.value.twitchGameId,
+				boxArtUrl: draft.value.boxArtUrl,
 				counters: countersPayload,
 			},
 		})
 
-		toast.success(`Successfully saved death counters for "${gameName.value.trim()}"`)
+		toast.success(`Successfully saved death counters for "${draft.value.gameName.trim()}"`)
 		emit('saved')
 		emit('update:open', false)
 	}
@@ -192,14 +202,14 @@ async function saveAll() {
 
 			<div class="flex flex-col gap-6 px-4 py-2">
 				<!-- Selected Game Preview Card -->
-				<Item v-if="gameName" variant="outline" class="w-full border-border/60 bg-muted/40 p-3">
+				<Item v-if="draft.gameName" variant="outline" class="w-full border-border/60 bg-muted/40 p-3">
 					<div class="flex w-full items-center justify-between gap-3">
 						<div class="flex min-w-0 flex-1 items-center gap-3">
 							<div class="relative h-14 w-11 shrink-0 overflow-hidden rounded-sm border border-border/50 bg-muted">
 								<img
-									v-if="boxArtUrl"
-									:src="boxArtUrl"
-									:alt="gameName"
+									v-if="draft.boxArtUrl"
+									:src="draft.boxArtUrl"
+									:alt="draft.gameName"
 									class="size-full object-cover"
 								>
 								<div v-else class="flex size-full items-center justify-center text-muted-foreground">
@@ -208,10 +218,10 @@ async function saveAll() {
 							</div>
 							<div class="flex min-w-0 flex-1 flex-col justify-center">
 								<span class="text-sm/snug font-semibold wrap-break-word text-foreground">
-									{{ gameName }}
+									{{ draft.gameName }}
 								</span>
 								<span class="mt-0.5 truncate text-xs text-muted-foreground">
-									{{ twitchGameId ? `Twitch Game ID: ${twitchGameId}` : 'Twitch Category' }}
+									{{ draft.twitchGameId ? `Twitch Game ID: ${draft.twitchGameId}` : 'Twitch Category' }}
 								</span>
 							</div>
 						</div>
@@ -299,13 +309,13 @@ async function saveAll() {
 							Death Counters
 						</span>
 						<span class="text-xs text-muted-foreground">
-							{{ localCounters.length }} counter(s)
+							{{ draft.counters.length }} counter(s)
 						</span>
 					</div>
 
-					<div v-if="localCounters.length" class="flex flex-col gap-3">
+					<div v-if="draft.counters.length" class="flex flex-col gap-3">
 						<div
-							v-for="(counter, idx) in localCounters"
+							v-for="(counter, idx) in draft.counters"
 							:key="counter.id || idx"
 							:class="cn(
 								'flex flex-col gap-3 rounded-xl border bg-card p-3.5 shadow-xs transition-colors',
@@ -329,7 +339,7 @@ async function saveAll() {
 								</Button>
 
 								<Button
-									v-if="localCounters.length > 1"
+									v-if="draft.counters.length > 1"
 									variant="ghostDestructive"
 									size="icon-sm"
 									title="Remove counter"
@@ -394,7 +404,7 @@ async function saveAll() {
 					</Button>
 				</SheetClose>
 
-				<Button :disabled="isSaving || !gameName.trim()" @click="saveAll">
+				<Button :disabled="isSaving || !draft.gameName.trim() || (isEditMode && !isModified)" @click="saveAll">
 					<Spinner v-if="isSaving" data-icon="inline-start" />
 					<SaveIcon v-else data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Changes' }}

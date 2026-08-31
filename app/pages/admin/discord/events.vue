@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { toast } from 'vue-sonner'
+import { computed } from 'vue'
 import DiscordAlertConfig from '~/components/discord/DiscordAlertConfig.vue'
 import { ConfigAccordionGroup } from '~/components/ui/config-accordion'
 import {
@@ -13,7 +12,20 @@ import {
 
 type EventsSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/events.get').default>>
 
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<EventsSettings>('/api/admin/discord/events')
+const {
+	form,
+	initialData: settingsData,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<EventsSettings>('/api/admin/discord/events', {
+	ignoreKeys: ['isDiscordConnected'],
+	successMessage: 'Discord native event settings updated successfully!',
+})
+
 const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
 const { data: guildRolesResponse } = useFetch<{ id: string, name: string, color?: string, isManageable: boolean }[]>('/api/admin/discord/guild-roles')
 
@@ -24,32 +36,8 @@ useHead({
 	title: 'Discord Native Events',
 })
 
-const form = ref<EventsSettings>({
-	discordEventJoinEnabled: false,
-	discordEventJoinChannelId: '',
-	discordEventJoinTemplate: '',
-
-	discordRolesAutoBestowEnabled: false,
-	discordRolesAutoBestowRoles: '',
-
-	discordEventLeaveEnabled: false,
-	discordEventLeaveChannelId: '',
-	discordEventLeaveTemplate: '',
-
-	isDiscordConnected: false,
-})
-
-const isSaving = ref(false)
-
-// Sync values when fetched
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
 const activeRoleIds = computed(() => {
-	return form.value.discordRolesAutoBestowRoles
+	return (form.value.discordRolesAutoBestowRoles || '')
 		.split(',')
 		.map(id => id.trim())
 		.filter(id => !!id)
@@ -69,63 +57,6 @@ function toggleRole(roleId: string) {
 		current.push(roleId)
 	}
 	form.value.discordRolesAutoBestowRoles = current.join(',')
-}
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.discordEventJoinEnabled !== settingsData.value.discordEventJoinEnabled
-		|| form.value.discordEventJoinChannelId !== settingsData.value.discordEventJoinChannelId
-		|| form.value.discordEventJoinTemplate !== settingsData.value.discordEventJoinTemplate
-
-		|| form.value.discordRolesAutoBestowEnabled !== settingsData.value.discordRolesAutoBestowEnabled
-		|| form.value.discordRolesAutoBestowRoles !== settingsData.value.discordRolesAutoBestowRoles
-
-		|| form.value.discordEventLeaveEnabled !== settingsData.value.discordEventLeaveEnabled
-		|| form.value.discordEventLeaveChannelId !== settingsData.value.discordEventLeaveChannelId
-		|| form.value.discordEventLeaveTemplate !== settingsData.value.discordEventLeaveTemplate
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/admin/discord/events', {
-			method: 'PUT',
-			body: {
-				discordEventJoinEnabled: form.value.discordEventJoinEnabled,
-				discordEventJoinChannelId: form.value.discordEventJoinChannelId,
-				discordEventJoinTemplate: form.value.discordEventJoinTemplate,
-
-				discordRolesAutoBestowEnabled: form.value.discordRolesAutoBestowEnabled,
-				discordRolesAutoBestowRoles: form.value.discordRolesAutoBestowRoles,
-
-				discordEventLeaveEnabled: form.value.discordEventLeaveEnabled,
-				discordEventLeaveChannelId: form.value.discordEventLeaveChannelId,
-				discordEventLeaveTemplate: form.value.discordEventLeaveTemplate,
-			},
-		})
-		toast.success('Discord native event settings updated successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save event configuration')
-		console.error(err)
-	}
-	finally {
-		isSaving.value = false
-	}
 }
 </script>
 

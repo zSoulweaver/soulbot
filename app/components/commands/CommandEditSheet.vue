@@ -25,27 +25,62 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:open', 'saved'])
 
-// Local state fields
-const triggerName = ref('')
-const costValue = ref(0)
-const globalCooldownValue = ref(0)
-const userCooldownValue = ref(0)
-const isEnabled = ref(true)
-const isHidden = ref(false)
-const permissionValue = ref('everyone')
-const allowWhisperValue = ref(false)
-const whisperSilentResponseValue = ref(false)
-
 // Aliases edit states (node-scoped: only aliases targeting the open node)
-const aliasesList = ref<Alias[]>([])
 const showAddForm = ref(false)
 const newAliasTrigger = ref('')
 const newAliasOverrides = ref('')
 const editingKey = ref<string | null>(null)
 const editTrigger = ref('')
 const editOverrides = ref('')
-
 const isSaving = ref(false)
+
+interface CommandDraft {
+	trigger: string
+	cost: number
+	globalCooldown: number
+	userCooldown: number
+	enabled: boolean
+	hidden: boolean
+	permission: string
+	allowWhisper: boolean
+	whisperSilentResponse: boolean
+	aliases: Alias[]
+}
+
+const {
+	draft,
+	isModified,
+	reset: resetDraft,
+} = useFormDraft<CommandDraft>(
+	() => {
+		if (!props.command)
+			return null
+		return {
+			trigger: props.command.trigger || '',
+			cost: props.command.cost,
+			globalCooldown: props.command.globalCooldown,
+			userCooldown: props.command.userCooldown,
+			enabled: props.command.enabled,
+			hidden: Boolean(props.command.hidden),
+			permission: props.command.permission || 'everyone',
+			allowWhisper: Boolean(props.command.allowWhisper),
+			whisperSilentResponse: Boolean(props.command.whisperSilentResponse),
+			aliases: props.command.aliases || [],
+		}
+	},
+	() => ({
+		trigger: '',
+		cost: 0,
+		globalCooldown: 0,
+		userCooldown: 0,
+		enabled: true,
+		hidden: false,
+		permission: 'everyone',
+		allowWhisper: false,
+		whisperSilentResponse: false,
+		aliases: [],
+	}),
+)
 
 function cleanTriggerInput(value: string): string {
 	return value.trim().toLowerCase().replace(/^!/, '')
@@ -58,21 +93,10 @@ function splitOverrides(value: string): string[] {
 		.filter(Boolean)
 }
 
-// Populate values on edit open
+// Reset aliases UI sub-states on edit open
 watch(() => props.open, (isOpen) => {
-	if (isOpen && props.command) {
-		triggerName.value = props.command.trigger || ''
-		costValue.value = props.command.cost
-		globalCooldownValue.value = props.command.globalCooldown
-		userCooldownValue.value = props.command.userCooldown
-		isEnabled.value = props.command.enabled
-		isHidden.value = Boolean(props.command.hidden)
-		permissionValue.value = props.command.permission || 'everyone'
-		allowWhisperValue.value = Boolean(props.command.allowWhisper)
-		whisperSilentResponseValue.value = Boolean(props.command.whisperSilentResponse)
-
-		aliasesList.value = JSON.parse(JSON.stringify(props.command.aliases || []))
-
+	if (isOpen) {
+		resetDraft()
 		showAddForm.value = false
 		newAliasTrigger.value = ''
 		newAliasOverrides.value = ''
@@ -98,7 +122,7 @@ const baseCommandTrigger = computed(() => {
 	if (!props.command)
 		return ''
 	if (!scopePath.value) {
-		return cleanTriggerInput(triggerName.value) || props.command.id
+		return cleanTriggerInput(draft.value.trigger) || props.command.id
 	}
 	return (props.command.parentTriggerPath || `!${rootId.value}`).replace(/^!/, '')
 })
@@ -125,14 +149,14 @@ function addAliasLocally() {
 		return
 	}
 
-	if (aliasesList.value.some(alias => alias.trigger === trigger)) {
+	if (draft.value.aliases.some(alias => alias.trigger === trigger)) {
 		toast.error(`Alias '!${trigger}' already exists in this list`)
 		return
 	}
 
 	const overrides = splitOverrides(newAliasOverrides.value)
 
-	aliasesList.value.push({
+	draft.value.aliases.push({
 		trigger,
 		subcommand: scopePath.value,
 		overrideArgs: overrides.length > 0 ? overrides : null,
@@ -144,7 +168,7 @@ function addAliasLocally() {
 }
 
 function removeAliasLocally(trigger: string) {
-	aliasesList.value = aliasesList.value.filter(alias => alias.trigger !== trigger)
+	draft.value.aliases = draft.value.aliases.filter(alias => alias.trigger !== trigger)
 	if (editingKey.value === trigger) {
 		cancelEditAlias()
 	}
@@ -169,18 +193,18 @@ function saveEditAlias(originalTrigger: string) {
 		return
 	}
 
-	if (aliasesList.value.some(alias => alias.trigger !== originalTrigger && alias.trigger === trigger)) {
+	if (draft.value.aliases.some(alias => alias.trigger !== originalTrigger && alias.trigger === trigger)) {
 		toast.error(`Alias '!${trigger}' already exists in this list`)
 		return
 	}
 
-	const index = aliasesList.value.findIndex(alias => alias.trigger === originalTrigger)
+	const index = draft.value.aliases.findIndex(alias => alias.trigger === originalTrigger)
 	if (index === -1)
 		return
 
 	const overrides = splitOverrides(editOverrides.value)
-	aliasesList.value[index] = {
-		...aliasesList.value[index]!,
+	draft.value.aliases[index] = {
+		...draft.value.aliases[index]!,
 		trigger,
 		overrideArgs: overrides.length > 0 ? overrides : null,
 	}
@@ -188,12 +212,12 @@ function saveEditAlias(originalTrigger: string) {
 }
 
 async function saveAllConfig() {
-	if (!props.command || isSaving.value)
+	if (!props.command || isSaving.value || !isModified.value)
 		return
 	isSaving.value = true
 
 	try {
-		const cleanTrigger = cleanTriggerInput(triggerName.value) || null
+		const cleanTrigger = cleanTriggerInput(draft.value.trigger) || null
 
 		// Update primary command DB config
 		await $fetch('/api/commands/save', {
@@ -201,14 +225,14 @@ async function saveAllConfig() {
 			body: {
 				id: props.command.id,
 				trigger: cleanTrigger,
-				enabled: isEnabled.value,
-				cost: typeof costValue.value === 'number' && !Number.isNaN(costValue.value) ? costValue.value : 0,
-				globalCooldown: typeof globalCooldownValue.value === 'number' && !Number.isNaN(globalCooldownValue.value) ? globalCooldownValue.value : 0,
-				userCooldown: typeof userCooldownValue.value === 'number' && !Number.isNaN(userCooldownValue.value) ? userCooldownValue.value : 0,
-				permission: permissionValue.value,
-				allowWhisper: allowWhisperValue.value,
-				whisperSilentResponse: whisperSilentResponseValue.value,
-				hidden: isHidden.value,
+				enabled: draft.value.enabled,
+				cost: typeof draft.value.cost === 'number' && !Number.isNaN(draft.value.cost) ? draft.value.cost : 0,
+				globalCooldown: typeof draft.value.globalCooldown === 'number' && !Number.isNaN(draft.value.globalCooldown) ? draft.value.globalCooldown : 0,
+				userCooldown: typeof draft.value.userCooldown === 'number' && !Number.isNaN(draft.value.userCooldown) ? draft.value.userCooldown : 0,
+				permission: draft.value.permission,
+				allowWhisper: draft.value.allowWhisper,
+				whisperSilentResponse: draft.value.whisperSilentResponse,
+				hidden: draft.value.hidden,
 			},
 		})
 
@@ -219,7 +243,7 @@ async function saveAllConfig() {
 				body: {
 					commandId: rootId.value,
 					subcommand: scopePath.value,
-					aliases: aliasesList.value.map(alias => ({
+					aliases: draft.value.aliases.map(alias => ({
 						trigger: alias.trigger,
 						overrideArgs: alias.overrideArgs,
 					})),
@@ -308,10 +332,10 @@ function navigateToTemplateEditor() {
 					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Status</span>
 					<SettingsGroup>
 						<CommandStatusSettings
-							v-model:enabled="isEnabled"
-							v-model:allow-whisper="allowWhisperValue"
-							v-model:whisper-silent-response="whisperSilentResponseValue"
-							v-model:hidden="isHidden"
+							v-model:enabled="draft.enabled"
+							v-model:allow-whisper="draft.allowWhisper"
+							v-model:whisper-silent-response="draft.whisperSilentResponse"
+							v-model:hidden="draft.hidden"
 						/>
 					</SettingsGroup>
 				</div>
@@ -331,14 +355,14 @@ function navigateToTemplateEditor() {
 										{{ props?.command?.parentTriggerPath || '!' }}
 									</InputGroupAddon>
 									<InputGroupInput
-										v-model="triggerName"
+										v-model="draft.trigger"
 										placeholder="trigger"
 									/>
 								</InputGroup>
 							</SettingsGroupAction>
 						</SettingsGroupItem>
 
-						<CommandPermissionSelect v-model="permissionValue" />
+						<CommandPermissionSelect v-model="draft.permission" />
 					</SettingsGroup>
 				</div>
 
@@ -347,9 +371,9 @@ function navigateToTemplateEditor() {
 					<span class="text-xs font-bold tracking-wider text-muted-foreground select-none">Limits</span>
 					<SettingsGroup>
 						<CommandLimitsFields
-							v-model:cost="costValue"
-							v-model:global-cooldown="globalCooldownValue"
-							v-model:user-cooldown="userCooldownValue"
+							v-model:cost="draft.cost"
+							v-model:global-cooldown="draft.globalCooldown"
+							v-model:user-cooldown="draft.userCooldown"
 							:disabled="props.command?.hasHandler === false"
 						/>
 					</SettingsGroup>
@@ -409,7 +433,7 @@ function navigateToTemplateEditor() {
 						</SettingsGroupItem>
 
 						<!-- Alias Rows -->
-						<template v-for="alias in aliasesList" :key="alias.trigger">
+						<template v-for="alias in draft.aliases" :key="alias.trigger">
 							<SettingsGroupItem v-if="editingKey === alias.trigger" class="sm:flex-col sm:items-stretch sm:gap-3">
 								<SettingsGroupContent class="sm:pr-0">
 									<SettingsGroupLabel>Edit Alias Trigger</SettingsGroupLabel>
@@ -464,7 +488,7 @@ function navigateToTemplateEditor() {
 					</SettingsGroup>
 
 					<div
-						v-if="aliasesList.length === 0"
+						v-if="draft.aliases.length === 0"
 						class="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground"
 					>
 						No aliases configured for this node. Click "Add Alias" to create one.
@@ -479,7 +503,7 @@ function navigateToTemplateEditor() {
 						Cancel
 					</Button>
 				</SheetClose>
-				<Button :disabled="isSaving" @click="saveAllConfig">
+				<Button :disabled="!isModified || isSaving" @click="saveAllConfig">
 					<Save data-icon="inline-start" />
 					{{ isSaving ? 'Saving...' : 'Save Changes' }}
 				</Button>

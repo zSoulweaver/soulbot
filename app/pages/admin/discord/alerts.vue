@@ -1,202 +1,28 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { toast } from 'vue-sonner'
+import { computed } from 'vue'
 import DiscordAlertConfig from '~/components/discord/DiscordAlertConfig.vue'
 
 type AlertsSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/alerts.get').default>>
 
-// Non-blocking fetch of settings and guild text channels
-const { data: settingsData, refresh: refreshSettings, pending: loading } = useFetch<AlertsSettings>('/api/admin/discord/alerts')
-const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
+const {
+	form,
+	isModified,
+	isSaving,
+	loading,
+	refresh: refreshSettings,
+	discard: discardChanges,
+	save: saveSettings,
+} = useSettingsForm<AlertsSettings>('/api/admin/discord/alerts', {
+	ignoreKeys: ['isDiscordConnected'],
+	successMessage: 'Discord alert settings updated successfully!',
+})
 
+const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
 const channels = computed(() => channelsResponse.value || [])
 
 useHead({
 	title: 'Twitch Event Alerts',
 })
-
-const form = ref<AlertsSettings>({
-	discordAlertFollowEnabled: false,
-	discordAlertFollowChannelId: '',
-	discordAlertFollowTemplate: '',
-
-	discordAlertSubEnabled: false,
-	discordAlertSubChannelId: '',
-	discordAlertSubTemplate: '',
-
-	discordAlertGiftEnabled: false,
-	discordAlertGiftChannelId: '',
-	discordAlertGiftTemplate: '',
-
-	discordAlertCheerEnabled: false,
-	discordAlertCheerChannelId: '',
-	discordAlertCheerTemplate: '',
-
-	discordAlertRaidEnabled: false,
-	discordAlertRaidChannelId: '',
-	discordAlertRaidTemplate: '',
-
-	discordAlertLiveEnabled: false,
-	discordAlertLiveChannelId: '',
-	discordAlertLiveTemplate: '',
-	discordAlertLiveRemoveOffline: false,
-
-	discordAlertOfflineEnabled: false,
-	discordAlertOfflineChannelId: '',
-	discordAlertOfflineTemplate: '',
-
-	discordAlertBanEnabled: false,
-	discordAlertBanChannelId: '',
-	discordAlertBanTemplate: '',
-
-	discordAlertTimeoutEnabled: false,
-	discordAlertTimeoutChannelId: '',
-	discordAlertTimeoutTemplate: '',
-
-	discordAlertUnbanEnabled: false,
-	discordAlertUnbanChannelId: '',
-	discordAlertUnbanTemplate: '',
-
-	discordAlertMessageDeleteEnabled: false,
-	discordAlertMessageDeleteChannelId: '',
-	discordAlertMessageDeleteTemplate: '',
-
-	isDiscordConnected: false,
-})
-
-const isSaving = ref(false)
-
-// Sync values when fetched
-watch(settingsData, (newData) => {
-	if (newData) {
-		form.value = { ...newData }
-	}
-}, { immediate: true })
-
-const isModified = computed(() => {
-	if (!settingsData.value)
-		return false
-	return (
-		form.value.discordAlertFollowEnabled !== settingsData.value.discordAlertFollowEnabled
-		|| form.value.discordAlertFollowChannelId !== settingsData.value.discordAlertFollowChannelId
-		|| form.value.discordAlertFollowTemplate !== settingsData.value.discordAlertFollowTemplate
-
-		|| form.value.discordAlertSubEnabled !== settingsData.value.discordAlertSubEnabled
-		|| form.value.discordAlertSubChannelId !== settingsData.value.discordAlertSubChannelId
-		|| form.value.discordAlertSubTemplate !== settingsData.value.discordAlertSubTemplate
-
-		|| form.value.discordAlertGiftEnabled !== settingsData.value.discordAlertGiftEnabled
-		|| form.value.discordAlertGiftChannelId !== settingsData.value.discordAlertGiftChannelId
-		|| form.value.discordAlertGiftTemplate !== settingsData.value.discordAlertGiftTemplate
-
-		|| form.value.discordAlertCheerEnabled !== settingsData.value.discordAlertCheerEnabled
-		|| form.value.discordAlertCheerChannelId !== settingsData.value.discordAlertCheerChannelId
-		|| form.value.discordAlertCheerTemplate !== settingsData.value.discordAlertCheerTemplate
-
-		|| form.value.discordAlertRaidEnabled !== settingsData.value.discordAlertRaidEnabled
-		|| form.value.discordAlertRaidChannelId !== settingsData.value.discordAlertRaidChannelId
-		|| form.value.discordAlertRaidTemplate !== settingsData.value.discordAlertRaidTemplate
-
-		|| form.value.discordAlertLiveEnabled !== settingsData.value.discordAlertLiveEnabled
-		|| form.value.discordAlertLiveChannelId !== settingsData.value.discordAlertLiveChannelId
-		|| form.value.discordAlertLiveTemplate !== settingsData.value.discordAlertLiveTemplate
-		|| form.value.discordAlertLiveRemoveOffline !== settingsData.value.discordAlertLiveRemoveOffline
-
-		|| form.value.discordAlertOfflineEnabled !== settingsData.value.discordAlertOfflineEnabled
-		|| form.value.discordAlertOfflineChannelId !== settingsData.value.discordAlertOfflineChannelId
-		|| form.value.discordAlertOfflineTemplate !== settingsData.value.discordAlertOfflineTemplate
-
-		|| form.value.discordAlertBanEnabled !== settingsData.value.discordAlertBanEnabled
-		|| form.value.discordAlertBanChannelId !== settingsData.value.discordAlertBanChannelId
-		|| form.value.discordAlertBanTemplate !== settingsData.value.discordAlertBanTemplate
-
-		|| form.value.discordAlertTimeoutEnabled !== settingsData.value.discordAlertTimeoutEnabled
-		|| form.value.discordAlertTimeoutChannelId !== settingsData.value.discordAlertTimeoutChannelId
-		|| form.value.discordAlertTimeoutTemplate !== settingsData.value.discordAlertTimeoutTemplate
-
-		|| form.value.discordAlertUnbanEnabled !== settingsData.value.discordAlertUnbanEnabled
-		|| form.value.discordAlertUnbanChannelId !== settingsData.value.discordAlertUnbanChannelId
-		|| form.value.discordAlertUnbanTemplate !== settingsData.value.discordAlertUnbanTemplate
-
-		|| form.value.discordAlertMessageDeleteEnabled !== settingsData.value.discordAlertMessageDeleteEnabled
-		|| form.value.discordAlertMessageDeleteChannelId !== settingsData.value.discordAlertMessageDeleteChannelId
-		|| form.value.discordAlertMessageDeleteTemplate !== settingsData.value.discordAlertMessageDeleteTemplate
-	)
-})
-
-function discardChanges() {
-	if (settingsData.value) {
-		form.value = { ...settingsData.value }
-		toast.info('Discarded unsaved changes')
-	}
-}
-
-async function saveSettings() {
-	if (isSaving.value)
-		return
-
-	isSaving.value = true
-	try {
-		await $fetch('/api/admin/discord/alerts', {
-			method: 'PUT',
-			body: {
-				discordAlertFollowEnabled: form.value.discordAlertFollowEnabled,
-				discordAlertFollowChannelId: form.value.discordAlertFollowChannelId,
-				discordAlertFollowTemplate: form.value.discordAlertFollowTemplate,
-
-				discordAlertSubEnabled: form.value.discordAlertSubEnabled,
-				discordAlertSubChannelId: form.value.discordAlertSubChannelId,
-				discordAlertSubTemplate: form.value.discordAlertSubTemplate,
-
-				discordAlertGiftEnabled: form.value.discordAlertGiftEnabled,
-				discordAlertGiftChannelId: form.value.discordAlertGiftChannelId,
-				discordAlertGiftTemplate: form.value.discordAlertGiftTemplate,
-
-				discordAlertCheerEnabled: form.value.discordAlertCheerEnabled,
-				discordAlertCheerChannelId: form.value.discordAlertCheerChannelId,
-				discordAlertCheerTemplate: form.value.discordAlertCheerTemplate,
-
-				discordAlertRaidEnabled: form.value.discordAlertRaidEnabled,
-				discordAlertRaidChannelId: form.value.discordAlertRaidChannelId,
-				discordAlertRaidTemplate: form.value.discordAlertRaidTemplate,
-
-				discordAlertLiveEnabled: form.value.discordAlertLiveEnabled,
-				discordAlertLiveChannelId: form.value.discordAlertLiveChannelId,
-				discordAlertLiveTemplate: form.value.discordAlertLiveTemplate,
-				discordAlertLiveRemoveOffline: form.value.discordAlertLiveRemoveOffline,
-
-				discordAlertOfflineEnabled: form.value.discordAlertOfflineEnabled,
-				discordAlertOfflineChannelId: form.value.discordAlertOfflineChannelId,
-				discordAlertOfflineTemplate: form.value.discordAlertOfflineTemplate,
-
-				discordAlertBanEnabled: form.value.discordAlertBanEnabled,
-				discordAlertBanChannelId: form.value.discordAlertBanChannelId,
-				discordAlertBanTemplate: form.value.discordAlertBanTemplate,
-
-				discordAlertTimeoutEnabled: form.value.discordAlertTimeoutEnabled,
-				discordAlertTimeoutChannelId: form.value.discordAlertTimeoutChannelId,
-				discordAlertTimeoutTemplate: form.value.discordAlertTimeoutTemplate,
-
-				discordAlertUnbanEnabled: form.value.discordAlertUnbanEnabled,
-				discordAlertUnbanChannelId: form.value.discordAlertUnbanChannelId,
-				discordAlertUnbanTemplate: form.value.discordAlertUnbanTemplate,
-
-				discordAlertMessageDeleteEnabled: form.value.discordAlertMessageDeleteEnabled,
-				discordAlertMessageDeleteChannelId: form.value.discordAlertMessageDeleteChannelId,
-				discordAlertMessageDeleteTemplate: form.value.discordAlertMessageDeleteTemplate,
-			},
-		})
-		toast.success('Discord alerts configuration updated successfully!')
-		await refreshSettings()
-	}
-	catch (err: any) {
-		toast.error(err.data?.statusMessage || 'Failed to save alerts configuration')
-		console.error(err)
-	}
-	finally {
-		isSaving.value = false
-	}
-}
 </script>
 
 <template>

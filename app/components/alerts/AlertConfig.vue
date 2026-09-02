@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Bell, BellOff, PiggyBank } from '@lucide/vue'
+import { Bell, BellOff, MessageSquare, PiggyBank } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import { ConfigAccordion } from '~/components/ui/config-accordion'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '~/components/ui/item'
 import { Label } from '~/components/ui/label'
@@ -31,85 +30,96 @@ const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 
 const isExpanded = ref(false)
 
-// Auto-expand accordion if settings are enabled
+// Auto-expand/collapse accordion logic based on toggles
 watch(
 	[alertEnabled, pointsEnabled],
-	([newAlert, newPoints]) => {
-		if (newAlert || newPoints) {
-			isExpanded.value = true
+	([newAlert, newPoints], [oldAlert, oldPoints]) => {
+		if (oldAlert !== undefined && oldPoints !== undefined) {
+			if (newAlert || newPoints) {
+				isExpanded.value = true
+			}
+			else if (!newAlert && !newPoints) {
+				isExpanded.value = false
+			}
 		}
 	},
-	{ immediate: true },
+	{ immediate: false },
 )
-
-function toggleMaster(enabled: boolean) {
-	alertEnabled.value = enabled
-	if (!props.hidePoints) {
-		pointsEnabled.value = enabled
-	}
-}
 </script>
 
 <template>
 	<ConfigAccordion
-		v-model:is-expanded="isExpanded"
+		v-model="isExpanded"
 		:title="props.title"
 		:description="props.description"
 	>
-		<template #badge>
-			<Badge
+		<template #icon>
+			<Bell
 				v-if="alertEnabled || (!props.hidePoints && pointsEnabled)"
-				variant="outline"
-				class="
-					border-emerald-500/25 bg-emerald-500/10 text-emerald-600
-					dark:text-emerald-400
-				"
-			>
-				Active
-			</Badge>
-			<Badge
+				class="size-5 text-primary transition-colors"
+			/>
+			<BellOff
 				v-else
-				variant="outline"
-				class="border-muted-foreground/20 text-muted-foreground"
-			>
-				Disabled
-			</Badge>
+				class="
+					size-5 text-muted-foreground transition-colors
+					group-hover:text-primary
+				"
+			/>
 		</template>
 
-		<template #header-actions>
-			<div class="flex items-center gap-1">
-				<Button
-					v-if="alertEnabled || (!props.hidePoints && pointsEnabled)"
-					variant="ghost"
-					size="sm"
-					class="
-						h-8 gap-1.5 text-xs text-muted-foreground
-						hover:text-foreground
-					"
-					@click.stop="toggleMaster(false)"
+		<template #header-action>
+			<!-- Right-aligned Status Badges -->
+			<div class="flex items-center gap-2 select-none">
+				<!-- Points Badge -->
+				<template v-if="!props.hidePoints">
+					<Badge
+						v-if="pointsEnabled"
+						variant="secondary"
+						class="
+							gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600
+							dark:text-emerald-400
+						"
+					>
+						<PiggyBank class="size-3" />
+						+{{ pointsReward }} points
+					</Badge>
+					<Badge
+						v-else
+						variant="secondary"
+						class="gap-1 opacity-40"
+					>
+						<PiggyBank class="size-3" />
+						Points disabled
+					</Badge>
+				</template>
+
+				<!-- Chat Alert Badge -->
+				<Badge
+					v-if="alertEnabled"
+					variant="secondary"
+					class="gap-1 border-primary/20 bg-primary/10 text-primary"
 				>
-					<BellOff class="size-3.5" />
-					Disable All
-				</Button>
-				<Button
+					<MessageSquare class="size-3" />
+					Chat alert
+				</Badge>
+				<Badge
 					v-else
-					variant="ghost"
-					size="sm"
-					class="
-						h-8 gap-1.5 text-xs text-muted-foreground
-						hover:text-foreground
-					"
-					@click.stop="toggleMaster(true)"
+					variant="secondary"
+					class="gap-1 opacity-40"
 				>
-					<Bell class="size-3.5" />
-					Enable All
-				</Button>
+					<MessageSquare class="size-3" />
+					Chat disabled
+				</Badge>
 			</div>
 		</template>
 
-		<div class="flex flex-col gap-6 pt-2">
+		<!-- Two column grid for Points vs Chat configuration -->
+		<div
+			class="grid grid-cols-1 gap-12 pt-2"
+			:class="{ 'md:grid-cols-2': !props.hidePoints }"
+		>
 			<!-- Points Reward Settings -->
-			<div v-if="!props.hidePoints" class="flex flex-col gap-4 border-b border-border/50 pb-6">
+			<div v-if="!props.hidePoints" class="flex flex-col gap-4">
 				<Item class="border-none bg-transparent px-0 py-2 shadow-none">
 					<ItemContent>
 						<ItemTitle class="flex items-center gap-2">
@@ -117,7 +127,7 @@ function toggleMaster(enabled: boolean) {
 							Reward Points
 						</ItemTitle>
 						<ItemDescription>
-							Automatically grant channel currency to the chatter for this event.
+							Reward viewers with loyalty points on this event.
 						</ItemDescription>
 					</ItemContent>
 					<ItemActions>

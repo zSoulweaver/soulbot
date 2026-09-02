@@ -1,6 +1,6 @@
 import { and, desc, eq, like, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
-import { eventsLog } from '~~/server/database/schema'
+import { eventsLog, users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
 
@@ -34,8 +34,20 @@ export default defineEventHandler(async (event) => {
 	const count = countRes[0]?.count || 0
 
 	const items = await db
-		.select()
+		.select({
+			id: eventsLog.id,
+			type: eventsLog.type,
+			userName: eventsLog.userName,
+			displayName: eventsLog.displayName,
+			metadata: eventsLog.metadata,
+			createdAt: eventsLog.createdAt,
+			image: users.image,
+		})
 		.from(eventsLog)
+		.leftJoin(users, or(
+			eq(users.username, eventsLog.userName),
+			eq(users.displayName, eventsLog.displayName),
+		))
 		.where(whereClause)
 		.orderBy(desc(eventsLog.createdAt))
 		.limit(limit)

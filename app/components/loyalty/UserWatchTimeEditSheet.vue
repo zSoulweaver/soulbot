@@ -2,6 +2,7 @@
 import { SaveIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '~/components/ui/item'
 import {
 	SettingsGroup,
@@ -17,6 +18,7 @@ interface User {
 	username: string
 	displayName: string
 	watchTime: number
+	image?: string | null
 }
 
 const props = defineProps<{
@@ -81,6 +83,10 @@ async function saveAdjustment() {
 			<div class="flex flex-col gap-6 overflow-y-auto px-4 py-2">
 				<!-- Selected User Banner Item (Using built-in Item components) -->
 				<Item v-if="props.user" variant="outline" class="w-full border-border/60 bg-muted/40">
+					<Avatar class="size-10">
+						<AvatarImage :src="props.user.image || ''" :alt="props.user.displayName" />
+						<AvatarFallback>{{ props.user.displayName.charAt(0).toUpperCase() }}</AvatarFallback>
+					</Avatar>
 					<ItemContent>
 						<ItemTitle class="text-sm font-semibold text-foreground">
 							{{ props.user.displayName }}

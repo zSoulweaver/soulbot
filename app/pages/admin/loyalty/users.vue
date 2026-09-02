@@ -4,6 +4,7 @@ import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import UserPointsEditSheet from '~/components/loyalty/UserPointsEditSheet.vue'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { usePagination } from '~/composables/usePagination'
 
@@ -12,6 +13,7 @@ interface User {
 	username: string
 	displayName: string
 	points: number
+	image?: string | null
 }
 
 const {
@@ -58,6 +60,7 @@ function openAdjustSheetForNewUser() {
 		username: clean,
 		displayName: searchQuery.value.trim(),
 		points: 0,
+		image: null,
 	}
 	isAdjustSheetOpen.value = true
 }
@@ -65,13 +68,18 @@ function openAdjustSheetForNewUser() {
 // Table Columns
 const columnHelper = createColumnHelper<User>()
 const columns: any[] = [
-	columnHelper.accessor('username', {
-		header: 'User',
-		cell: info => info.getValue(),
-	}),
 	columnHelper.accessor('displayName', {
-		header: 'Display Name',
-		cell: info => info.getValue(),
+		header: 'User',
+		cell: info => h('div', { class: 'flex items-center gap-3 py-1' }, [
+			h(Avatar, { class: 'size-8 shrink-0' }, () => [
+				h(AvatarImage, { src: info.row.original.image || '', alt: info.getValue() }),
+				h(AvatarFallback, () => info.getValue().charAt(0).toUpperCase()),
+			]),
+			h('div', { class: 'flex flex-col gap-0.5 min-w-0' }, [
+				h('span', { class: 'text-sm font-medium text-foreground truncate' }, info.getValue()),
+				h('span', { class: 'text-xs text-muted-foreground truncate' }, `@${info.row.original.username}`),
+			]),
+		]),
 	}),
 	columnHelper.accessor('points', {
 		header: 'Points',

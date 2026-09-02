@@ -13,6 +13,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Spinner } from '~/components/ui/spinner'
 import { usePagination } from '~/composables/usePagination'
@@ -36,6 +37,7 @@ interface BlacklistedTrack {
 	artist: string
 	albumArt: string | null
 	addedBy: string
+	addedByImage?: string | null
 	createdAt: string
 }
 
@@ -115,7 +117,13 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('addedBy', {
 		header: 'Added By',
-		cell: info => h('span', { class: 'text-sm font-medium' }, info.getValue()),
+		cell: info => h('div', { class: 'flex items-center gap-2' }, [
+			h(Avatar, { class: 'size-6 shrink-0' }, () => [
+				h(AvatarImage, { src: info.row.original.addedByImage || '', alt: info.getValue() }),
+				h(AvatarFallback, { class: 'text-[10px]' }, () => info.getValue().charAt(0).toUpperCase()),
+			]),
+			h('span', { class: 'text-sm font-medium' }, info.getValue()),
+		]),
 	}),
 	columnHelper.accessor('createdAt', {
 		header: 'Blacklisted At',

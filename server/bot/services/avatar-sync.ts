@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, lt, notInArray } from 'drizzle-orm'
+import { and, desc, gt, inArray, lt, notInArray } from 'drizzle-orm'
 import { PollingEngine } from '~~/server/bot/core/polling-engine'
 import { db } from '~~/server/database'
 import { excludedUsers, users } from '~~/server/database/schema'
@@ -9,15 +9,17 @@ import { cleanUsername } from '../core/utils'
 const MISSING_CHECK_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 const FULL_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000 // 6 hours
 
-export interface LeaderboardUserEntry {
+export interface AvatarSyncUserEntry {
 	id: string
 	image: string | null
 }
 
+export type LeaderboardUserEntry = AvatarSyncUserEntry
+
 /**
- * Gathers unique user IDs for all top leaderboard chatters across points, watch time, and gambling.
+ * Gathers user IDs for top leaderboard chatters across points, watch time, and gambling.
  */
-export async function getTopLeaderboardUsers(): Promise<LeaderboardUserEntry[]> {
+export async function getLeaderboardUsers(): Promise<AvatarSyncUserEntry[]> {
 	const excludedList = await db.select({ id: excludedUsers.id }).from(excludedUsers)
 	const excludedIds = excludedList.map(u => u.id).filter(Boolean) as string[]
 
@@ -68,7 +70,7 @@ export async function getTopLeaderboardUsers(): Promise<LeaderboardUserEntry[]> 
 		.orderBy(desc(users.gambleNetPoints))
 		.limit(10)
 
-	const userMap = new Map<string, LeaderboardUserEntry>()
+	const userMap = new Map<string, AvatarSyncUserEntry>()
 	for (const u of [...topPoints, ...topWatchTime, ...topGainers, ...topLosers]) {
 		if (u.id) {
 			userMap.set(u.id, u)
@@ -79,7 +81,86 @@ export async function getTopLeaderboardUsers(): Promise<LeaderboardUserEntry[]> 
 }
 
 /**
- * Syncs user profile pictures for leaderboard chatters in batches of up to 100 via Twitch Helix.
+ * Gathers user IDs for moderators and administrators.
+ */
+export async function getModeratorUsers(): Promise<AvatarSyncUserEntry[]> {
+	const modUsers = await db
+		.select({
+			id: users.id,
+			image: users.image,
+		})
+		.from(users)
+		.where(inArray(users.role, ['admin', 'moderator']))
+
+	return modUsers
+}
+
+/**
+ * Gathers user IDs for excluded users and bot account.
+ */
+export async function getExcludedUsers(): Promise<AvatarSyncUserEntry[]> {
+	const excludedList = await db
+		.select({
+			id: excludedUsers.id,
+		})
+		.from(excludedUsers)
+
+	const excludedIds = excludedList.map(u => u.id).filter(Boolean) as string[]
+
+	const botToken = await getBotToken()
+	if (botToken?.userId) {
+		excludedIds.push(botToken.userId)
+	}
+
+	if (excludedIds.length === 0) {
+		return []
+	}
+
+	const dbUsers = await db
+		.select({
+			id: users.id,
+			image: users.image,
+		})
+		.from(users)
+		.where(inArray(users.id, excludedIds))
+
+	const foundIds = new Set(dbUsers.map(u => u.id))
+	const missingFromDb = excludedIds
+		.filter(id => !foundIds.has(id))
+		.map(id => ({ id, image: null }))
+
+	return [...dbUsers, ...missingFromDb]
+}
+
+/**
+ * Master getter combining all high-priority user targets (leaderboard, mods, exclusions).
+ */
+export async function getPriorityAvatarSyncUsers(): Promise<AvatarSyncUserEntry[]> {
+	const [leaderboardUsers, modUsers, excludedUsersList] = await Promise.all([
+		getLeaderboardUsers(),
+		getModeratorUsers(),
+		getExcludedUsers(),
+	])
+
+	const userMap = new Map<string, AvatarSyncUserEntry>()
+	for (const u of [...leaderboardUsers, ...modUsers, ...excludedUsersList]) {
+		if (u.id) {
+			userMap.set(u.id, u)
+		}
+	}
+
+	return Array.from(userMap.values())
+}
+
+/**
+ * Legacy alias for backwards compatibility.
+ */
+export async function getTopLeaderboardUsers(): Promise<LeaderboardUserEntry[]> {
+	return getLeaderboardUsers()
+}
+
+/**
+ * Syncs user profile pictures for priority users in batches of up to 100 via Twitch Helix.
  */
 export async function syncLeaderboardAvatars(options: { missingOnly?: boolean } = {}) {
 	try {
@@ -89,14 +170,14 @@ export async function syncLeaderboardAvatars(options: { missingOnly?: boolean } 
 			return 0
 		}
 
-		const leaderboardUsers = await getTopLeaderboardUsers()
-		if (leaderboardUsers.length === 0) {
+		const priorityUsers = await getPriorityAvatarSyncUsers()
+		if (priorityUsers.length === 0) {
 			return 0
 		}
 
 		const targetUsers = options.missingOnly
-			? leaderboardUsers.filter(u => !u.image || u.image.trim() === '')
-			: leaderboardUsers
+			? priorityUsers.filter(u => !u.image || u.image.trim() === '')
+			: priorityUsers
 
 		if (targetUsers.length === 0) {
 			return 0
@@ -114,27 +195,36 @@ export async function syncLeaderboardAvatars(options: { missingOnly?: boolean } 
 
 			for (const twitchUser of twitchUsers) {
 				if (twitchUser.profilePictureUrl) {
-					await db.update(users)
-						.set({
-							image: twitchUser.profilePictureUrl,
-							displayName: twitchUser.displayName,
+					await db.insert(users)
+						.values({
+							id: twitchUser.id,
 							username: cleanUsername(twitchUser.name),
+							displayName: twitchUser.displayName,
+							image: twitchUser.profilePictureUrl,
 							updatedAt: new Date(),
 						})
-						.where(eq(users.id, twitchUser.id))
+						.onConflictDoUpdate({
+							target: users.id,
+							set: {
+								image: twitchUser.profilePictureUrl,
+								displayName: twitchUser.displayName,
+								username: cleanUsername(twitchUser.name),
+								updatedAt: new Date(),
+							},
+						})
 					updatedCount++
 				}
 			}
 		}
 
 		if (updatedCount > 0) {
-			botLogger.info({ updatedCount, missingOnly: !!options.missingOnly }, 'Successfully synchronized leaderboard user profile pictures')
+			botLogger.info({ updatedCount, missingOnly: !!options.missingOnly }, 'Successfully synchronized user profile pictures')
 		}
 
 		return updatedCount
 	}
 	catch (err) {
-		botLogger.error({ err }, 'Failed to synchronize leaderboard avatars from Twitch')
+		botLogger.error({ err }, 'Failed to synchronize avatars from Twitch')
 		return 0
 	}
 }

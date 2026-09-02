@@ -1,6 +1,6 @@
-import { desc, like, or, sql } from 'drizzle-orm'
+import { desc, eq, like, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
-import { excludedUsers } from '~~/server/database/schema'
+import { excludedUsers, users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
 import { getBotToken } from '~~/server/utils/twurple'
@@ -25,8 +25,16 @@ export default defineEventHandler(async (event) => {
 	const count = countRes[0]?.count || 0
 
 	const manual = await db
-		.select()
+		.select({
+			id: excludedUsers.id,
+			username: excludedUsers.username,
+			displayName: excludedUsers.displayName,
+			reason: excludedUsers.reason,
+			createdAt: excludedUsers.createdAt,
+			image: users.image,
+		})
 		.from(excludedUsers)
+		.leftJoin(users, eq(users.id, excludedUsers.id))
 		.where(conditions)
 		.orderBy(desc(excludedUsers.createdAt))
 		.limit(limit)
@@ -36,9 +44,14 @@ export default defineEventHandler(async (event) => {
 
 	const autoExclusions = []
 	if (botToken) {
+		const botDbUser = botToken.userId
+			? await db.select({ image: users.image }).from(users).where(eq(users.id, botToken.userId)).then(r => r[0])
+			: null
+
 		autoExclusions.push({
 			username: botToken.userName,
 			displayName: botToken.displayName,
+			image: botDbUser?.image || null,
 		})
 	}
 

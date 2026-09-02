@@ -1,6 +1,6 @@
-import { desc, like, or, sql } from 'drizzle-orm'
+import { desc, eq, like, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
-import { spotifyBlacklist } from '~~/server/database/schema'
+import { spotifyBlacklist, users } from '~~/server/database/schema'
 import { requireUserRole } from '~~/server/utils/auth'
 import { buildPaginationMeta, parsePaginationParams } from '~~/server/utils/pagination'
 
@@ -23,8 +23,21 @@ export default defineEventHandler(async (event) => {
 	const count = countRes[0]?.count || 0
 
 	const blacklistItems = await db
-		.select()
+		.select({
+			id: spotifyBlacklist.id,
+			trackId: spotifyBlacklist.trackId,
+			title: spotifyBlacklist.title,
+			artist: spotifyBlacklist.artist,
+			albumArt: spotifyBlacklist.albumArt,
+			addedBy: spotifyBlacklist.addedBy,
+			addedByImage: users.image,
+			createdAt: spotifyBlacklist.createdAt,
+		})
 		.from(spotifyBlacklist)
+		.leftJoin(users, or(
+			eq(users.displayName, spotifyBlacklist.addedBy),
+			eq(users.username, spotifyBlacklist.addedBy),
+		))
 		.where(conditions)
 		.orderBy(desc(spotifyBlacklist.createdAt))
 		.limit(limit)

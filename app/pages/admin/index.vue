@@ -9,6 +9,7 @@ import {
 import { useIntervalFn } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -496,38 +497,44 @@ function formatEventType(type: string) {
 
 											<!-- Details Cell -->
 											<TableCell class="py-3">
-												<div class="flex flex-col gap-0.5">
-													<span class="text-sm font-medium text-foreground">
-														{{ item.displayName }}
-														<span v-if="item.type === 'follow'" class="font-normal text-muted-foreground">
-															followed the channel!
+												<div class="flex items-center gap-3">
+													<Avatar class="size-8 shrink-0">
+														<AvatarImage :src="item.image || ''" :alt="item.displayName" />
+														<AvatarFallback>{{ item.displayName.charAt(0).toUpperCase() }}</AvatarFallback>
+													</Avatar>
+													<div class="flex flex-col gap-0.5">
+														<span class="text-sm font-medium text-foreground">
+															{{ item.displayName }}
+															<span v-if="item.type === 'follow'" class="font-normal text-muted-foreground">
+																followed the channel!
+															</span>
+															<span v-else-if="item.type === 'subscription'" class="font-normal text-muted-foreground">
+																subscribed to the channel!
+															</span>
+															<span v-else-if="item.type === 'gift'" class="font-normal text-muted-foreground">
+																gifted <span class="font-semibold text-foreground">{{ item.metadata?.giftCount }}</span> subscriptions!
+															</span>
+															<span v-else-if="item.type === 'cheer'" class="font-normal text-muted-foreground">
+																cheered <span class="font-semibold text-foreground">{{ item.metadata?.bitsCount }}</span> bits!
+															</span>
 														</span>
-														<span v-else-if="item.type === 'subscription'" class="font-normal text-muted-foreground">
-															subscribed to the channel!
-														</span>
-														<span v-else-if="item.type === 'gift'" class="font-normal text-muted-foreground">
-															gifted <span class="font-semibold text-foreground">{{ item.metadata?.giftCount }}</span> subscriptions!
-														</span>
-														<span v-else-if="item.type === 'cheer'" class="font-normal text-muted-foreground">
-															cheered <span class="font-semibold text-foreground">{{ item.metadata?.bitsCount }}</span> bits!
-														</span>
-													</span>
 
-													<!-- Sub Tier details -->
-													<span
-														v-if="item.type === 'subscription' && item.metadata?.tier"
-														class="text-xs font-medium text-muted-foreground"
-													>
-														Tier: {{ item.metadata.tier === '3000' ? 'Tier 3' : item.metadata.tier === '2000' ? 'Tier 2' : 'Tier 1' }}
-													</span>
+														<!-- Sub Tier details -->
+														<span
+															v-if="item.type === 'subscription' && item.metadata?.tier"
+															class="text-xs font-medium text-muted-foreground"
+														>
+															Tier: {{ item.metadata.tier === '3000' ? 'Tier 3' : item.metadata.tier === '2000' ? 'Tier 2' : 'Tier 1' }}
+														</span>
 
-													<!-- Cheer message details -->
-													<span
-														v-if="item.type === 'cheer' && item.metadata?.cheerMessage"
-														class="mt-0.5 line-clamp-1 max-w-md border-l-2 border-orange-500/30 pl-2 text-xs text-muted-foreground italic"
-													>
-														"{{ item.metadata.cheerMessage }}"
-													</span>
+														<!-- Cheer message details -->
+														<span
+															v-if="item.type === 'cheer' && item.metadata?.cheerMessage"
+															class="mt-0.5 line-clamp-1 max-w-md border-l-2 border-orange-500/30 pl-2 text-xs text-muted-foreground italic"
+														>
+															"{{ item.metadata.cheerMessage }}"
+														</span>
+													</div>
 												</div>
 											</TableCell>
 

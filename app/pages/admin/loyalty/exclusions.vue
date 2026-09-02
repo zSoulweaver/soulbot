@@ -4,6 +4,7 @@ import { PlusIcon, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
 import { computed, h, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import { Spinner } from '~/components/ui/spinner'
 import { usePagination } from '~/composables/usePagination'
@@ -58,9 +59,15 @@ const columnHelper = createColumnHelper<ExcludedUser>()
 const columns: any[] = [
 	columnHelper.accessor('displayName', {
 		header: 'User',
-		cell: info => h('div', { class: 'flex items-center gap-2' }, [
-			h('span', { class: 'font-semibold' }, info.getValue()),
-			h('span', { class: 'text-xs text-muted-foreground' }, `(${info.row.original.username})`),
+		cell: info => h('div', { class: 'flex items-center gap-3 py-1' }, [
+			h(Avatar, { class: 'size-8 shrink-0' }, () => [
+				h(AvatarImage, { src: info.row.original.image || '', alt: info.getValue() }),
+				h(AvatarFallback, () => info.getValue().charAt(0).toUpperCase()),
+			]),
+			h('div', { class: 'flex flex-col gap-0.5 min-w-0' }, [
+				h('span', { class: 'text-sm font-medium text-foreground truncate' }, info.getValue()),
+				h('span', { class: 'text-xs text-muted-foreground truncate' }, `@${info.row.original.username}`),
+			]),
 		]),
 	}),
 	columnHelper.accessor('reason', {
@@ -113,8 +120,16 @@ const columns: any[] = [
 			<AlertTitle>
 				System Exclusions
 			</AlertTitle>
-			<AlertDescription>
-				The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
+			<AlertDescription class="flex items-center gap-2">
+				<Avatar v-if="data?.autoExclusions?.[0]" class="size-6 shrink-0">
+					<AvatarImage :src="data.autoExclusions[0].image || ''" :alt="data.autoExclusions[0].displayName || 'bot'" />
+					<AvatarFallback class="text-[10px]">
+						{{ (data.autoExclusions[0].displayName || 'B').charAt(0).toUpperCase() }}
+					</AvatarFallback>
+				</Avatar>
+				<span>
+					The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
+				</span>
 			</AlertDescription>
 		</Alert>
 

@@ -189,6 +189,16 @@ async function confirmToggle() {
 		<AlertDialog :open="isConfirmOpen" @update:open="isConfirmOpen = $event">
 			<AlertDialogContent>
 				<AlertDialogHeader>
+					<div v-if="targetUser" class="mb-2 flex items-center gap-3">
+						<Avatar class="size-10">
+							<AvatarImage :src="targetUser.image || ''" :alt="targetUser.displayName" />
+							<AvatarFallback>{{ targetUser.displayName.charAt(0).toUpperCase() }}</AvatarFallback>
+						</Avatar>
+						<div class="flex flex-col text-left">
+							<span class="text-sm font-semibold text-foreground">{{ targetUser.displayName }}</span>
+							<span class="text-xs text-muted-foreground">@{{ targetUser.username }}</span>
+						</div>
+					</div>
 					<AlertDialogTitle v-if="targetAdminState">
 						Grant Administrator Permissions?
 					</AlertDialogTitle>

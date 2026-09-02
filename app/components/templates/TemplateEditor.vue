@@ -388,7 +388,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="flex flex-col gap-2">
+	<div class="@container flex flex-col gap-2">
 		<!-- Main Editor Frame -->
 		<div
 			class="
@@ -399,14 +399,14 @@ onBeforeUnmount(() => {
 		>
 			<!-- Top Toolbar -->
 			<div class="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 bg-muted/20 px-2.5 py-2">
-				<div class="flex flex-wrap items-center gap-1.5">
+				<div class="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
 					<!-- Insert Variable Dropdown / Popover -->
 					<Popover v-model:open="isPopoverOpen">
 						<PopoverTrigger as-child>
 							<Button
 								variant="outline"
 								size="sm"
-								class="h-7 gap-1.5 rounded-md px-2.5 text-xs font-medium"
+								class="h-7 shrink-0 gap-1.5 rounded-md px-2.5 text-xs font-medium"
 								:disabled="props.disabled"
 							>
 								<Plus class="size-3.5 text-primary" />
@@ -496,22 +496,29 @@ onBeforeUnmount(() => {
 						</PopoverContent>
 					</Popover>
 
-					<!-- Quick Insert Chips Row (matching button height, border-radius, and padding) -->
+					<!-- Quick Insert Chips Row (Container Query Responsive) -->
 					<div
 						v-if="props.showQuickChips && variableGroups.scoped.length > 0"
 						class="
-							hidden items-center gap-1
-							sm:flex
+							hidden items-center gap-1 overflow-hidden
+							@min-[420px]:flex
 						"
 					>
-						<Tooltip v-for="v in variableGroups.scoped.slice(0, 4)" :key="v.name">
+						<Tooltip v-for="(v, idx) in variableGroups.scoped.slice(0, 4)" :key="v.name">
 							<TooltipTrigger as-child>
 								<button
 									type="button"
 									class="
-										inline-flex h-7 items-center gap-1 rounded-md border border-border/60 bg-background/80 px-2 font-mono text-[11px] font-medium text-foreground transition-colors select-none
+										h-7 shrink-0 items-center gap-1 rounded-md border border-border/60 bg-background/80 px-2 font-mono text-[11px] font-medium text-foreground transition-colors select-none
 										hover:bg-accent hover:text-accent-foreground
 									"
+									:class="idx >= 2 ? (idx === 2 ? `
+										hidden
+										@min-[560px]:inline-flex
+									` : `
+										hidden
+										@min-[680px]:inline-flex
+									`) : 'inline-flex'"
 									:disabled="props.disabled"
 									@click="insertVariable(v.name)"
 								>
@@ -532,14 +539,14 @@ onBeforeUnmount(() => {
 				</div>
 
 				<!-- Right Actions: Preview Toggle -->
-				<div class="flex items-center gap-1">
+				<div class="flex shrink-0 items-center gap-1">
 					<Tooltip>
 						<TooltipTrigger as-child>
 							<Button
 								variant="ghost"
 								size="sm"
 								class="
-									h-7 rounded-md px-2 text-xs font-medium text-muted-foreground
+									h-7 shrink-0 rounded-md px-2 text-xs font-medium text-muted-foreground
 									hover:text-foreground
 								"
 								:class="{ 'bg-accent text-accent-foreground': showPreview }"

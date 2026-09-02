@@ -115,8 +115,11 @@ watch(
 
 		<!-- Two column grid for Points vs Chat configuration -->
 		<div
-			class="grid grid-cols-1 gap-12 pt-2"
-			:class="{ 'md:grid-cols-2': !props.hidePoints }"
+			class="
+				grid grid-cols-1 gap-8 pt-2
+				xl:gap-12
+			"
+			:class="{ 'xl:grid-cols-2': !props.hidePoints }"
 		>
 			<!-- Points Reward Settings -->
 			<div v-if="!props.hidePoints" class="flex flex-col gap-4">

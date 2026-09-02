@@ -1,11 +1,10 @@
 import { defineCommandVariable } from '../define-command-variable'
 
 /**
- * Sender variable resolver: $(sender), $(user), $(user.name), $(user.id)
+ * Sender variable resolver: $(sender), $(sender.name), $(sender.id)
  */
 export const senderVariable = defineCommandVariable({
 	name: 'sender',
-	aliases: ['user'],
 	description: 'Resolves metadata about the user who triggered the command.',
 	examples: [
 		{ syntax: '$(sender)', description: 'Display name of the sender.' },

@@ -1,11 +1,10 @@
 import { defineCommandVariable } from '../define-command-variable'
 
 /**
- * Target user variable resolver: $(touser), $(target)
+ * Target user variable resolver: $(touser)
  */
 export const touserVariable = defineCommandVariable({
 	name: 'touser',
-	aliases: ['target'],
 	description: 'Resolves to the first argument target user (stripped of @); defaults to the sender display name if empty.',
 	examples: [
 		{ syntax: '$(touser)', description: 'First argument target user (stripped of @); defaults to the sender display name if empty.' },

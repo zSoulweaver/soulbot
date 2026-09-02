@@ -97,7 +97,7 @@ describe('Discord API Routes', () => {
 		it('gET should return alerts config', async () => {
 			const res = await alertsGetHandler({} as any)
 			expect(res.discordAlertFollowEnabled).toBe(false)
-			expect(res.discordAlertFollowTemplate).toBe('Thank you for the follow, $(sender)!')
+			expect(res.discordAlertFollowTemplate).toBe('Thank you for the follow, $(follower)!')
 			expect(res.isDiscordConnected).toBe(true) // mocked
 		})
 
@@ -140,7 +140,7 @@ describe('Discord API Routes', () => {
 			expect(res.discordEventJoinEnabled).toBe(false)
 			expect(res.discordEventJoinTemplate).toBe('Welcome to $(server), $(user)!')
 			expect(res.discordEventLeaveEnabled).toBe(false)
-			expect(res.discordEventLeaveTemplate).toBe('$(username) has left the server.')
+			expect(res.discordEventLeaveTemplate).toBe('$(username) has left $(server).')
 			expect(res.isDiscordConnected).toBe(true)
 		})
 

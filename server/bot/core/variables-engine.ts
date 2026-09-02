@@ -89,9 +89,9 @@ async function resolveVariableExpression(
 		}
 	}
 
-	// 2. Check registered variables by exact rawName (e.g. user.points, sender, uptime)
+	// 2. Check registered variables by exact rawName (e.g. sender, uptime, points)
 	const exactMatch = registeredVariables.find(
-		v => v.name === rawName.toLowerCase() || v.aliases?.map(a => a.toLowerCase()).includes(rawName.toLowerCase()),
+		v => v.name === rawName.toLowerCase(),
 	)
 
 	if (exactMatch) {
@@ -104,13 +104,13 @@ async function resolveVariableExpression(
 		}
 	}
 
-	// 3. Fallback: Support period/dot-notation (e.g. $(user.name), $(user.id)) by splitting
+	// 3. Fallback: Support period/dot-notation (e.g. $(sender.name), $(sender.id)) by splitting
 	const dotParts = rawName.split('.')
 	const rootName = dotParts[0]?.toLowerCase() || ''
 	let extendedArgs = [...args]
 
 	if (dotParts.length > 1) {
-		// Prepend subfields to the arguments array (e.g. user.name -> ['name'])
+		// Prepend subfields to the arguments array (e.g. sender.name -> ['name'])
 		extendedArgs = [...dotParts.slice(1), ...extendedArgs]
 	}
 
@@ -120,9 +120,9 @@ async function resolveVariableExpression(
 		return ctx.rawArgs[index] || ''
 	}
 
-	// Find registered variable by rootName or rootName alias
+	// Find registered variable by rootName
 	const variableDef = registeredVariables.find(
-		v => v.name === rootName || v.aliases?.map(a => a.toLowerCase()).includes(rootName),
+		v => v.name === rootName,
 	)
 
 	if (variableDef) {

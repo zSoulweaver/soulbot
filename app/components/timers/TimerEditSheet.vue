@@ -3,6 +3,7 @@ import type { Timer, TimerMessage } from '~/types/timers'
 import { Plus, Save, Trash2 } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import {
 	SettingsGroup,
 	SettingsGroupAction,
@@ -210,18 +211,23 @@ async function saveConfig() {
 						<SettingsGroupItem
 							v-for="(msg, index) in draft.messages"
 							:key="index"
-							class="sm:flex-col sm:items-stretch sm:gap-3"
+							class="
+								transition-opacity duration-200
+								sm:flex-col sm:items-stretch sm:gap-3
+							"
+							:class="{
+								'opacity-50 focus-within:opacity-100 hover:opacity-100': !msg.enabled,
+							}"
 						>
 							<SettingsGroupContent class="sm:pr-0">
-								<SettingsGroupLabel :class="{ 'opacity-60': !msg.enabled }">
+								<SettingsGroupLabel>
 									Message {{ index + 1 }}
 								</SettingsGroupLabel>
 								<div class="flex w-full flex-col gap-2 pt-1">
-									<Textarea
+									<TemplateEditor
 										v-model="msg.text"
+										scope="timers.message"
 										placeholder="Enter chat message..."
-										rows="2"
-										class="text-sm"
 									/>
 									<div class="flex items-center justify-between">
 										<div class="flex items-center gap-2">

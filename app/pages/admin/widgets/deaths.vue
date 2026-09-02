@@ -3,7 +3,7 @@ import type { AdminWidgetResponse } from '~/types/widgets'
 import { Check, Copy, RefreshCcw } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
-import { Badge } from '~/components/ui/badge'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '~/components/ui/field'
@@ -144,10 +144,6 @@ async function confirmRegenerateKey() {
 	}
 }
 
-function insertTag(tag: string) {
-	template.value += tag
-}
-
 async function saveSettings() {
 	if (isSaving.value)
 		return
@@ -272,61 +268,15 @@ const TEXT_ALIGN_OPTIONS = [
 							<FieldLabel for="template-input">
 								Display Template
 							</FieldLabel>
-							<Input
+							<TemplateEditor
 								id="template-input"
 								v-model="template"
+								scope="widgets.deaths"
 								placeholder="$(game) Deaths: $(count)"
-								class="w-full"
 							/>
 							<FieldDescription>
-								Customize the text shown on stream. Click variable tags below to insert.
+								Customize the text shown on stream.
 							</FieldDescription>
-							<div class="mt-2 flex flex-wrap items-center gap-2">
-								<span class="text-xs font-medium text-muted-foreground">Variables:</span>
-								<Badge
-									variant="secondary"
-									class="
-										cursor-pointer
-										hover:bg-accent
-									"
-									@click="insertTag('$(count)')"
-								>
-									$(count)
-								</Badge>
-
-								<Badge
-									variant="secondary"
-									class="
-										cursor-pointer
-										hover:bg-accent
-									"
-									@click="insertTag('$(total)')"
-								>
-									$(total)
-								</Badge>
-
-								<Badge
-									variant="secondary"
-									class="
-										cursor-pointer
-										hover:bg-accent
-									"
-									@click="insertTag('$(counter)')"
-								>
-									$(counter)
-								</Badge>
-
-								<Badge
-									variant="secondary"
-									class="
-										cursor-pointer
-										hover:bg-accent
-									"
-									@click="insertTag('$(game)')"
-								>
-									$(game)
-								</Badge>
-							</div>
 						</Field>
 					</FieldGroup>
 

@@ -2,6 +2,7 @@
 import { Dices, HelpCircle, Sparkles } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Slider } from '~/components/ui/slider'
 
@@ -320,7 +321,7 @@ async function cancelBonusEvent() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Twitch chat message sent when the bonus event is triggered. Supports $(multiplier), $(threshold), $(duration), $(tickets).
+								Twitch chat message sent when the bonus event is triggered.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -330,7 +331,12 @@ async function cancelBonusEvent() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="bonusMessage" v-model="form.bonusMessage" placeholder="Start message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="bonusMessage"
+								v-model="form.bonusMessage"
+								scope="gambling.bonus_start"
+								placeholder="Start message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
@@ -338,7 +344,7 @@ async function cancelBonusEvent() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>End Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Twitch chat message sent when the bonus event ends. Supports $(multiplier), $(threshold), $(duration), $(tickets).
+								Twitch chat message sent when the bonus event ends.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -348,7 +354,12 @@ async function cancelBonusEvent() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="bonusEndMessage" v-model="form.bonusEndMessage" placeholder="End message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="bonusEndMessage"
+								v-model="form.bonusEndMessage"
+								scope="gambling.bonus_end"
+								placeholder="End message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 				</SettingsGroup>

@@ -3,19 +3,20 @@ import type { Command, Template } from '~/types/commands'
 import {
 	CornerDownRight,
 	Folder,
-	Search,
 	Terminal,
 } from '@lucide/vue'
-import { useClipboard } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import TemplateEditorCard from '~/components/commands/TemplateEditorCard.vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { Card } from '~/components/ui/card'
+import { Skeleton } from '~/components/ui/skeleton'
 import { Spinner } from '~/components/ui/spinner'
 
 const route = useRoute()
 const { data: commands, refresh: refreshCommands, pending: loading } = useFetch<Command[]>('/api/commands')
-const { data: globalVariables } = useFetch<any[]>('/api/commands/variables')
 
 const command = computed(() => {
 	if (!commands.value)
@@ -30,29 +31,6 @@ useHead({
 // Sub-navigation filter selection ('root' or subcommand name)
 const activePathFilter = ref('root')
 const isSaving = ref(false)
-
-// Global variables search & copy setup
-const varSearch = ref('')
-const { copy } = useClipboard()
-
-const filteredVariables = computed(() => {
-	if (!globalVariables.value)
-		return []
-	const search = varSearch.value.trim().toLowerCase()
-	if (!search)
-		return globalVariables.value
-
-	return globalVariables.value.filter(v =>
-		v.name.toLowerCase().includes(search)
-		|| v.description.toLowerCase().includes(search)
-		|| v.aliases?.some((a: string) => a.toLowerCase().includes(search)),
-	)
-})
-
-function copyVariable(variableSyntax: string) {
-	copy(variableSyntax)
-	toast.success(`Copied '${variableSyntax}' to clipboard!`)
-}
 
 // Flattened subcommands computed property
 const flatSubcommands = computed(() => {
@@ -254,14 +232,15 @@ function discardChanges() {
 				<AppRefreshButton :loading="loading" @click="refreshCommands" />
 			</template>
 			<ClientOnly>
-				<!-- Dynamic Left-Right Sidebar Workspace -->
+				<!-- Dynamic Workspace Grid with Subcommands -->
 				<div
+					v-if="flatSubcommands.length > 0"
 					class="
 						grid flex-1 grid-cols-1 items-start gap-6
 						xl:grid-cols-4
 					"
 				>
-					<!-- Left Sidebar: Triggers & Global Variables -->
+					<!-- Left Sidebar: Subcommand Triggers -->
 					<div
 						class="
 							flex flex-col gap-6
@@ -297,104 +276,40 @@ function discardChanges() {
 								</Button>
 
 								<!-- Subcommands options -->
-								<template v-if="flatSubcommands.length > 0">
-									<template v-for="sub in flatSubcommands" :key="sub.key">
-										<!-- Route group header (no handler) -->
-										<div
-											v-if="!sub.hasHandler"
-											class="flex w-full items-center justify-between gap-2 py-1.5 pr-4 text-muted-foreground/80 select-none"
-											:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
-										>
-											<div class="flex min-w-0 items-center gap-2">
-												<Folder class="size-3.5 shrink-0 text-muted-foreground/60" />
-												<span class="truncate text-left font-mono text-xs font-semibold">{{ sub.name }}</span>
-											</div>
-											<span class="shrink-0 text-[9px] font-bold tracking-wider text-muted-foreground/40 uppercase">Group</span>
+								<template v-for="sub in flatSubcommands" :key="sub.key">
+									<!-- Route group header (no handler) -->
+									<div
+										v-if="!sub.hasHandler"
+										class="flex w-full items-center justify-between gap-2 py-1.5 pr-4 text-muted-foreground/80 select-none"
+										:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
+									>
+										<div class="flex min-w-0 items-center gap-2">
+											<Folder class="size-3.5 shrink-0 text-muted-foreground/60" />
+											<span class="truncate text-left font-mono text-xs font-semibold">{{ sub.name }}</span>
 										</div>
+										<span class="shrink-0 text-[9px] font-bold tracking-wider text-muted-foreground/40 uppercase">Group</span>
+									</div>
 
-										<!-- Actual command option (has handler) -->
-										<Button
-											v-else
-											class="w-full justify-between gap-2 transition-all duration-200"
-											:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
-											:class="{ 'bg-secondary/80 font-bold': activePathFilter === sub.key }"
-											:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
-											@click="activePathFilter = sub.key"
-										>
-											<div class="flex min-w-0 items-center gap-2">
-												<CornerDownRight class="size-3.5 shrink-0 text-muted-foreground/60" />
-												<span class="truncate text-left font-mono text-xs">{{ sub.name }}</span>
-											</div>
-											<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
-												{{ sub.templates?.length || 0 }}
-											</Badge>
-										</Button>
-									</template>
+									<!-- Actual command option (has handler) -->
+									<Button
+										v-else
+										class="w-full justify-between gap-2 transition-all duration-200"
+										:variant="activePathFilter === sub.key ? 'secondary' : 'ghost'"
+										:class="{ 'bg-secondary/80 font-bold': activePathFilter === sub.key }"
+										:style="{ paddingLeft: `${(sub.depth * 12) + 12}px` }"
+										@click="activePathFilter = sub.key"
+									>
+										<div class="flex min-w-0 items-center gap-2">
+											<CornerDownRight class="size-3.5 shrink-0 text-muted-foreground/60" />
+											<span class="truncate text-left font-mono text-xs">{{ sub.name }}</span>
+										</div>
+										<Badge :variant="activePathFilter === sub.key ? 'default' : 'outline'" class="h-4 shrink-0 px-1 text-xs">
+											{{ sub.templates?.length || 0 }}
+										</Badge>
+									</Button>
 								</template>
 							</div>
 						</div>
-
-						<!-- Left Sidebar: Global & Custom Variables -->
-						<Card class="flex flex-col">
-							<CardHeader>
-								<CardTitle class="text-sm font-bold">
-									Global Variables
-								</CardTitle>
-								<CardDescription class="text-xs">
-									Global and utility variables that can be resolved in any command response. Click to copy.
-								</CardDescription>
-							</CardHeader>
-							<CardContent class="flex flex-col gap-3">
-								<!-- Search Input -->
-								<div class="relative w-full items-center">
-									<Input
-										v-model="varSearch"
-										placeholder="Search variables..."
-										class="h-9 pl-9 text-xs"
-									/>
-									<span class="absolute inset-y-0 inset-s-0 flex items-center justify-center px-3">
-										<Search class="size-3.5 text-muted-foreground" />
-									</span>
-								</div>
-
-								<!-- Scrollable List -->
-								<ScrollArea class="max-h-125 overflow-y-auto">
-									<div class="flex flex-col gap-2.5">
-										<div v-if="filteredVariables.length === 0" class="py-6 text-center text-muted-foreground italic select-none">
-											No matching variables found
-										</div>
-										<div
-											v-for="v in filteredVariables"
-											:key="v.name"
-											class="
-												flex flex-col gap-1.5 rounded-md border p-2 transition-colors
-												hover:bg-accent/40
-											"
-										>
-											<div class="flex flex-wrap items-center justify-between gap-2">
-												<Badge
-													variant="secondary"
-													class="
-														cursor-pointer font-mono text-xs font-bold transition-colors select-none
-														hover:bg-primary hover:text-primary-foreground
-													"
-													title="Click to copy variable"
-													@click="copyVariable(`$(${v.name})`)"
-												>
-													{{ `$(${v.name})` }}
-												</Badge>
-												<span v-if="v.aliases?.length" class="font-mono text-xs text-muted-foreground">
-													Alias: {{ v.aliases.map((a: string) => `$(${a})`).join(', ') }}
-												</span>
-											</div>
-											<p class="text-xs text-muted-foreground">
-												{{ v.description }}
-											</p>
-										</div>
-									</div>
-								</ScrollArea>
-							</CardContent>
-						</Card>
 					</div>
 
 					<!-- Workspace: Active Path Templates Editors -->
@@ -427,6 +342,31 @@ function discardChanges() {
 						</div>
 					</div>
 				</div>
+
+				<!-- Single Root Workspace (No Subcommands) -->
+				<div v-else class="flex flex-col gap-4">
+					<!-- Path Header details -->
+					<div>
+						<p class="text-sm font-bold tracking-wider uppercase">
+							Active Path - !{{ command.activeTrigger }}
+						</p>
+						<p class="text-xs text-muted-foreground">
+							{{ command.description }}
+						</p>
+					</div>
+
+					<div class="flex flex-col gap-4">
+						<TemplateEditorCard
+							v-for="template in activeTemplatesToDisplay"
+							:key="template.id"
+							v-model="editableTemplates[template.id]"
+							v-model:is-expanded="expandedTemplates[template.id]"
+							:template="template"
+							@reset="resetTemplateToDefault(template)"
+						/>
+					</div>
+				</div>
+
 				<template #fallback>
 					<!-- Skeleton loaders matching page layout -->
 					<div
@@ -449,20 +389,6 @@ function discardChanges() {
 									<Skeleton v-for="i in 5" :key="i" class="h-9 w-full" />
 								</div>
 							</div>
-
-							<!-- Global Variables Skeleton -->
-							<Card class="flex flex-col">
-								<CardHeader>
-									<Skeleton class="mb-1 h-5 w-28" />
-									<Skeleton class="h-3 w-full" />
-								</CardHeader>
-								<CardContent class="flex flex-col gap-3">
-									<Skeleton class="h-9 w-full" />
-									<div class="flex flex-col gap-2.5">
-										<Skeleton v-for="i in 3" :key="i" class="h-14 w-full" />
-									</div>
-								</CardContent>
-							</Card>
 						</div>
 
 						<!-- Workspace Skeletons -->

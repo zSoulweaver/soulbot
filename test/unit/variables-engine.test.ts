@@ -57,14 +57,36 @@ describe('Unified Variable & Template Engine', () => {
 		expect(rendered).toContain('Hey ViewerOne, you transferred 50')
 	})
 
-	it('should support nested dynamic variables', async () => {
-		const ctx = createTemplateContext('channel', {
+	it('should resolve scoped semantic variables cleanly', async () => {
+		const ctx = createTemplateContext('mysuperchannel', {
 			id: '123',
-			name: 'alice',
-			displayName: 'Alice',
+			name: 'chatter',
+			displayName: 'Chatter',
 		})
 
-		const result = await renderCustomTemplate('Sender uppercase check: $(sender)', ctx)
-		expect(result).toBe('Sender uppercase check: Alice')
+		const followResult = await renderCustomTemplate('Thank you for following, $(follower)!', ctx, {
+			'follower': 'NewFollower',
+			'follower.name': 'newfollower',
+			'follower.id': '999',
+		})
+		expect(followResult).toBe('Thank you for following, NewFollower!')
+
+		const subResult = await renderCustomTemplate('$(subscriber) subscribed at $(tier)!', ctx, {
+			subscriber: 'CoolSub',
+			tier: 'Tier 2',
+		})
+		expect(subResult).toBe('CoolSub subscribed at Tier 2!')
+
+		const raidResult = await renderCustomTemplate('$(raider) raided with $(viewers) viewers!', ctx, {
+			raider: 'BigBroadcaster',
+			viewers: 100,
+		})
+		expect(raidResult).toBe('BigBroadcaster raided with 100 viewers!')
+
+		const banResult = await renderCustomTemplate('$(target) was banned by $(moderator)!', ctx, {
+			target: 'TrollUser',
+			moderator: 'ChiefMod',
+		})
+		expect(banResult).toBe('TrollUser was banned by ChiefMod!')
 	})
 })

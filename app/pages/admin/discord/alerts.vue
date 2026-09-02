@@ -75,7 +75,7 @@ useHead({
 						v-model:alert-template="form.discordAlertFollowTemplate"
 						title="Follower Alerts"
 						description="Send a message to a Discord channel when a user follows your Twitch stream."
-						:variables="['$(sender) (Follower Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						scope="discord.alert.follow"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -87,7 +87,7 @@ useHead({
 						v-model:alert-template="form.discordAlertSubTemplate"
 						title="Subscription Alerts"
 						description="Send a message to a Discord channel when a viewer subscribes or resubscribes."
-						:variables="['$(sender) (Subscriber Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(subTier) (Tier)', '$(channel) (Channel)']"
+						scope="discord.alert.sub"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -99,7 +99,7 @@ useHead({
 						v-model:alert-template="form.discordAlertGiftTemplate"
 						title="Subscription Gift Alerts"
 						description="Send a message to a Discord channel when a viewer gifts subs to the community."
-						:variables="['$(sender) (Gifter Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(giftCount) (Gift Count)', '$(channel) (Channel)']"
+						scope="discord.alert.gift"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -111,7 +111,7 @@ useHead({
 						v-model:alert-template="form.discordAlertCheerTemplate"
 						title="Cheer Alerts"
 						description="Send a message to a Discord channel when a user cheers bits on your stream."
-						:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)', '$(channel) (Channel)']"
+						scope="discord.alert.cheer"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -123,7 +123,7 @@ useHead({
 						v-model:alert-template="form.discordAlertLiveTemplate"
 						title="Live Stream Alerts"
 						description="Send a rich embed message with Category, Stream Title, and Preview Image to Discord when your stream goes live."
-						:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						scope="discord.alert.live"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					>
@@ -153,7 +153,7 @@ useHead({
 						v-model:alert-template="form.discordAlertOfflineTemplate"
 						title="Stream Offline Alerts"
 						description="Send an announcement message to Discord when your stream goes offline."
-						:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+						scope="discord.alert.offline"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -165,7 +165,7 @@ useHead({
 						v-model:alert-template="form.discordAlertRaidTemplate"
 						title="Raid Alerts"
 						description="Send an announcement message to Discord when another channel raids you."
-						:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
+						scope="discord.alert.raid"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -177,7 +177,7 @@ useHead({
 						v-model:alert-template="form.discordAlertBanTemplate"
 						title="User Ban Alerts"
 						description="Send a message to Discord when a user is permanently banned from your stream."
-						:variables="['$(sender) (Banned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+						scope="discord.alert.ban"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -189,7 +189,7 @@ useHead({
 						v-model:alert-template="form.discordAlertTimeoutTemplate"
 						title="User Timeout Alerts"
 						description="Send a message to Discord when a user is timed out in your stream."
-						:variables="['$(sender) (Timed-out User)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(duration) (Timeout Duration in Seconds)']"
+						scope="discord.alert.timeout"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -201,7 +201,7 @@ useHead({
 						v-model:alert-template="form.discordAlertUnbanTemplate"
 						title="User Unban Alerts"
 						description="Send a message to Discord when a user is unbanned from your stream."
-						:variables="['$(sender) (Unbanned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+						scope="discord.alert.unban"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>
@@ -213,7 +213,7 @@ useHead({
 						v-model:alert-template="form.discordAlertMessageDeleteTemplate"
 						title="Message Delete Alerts"
 						description="Send a message to Discord when a chat message is deleted by a moderator."
-						:variables="['$(sender) (User Name)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+						scope="discord.alert.message_delete"
 						:channels="channels"
 						:disabled="!form.isDiscordConnected"
 					/>

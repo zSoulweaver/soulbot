@@ -57,11 +57,16 @@ export function registerAlertsEventSubHandlers() {
 		try {
 			await logTwitchEvent('follow', event.userName, event.userDisplayName)
 			const settings = await getAppSettings()
+			const followerVars = {
+				'follower': event.userDisplayName,
+				'follower.name': event.userName,
+				'follower.id': event.userId,
+			}
 			await renderAndPostAlert(
 				settings.eventsubAlertFollowEnabled,
 				settings.eventsubAlertFollow,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
-				undefined,
+				followerVars,
 				{ user: event.userName, type: 'follow' },
 			)
 			await renderAndPostDiscordAlert(
@@ -69,7 +74,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertFollowChannelId,
 				settings.discordAlertFollowTemplate,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
-				undefined,
+				followerVars,
 				{ user: event.userName, type: 'discord-follow' },
 			)
 		}
@@ -82,11 +87,17 @@ export function registerAlertsEventSubHandlers() {
 		try {
 			await logTwitchEvent('subscription', event.userName, event.userDisplayName, { tier: event.tier })
 			const settings = await getAppSettings()
+			const subVars = {
+				'subscriber': event.userDisplayName,
+				'subscriber.name': event.userName,
+				'subscriber.id': event.userId,
+				'tier': event.tier,
+			}
 			await renderAndPostAlert(
 				settings.eventsubAlertSubEnabled,
 				settings.eventsubAlertSub,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
-				{ subTier: event.tier },
+				subVars,
 				{ user: event.userName, type: 'subscription' },
 			)
 			await renderAndPostDiscordAlert(
@@ -94,7 +105,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertSubChannelId,
 				settings.discordAlertSubTemplate,
 				{ id: event.userId, name: event.userName, displayName: event.userDisplayName },
-				{ subTier: event.tier },
+				subVars,
 				{ user: event.userName, type: 'discord-subscription' },
 			)
 		}
@@ -107,6 +118,12 @@ export function registerAlertsEventSubHandlers() {
 		try {
 			await logTwitchEvent('gift', event.gifterName || 'anonymous', event.gifterDisplayName || 'Anonymous', { giftCount: event.amount })
 			const settings = await getAppSettings()
+			const giftVars = {
+				'gifter': event.gifterDisplayName || 'Anonymous',
+				'gifter.name': event.gifterName || 'anonymous',
+				'gifter.id': event.gifterId || 'anonymous',
+				'count': event.amount,
+			}
 			await renderAndPostAlert(
 				settings.eventsubAlertGiftEnabled,
 				settings.eventsubAlertGift,
@@ -115,7 +132,7 @@ export function registerAlertsEventSubHandlers() {
 					name: event.gifterName || 'anonymous',
 					displayName: event.gifterDisplayName || 'Anonymous',
 				},
-				{ giftCount: event.amount },
+				giftVars,
 				{ gifter: event.gifterName || 'anonymous', type: 'subscription.gift' },
 			)
 			await renderAndPostDiscordAlert(
@@ -127,7 +144,7 @@ export function registerAlertsEventSubHandlers() {
 					name: event.gifterName || 'anonymous',
 					displayName: event.gifterDisplayName || 'Anonymous',
 				},
-				{ giftCount: event.amount },
+				giftVars,
 				{ gifter: event.gifterName || 'anonymous', type: 'discord-subscription.gift' },
 			)
 		}
@@ -143,6 +160,13 @@ export function registerAlertsEventSubHandlers() {
 				cheerMessage: event.message,
 			})
 			const settings = await getAppSettings()
+			const cheerVars = {
+				'cheerer': event.userDisplayName || 'Anonymous',
+				'cheerer.name': event.userName || 'anonymous',
+				'cheerer.id': event.userId || 'anonymous',
+				'bits': event.bits,
+				'message': event.message,
+			}
 			await renderAndPostAlert(
 				settings.eventsubAlertCheerEnabled,
 				settings.eventsubAlertCheer,
@@ -151,10 +175,7 @@ export function registerAlertsEventSubHandlers() {
 					name: event.userName || 'anonymous',
 					displayName: event.userDisplayName || 'Anonymous',
 				},
-				{
-					bitsCount: event.bits,
-					cheerMessage: event.message,
-				},
+				cheerVars,
 				{ user: event.userName || 'anonymous', bits: event.bits, type: 'cheer' },
 			)
 			await renderAndPostDiscordAlert(
@@ -166,10 +187,7 @@ export function registerAlertsEventSubHandlers() {
 					name: event.userName || 'anonymous',
 					displayName: event.userDisplayName || 'Anonymous',
 				},
-				{
-					bitsCount: event.bits,
-					cheerMessage: event.message,
-				},
+				cheerVars,
 				{ user: event.userName || 'anonymous', bits: event.bits, type: 'discord-cheer' },
 			)
 		}
@@ -182,11 +200,17 @@ export function registerAlertsEventSubHandlers() {
 		try {
 			await logTwitchEvent('raid', event.raidingBroadcasterName, event.raidingBroadcasterDisplayName, { raidSize: event.viewers })
 			const settings = await getAppSettings()
+			const raidVars = {
+				'raider': event.raidingBroadcasterDisplayName,
+				'raider.name': event.raidingBroadcasterName,
+				'raider.id': event.raidingBroadcasterId,
+				'viewers': event.viewers,
+			}
 			await renderAndPostAlert(
 				settings.eventsubAlertRaidEnabled,
 				settings.eventsubAlertRaid,
 				{ id: event.raidingBroadcasterId, name: event.raidingBroadcasterName, displayName: event.raidingBroadcasterDisplayName },
-				{ raidSize: event.viewers },
+				raidVars,
 				{ raider: event.raidingBroadcasterName, viewers: event.viewers, type: 'raid' },
 			)
 			await renderAndPostDiscordAlert(
@@ -194,7 +218,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertRaidChannelId,
 				settings.discordAlertRaidTemplate,
 				{ id: event.raidingBroadcasterId, name: event.raidingBroadcasterName, displayName: event.raidingBroadcasterDisplayName },
-				{ raidSize: event.viewers },
+				raidVars,
 				{ raider: event.raidingBroadcasterName, viewers: event.viewers, type: 'discord-raid' },
 			)
 		}
@@ -219,15 +243,18 @@ export function registerAlertsEventSubHandlers() {
 				botLogger.error({ apiErr }, '[EventSub Alerts] Failed to fetch live metadata from Helix')
 			}
 
+			const liveVars = {
+				broadcaster: event.broadcasterDisplayName,
+				game: channelInfo?.gameName || 'Just Chatting',
+				title: channelInfo?.title || 'No Title',
+			}
+
 			// 1. Post to Twitch Chat
 			await renderAndPostAlert(
 				settings.eventsubAlertLiveEnabled,
 				settings.eventsubAlertLive,
 				{ id: event.broadcasterId, name: event.broadcasterName, displayName: event.broadcasterDisplayName },
-				{
-					liveGame: channelInfo?.gameName || 'Just Chatting',
-					liveTitle: channelInfo?.title || 'No Title',
-				},
+				liveVars,
 				{ user: event.broadcasterName, type: 'live' },
 			)
 
@@ -236,7 +263,11 @@ export function registerAlertsEventSubHandlers() {
 				const channel = (await getStreamerChannelName()) || 'streamer'
 				const eventUser = { id: event.broadcasterId, name: event.broadcasterName, displayName: event.broadcasterDisplayName }
 				const ctx = createTemplateContext(channel, eventUser)
-				const renderedMessage = await renderCustomTemplate(settings.discordAlertLiveTemplate || '@everyone $(sender) is now live on Twitch!', ctx)
+				const renderedMessage = await renderCustomTemplate(
+					settings.discordAlertLiveTemplate || '@everyone $(broadcaster) is now live on Twitch playing $(game) - $(title)!',
+					ctx,
+					liveVars,
+				)
 
 				const embed = {
 					title: `${event.broadcasterDisplayName} just went online on Twitch!`,
@@ -270,13 +301,16 @@ export function registerAlertsEventSubHandlers() {
 		try {
 			await logTwitchEvent('offline', event.broadcasterName, event.broadcasterDisplayName)
 			const settings = await getAppSettings()
+			const offlineVars = {
+				broadcaster: event.broadcasterDisplayName,
+			}
 
 			// 1. Post to Twitch Chat
 			await renderAndPostAlert(
 				settings.eventsubAlertOfflineEnabled,
 				settings.eventsubAlertOffline,
 				{ id: event.broadcasterId, name: event.broadcasterName, displayName: event.broadcasterDisplayName },
-				undefined,
+				offlineVars,
 				{ user: event.broadcasterName, type: 'offline' },
 			)
 
@@ -286,7 +320,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertOfflineChannelId,
 				settings.discordAlertOfflineTemplate,
 				{ id: event.broadcasterId, name: event.broadcasterName, displayName: event.broadcasterDisplayName },
-				undefined,
+				offlineVars,
 				{ user: event.broadcasterName, type: 'discord-offline' },
 			)
 
@@ -340,11 +374,18 @@ export function registerAlertsEventSubHandlers() {
 
 			if (isTimeout) {
 				await logTwitchEvent('timeout', event.userName, event.userDisplayName, { duration, moderator: event.moderatorName })
+				const timeoutVars = {
+					'target': event.userDisplayName,
+					'target.name': event.userName,
+					'target.id': event.userId,
+					'duration': duration,
+					'moderator': event.moderatorDisplayName || event.moderatorName || 'Moderator',
+				}
 				await renderAndPostAlert(
 					settings.eventsubAlertTimeoutEnabled,
 					settings.eventsubAlertTimeout,
 					eventUser,
-					{ duration },
+					timeoutVars,
 					{ user: event.userName, type: 'timeout' },
 				)
 				await renderAndPostDiscordAlert(
@@ -352,7 +393,7 @@ export function registerAlertsEventSubHandlers() {
 					settings.discordAlertTimeoutChannelId,
 					settings.discordAlertTimeoutTemplate,
 					eventUser,
-					{ duration },
+					timeoutVars,
 					{ user: event.userName, type: 'discord-timeout' },
 				)
 				await postDiscordModerationEmbed(
@@ -365,11 +406,17 @@ export function registerAlertsEventSubHandlers() {
 			}
 			else {
 				await logTwitchEvent('ban', event.userName, event.userDisplayName, { moderator: event.moderatorName })
+				const banVars = {
+					'target': event.userDisplayName,
+					'target.name': event.userName,
+					'target.id': event.userId,
+					'moderator': event.moderatorDisplayName || event.moderatorName || 'Moderator',
+				}
 				await renderAndPostAlert(
 					settings.eventsubAlertBanEnabled,
 					settings.eventsubAlertBan,
 					eventUser,
-					undefined,
+					banVars,
 					{ user: event.userName, type: 'ban' },
 				)
 				await renderAndPostDiscordAlert(
@@ -377,7 +424,7 @@ export function registerAlertsEventSubHandlers() {
 					settings.discordAlertBanChannelId,
 					settings.discordAlertBanTemplate,
 					eventUser,
-					undefined,
+					banVars,
 					{ user: event.userName, type: 'discord-ban' },
 				)
 				await postDiscordModerationEmbed(
@@ -401,11 +448,18 @@ export function registerAlertsEventSubHandlers() {
 			const eventUser = { id: event.userId, name: event.userName, displayName: event.userDisplayName }
 			const moderator = { name: event.moderatorName, displayName: event.moderatorDisplayName }
 
+			const unbanVars = {
+				'target': event.userDisplayName,
+				'target.name': event.userName,
+				'target.id': event.userId,
+				'moderator': event.moderatorDisplayName || event.moderatorName || 'Moderator',
+			}
+
 			await renderAndPostAlert(
 				settings.eventsubAlertUnbanEnabled,
 				settings.eventsubAlertUnban,
 				eventUser,
-				undefined,
+				unbanVars,
 				{ user: event.userName, type: 'unban' },
 			)
 			await renderAndPostDiscordAlert(
@@ -413,7 +467,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertUnbanChannelId,
 				settings.discordAlertUnbanTemplate,
 				eventUser,
-				undefined,
+				unbanVars,
 				{ user: event.userName, type: 'discord-unban' },
 			)
 			await postDiscordModerationEmbed(
@@ -436,11 +490,19 @@ export function registerAlertsEventSubHandlers() {
 			const eventUser = { id: event.userId, name: event.userName, displayName: event.userDisplayName }
 			const moderator = { name: event.moderatorName || 'Moderator', displayName: event.moderatorDisplayName || 'Moderator' }
 
+			const deleteVars = {
+				'target': event.userDisplayName,
+				'target.name': event.userName,
+				'target.id': event.userId,
+				'message': event.messageText,
+				'moderator': event.moderatorDisplayName || event.moderatorName || 'Moderator',
+			}
+
 			await renderAndPostAlert(
 				settings.eventsubAlertMessageDeleteEnabled,
 				settings.eventsubAlertMessageDelete,
 				eventUser,
-				undefined,
+				deleteVars,
 				{ user: event.userName, type: 'message_delete' },
 			)
 			await renderAndPostDiscordAlert(
@@ -448,7 +510,7 @@ export function registerAlertsEventSubHandlers() {
 				settings.discordAlertMessageDeleteChannelId,
 				settings.discordAlertMessageDeleteTemplate,
 				eventUser,
-				undefined,
+				deleteVars,
 				{ user: event.userName, type: 'discord-message_delete' },
 			)
 			await postDiscordModerationEmbed(

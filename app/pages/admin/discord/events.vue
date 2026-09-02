@@ -108,12 +108,7 @@ function toggleRole(roleId: string) {
 					v-model:alert-template="form.discordEventJoinTemplate"
 					title="Member Join Alert & Auto-Roles"
 					description="Trigger welcome messages and automatically assign server roles when a user joins."
-					:variables="[
-						'$(user) (User Mention)',
-						'$(username) (Plain Username)',
-						'$(server) (Server Name)',
-						'$(memberCount) (Total Server Members)',
-					]"
+					scope="discord.events.join"
 					:channels="channels"
 					:disabled="!form.isDiscordConnected"
 				>
@@ -170,12 +165,7 @@ function toggleRole(roleId: string) {
 					v-model:alert-template="form.discordEventLeaveTemplate"
 					title="Member Leave Alert"
 					description="Send a message to a text channel when a member leaves your Discord server."
-					:variables="[
-						'$(user) (Member Display Name)',
-						'$(username) (Plain Username)',
-						'$(server) (Server Name)',
-						'$(memberCount) (Total Server Members)',
-					]"
+					scope="discord.events.leave"
 					:channels="channels"
 					:disabled="!form.isDiscordConnected"
 				/>

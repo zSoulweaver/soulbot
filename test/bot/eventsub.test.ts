@@ -49,7 +49,7 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.follow.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.follow', value: '150', updatedAt: new Date() },
 				{ key: 'eventsub.alert.follow.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.follow', value: 'Thank you for following, $(sender)! You have $(points) points.', updatedAt: new Date() },
+				{ key: 'eventsub.alert.follow', value: 'Thank you for following, $(follower)! You have $(points) points.', updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
@@ -77,7 +77,7 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.sub.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.sub', value: '500', updatedAt: new Date() },
 				{ key: 'eventsub.alert.sub.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.sub', value: 'Welcome to the club, $(sender)!', updatedAt: new Date() },
+				{ key: 'eventsub.alert.sub', value: 'Welcome to the club, $(subscriber)!', updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
@@ -103,7 +103,7 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.gift.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.gift', value: '250', updatedAt: new Date() },
 				{ key: 'eventsub.alert.gift.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.gift', value: 'Thank you @$(sender) for gifting $(giftCount) sub(s) to the community!', updatedAt: new Date() },
+				{ key: 'eventsub.alert.gift', value: 'Thank you @$(gifter) for gifting $(count) sub(s) to the community!', updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
@@ -130,7 +130,7 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.cheer.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.cheer', value: '3', updatedAt: new Date() }, // 3 points per bit
 				{ key: 'eventsub.alert.cheer.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.cheer', value: 'Thank you @$(sender) for cheering $(bitsCount) bits! Msg: $(cheerMessage)', updatedAt: new Date() },
+				{ key: 'eventsub.alert.cheer', value: 'Thank you @$(cheerer) for cheering $(bits) bits! Msg: $(message)', updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
@@ -155,11 +155,11 @@ describe('Bot EventSub Integration', () => {
 		it('should post chat and Discord messages on incoming raid', async () => {
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.raid.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.raid', value: 'Thanks for raiding, $(sender) with $(raidSize) viewers!', updatedAt: new Date() },
+				{ key: 'eventsub.alert.raid', value: 'Thanks for raiding, $(raider) with $(viewers) viewers!', updatedAt: new Date() },
 				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.raid.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.raid.channel_id', value: 'ch-raid-123', updatedAt: new Date() },
-				{ key: 'discord.alerts.raid.template', value: '$(sender) raided with $(raidSize) viewers!', updatedAt: new Date() },
+				{ key: 'discord.alerts.raid.template', value: '$(raider) raided with $(viewers) viewers!', updatedAt: new Date() },
 			])
 			await refreshAppSettingsCache()
 
@@ -201,11 +201,11 @@ describe('Bot EventSub Integration', () => {
 
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.live.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.live', value: 'We are live playing $(liveGame): $(liveTitle)!', updatedAt: new Date() },
+				{ key: 'eventsub.alert.live', value: 'We are live playing $(game): $(title)!', updatedAt: new Date() },
 				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.channel_id', value: 'ch-live-123', updatedAt: new Date() },
-				{ key: 'discord.alerts.live.template', value: '@everyone We are now live!', updatedAt: new Date() },
+				{ key: 'discord.alerts.live.template', value: '@everyone $(broadcaster) is now live!', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.remove_offline', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.alert.offline.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.alert.offline', value: 'Stream over!', updatedAt: new Date() },
@@ -232,7 +232,7 @@ describe('Bot EventSub Integration', () => {
 			// Verify Discord live embed alert
 			expect(mockSendDiscordMessage).toHaveBeenCalledTimes(1)
 			expect((mockSendDiscordMessage as any).mock.calls[0]?.[0]).toBe('ch-live-123')
-			expect((mockSendDiscordMessage as any).mock.calls[0]?.[1]).toBe('@everyone We are now live!')
+			expect((mockSendDiscordMessage as any).mock.calls[0]?.[1]).toBe('@everyone StreamerChannel is now live!')
 			expect((mockSendDiscordMessage as any).mock.calls[0]?.[2]).toEqual({
 				title: 'StreamerChannel just went online on Twitch!',
 				url: 'https://twitch.tv/streamerchannel',

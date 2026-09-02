@@ -18,7 +18,7 @@ describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 			await db.insert(customCommands).values({
 				id: 'c1',
 				trigger: 'hello',
-				response: 'Hello $(sender)! Welcome to $(channel). Your ID is $(user.id) and username is $(user.name).',
+				response: 'Hello $(sender)! Welcome to $(channel). Your ID is $(sender.id) and username is $(sender.name).',
 				enabled: true,
 				cost: 0,
 				globalCooldown: 0,
@@ -194,7 +194,7 @@ describe('Bot Dynamic Custom Commands & Variable Templates Integration', () => {
 			await db.insert(customCommands).values({
 				id: 'c7',
 				trigger: 'balance',
-				response: 'You have $(user.points) dynamic: $(core.currency) | singular: $(core.currency_singular)',
+				response: 'You have $(points) dynamic: $(core.currency) | singular: $(core.currency_singular)',
 				enabled: true,
 				cost: 0,
 				globalCooldown: 0,

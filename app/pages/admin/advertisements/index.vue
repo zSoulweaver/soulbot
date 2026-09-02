@@ -2,6 +2,7 @@
 import { AlertCircle, Megaphone, Play, Timer } from '@lucide/vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { Spinner } from '~/components/ui/spinner'
 
 type AdSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/advertisements/settings.get').default>>
@@ -241,24 +242,16 @@ async function refreshAll() {
 					<FieldLabel for="adsAlertTemplate">
 						Warning Message Template
 					</FieldLabel>
-					<Textarea
+					<TemplateEditor
 						id="adsAlertTemplate"
 						v-model="form.adsAlertTemplate"
+						scope="ads.alert"
 						:disabled="!form.adsAlertsEnabled"
 						placeholder="e.g. Ad break of $(duration) seconds is starting in $(time)!"
-						rows="3"
-						class="w-full"
 					/>
 					<FieldDescription>
 						Customize the text posted to chat when an ad warning is triggered.
 					</FieldDescription>
-					<div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground select-none">
-						<span>Variables:</span>
-						<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(time)</code>
-						<span>(Milestone time e.g. "5 minutes")</span>
-						<code class="rounded-sm bg-muted px-1.5 py-0.5 font-mono">$(duration)</code>
-						<span>(Break length in seconds)</span>
-					</div>
 				</Field>
 			</FieldGroup>
 			<!-- Right Column: Status & Widget Panel -->

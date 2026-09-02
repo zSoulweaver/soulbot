@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { handleCommand } from '~~/server/bot/core/command-dispatcher'
 import { botEventBus } from '~~/server/bot/core/events'
 import { PollingEngine } from '~~/server/bot/core/polling-engine'
+import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { db } from '~~/server/database'
 import { timers } from '~~/server/database/schema'
@@ -147,11 +148,13 @@ export async function executeTimerCheck() {
 				await handleCommand(channelName, userName, messageToSend, rawMsg)
 			}
 			else {
+				const ctx = createTemplateContext(channelName)
+				const renderedMessage = await renderCustomTemplate(messageToSend, ctx)
 				botLogger.info(
-					{ timerId: timer.id, name: timer.name, message: messageToSend },
+					{ timerId: timer.id, name: timer.name, message: renderedMessage },
 					'[Timer Engine] Sending scheduled message to chat',
 				)
-				await sendRawChatMessage(channelName, messageToSend)
+				await sendRawChatMessage(channelName, renderedMessage)
 			}
 
 			const nextSentIndex = (foundIndex + 1) % allMessages.length

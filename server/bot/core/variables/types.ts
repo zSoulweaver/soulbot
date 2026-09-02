@@ -8,7 +8,6 @@ export interface VariableExample {
 
 export interface CommandVariableDefinition {
 	name: string
-	aliases?: string[]
 	description: string
 	examples: VariableExample[]
 	resolve: (args: string[], ctx: CommandContext, cache: Record<string, any>) => string | Promise<string>

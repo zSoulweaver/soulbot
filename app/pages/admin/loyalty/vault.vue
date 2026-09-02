@@ -2,6 +2,7 @@
 import { HelpCircle, Shield, Sparkles } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Slider } from '~/components/ui/slider'
 import { Switch } from '~/components/ui/switch'
@@ -267,7 +268,7 @@ async function cancelVaultRaid() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Sent when the raid is triggered. Supports $(duration), $(multiplier), $(minBet), $(maxBet).
+								Sent when the raid is triggered.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -277,7 +278,12 @@ async function cancelVaultRaid() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="startMessage" v-model="form.startMessage" placeholder="Start message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="startMessage"
+								v-model="form.startMessage"
+								scope="vault.start"
+								placeholder="Start message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
@@ -285,7 +291,7 @@ async function cancelVaultRaid() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>15-Second Warning Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Sent when 15 seconds remain. Supports $(secondsLeft), $(raidersCount), $(pot), $(multiplier).
+								Sent when 15 seconds remain.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -295,7 +301,12 @@ async function cancelVaultRaid() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="warningMessage" v-model="form.warningMessage" placeholder="Warning message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="warningMessage"
+								v-model="form.warningMessage"
+								scope="vault.warning"
+								placeholder="Warning message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
@@ -303,7 +314,7 @@ async function cancelVaultRaid() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Win Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Sent when the raid succeeds. Supports $(roll), $(threshold), $(raidersCount), $(pot), $(totalWon), $(multiplier).
+								Sent when the raid succeeds.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -313,7 +324,12 @@ async function cancelVaultRaid() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="endWinMessage" v-model="form.endWinMessage" placeholder="Win message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="endWinMessage"
+								v-model="form.endWinMessage"
+								scope="vault.win"
+								placeholder="Win message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
@@ -321,7 +337,7 @@ async function cancelVaultRaid() {
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Lose Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
-								Sent when the raid fails. Supports $(roll), $(threshold), $(raidersCount), $(pot), $(multiplier).
+								Sent when the raid fails.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
 						<SettingsGroupAction
@@ -331,7 +347,12 @@ async function cancelVaultRaid() {
 								md:w-full md:max-w-full
 							"
 						>
-							<Textarea id="endLoseMessage" v-model="form.endLoseMessage" placeholder="Lose message..." rows="3" class="w-full" />
+							<TemplateEditor
+								id="endLoseMessage"
+								v-model="form.endLoseMessage"
+								scope="vault.lose"
+								placeholder="Lose message..."
+							/>
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 				</SettingsGroup>

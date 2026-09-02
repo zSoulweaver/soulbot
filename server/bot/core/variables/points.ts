@@ -4,11 +4,10 @@ import { users } from '~~/server/database/schema'
 import { defineCommandVariable } from '../define-command-variable'
 
 /**
- * Points variable resolver: $(user.points), $(points)
+ * Points variable resolver: $(points)
  */
 export const pointsVariable = defineCommandVariable({
 	name: 'points',
-	aliases: ['user.points'],
 	description: 'Retrieves the points balance of the user triggering the command.',
 	examples: [
 		{ syntax: '$(points)', description: 'Queries the sender\'s points balance.' },

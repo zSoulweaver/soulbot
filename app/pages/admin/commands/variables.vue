@@ -10,7 +10,6 @@ import { cn } from '~/lib/utils'
 
 export interface Variable {
 	name: string
-	aliases: string[]
 	description: string
 	examples: { syntax: string, description: string, output?: string }[]
 }
@@ -19,7 +18,6 @@ export interface VariableRow {
 	id: string
 	name: string
 	type: 'variable' | 'example'
-	aliases?: string[]
 	description: string
 	syntax?: string
 	output?: string
@@ -36,7 +34,6 @@ useHead({
 // Hardcoded positional variables definition (core aspect of custom commands)
 const positionalVariable: Variable = {
 	name: '1...n',
-	aliases: [],
 	description: 'Positional parameters representing arguments typed after the command.',
 	examples: [
 		{ syntax: '$(1)', description: 'Resolves to the first argument typed after the command.' },
@@ -66,7 +63,6 @@ const variableTree = computed<VariableRow[]>(() => {
 		id: v.name,
 		name: v.name,
 		type: 'variable' as const,
-		aliases: v.aliases || [],
 		description: v.description,
 		subRows: v.examples?.map((ex, index) => ({
 			id: `${v.name}-ex-${index}`,
@@ -82,10 +78,9 @@ const variableTree = computed<VariableRow[]>(() => {
 function rowMatchesFilter(row: VariableRow, filter: string): boolean {
 	const nameMatch = row.name.toLowerCase().includes(filter)
 	const descMatch = row.description.toLowerCase().includes(filter)
-	const aliasMatch = row.aliases?.some(a => a.toLowerCase().includes(filter))
 	const syntaxMatch = row.syntax?.toLowerCase().includes(filter)
 
-	if (nameMatch || descMatch || aliasMatch || syntaxMatch)
+	if (nameMatch || descMatch || syntaxMatch)
 		return true
 
 	if (row.subRows && row.subRows.length > 0) {
@@ -174,26 +169,6 @@ const columns = [
 			])
 		},
 	}),
-	columnHelper.accessor('aliases', {
-		header: 'Aliases',
-		cell: ({ row }) => {
-			const item = row.original
-			if (item.type === 'example')
-				return null
-
-			if (!item.aliases || item.aliases.length === 0) {
-				return h('span', { class: 'text-xs text-muted-foreground/40 italic select-none' }, 'None')
-			}
-
-			return h('div', { class: 'flex flex-wrap gap-1' }, item.aliases.map(alias =>
-				h(Badge, {
-					key: alias,
-					variant: 'secondary',
-					class: 'font-mono text-xs',
-				}, () => `$(${alias})`),
-			))
-		},
-	}),
 	columnHelper.accessor('description', {
 		header: 'Description',
 		cell: ({ row }) => {
@@ -242,7 +217,7 @@ const columns = [
 					<InputGroupInput
 						v-model="searchQuery"
 						type="search"
-						placeholder="Search variables, aliases or behavior..."
+						placeholder="Search variables or descriptions..."
 					/>
 				</InputGroup>
 

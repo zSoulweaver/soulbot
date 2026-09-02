@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import CommandLimitsFields from '~/components/commands/CommandLimitsFields.vue'
 import CommandPermissionSelect from '~/components/commands/CommandPermissionSelect.vue'
 import CommandStatusSettings from '~/components/commands/CommandStatusSettings.vue'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import {
 	SettingsGroup,
 	SettingsGroupAction,
@@ -230,10 +231,11 @@ async function saveConfig() {
 								"
 							>
 								<div class="flex w-full flex-col gap-2">
-									<Textarea
+									<TemplateEditor
 										v-model="draft.response"
+										scope="commands.custom"
+										:reply-to="true"
 										placeholder="Hello $(sender)! You have $(count wins) wins in $(channel)."
-										rows="4"
 									/>
 									<Alert v-if="isMultiLine" variant="warning">
 										<AlertTitle>Multi-Line Template Detected</AlertTitle>

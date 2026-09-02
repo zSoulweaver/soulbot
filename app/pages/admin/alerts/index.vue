@@ -44,7 +44,7 @@ const {
 				v-model:points-reward="form.eventsubPointsFollow"
 				title="Follower Alerts"
 				description="Triggers in real-time when a Twitch user follows your channel."
-				:variables="['$(sender) (Follower Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(channel) (Channel)']"
+				scope="eventsub.alert.follow"
 			/>
 
 			<!-- Subscription Config Card -->
@@ -55,7 +55,7 @@ const {
 				v-model:points-reward="form.eventsubPointsSub"
 				title="Subscription Alerts"
 				description="Triggers when a chatter subscribes, resubscribes, or shares their subscription in chat."
-				:variables="['$(sender) (Subscriber Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(subTier) (Tier)', '$(channel) (Channel)']"
+				scope="eventsub.alert.sub"
 			/>
 
 			<!-- Subscription Gift Config Card -->
@@ -66,7 +66,7 @@ const {
 				v-model:points-reward="form.eventsubPointsGift"
 				title="Subscription Gift Alerts"
 				description="Triggers when a viewer gifts one or multiple subscriptions to other chatters."
-				:variables="['$(sender) (Gifter Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(giftCount) (Gift Count)']"
+				scope="eventsub.alert.gift"
 			/>
 
 			<!-- Cheer Config Card -->
@@ -78,7 +78,7 @@ const {
 				title="Cheer Alerts"
 				description="Triggers when a chatter cheers bits in your channel."
 				points-label="Loyalty Points per 1 Bit Cheered"
-				:variables="['$(sender) (Cheerer Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(points) (Points)', '$(bitsCount) (Bits)', '$(cheerMessage) (Message)']"
+				scope="eventsub.alert.cheer"
 			/>
 
 			<!-- Raid Config Card -->
@@ -87,7 +87,7 @@ const {
 				v-model:alert-template="form.eventsubAlertRaid"
 				title="Raid Alerts"
 				description="Triggers when another broadcaster raids your channel."
-				:variables="['$(sender) (Raider Display Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(raidSize) (Viewer Count)', '$(channel) (Channel)']"
+				scope="eventsub.alert.raid"
 				:hide-points="true"
 			/>
 
@@ -97,7 +97,7 @@ const {
 				v-model:alert-template="form.eventsubAlertLive"
 				title="Stream Live Alerts"
 				description="Triggers when your Twitch channel goes live."
-				:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(liveTitle) (Stream Title)', '$(liveGame) (Game Name)', '$(channel) (Channel)']"
+				scope="eventsub.alert.live"
 				:hide-points="true"
 			/>
 
@@ -107,7 +107,7 @@ const {
 				v-model:alert-template="form.eventsubAlertOffline"
 				title="Stream Offline Alerts"
 				description="Triggers when your Twitch channel goes offline."
-				:variables="['$(sender) (Broadcaster Name)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(channel) (Channel)']"
+				scope="eventsub.alert.offline"
 				:hide-points="true"
 			/>
 
@@ -117,7 +117,7 @@ const {
 				v-model:alert-template="form.eventsubAlertAdBreak"
 				title="Ad Break Start Alerts"
 				description="Triggers when an advertisement break starts on your channel."
-				:variables="['$(duration) (Ad break duration in seconds)', '$(requester) (User who triggered ad break)']"
+				scope="eventsub.alert.adbreak"
 				:hide-points="true"
 			/>
 
@@ -127,7 +127,7 @@ const {
 				v-model:alert-template="form.eventsubAlertBan"
 				title="User Ban Alerts"
 				description="Triggers when a user is permanently banned from your channel."
-				:variables="['$(sender) (Banned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+				scope="eventsub.alert.ban"
 				:hide-points="true"
 			/>
 
@@ -137,7 +137,7 @@ const {
 				v-model:alert-template="form.eventsubAlertTimeout"
 				title="User Timeout Alerts"
 				description="Triggers when a user is timed out in your channel."
-				:variables="['$(sender) (Timed-out User)', '$(sender.name) (Username)', '$(sender.id) (ID)', '$(duration) (Timeout Duration in Seconds)']"
+				scope="eventsub.alert.timeout"
 				:hide-points="true"
 			/>
 
@@ -147,7 +147,7 @@ const {
 				v-model:alert-template="form.eventsubAlertUnban"
 				title="User Unban Alerts"
 				description="Triggers when a user is unbanned from your channel."
-				:variables="['$(sender) (Unbanned User)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+				scope="eventsub.alert.unban"
 				:hide-points="true"
 			/>
 
@@ -157,7 +157,7 @@ const {
 				v-model:alert-template="form.eventsubAlertMessageDelete"
 				title="Message Delete Alerts"
 				description="Triggers when a chat message is deleted by a moderator."
-				:variables="['$(sender) (User Name)', '$(sender.name) (Username)', '$(sender.id) (ID)']"
+				scope="eventsub.alert.message_delete"
 				:hide-points="true"
 			/>
 		</ConfigAccordionGroup>

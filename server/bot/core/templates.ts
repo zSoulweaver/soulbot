@@ -11,10 +11,17 @@ export type MapTemplates<TemplatesMap extends Record<string, any>> = {
 	[TemplateKey in keyof TemplatesMap]: TemplatesMap[TemplateKey]['params']
 }
 
+export interface TemplateParamMeta {
+	label?: string
+	description?: string
+	example?: string | number
+}
+
 export interface TemplateSource {
 	default: string
 	params?: Record<string, any> | undefined
 	paramDescriptions?: Record<string, string> | undefined
+	paramMeta?: Record<string, TemplateParamMeta> | undefined
 }
 
 export type TemplateSourceMap = Record<string, TemplateSource>
@@ -27,13 +34,38 @@ export interface CommandTemplates {}
 
 export interface TemplateParamDefinition {
 	name: string
-	description?: string
+	label: string
+	description: string
+	example: string | number
 }
 
 export interface TemplateDefinition {
 	id: string
 	default: string
 	params?: readonly TemplateParamDefinition[]
+}
+
+export function buildTemplateParams(
+	params?: Record<string, any>,
+	paramMeta?: Record<string, TemplateParamMeta>,
+	paramDescriptions?: Record<string, string>,
+): TemplateParamDefinition[] {
+	if (!params)
+		return []
+
+	return Object.keys(params).map((key) => {
+		const meta = paramMeta?.[key]
+		const desc = meta?.description || paramDescriptions?.[key] || ''
+		const label = meta?.label || key
+		const example = meta?.example ?? (typeof params[key] === 'number' ? (params[key] || 100) : (params[key] || key))
+
+		return {
+			name: key,
+			label,
+			description: desc,
+			example,
+		}
+	})
 }
 
 export function getGlobalTemplateVariables(data: Record<string, string | number>): Record<string, string | number> {

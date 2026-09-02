@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { Template } from '~/types/commands'
-import { ChevronRight, HelpCircle, RefreshCw } from '@lucide/vue'
-import { useClipboard } from '@vueuse/core'
-import { computed, nextTick, ref } from 'vue'
-
-import { toast } from 'vue-sonner'
+import { ChevronRight, RefreshCw } from '@lucide/vue'
+import { computed } from 'vue'
+import TemplateEditor from '~/components/templates/TemplateEditor.vue'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { Card, CardContent } from '~/components/ui/card'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 
 const props = defineProps<{
 	template: Template
@@ -13,36 +15,6 @@ const props = defineProps<{
 const emit = defineEmits(['reset'])
 const templateText = defineModel<string | undefined>({ required: true })
 const isExpanded = defineModel<boolean>('isExpanded', { default: false })
-
-const { copy } = useClipboard()
-const textareaRef = ref<any | null>(null)
-
-function handleParamClick(paramName: string) {
-	const token = `$(${paramName})`
-
-	// Copy to clipboard as requested
-	copy(token)
-
-	// Insert at textarea cursor position
-	const el = textareaRef.value?.$el?.querySelector('textarea') || textareaRef.value?.$el || textareaRef.value
-	if (el && typeof el.selectionStart === 'number') {
-		const start = el.selectionStart
-		const end = el.selectionEnd
-		const text = templateText.value || ''
-		templateText.value = text.substring(0, start) + token + text.substring(end)
-
-		nextTick(() => {
-			if (el) {
-				el.focus()
-				el.setSelectionRange(start + token.length, start + token.length)
-			}
-		})
-		toast.success(`Copied & inserted '${token}' at cursor!`)
-	}
-	else {
-		toast.success(`Copied '${token}' to clipboard!`)
-	}
-}
 
 function getTemplateSummary() {
 	if (!templateText.value)
@@ -53,6 +25,17 @@ function getTemplateSummary() {
 function handleReset() {
 	emit('reset')
 }
+
+const customVariables = computed(() => {
+	if (!props.template.params)
+		return []
+	return props.template.params.map(p => ({
+		name: p.name,
+		label: p.label || p.name,
+		description: p.description || '',
+		example: p.example ?? p.name,
+	}))
+})
 
 const borderClass = computed(() => {
 	const isModifiedState = (templateText.value ?? '') !== (props.template.custom !== null ? props.template.custom : props.template.default)
@@ -141,43 +124,12 @@ const borderClass = computed(() => {
 				<CardContent
 					class="flex flex-col gap-4 border-t border-border/60 p-4"
 				>
-					<!-- Textarea Input Editor -->
-					<Textarea
-						ref="textareaRef"
+					<TemplateEditor
 						v-model="templateText"
-						rows="3"
+						:custom-variables="customVariables"
+						:reply-to="true"
+						placeholder="Enter response template message..."
 					/>
-
-					<!-- Available parameters helper box (takes full width) -->
-					<div class="flex flex-col gap-1.5 rounded-lg bg-muted p-3">
-						<div class="flex items-center gap-1 text-xs font-semibold text-muted-foreground select-none">
-							<HelpCircle class="size-3.5" />
-							Available Parameters (Click to Copy & Insert):
-						</div>
-						<div class="mt-1 flex flex-col gap-2">
-							<span v-if="props.template.params.length === 0" class="text-xs text-muted-foreground italic select-none">None defined (Static text output)</span>
-							<template v-else>
-								<div
-									v-for="param in props.template.params"
-									:key="param.name"
-									class="flex items-start gap-2.5 text-xs text-muted-foreground"
-								>
-									<Badge
-										variant="outline"
-										class="
-											cursor-pointer font-mono font-bold transition-colors select-none
-											hover:bg-primary hover:text-primary-foreground
-										"
-										title="Click to copy parameter and insert at cursor"
-										@click="handleParamClick(param.name)"
-									>
-										{{ `$(${param.name})` }}
-									</Badge>
-									<span class="pt-0.5 leading-normal">{{ param.description || 'Dynamic parameter for this template.' }}</span>
-								</div>
-							</template>
-						</div>
-					</div>
 				</CardContent>
 			</CollapsibleContent>
 		</Card>

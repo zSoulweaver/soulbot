@@ -24,7 +24,7 @@ describe('Alerts & EventSub Settings API Routes', () => {
 			expect(res.eventsubPointsSubEnabled).toBe(false)
 			expect(res.eventsubPointsGiftEnabled).toBe(false)
 			expect(res.eventsubPointsCheerEnabled).toBe(false)
-			expect(res.eventsubAlertFollow).toBe('Thank you for the follow, $(sender)!')
+			expect(res.eventsubAlertFollow).toBe('Thank you for the follow, $(follower)!')
 			expect(res.eventsubPointsFollow).toBe(100)
 			expect(res.eventsubPointsSub).toBe(500)
 		})

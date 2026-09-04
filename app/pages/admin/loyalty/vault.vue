@@ -264,96 +264,64 @@ async function cancelVaultRaid() {
 			<AppSettingsSection>
 				<SettingsHeading>Customizable Chat Announcements</SettingsHeading>
 				<SettingsGroup>
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Sent when the raid is triggered.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="startMessage"
-								v-model="form.startMessage"
-								scope="vault.start"
-								placeholder="Start message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="startMessage"
+							v-model="form.startMessage"
+							scope="vault.start"
+							placeholder="Start message..."
+						/>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>15-Second Warning Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Sent when 15 seconds remain.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="warningMessage"
-								v-model="form.warningMessage"
-								scope="vault.warning"
-								placeholder="Warning message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="warningMessage"
+							v-model="form.warningMessage"
+							scope="vault.warning"
+							placeholder="Warning message..."
+						/>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Win Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Sent when the raid succeeds.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="endWinMessage"
-								v-model="form.endWinMessage"
-								scope="vault.win"
-								placeholder="Win message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="endWinMessage"
+							v-model="form.endWinMessage"
+							scope="vault.win"
+							placeholder="Win message..."
+						/>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Lose Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Sent when the raid fails.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="endLoseMessage"
-								v-model="form.endLoseMessage"
-								scope="vault.lose"
-								placeholder="Lose message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="endLoseMessage"
+							v-model="form.endLoseMessage"
+							scope="vault.lose"
+							placeholder="Lose message..."
+						/>
 					</SettingsGroupItem>
 				</SettingsGroup>
 			</AppSettingsSection>

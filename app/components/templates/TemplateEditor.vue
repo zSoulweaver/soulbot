@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import type { TemplateVariableMeta } from '~/composables/useTemplateCatalog'
 import {
+	AlertCircle,
 	Eye,
 	EyeOff,
 	Plus,
 	Search,
+	Sparkles,
 } from '@lucide/vue'
 import Mention from '@tiptap/extension-mention'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import { onClickOutside } from '@vueuse/core'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { GLOBAL_TEMPLATE_VARIABLES } from '~~/shared/types/templates'
 import { Button } from '~/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 import { useTemplateCatalog } from '~/composables/useTemplateCatalog'
+import { validateTemplate } from '~/composables/useTemplateValidator'
 import TemplatePreview from './TemplatePreview.vue'
 
 const props = withDefaults(
@@ -42,7 +46,7 @@ const props = withDefaults(
 
 const modelValue = defineModel<string>({ default: '' })
 
-const { getVariablesForScope, renderPreview } = useTemplateCatalog()
+const { getVariablesForScope, renderPreview, loading: catalogLoading } = useTemplateCatalog()
 
 const showPreview = ref(props.defaultShowPreview)
 const isPopoverOpen = ref(false)
@@ -83,6 +87,16 @@ watch(isPopoverOpen, (open) => {
 // Compute available variables
 const variableGroups = computed(() => {
 	return getVariablesForScope(props.scope, props.customVariables, props.includeGlobal)
+})
+
+// Validation result
+const validation = computed(() => {
+	return validateTemplate(modelValue.value || '', {
+		scopeId: props.scope,
+		allowedVariables: variableGroups.value.all,
+		customVariables: props.customVariables,
+		includeGlobal: props.includeGlobal,
+	})
 })
 
 const filteredScopedVars = computed(() => {
@@ -134,16 +148,18 @@ watch(() => suggestionState.value.selectedIndex, (newIndex) => {
 function stringToHtml(text: string): string {
 	if (!text)
 		return '<p></p>'
-	// Replace $(varName) with mention span
-	const converted = text
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/\$\(([^()]+)\)/g, (_match, varName) => {
-			const cleanName = varName.trim()
-			return `<span data-type="mention" data-id="${cleanName}">$(${cleanName})<span class="mention-delete-btn">×</span></span>`
-		})
-	return `<p>${converted}</p>`
+	const lines = text.split('\n')
+	return lines.map((line) => {
+		const converted = line
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/\$\(([^()]+)\)/g, (_match, varName) => {
+				const cleanName = varName.trim()
+				return `<span data-type="mention" data-id="${cleanName}">$(${cleanName})<span class="mention-delete-btn">×</span></span>`
+			})
+		return `<p>${converted}</p>`
+	}).join('')
 }
 
 // Helper to convert TipTap editor document/HTML back to raw template string
@@ -152,19 +168,31 @@ function editorToString(editorInstance: any): string {
 		return ''
 	let result = ''
 	const doc = editorInstance.state.doc
+	let isFirstBlock = true
 
-	doc.descendants((node: any) => {
-		if (node.type.name === 'mention') {
-			result += `$(${node.attrs.id || node.attrs.label})`
-			return false
+	doc.forEach((node: any) => {
+		if (node.isBlock) {
+			if (!isFirstBlock) {
+				result += '\n'
+			}
+			isFirstBlock = false
+			node.descendants((child: any) => {
+				if (child.type.name === 'mention') {
+					result += `$(${child.attrs.id || child.attrs.label})`
+					return false
+				}
+				if (child.isText) {
+					result += child.text
+				}
+				if (child.type.name === 'hardBreak') {
+					result += '\n'
+				}
+				return true
+			})
 		}
-		if (node.isText) {
+		else if (node.isText) {
 			result += node.text
 		}
-		if (node.type.name === 'hardBreak') {
-			result += '\n'
-		}
-		return true
 	})
 
 	return result
@@ -182,24 +210,58 @@ function updatePopupCoords(clientRect?: (() => DOMRect | null) | null) {
 	}
 }
 
-// Custom Variable Mention Extension
+// Custom Variable Mention Extension with invalid and category-based styling
 const CustomVariableMention = Mention.extend({
 	name: 'mention',
 	renderHTML({ node }) {
+		const varId = node.attrs.id || node.attrs.label || ''
+		const isGlobal = GLOBAL_TEMPLATE_VARIABLES.some(g => g.name === varId) || varId.startsWith('core.')
+
+		const singleValidation = validateTemplate(`$(${varId})`, {
+			scopeId: props.scope,
+			allowedVariables: variableGroups.value.all,
+			customVariables: props.customVariables,
+			includeGlobal: props.includeGlobal,
+		})
+
+		// While catalog is still loading, if it's not a known global variable, don't mark as invalid yet
+		const isInvalid = catalogLoading.value && variableGroups.value.scoped.length === 0
+			? false
+			: !singleValidation.isValid
+
+		let badgeClass = 'border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400'
+		let category = 'scoped'
+
+		if (isInvalid) {
+			badgeClass = 'border-destructive/50 bg-destructive/15 text-destructive'
+			category = 'invalid'
+		}
+		else if (isGlobal) {
+			badgeClass = 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+			category = 'global'
+		}
+
 		return [
 			'span',
 			{
 				'data-type': 'mention',
 				'data-id': node.attrs.id,
-				'class': 'group relative inline-flex items-center overflow-hidden rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 mx-0.5 text-xs font-mono font-bold text-primary select-none align-baseline cursor-pointer transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive',
+				'data-invalid': isInvalid ? 'true' : 'false',
+				'data-category': category,
+				'class': `group relative inline-flex items-center overflow-hidden rounded border px-1.5 py-0.5 mx-0.5 text-xs font-mono font-bold select-none align-baseline cursor-pointer transition-colors hover:border-red-500/50 hover:bg-red-50 hover:text-red-600 dark:hover:border-red-500/60 dark:hover:bg-[#220c0e] dark:hover:text-red-400 ${badgeClass}`,
 			},
 			`$(${node.attrs.id || node.attrs.label})`,
 			[
 				'span',
 				{
-					class: 'mention-delete-btn pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end bg-gradient-to-r from-transparent via-background/90 to-background pl-4 pr-1 font-sans text-xs font-bold leading-none text-destructive opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 dark:via-[#1c0f12] dark:to-[#291014]',
+					class: 'mention-delete-btn pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center pl-5 pr-1.5 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 bg-gradient-to-r from-transparent via-red-100/90 to-red-100 text-red-600 dark:from-transparent dark:via-[#220c0e]/95 dark:to-[#220c0e] dark:text-red-400',
 				},
-				'×',
+				[
+					'span',
+					{
+						class: 'mention-delete-icon',
+					},
+				],
 			],
 		]
 	},
@@ -337,6 +399,15 @@ watch(modelValue, (newVal) => {
 	}
 })
 
+// When the variable catalog finishes loading, re-render the TipTap document
+// so that mention badges re-evaluate their styling (scoped vs global vs invalid)
+watch([() => variableGroups.value.all.length, catalogLoading], () => {
+	if (editor.value) {
+		const currentStr = editorToString(editor.value)
+		editor.value.commands.setContent(stringToHtml(currentStr), { emitUpdate: false })
+	}
+})
+
 // Watch disabled state
 watch(() => props.disabled, (isDisabled) => {
 	if (editor.value) {
@@ -377,6 +448,15 @@ function selectSuggestionItem(item: TemplateVariableMeta) {
 	suggestionState.value.active = false
 }
 
+function replaceInvalidToken(rawToken: string, suggestion: string) {
+	const replacement = suggestion.startsWith('$') ? suggestion : `$(${suggestion})`
+	const newStr = (modelValue.value || '').replaceAll(rawToken, () => replacement)
+	modelValue.value = newStr
+	if (editor.value) {
+		editor.value.commands.setContent(stringToHtml(newStr), { emitUpdate: false })
+	}
+}
+
 // Live preview text computation
 const livePreviewText = computed(() => {
 	return renderPreview(modelValue.value || '', props.scope, props.customVariables)
@@ -392,10 +472,13 @@ onBeforeUnmount(() => {
 		<!-- Main Editor Frame -->
 		<div
 			class="
-				flex flex-col rounded-lg border border-input bg-background transition-all
+				flex flex-col rounded-lg border transition-all
 				focus-within:border-ring focus-within:ring-1 focus-within:ring-ring
 			"
-			:class="{ 'pointer-events-none bg-muted/30 opacity-60': props.disabled }"
+			:class="[
+				props.disabled ? 'pointer-events-none bg-muted/30 opacity-60' : 'bg-background',
+				!validation.isValid && validation.invalidVariables.length > 0 ? 'border-destructive/60' : 'border-input',
+			]"
 		>
 			<!-- Top Toolbar -->
 			<div class="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 bg-muted/20 px-2.5 py-2">
@@ -434,7 +517,12 @@ onBeforeUnmount(() => {
 								<div class="max-h-64 overflow-y-auto p-1.5">
 									<!-- Scoped / Context Variables -->
 									<div v-if="filteredScopedVars.length > 0">
-										<div class="px-2 py-1 text-[10px] font-bold tracking-wider text-primary uppercase select-none">
+										<div
+											class="
+												px-2 py-1 text-[10px] font-bold tracking-wider text-sky-600 uppercase select-none
+												dark:text-sky-400
+											"
+										>
 											Event Variables
 										</div>
 										<button
@@ -448,7 +536,12 @@ onBeforeUnmount(() => {
 											@click="insertVariable(v.name)"
 										>
 											<div class="flex items-center justify-between gap-2">
-												<span class="font-mono font-bold text-foreground">{{ `$(${v.name})` }}</span>
+												<span
+													class="
+														font-mono font-bold text-sky-600
+														dark:text-sky-400
+													"
+												>{{ `$(${v.name})` }}</span>
 												<span class="text-[10px] font-medium text-muted-foreground">{{ v.label }}</span>
 											</div>
 											<p class="text-[11px] leading-relaxed text-muted-foreground">
@@ -465,7 +558,12 @@ onBeforeUnmount(() => {
 
 									<!-- Global Variables -->
 									<div v-if="filteredGlobalVars.length > 0">
-										<div class="px-2 py-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase select-none">
+										<div
+											class="
+												px-2 py-1 text-[10px] font-bold tracking-wider text-amber-600 uppercase select-none
+												dark:text-amber-400
+											"
+										>
 											Global Variables
 										</div>
 										<button
@@ -479,7 +577,12 @@ onBeforeUnmount(() => {
 											@click="insertVariable(v.name)"
 										>
 											<div class="flex items-center justify-between gap-2">
-												<span class="font-mono font-bold text-foreground">{{ `$(${v.name})` }}</span>
+												<span
+													class="
+														font-mono font-bold text-amber-600
+														dark:text-amber-400
+													"
+												>{{ `$(${v.name})` }}</span>
 												<span class="text-[10px] font-medium text-muted-foreground">{{ v.label }}</span>
 											</div>
 											<p class="text-[11px] leading-relaxed text-muted-foreground">
@@ -509,8 +612,10 @@ onBeforeUnmount(() => {
 								<button
 									type="button"
 									class="
-										h-7 shrink-0 items-center gap-1 rounded-md border border-border/60 bg-background/80 px-2 font-mono text-[11px] font-medium text-foreground transition-colors select-none
-										hover:bg-accent hover:text-accent-foreground
+										h-7 shrink-0 items-center gap-1 rounded-md border border-sky-500/25 bg-sky-500/5 px-2 font-mono text-[11px] font-medium text-sky-700 transition-colors select-none
+										hover:border-sky-500/40 hover:bg-sky-500/15 hover:text-sky-800
+										dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300
+										dark:hover:bg-sky-500/20
 									"
 									:class="idx >= 2 ? (idx === 2 ? `
 										hidden
@@ -522,7 +627,12 @@ onBeforeUnmount(() => {
 									:disabled="props.disabled"
 									@click="insertVariable(v.name)"
 								>
-									<Plus class="size-3 text-muted-foreground" />
+									<Plus
+										class="
+											size-3 text-sky-600/70
+											dark:text-sky-400/70
+										"
+									/>
 									<span>{{ `$(${v.name})` }}</span>
 								</button>
 							</TooltipTrigger>
@@ -613,6 +723,52 @@ onBeforeUnmount(() => {
 			</div>
 		</div>
 
+		<!-- In-Editor Invalid Variable Diagnostics Alert with Quick Fix -->
+		<div
+			v-if="!validation.isValid && validation.invalidVariables.length > 0"
+			class="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive transition-all"
+		>
+			<div class="flex items-center gap-1.5 font-semibold">
+				<AlertCircle class="size-4 shrink-0 text-destructive" />
+				<span>Invalid Variable{{ validation.invalidVariables.length === 1 ? '' : 's' }} Detected</span>
+			</div>
+
+			<div class="flex flex-col gap-1.5 pl-5.5">
+				<div
+					v-for="(inv, idx) in validation.invalidVariables"
+					:key="idx"
+					class="flex flex-wrap items-center justify-between gap-2"
+				>
+					<div class="flex items-center gap-2">
+						<code class="rounded-sm bg-destructive/20 px-1 py-0.5 font-mono text-xs font-bold text-destructive">
+							{{ inv.raw }}
+						</code>
+						<span class="text-xs text-muted-foreground">{{ inv.reason }}</span>
+					</div>
+
+					<div v-if="inv.suggestions.length > 0" class="flex items-center gap-1">
+						<span class="text-xs text-muted-foreground">Suggestion:</span>
+						<Button
+							v-for="sug in inv.suggestions.slice(0, 2)"
+							:key="sug"
+							type="button"
+							size="sm"
+							variant="outline"
+							class="
+								h-6 gap-1 border-emerald-500/30 bg-emerald-500/10 px-2 font-mono text-xs font-bold text-emerald-600
+								hover:bg-emerald-500/20
+								dark:text-emerald-400
+							"
+							@click="replaceInvalidToken(inv.raw, sug)"
+						>
+							<Sparkles />
+							<span>Replace with {{ sug.startsWith('$') ? sug : `$(${sug})` }}</span>
+						</Button>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Simulated Live Preview (Toggleable) -->
 		<TemplatePreview
 			v-if="showPreview"
@@ -640,5 +796,33 @@ onBeforeUnmount(() => {
 	float: left;
 	height: 0;
 	pointer-events: none;
+}
+
+.mention-delete-icon {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 10px;
+	height: 10px;
+	flex-shrink: 0;
+}
+
+.mention-delete-icon::before,
+.mention-delete-icon::after {
+	content: '';
+	position: absolute;
+	width: 7.5px;
+	height: 1.5px;
+	background-color: currentColor;
+	border-radius: 9999px;
+}
+
+.mention-delete-icon::before {
+	transform: rotate(45deg);
+}
+
+.mention-delete-icon::after {
+	transform: rotate(-45deg);
 }
 </style>

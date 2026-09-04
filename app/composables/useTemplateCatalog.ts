@@ -1,7 +1,9 @@
-import type { TemplateCatalogResponse, TemplateScopeDefinition, TemplateVariableMeta } from '~~/server/bot/core/template-catalog'
+import type { TemplateVariableMeta } from '~~/shared/types/templates'
 import { computed } from 'vue'
 
-export type { TemplateCatalogResponse, TemplateScopeDefinition, TemplateVariableMeta }
+export type TemplateCatalogResponse = Awaited<ReturnType<typeof import('~~/server/api/templates/catalog.get').default>>
+export type TemplateScopeDefinition = NonNullable<TemplateCatalogResponse['scopes'][string]>
+export type { TemplateVariableMeta }
 
 export function useTemplateCatalog() {
 	const { data: catalog, pending: loading, refresh } = useFetch<TemplateCatalogResponse>('/api/templates/catalog', {
@@ -54,7 +56,7 @@ export function useTemplateCatalog() {
 			return ''
 
 		const { all: vars } = getVariablesForScope(scopeId, customVariables, true)
-		const mockData: Record<string, string | number> = {}
+		const mockData: Record<string, string | number | boolean> = {}
 
 		for (const v of vars) {
 			mockData[v.name] = v.example ?? v.name

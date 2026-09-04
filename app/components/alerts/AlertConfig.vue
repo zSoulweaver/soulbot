@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Bell, BellOff, MessageSquare, PiggyBank } from '@lucide/vue'
-import { ref, watch } from 'vue'
+import { AlertTriangle, Bell, BellOff, MessageSquare, PiggyBank } from '@lucide/vue'
+import { computed, ref, watch } from 'vue'
 import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { Badge } from '~/components/ui/badge'
 import { ConfigAccordion } from '~/components/ui/config-accordion'
@@ -8,6 +8,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '~/co
 import { Label } from '~/components/ui/label'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '~/components/ui/number-field'
 import { Switch } from '~/components/ui/switch'
+import { validateTemplate } from '~/composables/useTemplateValidator'
 
 const props = withDefaults(
 	defineProps<{
@@ -29,6 +30,11 @@ const pointsEnabled = defineModel<boolean>('pointsEnabled', { default: false })
 const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 
 const isExpanded = ref(false)
+
+const templateValidation = computed(() => {
+	return validateTemplate(alertTemplate.value || '', { scopeId: props.scope })
+})
+const hasInvalidVariables = computed(() => !templateValidation.value.isValid)
 
 // Auto-expand/collapse accordion logic based on toggles
 watch(
@@ -70,6 +76,15 @@ watch(
 		<template #header-action>
 			<!-- Right-aligned Status Badges -->
 			<div class="flex items-center gap-2 select-none">
+				<!-- Warning Badge for Invalid Variables -->
+				<Badge
+					v-if="hasInvalidVariables"
+					variant="destructive"
+				>
+					<AlertTriangle class="size-3" />
+					Invalid Variable
+				</Badge>
+
 				<!-- Points Badge -->
 				<template v-if="!props.hidePoints">
 					<Badge

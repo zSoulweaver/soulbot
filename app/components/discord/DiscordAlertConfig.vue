@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Bell, BellOff, Hash, Keyboard } from '@lucide/vue'
-import { ref } from 'vue'
+import { AlertTriangle, Bell, BellOff, Hash, Keyboard } from '@lucide/vue'
+import { computed, ref } from 'vue'
 import TemplateEditor from '~/components/templates/TemplateEditor.vue'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { ConfigAccordion } from '~/components/ui/config-accordion'
 import { Field, FieldGroup, FieldLabel } from '~/components/ui/field'
@@ -16,6 +17,7 @@ import {
 	SettingsGroupLabel,
 } from '~/components/ui/settings-group'
 import { Switch } from '~/components/ui/switch'
+import { validateTemplate } from '~/composables/useTemplateValidator'
 
 const props = defineProps<{
 	title: string
@@ -32,6 +34,11 @@ const alertTemplate = defineModel<string>('alertTemplate', { required: true })
 
 const showManualInput = ref(false)
 const isExpanded = ref(false)
+
+const templateValidation = computed(() => {
+	return validateTemplate(alertTemplate.value || '', { scopeId: props.scope })
+})
+const hasInvalidVariables = computed(() => !templateValidation.value.isValid)
 
 function onToggleAlert(val: boolean) {
 	if (props.disabled)
@@ -61,11 +68,20 @@ function onToggleAlert(val: boolean) {
 		</template>
 
 		<template #header-action>
-			<Switch
-				v-model:model-value="alertEnabled"
-				:disabled="props.disabled"
-				@update:model-value="onToggleAlert"
-			/>
+			<div class="flex items-center gap-2">
+				<Badge
+					v-if="hasInvalidVariables"
+					variant="destructive"
+				>
+					<AlertTriangle class="size-3" />
+					Invalid Variable
+				</Badge>
+				<Switch
+					v-model:model-value="alertEnabled"
+					:disabled="props.disabled"
+					@update:model-value="onToggleAlert"
+				/>
+			</div>
 		</template>
 
 		<div class="flex flex-col gap-6 pt-2">

@@ -69,6 +69,12 @@ export const commandTemplates = sqliteTable('command_templates', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
+export const generalTemplates = sqliteTable('general_templates', {
+	id: text('id').primaryKey(), // e.g. 'eventsub.alert.follow', 'discord.alert.follow', 'vault.start'
+	template: text('template').notNull(), // The user-defined override string
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})
+
 export const settings = sqliteTable('settings', {
 	key: text('key').primaryKey(),
 	value: text('value').notNull(),

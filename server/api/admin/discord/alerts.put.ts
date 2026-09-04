@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 
@@ -156,6 +157,29 @@ export default defineEventHandler(async (event) => {
 	}
 
 	await discordSettings.update(updatePayload)
+
+	if (typeof d.discordAlertFollowTemplate === 'string')
+		await templateRegistry.update('discord.alert.follow', d.discordAlertFollowTemplate)
+	if (typeof d.discordAlertSubTemplate === 'string')
+		await templateRegistry.update('discord.alert.sub', d.discordAlertSubTemplate)
+	if (typeof d.discordAlertGiftTemplate === 'string')
+		await templateRegistry.update('discord.alert.gift', d.discordAlertGiftTemplate)
+	if (typeof d.discordAlertCheerTemplate === 'string')
+		await templateRegistry.update('discord.alert.cheer', d.discordAlertCheerTemplate)
+	if (typeof d.discordAlertRaidTemplate === 'string')
+		await templateRegistry.update('discord.alert.raid', d.discordAlertRaidTemplate)
+	if (typeof d.discordAlertLiveTemplate === 'string')
+		await templateRegistry.update('discord.alert.live', d.discordAlertLiveTemplate)
+	if (typeof d.discordAlertOfflineTemplate === 'string')
+		await templateRegistry.update('discord.alert.offline', d.discordAlertOfflineTemplate)
+	if (typeof d.discordAlertBanTemplate === 'string')
+		await templateRegistry.update('discord.alert.ban', d.discordAlertBanTemplate)
+	if (typeof d.discordAlertTimeoutTemplate === 'string')
+		await templateRegistry.update('discord.alert.timeout', d.discordAlertTimeoutTemplate)
+	if (typeof d.discordAlertUnbanTemplate === 'string')
+		await templateRegistry.update('discord.alert.unban', d.discordAlertUnbanTemplate)
+	if (typeof d.discordAlertMessageDeleteTemplate === 'string')
+		await templateRegistry.update('discord.alert.message_delete', d.discordAlertMessageDeleteTemplate)
 
 	return { success: true }
 })

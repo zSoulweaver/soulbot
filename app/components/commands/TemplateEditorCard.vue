@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { Template } from '~/types/commands'
-import { ChevronRight, RefreshCw } from '@lucide/vue'
+import { AlertTriangle, ChevronRight, RefreshCw } from '@lucide/vue'
 import { computed } from 'vue'
 import TemplateEditor from '~/components/templates/TemplateEditor.vue'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
+import { validateTemplate } from '~/composables/useTemplateValidator'
 
 const props = defineProps<{
 	template: Template
@@ -37,7 +38,18 @@ const customVariables = computed(() => {
 	}))
 })
 
+const templateValidation = computed(() => {
+	return validateTemplate(templateText.value || '', {
+		customVariables: customVariables.value,
+		includeGlobal: true,
+	})
+})
+const hasInvalidVariables = computed(() => !templateValidation.value.isValid)
+
 const borderClass = computed(() => {
+	if (hasInvalidVariables.value) {
+		return 'border-destructive/70 dark:border-destructive/60'
+	}
 	const isModifiedState = (templateText.value ?? '') !== (props.template.custom !== null ? props.template.custom : props.template.default)
 	if (isModifiedState) {
 		return 'border-amber-500/70 dark:border-amber-500/60'
@@ -84,6 +96,15 @@ const borderClass = computed(() => {
 					</div>
 
 					<div class="flex items-center gap-2">
+						<!-- Warning Badge for Invalid Variables -->
+						<Badge
+							v-if="hasInvalidVariables"
+							variant="destructive"
+						>
+							<AlertTriangle class="size-3" />
+							Invalid Variable
+						</Badge>
+
 						<!-- Modified/Saved Badges -->
 						<Badge
 							v-if="(templateText ?? '') !== (props.template.custom !== null ? props.template.custom : props.template.default)"

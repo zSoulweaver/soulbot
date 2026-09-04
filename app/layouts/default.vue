@@ -33,6 +33,7 @@ const isModeratorOrCaster = computed(() => {
 				>
 					<AppOutdatedTokenAlert />
 					<AppBotModeratorAlert />
+					<AppBrokenTemplatesAlert />
 				</div>
 				<slot />
 			</main>

@@ -1,3 +1,4 @@
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { adsSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 
@@ -7,6 +8,10 @@ export default defineEventHandler(async (event) => {
 
 	try {
 		await adsSettings.update(body)
+
+		if (typeof body.adsAlertTemplate === 'string')
+			await templateRegistry.update('ads.alert', body.adsAlertTemplate)
+
 		return { success: true }
 	}
 	catch (err: any) {

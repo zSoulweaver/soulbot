@@ -1,11 +1,11 @@
-import { GLOBAL_TEMPLATE_VARIABLES, TEMPLATE_SCOPES } from '~~/server/bot/core/template-catalog'
+import { initRegistry } from '~~/server/bot'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
+	initRegistry()
+	await templateRegistry.syncWithDb()
 
-	return {
-		globalVariables: GLOBAL_TEMPLATE_VARIABLES,
-		scopes: TEMPLATE_SCOPES,
-	}
+	return templateRegistry.getCatalog()
 })

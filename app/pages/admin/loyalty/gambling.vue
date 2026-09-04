@@ -317,50 +317,34 @@ async function cancelBonusEvent() {
 						</SettingsGroupAction>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>Start Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Twitch chat message sent when the bonus event is triggered.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="bonusMessage"
-								v-model="form.bonusMessage"
-								scope="gambling.bonus_start"
-								placeholder="Start message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="bonusMessage"
+							v-model="form.bonusMessage"
+							scope="gambling.bonus_start"
+							placeholder="Start message..."
+						/>
 					</SettingsGroupItem>
 
-					<SettingsGroupItem class="sm:flex-col sm:items-stretch sm:gap-3">
+					<SettingsGroupItem stacked>
 						<SettingsGroupContent>
 							<SettingsGroupLabel>End Announcement Message</SettingsGroupLabel>
 							<SettingsGroupDescription>
 								Twitch chat message sent when the bonus event ends.
 							</SettingsGroupDescription>
 						</SettingsGroupContent>
-						<SettingsGroupAction
-							class="
-								w-full max-w-full
-								sm:w-full sm:max-w-full
-								md:w-full md:max-w-full
-							"
-						>
-							<TemplateEditor
-								id="bonusEndMessage"
-								v-model="form.bonusEndMessage"
-								scope="gambling.bonus_end"
-								placeholder="End message..."
-							/>
-						</SettingsGroupAction>
+						<TemplateEditor
+							id="bonusEndMessage"
+							v-model="form.bonusEndMessage"
+							scope="gambling.bonus_end"
+							placeholder="End message..."
+						/>
 					</SettingsGroupItem>
 				</SettingsGroup>
 			</AppSettingsSection>

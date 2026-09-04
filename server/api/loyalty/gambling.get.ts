@@ -1,7 +1,15 @@
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { gamblingSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'caster')
-	return gamblingSettings.get()
+	const settings = gamblingSettings.get()
+	const tStart = templateRegistry.get('gambling.bonus_start')
+	const tEnd = templateRegistry.get('gambling.bonus_end')
+	return {
+		...settings,
+		bonusMessage: tStart?.isOverridden ? tStart.current : settings.bonusMessage,
+		bonusEndMessage: tEnd?.isOverridden ? tEnd.current : settings.bonusEndMessage,
+	}
 })

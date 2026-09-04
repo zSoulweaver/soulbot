@@ -10,8 +10,10 @@ import { templateRegistry } from './core/templates'
 import { adsModule } from './modules/advertisements'
 import { adsEngine, startAdsEngine, stopAdsEngine } from './modules/advertisements/engine'
 import { registerAlertsEventSubHandlers } from './modules/alerts/eventsub'
+import { registerAlertsTemplates } from './modules/alerts/templates'
 import { commandsModule } from './modules/commands'
 import { deathsModule } from './modules/deaths'
+import { registerDiscordTemplates } from './modules/discord/templates'
 import { pointsModule } from './modules/points'
 import { registerPointsEventSubHandlers } from './modules/points/eventsub'
 import { gambleModule } from './modules/points/gamble'
@@ -20,7 +22,9 @@ import { vaultModule } from './modules/points/vault'
 import { spotifyModule } from './modules/spotify'
 import { spotifyQueueEngine, startSpotifyQueueEngine, stopSpotifyQueueEngine } from './modules/spotify/queue-engine'
 import { startTimerEngine, stopTimerEngine, timerEngine } from './modules/timers'
+import { registerTimersTemplates } from './modules/timers/templates'
 import { twitchModule } from './modules/twitch'
+
 import { registerTwitchEventSubHandlers } from './modules/twitch/eventsub'
 import { watchtimeModule } from './modules/watchtime'
 import { avatarSyncEngine, startAvatarSyncEngine, stopAvatarSyncEngine } from './services/avatar-sync'
@@ -49,6 +53,9 @@ export function initRegistry() {
 	registry.register(watchtimeModule)
 	registry.register(adsModule)
 	registry.register(deathsModule)
+	registerAlertsTemplates()
+	registerDiscordTemplates()
+	registerTimersTemplates()
 	isRegistryInitialized = true
 }
 

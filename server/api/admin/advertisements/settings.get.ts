@@ -1,7 +1,13 @@
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { adsSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
 	await requireUserRole(event, 'moderator')
-	return adsSettings.get()
+	const settings = adsSettings.get()
+	const t = templateRegistry.get('ads.alert')
+	return {
+		...settings,
+		adsAlertTemplate: t?.isOverridden ? t.current : settings.adsAlertTemplate,
+	}
 })

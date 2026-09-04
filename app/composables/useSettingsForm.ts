@@ -67,6 +67,7 @@ export function useSettingsForm<T extends Record<string, any>>(
 			})
 			toast.success(options.successMessage || 'Settings saved successfully.')
 			await refresh()
+			refreshTemplateAudit()
 			if (options.onSuccess && initialData.value) {
 				await options.onSuccess(form.value)
 			}

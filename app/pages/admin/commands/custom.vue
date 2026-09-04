@@ -92,6 +92,7 @@ async function confirmDelete() {
 		})
 		toast.success(`Custom command '!${command.trigger}' deleted successfully.`)
 		await refreshCustomCommands()
+		refreshTemplateAudit()
 	}
 	catch (error: any) {
 		toast.error(error.data?.statusMessage || 'Failed to delete custom command.')

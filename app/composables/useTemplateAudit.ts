@@ -5,6 +5,12 @@ export type TemplateResetResponse = Awaited<ReturnType<typeof import('~~/server/
 export type TemplateAuditResult = TemplateIssuesResponse
 export type TemplateAuditIssue = TemplateIssuesResponse['issues'][number]
 
+export const TEMPLATE_AUDIT_KEY = 'template-audit-issues'
+
+export function refreshTemplateAudit() {
+	return refreshNuxtData(TEMPLATE_AUDIT_KEY)
+}
+
 export function useTemplateAudit() {
 	const { loggedIn, user } = useUserSession()
 	const isModeratorOrCaster = computed(() => {
@@ -12,7 +18,7 @@ export function useTemplateAudit() {
 	})
 
 	const { data: auditResult, pending: loading, refresh } = useFetch<TemplateIssuesResponse>('/api/admin/templates/issues', {
-		key: 'template-audit-issues',
+		key: TEMPLATE_AUDIT_KEY,
 		lazy: true,
 		immediate: isModeratorOrCaster.value,
 	})
@@ -23,12 +29,28 @@ export function useTemplateAudit() {
 		}
 	})
 
+	try {
+		const route = useRoute()
+		watch(() => route.path, (newPath) => {
+			if (isModeratorOrCaster.value && newPath.startsWith('/admin')) {
+				refresh()
+			}
+		})
+	}
+	catch {
+		// Ignore if outside Nuxt context
+	}
+
 	async function resetTemplate(issueId: string) {
 		const res = await $fetch<TemplateResetResponse>('/api/admin/templates/reset', {
 			method: 'POST',
 			body: { id: issueId },
 		})
-		await refresh()
+		const { refresh: refreshCatalog } = useTemplateCatalog()
+		await Promise.all([
+			refresh(),
+			refreshCatalog(),
+		])
 		return res
 	}
 

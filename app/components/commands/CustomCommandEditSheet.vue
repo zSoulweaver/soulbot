@@ -136,6 +136,7 @@ async function saveConfig() {
 			toast.success(`Custom command '!${trigger}' created successfully!`)
 		}
 
+		refreshTemplateAudit()
 		emit('saved')
 		emit('update:open', false)
 	}

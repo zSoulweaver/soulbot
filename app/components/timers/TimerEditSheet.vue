@@ -128,6 +128,7 @@ async function saveConfig() {
 			toast.success(`Timer '${name}' created successfully!`)
 		}
 
+		refreshTemplateAudit()
 		emit('saved')
 		emit('update:open', false)
 	}

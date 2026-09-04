@@ -96,6 +96,7 @@ async function confirmDelete() {
 		})
 		toast.success(`Timer '${timer.name}' deleted successfully.`)
 		await refreshTimers()
+		refreshTemplateAudit()
 	}
 	catch (error: any) {
 		toast.error(error.data?.statusMessage || 'Failed to delete timer.')

@@ -192,6 +192,7 @@ async function saveTemplates() {
 			})
 			toast.success(`Successfully saved response templates for !${command.value.activeTrigger}!`)
 			await refreshCommands()
+			refreshTemplateAudit()
 		}
 		else {
 			toast.info('No changes detected in templates.')

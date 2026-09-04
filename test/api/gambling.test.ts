@@ -4,6 +4,7 @@ import gamblingGetHandler from '~~/server/api/loyalty/gambling.get'
 import gamblingPutHandler from '~~/server/api/loyalty/gambling.put'
 import cancelBonusHandler from '~~/server/api/loyalty/gambling/bonus/cancel.post'
 import triggerBonusHandler from '~~/server/api/loyalty/gambling/bonus/trigger.post'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
@@ -41,10 +42,10 @@ describe('Loyalty Gambling Settings API Routes', () => {
 				{ key: 'points.gambling_bonus_win_multiplier', value: '2.5', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_win_min_roll', value: '60', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_tickets_per_user', value: '7', updatedAt: new Date() },
-				{ key: 'points.gambling_bonus_message', value: 'Custom start message', updatedAt: new Date() },
-				{ key: 'points.gambling_bonus_end_message', value: 'Custom end message', updatedAt: new Date() },
 				{ key: 'points.gambling_bonus_end_time', value: '0', updatedAt: new Date() },
 			])
+			await templateRegistry.update('gambling.bonus_start', 'Custom start message')
+			await templateRegistry.update('gambling.bonus_end', 'Custom end message')
 
 			await refreshAppSettingsCache()
 
@@ -166,7 +167,7 @@ describe('Loyalty Gambling Settings API Routes', () => {
 				.then(res => res[0])
 			expect(dbTickets?.value).toBe('8')
 
-			// Assert inside synchronous memory cache
+			// Assert inside synchronous memory cache and template registry
 			const cached = getAppSettingsSync()
 			expect(cached.pointsGamblingMinBet).toBe(20)
 			expect(cached.pointsGamblingMaxBet).toBe(80000)
@@ -176,8 +177,8 @@ describe('Loyalty Gambling Settings API Routes', () => {
 			expect(cached.pointsGamblingBonusWinMultiplier).toBe(2.4)
 			expect(cached.pointsGamblingBonusWinMinRoll).toBe(55)
 			expect(cached.pointsGamblingBonusTicketsPerUser).toBe(8)
-			expect(cached.pointsGamblingBonusMessage).toBe('New Start Message')
-			expect(cached.pointsGamblingBonusEndMessage).toBe('New End Message')
+			expect(templateRegistry.get('gambling.bonus_start')?.template).toBe('New Start Message')
+			expect(templateRegistry.get('gambling.bonus_end')?.template).toBe('New End Message')
 		})
 	})
 

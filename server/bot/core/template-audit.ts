@@ -45,25 +45,53 @@ export async function auditStoredTemplates(): Promise<TemplateAuditResult> {
 
 	const issues: TemplateAuditIssue[] = []
 
-	// 1. Registered Template Overrides (command_templates and general_templates)
+	// 1. Registered Template Overrides in templateRegistry (from command_templates, general_templates, and settings)
+	for (const def of templateRegistry.all()) {
+		if (!def.isOverridden)
+			continue
+
+		const allowedVars = def.params ? [...def.params] : []
+		const validation = validateTemplate(def.template, {
+			scopeId: def.id,
+			allowedVariables: allowedVars,
+			includeGlobal: true,
+		})
+
+		if (!validation.isValid) {
+			const isCommand = def.category === 'command' || (!def.domain && !def.id.startsWith('eventsub') && !def.id.startsWith('discord') && !def.id.startsWith('ads') && !def.id.startsWith('widgets') && !def.id.startsWith('vault') && !def.id.startsWith('gambling'))
+			const domain = (def.domain || (isCommand ? 'commands' : (def.id.split('.')[0] || 'alerts'))) as TemplateAuditIssue['domain']
+			issues.push({
+				id: `${domain}:${def.id}`,
+				domain,
+				location: def.name || (isCommand ? `Command: !${def.id}` : `Template: ${def.id}`),
+				targetId: def.id,
+				scopeId: def.id,
+				currentTemplate: def.template,
+				defaultTemplate: def.default,
+				canReset: true,
+				isOrphan: false,
+				editUrl: def.editUrl,
+				invalidVariables: validation.invalidVariables.map(v => ({
+					raw: v.raw,
+					name: v.name,
+					type: v.type,
+					reason: v.reason,
+					suggestions: v.suggestions,
+				})),
+			})
+		}
+	}
+
+	// 1b. Orphaned template overrides stored in command_templates or general_templates not registered in any bot module
 	const dbCommandTemplates = await db.select().from(commandTemplates)
 	const dbGeneralTemplates = await db.select().from(generalTemplates)
 
-	const allStoredTemplates = [
-		...dbCommandTemplates.map(t => ({ id: t.id, template: t.template, isCommand: true })),
-		...dbGeneralTemplates.map(t => ({ id: t.id, template: t.template, isCommand: false })),
-	]
-
-	for (const item of allStoredTemplates) {
-		const def = templateRegistry.get(item.id)
-
-		// 1. Orphaned template in database not registered in any bot module
-		if (!def) {
-			const domain = (item.isCommand ? 'commands' : (item.id.split('.')[0] || 'alerts')) as TemplateAuditIssue['domain']
+	for (const item of dbCommandTemplates) {
+		if (!templateRegistry.has(item.id)) {
 			issues.push({
-				id: `${domain}:${item.id}`,
-				domain,
-				location: item.isCommand ? `Orphaned Command: !${item.id}` : `Orphaned Template: ${item.id}`,
+				id: `commands:${item.id}`,
+				domain: 'commands',
+				location: `Orphaned Command: !${item.id}`,
 				targetId: item.id,
 				scopeId: item.id,
 				currentTemplate: item.template,
@@ -81,37 +109,32 @@ export async function auditStoredTemplates(): Promise<TemplateAuditResult> {
 					},
 				],
 			})
-			continue
 		}
+	}
 
-		// 2. Registered template with invalid variables
-		const allowedVars = def.params ? [...def.params] : []
-		const validation = validateTemplate(item.template, {
-			scopeId: def.id,
-			allowedVariables: allowedVars,
-			includeGlobal: true,
-		})
-
-		if (!validation.isValid) {
-			const domain = (def.domain || (item.isCommand ? 'commands' : 'alerts')) as TemplateAuditIssue['domain']
+	for (const item of dbGeneralTemplates) {
+		if (!templateRegistry.has(item.id)) {
+			const domain = (item.id.split('.')[0] || 'alerts') as TemplateAuditIssue['domain']
 			issues.push({
 				id: `${domain}:${item.id}`,
 				domain,
-				location: def.name || (item.isCommand ? `Command: !${item.id}` : `Template: ${item.id}`),
+				location: `Orphaned Template: ${item.id}`,
 				targetId: item.id,
 				scopeId: item.id,
 				currentTemplate: item.template,
-				defaultTemplate: def.default,
+				defaultTemplate: undefined,
 				canReset: true,
-				isOrphan: false,
-				editUrl: def.editUrl,
-				invalidVariables: validation.invalidVariables.map(v => ({
-					raw: v.raw,
-					name: v.name,
-					type: v.type,
-					reason: v.reason,
-					suggestions: v.suggestions,
-				})),
+				isOrphan: true,
+				editUrl: undefined,
+				invalidVariables: [
+					{
+						raw: item.id,
+						name: item.id,
+						type: 'orphan',
+						reason: 'This template is orphaned in the database and is no longer used by any bot feature or module.',
+						suggestions: [],
+					},
+				],
 			})
 		}
 	}

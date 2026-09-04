@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { ChannelType, Client, EmbedBuilder, GatewayIntentBits, PermissionFlagsBits } from 'discord.js'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { botLogger } from './logger'
 import { getAppSettings } from './settings'
@@ -119,8 +120,9 @@ export async function startDiscord(): Promise<void> {
 							name: member.user.username,
 							displayName: `<@${member.id}>`,
 						})
+						const templateStr = templateRegistry.get('discord.events.join')?.template || ''
 						const text = await renderCustomTemplate(
-							currentSettings.discordEventJoinTemplate,
+							templateStr,
 							ctx,
 							{
 								user: `<@${member.id}>`,
@@ -157,8 +159,9 @@ export async function startDiscord(): Promise<void> {
 							name: member.user.username,
 							displayName,
 						})
+						const templateStr = templateRegistry.get('discord.events.leave')?.template || ''
 						const text = await renderCustomTemplate(
-							currentSettings.discordEventLeaveTemplate,
+							templateStr,
 							ctx,
 							{
 								user: displayName,

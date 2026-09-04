@@ -71,6 +71,13 @@
 			"when": 1788355515793,
 			"tag": "0009_clammy_white_tiger",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "6",
+			"when": 1788521172930,
+			"tag": "0010_migrate_settings_templates_to_general_templates",
+			"breakpoints": true
 		}
 	]
 }

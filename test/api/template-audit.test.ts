@@ -336,5 +336,40 @@ describe('Template Variable Audit & Reset API', () => {
 			const rows = await db.select().from(generalTemplates)
 			expect(rows.some(r => r.id === 'legacy.old_alert')).toBe(false)
 		})
+
+		it('should detect invalid variables in general templates and reset cleanly', async () => {
+			await templateRegistry.update('discord.events.join', 'Welcome to {server}, $(user)!')
+
+			// Verify audit detects this issue
+			const res = await issuesGetHandler({
+				context: { user: { role: 'moderator' } },
+			} as any)
+
+			expect(res.hasIssues).toBe(true)
+			const joinIssue = res.issues.find(i => i.targetId === 'discord.events.join')
+			expect(joinIssue).toBeDefined()
+			expect(joinIssue?.domain).toBe('discord')
+			expect(joinIssue?.editUrl).toBe('/admin/discord/events')
+			expect(joinIssue?.invalidVariables.some(v => v.raw === '{server}')).toBe(true)
+
+			// Reset this template
+			const resetRes = await resetPostHandler({
+				context: { user: { role: 'moderator' } },
+				body: { id: joinIssue!.id, targetId: 'discord.events.join' },
+			} as any)
+
+			expect(resetRes.success).toBe(true)
+			expect(resetRes.defaultTemplate).toBe('Welcome to $(server), $(user)!')
+
+			// Verify general_templates row is deleted / reset
+			const dbGeneral = await db.select().from(generalTemplates)
+			expect(dbGeneral.some(s => s.id === 'discord.events.join')).toBe(false)
+
+			// Verify audit list is now clean
+			const afterAudit = await issuesGetHandler({
+				context: { user: { role: 'moderator' } },
+			} as any)
+			expect(afterAudit.issues.some(i => i.targetId === 'discord.events.join')).toBe(false)
+		})
 	})
 })

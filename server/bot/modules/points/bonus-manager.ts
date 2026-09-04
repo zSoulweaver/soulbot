@@ -1,3 +1,4 @@
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { gamblingSettings } from '~~/server/settings'
 import { sendRawChatMessage } from '~~/server/utils/chat'
@@ -65,7 +66,8 @@ export async function endBonusEvent() {
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.bonusEndMessage, ctx, {
+			const template = templateRegistry.get('gambling.bonus_end')?.template || ''
+			const rendered = await renderCustomTemplate(template, ctx, {
 				multiplier: settings.bonusWinMultiplier,
 				threshold: settings.bonusWinMinRoll,
 				duration: settings.bonusDuration,

@@ -9,6 +9,7 @@ import rolesGetHandler from '~~/server/api/admin/discord/guild-roles.get'
 import guildsGetHandler from '~~/server/api/admin/discord/guilds.get'
 import settingsGetHandler from '~~/server/api/admin/discord/settings.get'
 import settingsPutHandler from '~~/server/api/admin/discord/settings.put'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
@@ -123,14 +124,7 @@ describe('Discord API Routes', () => {
 			} as any)
 
 			expect(res.success).toBe(true)
-
-			const dbVal = await db
-				.select()
-				.from(settings)
-				.where(eq(settings.key, 'discord.alerts.follow.template'))
-				.then(r => r[0])
-
-			expect(dbVal?.value).toBe('Hello follow!')
+			expect(templateRegistry.get('discord.alert.follow')?.template).toBe('Hello follow!')
 		})
 	})
 
@@ -169,14 +163,7 @@ describe('Discord API Routes', () => {
 				.then(r => r[0])
 
 			expect(joinVal?.value).toBe('ch-join')
-
-			const leaveVal = await db
-				.select()
-				.from(settings)
-				.where(eq(settings.key, 'discord.events.leave.template'))
-				.then(r => r[0])
-
-			expect(leaveVal?.value).toBe('Goodbye $(username)!')
+			expect(templateRegistry.get('discord.events.leave')?.template).toBe('Goodbye $(username)!')
 		})
 	})
 

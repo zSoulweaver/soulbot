@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import alertsGetHandler from '~~/server/api/admin/alerts/settings.get'
 import alertsPutHandler from '~~/server/api/admin/alerts/settings.put'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
 import { getAppSettingsSync, refreshAppSettingsCache } from '~~/server/utils/settings'
@@ -32,10 +33,10 @@ describe('Alerts & EventSub Settings API Routes', () => {
 		it('should retrieve custom configurations from the database correctly', async () => {
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.follow.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.follow', value: 'Hello $(sender)!', updatedAt: new Date() },
 				{ key: 'eventsub.points.follow.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.follow', value: '250', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.follow', 'Hello $(sender)!')
 			await refreshAppSettingsCache()
 
 			const res = await alertsGetHandler({} as any)
@@ -113,14 +114,14 @@ describe('Alerts & EventSub Settings API Routes', () => {
 				.then(res => res[0])
 			expect(dbFollowPoints?.value).toBe('400')
 
-			// Assert inside synchronous memory cache
+			// Assert inside synchronous memory cache and template registry
 			const cached = getAppSettingsSync()
 			expect(cached.eventsubAlertFollowEnabled).toBe(true)
-			expect(cached.eventsubAlertFollow).toBe('Custom follow alert text')
+			expect(templateRegistry.get('eventsub.alert.follow')?.template).toBe('Custom follow alert text')
 			expect(cached.eventsubPointsFollow).toBe(400)
 			expect(cached.eventsubPointsSub).toBe(1000)
 			expect(cached.eventsubAlertAdBreakEnabled).toBe(false)
-			expect(cached.eventsubAlertAdBreak).toBe('Ad break alert!')
+			expect(templateRegistry.get('eventsub.alert.adbreak')?.template).toBe('Ad break alert!')
 		})
 	})
 })

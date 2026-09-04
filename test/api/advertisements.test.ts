@@ -5,6 +5,7 @@ import adsScheduleGetHandler from '~~/server/api/admin/advertisements/schedule.g
 import adsSettingsGetHandler from '~~/server/api/admin/advertisements/settings.get'
 import adsSettingsPutHandler from '~~/server/api/admin/advertisements/settings.put'
 import adsSnoozePostHandler from '~~/server/api/admin/advertisements/snooze.post'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { settings, twitchTokens } from '~~/server/database/schema'
 import { getAppSettingsSync } from '~~/server/utils/settings'
@@ -31,8 +32,8 @@ describe('Admin Advertisements API Routes', () => {
 			await db.insert(settings).values([
 				{ key: 'ads.alerts.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'ads.alerts.5m.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'ads.alerts.template', value: 'Ad starting soon!', updatedAt: new Date() },
 			])
+			await templateRegistry.update('ads.alert', 'Ad starting soon!')
 
 			const { refreshAppSettingsCache } = await import('~~/server/utils/settings')
 			await refreshAppSettingsCache()
@@ -81,7 +82,7 @@ describe('Admin Advertisements API Routes', () => {
 
 			const cached = getAppSettingsSync()
 			expect(cached.adsAlertsEnabled).toBe(true)
-			expect(cached.adsAlertTemplate).toBe('Ad break in $(time)')
+			expect(templateRegistry.get('ads.alert')?.template).toBe('Ad break in $(time)')
 		})
 	})
 

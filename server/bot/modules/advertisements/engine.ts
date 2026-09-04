@@ -1,4 +1,5 @@
 import { PollingEngine } from '~~/server/bot/core/polling-engine'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { getStreamInfo } from '~~/server/bot/services/stream'
 import { sendRawChatMessage } from '~~/server/utils/chat'
@@ -91,8 +92,7 @@ export async function executeAdsCheck() {
 }
 
 async function sendAdAlert(channelName: string, timeText: string, durationSeconds: number) {
-	const settings = await getAppSettings()
-	const template = settings.adsAlertTemplate || 'Ad break of $(duration) seconds is starting in $(time)!'
+	const template = templateRegistry.get('ads.alert')?.template || 'Ad break of $(duration) seconds is starting in $(time)!'
 	const ctx = createTemplateContext(channelName)
 	const rendered = await renderCustomTemplate(template, ctx, {
 		time: timeText,

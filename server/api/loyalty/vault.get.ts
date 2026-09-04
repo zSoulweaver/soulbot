@@ -11,9 +11,9 @@ export default defineEventHandler(async (event) => {
 	const tLose = templateRegistry.get('vault.lose')
 	return {
 		...settings,
-		startMessage: tStart?.isOverridden ? tStart.current : settings.startMessage,
-		warningMessage: tWarning?.isOverridden ? tWarning.current : settings.warningMessage,
-		endWinMessage: tWin?.isOverridden ? tWin.current : settings.endWinMessage,
-		endLoseMessage: tLose?.isOverridden ? tLose.current : settings.endLoseMessage,
+		startMessage: tStart?.template || '',
+		warningMessage: tWarning?.template || '',
+		endWinMessage: tWin?.template || '',
+		endLoseMessage: tLose?.template || '',
 	}
 })

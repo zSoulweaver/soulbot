@@ -1,3 +1,4 @@
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { gamblingSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
 	const duration = settings.bonusDuration
 	const multiplier = settings.bonusWinMultiplier
 	const threshold = settings.bonusWinMinRoll
-	const bonusMessage = settings.bonusMessage
+	const bonusMessage = templateRegistry.get('gambling.bonus_start')?.template || ''
 	const endTime = now + duration * 60 * 1000
 
 	// Persist the end time to the database settings and memory cache

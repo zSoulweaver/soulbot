@@ -6,7 +6,7 @@ import type {
 } from '~~/shared/types/templates'
 import { eq, sql } from 'drizzle-orm'
 import { db } from '~~/server/database'
-import { commandTemplates, generalTemplates, settings } from '~~/server/database/schema'
+import { commandTemplates, generalTemplates } from '~~/server/database/schema'
 import { pointsSettings } from '~~/server/settings'
 import { botLogger } from '~~/server/utils/logger'
 import { GLOBAL_TEMPLATE_VARIABLES } from '~~/shared/types/templates'
@@ -143,54 +143,9 @@ class TemplateRegistry {
 			for (const row of databaseGeneralTemplates) {
 				this.overrides.set(row.id, row.template)
 			}
-
-			// 3. Migrate any legacy template overrides stored in settings table
-			await this.migrateLegacySettingsTemplates()
 		}
 		catch (err) {
 			botLogger.error({ err }, '[Templates] Error syncing templates with database')
-		}
-	}
-
-	private async migrateLegacySettingsTemplates() {
-		try {
-			const dbSettings = await db.select().from(settings)
-			const settingsMap = new Map(dbSettings.map(s => [s.key, s.value]))
-			const rowsToInsert: { id: string, template: string, updatedAt: Date }[] = []
-
-			for (const def of this.templates.values()) {
-				if (def.category === 'general' && !this.overrides.has(def.id)) {
-					const candidateKeys = [
-						def.id,
-						def.id.replace(/\.alert\./, '.alerts.'),
-						`${def.id}.template`,
-						`${def.id.replace(/\.alert\./, '.alerts.')}.template`,
-					]
-
-					for (const key of candidateKeys) {
-						if (settingsMap.has(key)) {
-							const val = settingsMap.get(key)!
-							if (val && val !== def.default) {
-								rowsToInsert.push({
-									id: def.id,
-									template: val,
-									updatedAt: new Date(),
-								})
-								this.overrides.set(def.id, val)
-								break
-							}
-						}
-					}
-				}
-			}
-
-			if (rowsToInsert.length > 0) {
-				await db.insert(generalTemplates).values(rowsToInsert).onConflictDoNothing()
-				botLogger.info('[Templates] Migrated %d legacy settings templates to general_templates', rowsToInsert.length)
-			}
-		}
-		catch {
-			// Ignore migration issues in test environments
 		}
 	}
 

@@ -1,6 +1,7 @@
 import type { ChatMessage } from '@twurple/chat'
 import { eq } from 'drizzle-orm'
 import { handleChatMessage } from '~~/server/bot'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { cleanUsername } from '~~/server/bot/core/utils'
 import { db } from '~~/server/database'
 import {
@@ -238,4 +239,5 @@ export async function clearDatabase() {
 	await db.delete(timers)
 	await db.delete(widgets)
 	await refreshAppSettingsCache()
+	await templateRegistry.syncWithDb()
 }

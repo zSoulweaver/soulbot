@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { eventSubManager } from '~~/server/bot/core/eventsub'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { db } from '~~/server/database'
 import { settings, twitchTokens, users } from '~~/server/database/schema'
 import { refreshAppSettingsCache } from '~~/server/utils/settings'
@@ -49,8 +50,8 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.follow.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.follow', value: '150', updatedAt: new Date() },
 				{ key: 'eventsub.alert.follow.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.follow', value: 'Thank you for following, $(follower)! You have $(points) points.', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.follow', 'Thank you for following, $(follower)! You have $(points) points.')
 			await refreshAppSettingsCache()
 
 			await eventSubManager.simulate('follow', {
@@ -77,8 +78,8 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.sub.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.sub', value: '500', updatedAt: new Date() },
 				{ key: 'eventsub.alert.sub.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.sub', value: 'Welcome to the club, $(subscriber)!', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.sub', 'Welcome to the club, $(subscriber)!')
 			await refreshAppSettingsCache()
 
 			await eventSubManager.simulate('subscription', {
@@ -103,8 +104,8 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.gift.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.gift', value: '250', updatedAt: new Date() },
 				{ key: 'eventsub.alert.gift.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.gift', value: 'Thank you @$(gifter) for gifting $(count) sub(s) to the community!', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.gift', 'Thank you @$(gifter) for gifting $(count) sub(s) to the community!')
 			await refreshAppSettingsCache()
 
 			await eventSubManager.simulate('subscription.gift', {
@@ -130,8 +131,8 @@ describe('Bot EventSub Integration', () => {
 				{ key: 'eventsub.points.cheer.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.points.cheer', value: '3', updatedAt: new Date() }, // 3 points per bit
 				{ key: 'eventsub.alert.cheer.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.cheer', value: 'Thank you @$(cheerer) for cheering $(bits) bits! Msg: $(message)', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.cheer', 'Thank you @$(cheerer) for cheering $(bits) bits! Msg: $(message)')
 			await refreshAppSettingsCache()
 
 			await eventSubManager.simulate('cheer', {
@@ -155,12 +156,12 @@ describe('Bot EventSub Integration', () => {
 		it('should post chat and Discord messages on incoming raid', async () => {
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.raid.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.raid', value: 'Thanks for raiding, $(raider) with $(viewers) viewers!', updatedAt: new Date() },
 				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.raid.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.raid.channel_id', value: 'ch-raid-123', updatedAt: new Date() },
-				{ key: 'discord.alerts.raid.template', value: '$(raider) raided with $(viewers) viewers!', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.raid', 'Thanks for raiding, $(raider) with $(viewers) viewers!')
+			await templateRegistry.update('discord.alert.raid', '$(raider) raided with $(viewers) viewers!')
 			await refreshAppSettingsCache()
 
 			await eventSubManager.simulate('raid', {
@@ -201,18 +202,18 @@ describe('Bot EventSub Integration', () => {
 
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.live.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.live', value: 'We are live playing $(game): $(title)!', updatedAt: new Date() },
 				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.channel_id', value: 'ch-live-123', updatedAt: new Date() },
-				{ key: 'discord.alerts.live.template', value: '@everyone $(broadcaster) is now live!', updatedAt: new Date() },
 				{ key: 'discord.alerts.live.remove_offline', value: 'true', updatedAt: new Date() },
 				{ key: 'eventsub.alert.offline.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.offline', value: 'Stream over!', updatedAt: new Date() },
 				{ key: 'discord.alerts.offline.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.offline.channel_id', value: 'ch-offline-123', updatedAt: new Date() },
-				{ key: 'discord.alerts.offline.template', value: 'Goodbye!', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.live', 'We are live playing $(game): $(title)!')
+			await templateRegistry.update('discord.alert.live', '@everyone $(broadcaster) is now live!')
+			await templateRegistry.update('eventsub.alert.offline', 'Stream over!')
+			await templateRegistry.update('discord.alert.offline', 'Goodbye!')
 			await refreshAppSettingsCache()
 
 			// 1. Simulate Stream going Online
@@ -282,16 +283,16 @@ describe('Bot EventSub Integration', () => {
 		it('should trigger Twitch chat alert, Discord text alert, and rich Discord moderation log embed on ban and timeout', async () => {
 			await db.insert(settings).values([
 				{ key: 'eventsub.alert.ban.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.ban', value: '$(sender) was banned!', updatedAt: new Date() },
 				{ key: 'eventsub.alert.timeout.enabled', value: 'true', updatedAt: new Date() },
-				{ key: 'eventsub.alert.timeout', value: '$(sender) was timed out for $(duration)s!', updatedAt: new Date() },
 				{ key: 'discord.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.ban.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.alerts.ban.channel_id', value: 'ch-disc-ban', updatedAt: new Date() },
-				{ key: 'discord.alerts.ban.template', value: 'Discord: $(sender) banned!', updatedAt: new Date() },
 				{ key: 'discord.moderation.log.enabled', value: 'true', updatedAt: new Date() },
 				{ key: 'discord.moderation.log.channel_id', value: 'ch-mod-log', updatedAt: new Date() },
 			])
+			await templateRegistry.update('eventsub.alert.ban', '$(sender) was banned!')
+			await templateRegistry.update('eventsub.alert.timeout', '$(sender) was timed out for $(duration)s!')
+			await templateRegistry.update('discord.alert.ban', 'Discord: $(sender) banned!')
 			await refreshAppSettingsCache()
 
 			// 1. Simulate permanent ban

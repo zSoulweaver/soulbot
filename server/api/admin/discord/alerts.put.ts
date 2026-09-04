@@ -68,19 +68,15 @@ export default defineEventHandler(async (event) => {
 	const updatePayload: Record<string, any> = {
 		alertFollowEnabled: d.discordAlertFollowEnabled,
 		alertFollowChannelId: d.discordAlertFollowChannelId,
-		alertFollowTemplate: d.discordAlertFollowTemplate,
 
 		alertSubEnabled: d.discordAlertSubEnabled,
 		alertSubChannelId: d.discordAlertSubChannelId,
-		alertSubTemplate: d.discordAlertSubTemplate,
 
 		alertGiftEnabled: d.discordAlertGiftEnabled,
 		alertGiftChannelId: d.discordAlertGiftChannelId,
-		alertGiftTemplate: d.discordAlertGiftTemplate,
 
 		alertCheerEnabled: d.discordAlertCheerEnabled,
 		alertCheerChannelId: d.discordAlertCheerChannelId,
-		alertCheerTemplate: d.discordAlertCheerTemplate,
 	}
 
 	if (d.discordAlertRaidEnabled !== undefined) {
@@ -89,18 +85,12 @@ export default defineEventHandler(async (event) => {
 	if (d.discordAlertRaidChannelId !== undefined) {
 		updatePayload.alertRaidChannelId = d.discordAlertRaidChannelId
 	}
-	if (d.discordAlertRaidTemplate !== undefined) {
-		updatePayload.alertRaidTemplate = d.discordAlertRaidTemplate
-	}
 
 	if (d.discordAlertLiveEnabled !== undefined) {
 		updatePayload.alertLiveEnabled = d.discordAlertLiveEnabled
 	}
 	if (d.discordAlertLiveChannelId !== undefined) {
 		updatePayload.alertLiveChannelId = d.discordAlertLiveChannelId
-	}
-	if (d.discordAlertLiveTemplate !== undefined) {
-		updatePayload.alertLiveTemplate = d.discordAlertLiveTemplate
 	}
 	if (d.discordAlertLiveRemoveOffline !== undefined) {
 		updatePayload.alertLiveRemoveOffline = d.discordAlertLiveRemoveOffline
@@ -112,18 +102,12 @@ export default defineEventHandler(async (event) => {
 	if (d.discordAlertOfflineChannelId !== undefined) {
 		updatePayload.alertOfflineChannelId = d.discordAlertOfflineChannelId
 	}
-	if (d.discordAlertOfflineTemplate !== undefined) {
-		updatePayload.alertOfflineTemplate = d.discordAlertOfflineTemplate
-	}
 
 	if (d.discordAlertBanEnabled !== undefined) {
 		updatePayload.alertBanEnabled = d.discordAlertBanEnabled
 	}
 	if (d.discordAlertBanChannelId !== undefined) {
 		updatePayload.alertBanChannelId = d.discordAlertBanChannelId
-	}
-	if (d.discordAlertBanTemplate !== undefined) {
-		updatePayload.alertBanTemplate = d.discordAlertBanTemplate
 	}
 
 	if (d.discordAlertTimeoutEnabled !== undefined) {
@@ -132,9 +116,6 @@ export default defineEventHandler(async (event) => {
 	if (d.discordAlertTimeoutChannelId !== undefined) {
 		updatePayload.alertTimeoutChannelId = d.discordAlertTimeoutChannelId
 	}
-	if (d.discordAlertTimeoutTemplate !== undefined) {
-		updatePayload.alertTimeoutTemplate = d.discordAlertTimeoutTemplate
-	}
 
 	if (d.discordAlertUnbanEnabled !== undefined) {
 		updatePayload.alertUnbanEnabled = d.discordAlertUnbanEnabled
@@ -142,18 +123,12 @@ export default defineEventHandler(async (event) => {
 	if (d.discordAlertUnbanChannelId !== undefined) {
 		updatePayload.alertUnbanChannelId = d.discordAlertUnbanChannelId
 	}
-	if (d.discordAlertUnbanTemplate !== undefined) {
-		updatePayload.alertUnbanTemplate = d.discordAlertUnbanTemplate
-	}
 
 	if (d.discordAlertMessageDeleteEnabled !== undefined) {
 		updatePayload.alertMessageDeleteEnabled = d.discordAlertMessageDeleteEnabled
 	}
 	if (d.discordAlertMessageDeleteChannelId !== undefined) {
 		updatePayload.alertMessageDeleteChannelId = d.discordAlertMessageDeleteChannelId
-	}
-	if (d.discordAlertMessageDeleteTemplate !== undefined) {
-		updatePayload.alertMessageDeleteTemplate = d.discordAlertMessageDeleteTemplate
 	}
 
 	await discordSettings.update(updatePayload)

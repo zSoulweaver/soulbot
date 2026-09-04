@@ -1,4 +1,5 @@
 import { and, eq, gte, sql } from 'drizzle-orm'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { createTemplateContext, renderCustomTemplate } from '~~/server/bot/core/variables-engine'
 import { db } from '~~/server/database'
 import { users, vaultRaiders } from '~~/server/database/schema'
@@ -96,8 +97,9 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any, isR
 
 	if (!isResume) {
 		// Broadcast start message
+		const template = templateRegistry.get('vault.start')?.template || ''
 		if (commandCtx) {
-			const rendered = await renderCustomTemplate(settings.startMessage, commandCtx, {
+			const rendered = await renderCustomTemplate(template, commandCtx, {
 				duration,
 				multiplier: settings.winMultiplier,
 				minBet: settings.minBet,
@@ -109,7 +111,7 @@ export async function startVaultRaid(durationSec?: number, commandCtx?: any, isR
 			const channel = await getStreamerChannelName()
 			if (channel) {
 				const ctx = createTemplateContext(channel)
-				const rendered = await renderCustomTemplate(settings.startMessage, ctx, {
+				const rendered = await renderCustomTemplate(template, ctx, {
 					duration,
 					multiplier: settings.winMultiplier,
 					minBet: settings.minBet,
@@ -138,7 +140,8 @@ export async function broadcastVaultWarning(): Promise<void> {
 		const channel = await getStreamerChannelName()
 		if (channel) {
 			const ctx = createTemplateContext(channel)
-			const rendered = await renderCustomTemplate(settings.warningMessage, ctx, {
+			const template = templateRegistry.get('vault.warning')?.template || ''
+			const rendered = await renderCustomTemplate(template, ctx, {
 				secondsLeft: 15,
 				raidersCount: raidersList.length,
 				pot,
@@ -349,7 +352,7 @@ export async function resolveVaultRaid(): Promise<{ roll: number, isWin: boolean
 	const channel = await getStreamerChannelName()
 	if (channel) {
 		const ctx = createTemplateContext(channel)
-		const template = isWin ? settings.endWinMessage : settings.endLoseMessage
+		const template = (isWin ? templateRegistry.get('vault.win') : templateRegistry.get('vault.lose'))?.template || ''
 		const rendered = await renderCustomTemplate(template, ctx, {
 			roll,
 			threshold: settings.winMinRoll,

@@ -8,6 +8,6 @@ export default defineEventHandler(async (event) => {
 	const t = templateRegistry.get('ads.alert')
 	return {
 		...settings,
-		adsAlertTemplate: t?.isOverridden ? t.current : settings.adsAlertTemplate,
+		adsAlertTemplate: t?.template || '',
 	}
 })

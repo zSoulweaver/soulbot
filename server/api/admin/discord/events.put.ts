@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { discordSettings } from '~~/server/settings'
 import { requireUserRole } from '~~/server/utils/auth'
 
@@ -33,13 +34,16 @@ export default defineEventHandler(async (event) => {
 	await discordSettings.update({
 		eventJoinEnabled: d.discordEventJoinEnabled,
 		eventJoinChannelId: d.discordEventJoinChannelId,
-		eventJoinTemplate: d.discordEventJoinTemplate,
 		rolesAutoBestowEnabled: d.discordRolesAutoBestowEnabled,
 		rolesAutoBestowRoles: d.discordRolesAutoBestowRoles,
 		eventLeaveEnabled: d.discordEventLeaveEnabled,
 		eventLeaveChannelId: d.discordEventLeaveChannelId,
-		eventLeaveTemplate: d.discordEventLeaveTemplate,
 	})
+
+	if (typeof d.discordEventJoinTemplate === 'string')
+		await templateRegistry.update('discord.events.join', d.discordEventJoinTemplate)
+	if (typeof d.discordEventLeaveTemplate === 'string')
+		await templateRegistry.update('discord.events.leave', d.discordEventLeaveTemplate)
 
 	return { success: true }
 })

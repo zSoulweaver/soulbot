@@ -31,8 +31,12 @@ const pointsReward = defineModel<number>('pointsReward', { default: 0 })
 
 const isExpanded = ref(false)
 
+const { loading: catalogLoading } = useTemplateCatalog()
 const templateValidation = computed(() => {
-	return validateTemplate(alertTemplate.value || '', { scopeId: props.scope })
+	if (catalogLoading.value || !alertTemplate.value) {
+		return { isValid: true, invalidVariables: [], tokens: [] }
+	}
+	return validateTemplate(alertTemplate.value, { scopeId: props.scope })
 })
 const hasInvalidVariables = computed(() => !templateValidation.value.isValid)
 

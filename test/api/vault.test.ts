@@ -4,6 +4,7 @@ import vaultGetHandler from '~~/server/api/loyalty/vault.get'
 import vaultPutHandler from '~~/server/api/loyalty/vault.put'
 import cancelVaultHandler from '~~/server/api/loyalty/vault/cancel.post'
 import triggerVaultHandler from '~~/server/api/loyalty/vault/trigger.post'
+import { templateRegistry } from '~~/server/bot/core/templates'
 import { clearVaultTimers } from '~~/server/bot/modules/points/vault-manager'
 import { db } from '~~/server/database'
 import { settings } from '~~/server/database/schema'
@@ -41,12 +42,12 @@ describe('Loyalty Vault Settings API Routes', () => {
 				{ key: 'points.vault_win_multiplier', value: '1.5', updatedAt: new Date() },
 				{ key: 'points.vault_duration', value: '60', updatedAt: new Date() },
 				{ key: 'points.vault_warning_enabled', value: 'false', updatedAt: new Date() },
-				{ key: 'points.vault_start_message', value: 'Custom start', updatedAt: new Date() },
-				{ key: 'points.vault_warning_message', value: 'Custom warning', updatedAt: new Date() },
-				{ key: 'points.vault_end_win_message', value: 'Custom win', updatedAt: new Date() },
-				{ key: 'points.vault_end_lose_message', value: 'Custom lose', updatedAt: new Date() },
 				{ key: 'points.vault_end_time', value: '0', updatedAt: new Date() },
 			])
+			await templateRegistry.update('vault.start', 'Custom start')
+			await templateRegistry.update('vault.warning', 'Custom warning')
+			await templateRegistry.update('vault.win', 'Custom win')
+			await templateRegistry.update('vault.lose', 'Custom lose')
 
 			await refreshAppSettingsCache()
 
@@ -138,7 +139,7 @@ describe('Loyalty Vault Settings API Routes', () => {
 				.then(res => res[0])
 			expect(dbMinBet?.value).toBe('25')
 
-			// Assert inside synchronous memory cache
+			// Assert inside synchronous memory cache and template registry
 			const cached = getAppSettingsSync()
 			expect(cached.pointsVaultMinBet).toBe(25)
 			expect(cached.pointsVaultMaxBet).toBe(75000)
@@ -146,10 +147,10 @@ describe('Loyalty Vault Settings API Routes', () => {
 			expect(cached.pointsVaultWinMultiplier).toBe(2.5)
 			expect(cached.pointsVaultDuration).toBe(120)
 			expect(cached.pointsVaultWarningEnabled).toBe(true)
-			expect(cached.pointsVaultStartMessage).toBe('New Start')
-			expect(cached.pointsVaultWarningMessage).toBe('New Warning')
-			expect(cached.pointsVaultEndWinMessage).toBe('New Win')
-			expect(cached.pointsVaultEndLoseMessage).toBe('New Lose')
+			expect(templateRegistry.get('vault.start')?.template).toBe('New Start')
+			expect(templateRegistry.get('vault.warning')?.template).toBe('New Warning')
+			expect(templateRegistry.get('vault.win')?.template).toBe('New Win')
+			expect(templateRegistry.get('vault.lose')?.template).toBe('New Lose')
 		})
 	})
 

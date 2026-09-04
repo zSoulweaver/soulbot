@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 	const tEnd = templateRegistry.get('gambling.bonus_end')
 	return {
 		...settings,
-		bonusMessage: tStart?.isOverridden ? tStart.current : settings.bonusMessage,
-		bonusEndMessage: tEnd?.isOverridden ? tEnd.current : settings.bonusEndMessage,
+		bonusMessage: tStart?.template || '',
+		bonusEndMessage: tEnd?.template || '',
 	}
 })

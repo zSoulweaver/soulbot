@@ -46,10 +46,9 @@ export function useTemplateAudit() {
 			method: 'POST',
 			body: { id: issueId },
 		})
-		const { refresh: refreshCatalog } = useTemplateCatalog()
 		await Promise.all([
 			refresh(),
-			refreshCatalog(),
+			refreshNuxtData('template-catalog'),
 		])
 		return res
 	}

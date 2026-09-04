@@ -42,9 +42,7 @@ const { data: streamStatus, refresh: refreshStream, pending: loadingStream, erro
 	viewers: number
 	uptime: number
 	tags: string[]
-}>('/api/admin/stream/status', {
-	server: false,
-})
+}>('/api/admin/stream/status')
 
 // Frontend dynamic minutes tracker for stream uptime
 const additionalMinutes = ref(0)
@@ -78,17 +76,13 @@ const { data: botStatus, refresh: refreshBotStatus, pending: loadingBotStatus, e
 	isBotRunning: boolean
 	isStreamerTokenOutdated: boolean
 	isBotTokenOutdated: boolean
-}>('/api/bot/status', {
-	server: false,
-})
+}>('/api/bot/status')
 
 // 3. Fetch bot configuration settings
 const { data: botSettings, refresh: refreshBotSettings, error: errorBotSettings } = useFetch<{
 	chatMode: 'normal' | 'action'
 	muted: boolean
-}>('/api/bot/settings', {
-	server: false,
-})
+}>('/api/bot/settings')
 
 // 4. Fetch recent events for client-side filtering and pagination
 const { data: eventsResponse, refresh: refreshEvents, pending: loadingEvents, error: errorEvents } = useFetch<{
@@ -96,7 +90,6 @@ const { data: eventsResponse, refresh: refreshEvents, pending: loadingEvents, er
 	meta: any
 }>('/api/admin/events', {
 	query: { limit: 100 },
-	server: false,
 })
 
 const selectedType = ref('all')

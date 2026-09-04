@@ -287,16 +287,30 @@ onUnmounted(() => {
 
 						<Separator />
 
-						<div class="flex flex-col gap-2">
-							<div class="flex items-center justify-between text-xs">
-								<span class="font-medium text-muted-foreground">Next Payout Cycle</span>
-								<span class="font-mono font-bold text-foreground">{{ formattedCountdown }}</span>
+						<ClientOnly>
+							<div class="flex flex-col gap-2">
+								<div class="flex items-center justify-between text-xs">
+									<span class="font-medium text-muted-foreground">Next Payout Cycle</span>
+									<span class="font-mono font-bold text-foreground">{{ formattedCountdown }}</span>
+								</div>
+								<Progress :model-value="progressPercent" />
+								<p class="text-xs text-muted-foreground/80">
+									Running checks every {{ isOnline ? settingsData?.payoutInterval : settingsData?.payoutIntervalOffline }} minutes.
+								</p>
 							</div>
-							<Progress :model-value="progressPercent" />
-							<p class="text-xs text-muted-foreground/80">
-								Running checks every {{ isOnline ? settingsData?.payoutInterval : settingsData?.payoutIntervalOffline }} minutes.
-							</p>
-						</div>
+							<template #fallback>
+								<div class="flex flex-col gap-2">
+									<div class="flex items-center justify-between text-xs">
+										<span class="font-medium text-muted-foreground">Next Payout Cycle</span>
+										<span class="font-mono font-bold text-foreground">--:--</span>
+									</div>
+									<Progress :model-value="0" />
+									<p class="text-xs text-muted-foreground/80">
+										Running checks every {{ isOnline ? settingsData?.payoutInterval : settingsData?.payoutIntervalOffline }} minutes.
+									</p>
+								</div>
+							</template>
+						</ClientOnly>
 
 						<Button
 							size="sm"

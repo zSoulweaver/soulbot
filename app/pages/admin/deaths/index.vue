@@ -2,7 +2,7 @@
 import type { DeathsListResponse, GameDeathRecord } from '~/types/deaths'
 import { Gamepad2, PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { computed, h, ref } from 'vue'
+import { computed, h, ref, resolveComponent } from 'vue'
 import { toast } from 'vue-sonner'
 import DataTable from '@/components/ui/data-table/DataTable.vue'
 import GameDeathsEditSheet from '~/components/deaths/GameDeathsEditSheet.vue'
@@ -114,7 +114,14 @@ const columns: any[] = [
 			if (!val)
 				return '-'
 			const date = typeof val === 'number' ? new Date(val * 1000) : new Date(val)
-			return h('span', { class: 'text-xs text-muted-foreground' }, date.toLocaleString())
+			return h(
+				resolveComponent('ClientOnly'),
+				{},
+				{
+					default: () => h('span', { class: 'text-xs text-muted-foreground' }, date.toLocaleString()),
+					fallback: () => h('span', { class: 'text-xs text-muted-foreground' }, '--'),
+				},
+			)
 		},
 	}),
 	columnHelper.display({

@@ -1,69 +1,54 @@
 import type { TemplateVariableMeta } from '~~/shared/types/templates'
-import { computed, watch } from 'vue'
+import { computed, getCurrentInstance, ref, watch } from 'vue'
 
 export type TemplateCatalogResponse = Awaited<ReturnType<typeof import('~~/server/api/templates/catalog.get').default>>
 export type TemplateScopeDefinition = NonNullable<TemplateCatalogResponse['scopes'][string]>
 export type { TemplateVariableMeta }
 
-let inFlightPromise: Promise<TemplateCatalogResponse | null> | null = null
-
 export function useTemplateCatalog() {
-	const catalog = useState<TemplateCatalogResponse | null>('template-catalog', () => null)
-	const loading = useState<boolean>('template-catalog-loading', () => false)
-
 	const { loggedIn, user } = useUserSession()
 	const isModeratorOrCaster = computed(() => {
 		return loggedIn.value && (user.value?.role === 'caster' || user.value?.role === 'admin' || user.value?.role === 'moderator')
 	})
 
-	async function loadCatalog(options?: { force?: boolean }): Promise<TemplateCatalogResponse | null> {
-		if (catalog.value && !options?.force) {
-			return catalog.value
-		}
+	const nuxtData = useNuxtData<TemplateCatalogResponse | null>('template-catalog')
+	let catalog = nuxtData.data
+	let loading = ref(false)
+	let refresh: () => Promise<any> = () => refreshNuxtData('template-catalog')
 
-		if (inFlightPromise) {
-			return inFlightPromise
-		}
-
-		if (!isModeratorOrCaster.value) {
-			loading.value = false
-			return null
-		}
-
-		loading.value = true
-		const promise = $fetch<TemplateCatalogResponse>('/api/templates/catalog')
-			.then((data) => {
-				catalog.value = data
-				return data
-			})
-			.catch((err) => {
-				console.error('Failed to load template catalog:', err)
-				return null
-			})
-			.finally(() => {
-				inFlightPromise = null
-				loading.value = false
-			})
-
-		inFlightPromise = promise
-		return promise
-	}
-
-	if (import.meta.client) {
-		if (isModeratorOrCaster.value && !catalog.value && !inFlightPromise) {
-			loadCatalog()
-		}
-		else if (!catalog.value && !inFlightPromise) {
-			watch(isModeratorOrCaster, (allowed) => {
-				if (allowed && !catalog.value && !inFlightPromise) {
-					loadCatalog()
+	// Only register useAsyncData when called during synchronous component setup
+	if (getCurrentInstance()) {
+		const asyncData = useAsyncData<TemplateCatalogResponse | null>(
+			'template-catalog',
+			async () => {
+				if (!isModeratorOrCaster.value) {
+					return null
 				}
-			}, { once: true })
-		}
-	}
+				try {
+					if (import.meta.server) {
+						return await useRequestFetch()<TemplateCatalogResponse>('/api/templates/catalog')
+					}
+					return await $fetch<TemplateCatalogResponse>('/api/templates/catalog')
+				}
+				catch (err) {
+					console.error('Failed to load template catalog:', err)
+					return null
+				}
+			},
+			{
+				immediate: isModeratorOrCaster.value,
+				lazy: false,
+			},
+		)
+		catalog = asyncData.data
+		loading = asyncData.pending
+		refresh = asyncData.refresh
 
-	async function refresh() {
-		return loadCatalog({ force: true })
+		watch(isModeratorOrCaster, (allowed) => {
+			if (allowed && !catalog.value) {
+				refresh()
+			}
+		})
 	}
 
 	const globalVariables = computed<TemplateVariableMeta[]>(() => catalog.value?.globalVariables || [])

@@ -25,13 +25,19 @@ export function validateTemplate(
 ): TemplateValidationResult {
 	if (!options.allowedVariables && options.scopeId) {
 		try {
-			const { getVariablesForScope } = useTemplateCatalog()
-			const { all } = getVariablesForScope(options.scopeId, options.customVariables, options.includeGlobal ?? true)
-			if (all && all.length > 0) {
-				return baseValidateTemplate(template, {
-					...options,
-					allowedVariables: all,
-				})
+			const { catalog, getVariablesForScope } = useTemplateCatalog()
+			if (catalog.value) {
+				const { all } = getVariablesForScope(options.scopeId, options.customVariables, options.includeGlobal ?? true)
+				if (all && all.length > 0) {
+					return baseValidateTemplate(template, {
+						...options,
+						allowedVariables: all,
+					})
+				}
+			}
+			else {
+				// Catalog not yet loaded: return valid to avoid false positive error badges during initial load/SSR
+				return { isValid: true, invalidVariables: [], validVariables: [], tokens: [] }
 			}
 		}
 		catch {

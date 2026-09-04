@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Music, PlusIcon, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { computed, h, ref, watchEffect } from 'vue'
+import { computed, h, ref, resolveComponent, watchEffect } from 'vue'
 import { toast } from 'vue-sonner'
 import {
 	AlertDialog,
@@ -127,7 +127,14 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('createdAt', {
 		header: 'Blacklisted At',
-		cell: info => h('span', { class: 'text-sm text-muted-foreground' }, new Date(info.getValue()).toLocaleString()),
+		cell: info => h(
+			resolveComponent('ClientOnly'),
+			{},
+			{
+				default: () => h('span', { class: 'text-sm text-muted-foreground' }, new Date(info.getValue()).toLocaleString()),
+				fallback: () => h('span', { class: 'text-sm text-muted-foreground' }, '--'),
+			},
+		),
 	}),
 	columnHelper.display({
 		id: 'actions',

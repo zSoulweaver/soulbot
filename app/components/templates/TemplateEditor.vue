@@ -46,7 +46,7 @@ const props = withDefaults(
 
 const modelValue = defineModel<string>({ default: '' })
 
-const { getVariablesForScope, renderPreview, loading: catalogLoading } = useTemplateCatalog()
+const { getVariablesForScope, renderPreview, loading: catalogLoading, catalog } = useTemplateCatalog()
 
 const showPreview = ref(props.defaultShowPreview)
 const isPopoverOpen = ref(false)
@@ -91,6 +91,9 @@ const variableGroups = computed(() => {
 
 // Validation result
 const validation = computed(() => {
+	if ((props.scope && !catalog.value) || catalogLoading.value || !modelValue.value) {
+		return { isValid: true, invalidVariables: [], validVariables: [], tokens: [] }
+	}
 	return validateTemplate(modelValue.value || '', {
 		scopeId: props.scope,
 		allowedVariables: variableGroups.value.all,
@@ -676,7 +679,14 @@ onBeforeUnmount(() => {
 
 			<!-- TipTap Input Area -->
 			<div class="relative flex min-h-[72px] flex-col p-1">
-				<EditorContent :editor="editor" />
+				<ClientOnly>
+					<EditorContent :editor="editor" />
+					<template #fallback>
+						<div class="min-h-[72px] w-full px-3 py-2 text-sm/relaxed whitespace-pre-wrap text-muted-foreground">
+							{{ modelValue || props.placeholder }}
+						</div>
+					</template>
+				</ClientOnly>
 
 				<!-- Floating Autocomplete Suggestion Popup -->
 				<div

@@ -10,7 +10,6 @@ type AdSchedule = Awaited<ReturnType<typeof import('~~/server/api/admin/advertis
 
 const {
 	form,
-	initialData: settingsData,
 	isModified,
 	isSaving,
 	loading: settingsLoading,
@@ -162,7 +161,7 @@ async function refreshAll() {
 			<AppRefreshButton :loading="loading" @click="refreshAll" />
 		</template>
 		<!-- Full Page Loader -->
-		<div v-if="loading && !settingsData" class="flex flex-col items-center justify-center gap-2 py-20">
+		<div v-if="loading" class="flex flex-col items-center justify-center gap-2 py-20">
 			<Spinner class="size-8 text-primary" />
 			<span class="text-sm text-muted-foreground">Retrieving channel ad schedule configurations...</span>
 		</div>
@@ -281,14 +280,26 @@ async function refreshAll() {
 						<div class="flex flex-col gap-2">
 							<div class="flex items-center justify-between text-xs">
 								<span class="font-medium text-muted-foreground">Next Scheduled Ad break</span>
-								<span class="font-mono font-bold text-foreground">
-									{{ scheduleData?.nextAdAt ? formattedCountdown : '--:--' }}
-								</span>
+								<ClientOnly>
+									<span class="font-mono font-bold text-foreground">
+										{{ scheduleData?.nextAdAt ? formattedCountdown : '--:--' }}
+									</span>
+									<template #fallback>
+										<span class="font-mono font-bold text-foreground">--:--</span>
+									</template>
+								</ClientOnly>
 							</div>
 							<Progress :model-value="scheduleData?.nextAdAt ? Math.min(100, Math.max(0, (remainingSeconds / 1800) * 100)) : 0" class="rotate-180" />
-							<p class="text-xs text-muted-foreground/80">
-								{{ scheduleData?.nextAdAt ? `Scheduled at ${formatDate(scheduleData.nextAdAt)}` : 'No upcoming ad scheduled or stream is offline.' }}
-							</p>
+							<ClientOnly>
+								<p class="text-xs text-muted-foreground/80">
+									{{ scheduleData?.nextAdAt ? `Scheduled at ${formatDate(scheduleData.nextAdAt)}` : 'No upcoming ad scheduled or stream is offline.' }}
+								</p>
+								<template #fallback>
+									<p class="text-xs text-muted-foreground/80">
+										No upcoming ad scheduled or stream is offline.
+									</p>
+								</template>
+							</ClientOnly>
 						</div>
 
 						<Separator />
@@ -297,9 +308,14 @@ async function refreshAll() {
 						<div class="grid grid-cols-2 gap-4 text-sm">
 							<div class="flex flex-col gap-1 border-r pr-2">
 								<span class="text-xs text-muted-foreground">Last Ad Break</span>
-								<span class="truncate font-semibold text-foreground">
-									{{ scheduleData?.lastAdAt ? formatDate(scheduleData.lastAdAt) : 'None' }}
-								</span>
+								<ClientOnly>
+									<span class="truncate font-semibold text-foreground">
+										{{ scheduleData?.lastAdAt ? formatDate(scheduleData.lastAdAt) : 'None' }}
+									</span>
+									<template #fallback>
+										<span class="truncate font-semibold text-foreground">None</span>
+									</template>
+								</ClientOnly>
 							</div>
 							<div class="flex flex-col gap-1 pl-2">
 								<span class="text-xs text-muted-foreground">Pre-roll Free Time</span>
@@ -320,9 +336,14 @@ async function refreshAll() {
 							</div>
 							<div class="flex items-center justify-between text-xs">
 								<span class="font-medium text-muted-foreground">Snooze Refresh At</span>
-								<span class="font-mono text-muted-foreground">
-									{{ scheduleData?.snoozeRefreshAt ? formatSnoozeRefresh(scheduleData.snoozeRefreshAt) : 'Ready' }}
-								</span>
+								<ClientOnly>
+									<span class="font-mono text-muted-foreground">
+										{{ scheduleData?.snoozeRefreshAt ? formatSnoozeRefresh(scheduleData.snoozeRefreshAt) : 'Ready' }}
+									</span>
+									<template #fallback>
+										<span class="font-mono text-muted-foreground">Ready</span>
+									</template>
+								</ClientOnly>
 							</div>
 						</div>
 

@@ -35,12 +35,16 @@ const alertTemplate = defineModel<string>('alertTemplate', { required: true })
 const showManualInput = ref(false)
 const isExpanded = ref(false)
 
-const { loading: catalogLoading } = useTemplateCatalog()
+const { catalog, getVariablesForScope, loading: catalogLoading } = useTemplateCatalog()
 const templateValidation = computed(() => {
-	if (catalogLoading.value || !alertTemplate.value) {
-		return { isValid: true, invalidVariables: [], tokens: [] }
+	if (catalogLoading.value || !catalog.value || !alertTemplate.value) {
+		return { isValid: true, invalidVariables: [], validVariables: [], tokens: [] }
 	}
-	return validateTemplate(alertTemplate.value, { scopeId: props.scope })
+	const { all } = getVariablesForScope(props.scope)
+	return validateTemplate(alertTemplate.value, {
+		scopeId: props.scope,
+		allowedVariables: all,
+	})
 })
 const hasInvalidVariables = computed(() => !templateValidation.value.isValid)
 

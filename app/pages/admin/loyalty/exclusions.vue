@@ -2,7 +2,7 @@
 import type { AutoExclusion, ExcludedUser } from '~/types/loyalty'
 import { PlusIcon, SearchIcon, TrashIcon } from '@lucide/vue'
 import { createColumnHelper } from '@tanstack/vue-table'
-import { computed, h, ref } from 'vue'
+import { computed, h, ref, resolveComponent } from 'vue'
 import { toast } from 'vue-sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
@@ -79,7 +79,14 @@ const columns: any[] = [
 	}),
 	columnHelper.accessor('createdAt', {
 		header: 'Excluded At',
-		cell: info => h('span', { class: 'text-sm' }, new Date(info.getValue()).toLocaleString()),
+		cell: info => h(
+			resolveComponent('ClientOnly'),
+			{},
+			{
+				default: () => h('span', { class: 'text-sm' }, new Date(info.getValue()).toLocaleString()),
+				fallback: () => h('span', { class: 'text-sm text-muted-foreground' }, '--'),
+			},
+		),
 	}),
 	columnHelper.display({
 		id: 'actions',
@@ -121,12 +128,6 @@ const columns: any[] = [
 				System Exclusions
 			</AlertTitle>
 			<AlertDescription class="flex items-center gap-2">
-				<Avatar v-if="data?.autoExclusions?.[0]" class="size-6 shrink-0">
-					<AvatarImage :src="data.autoExclusions[0].image || ''" :alt="data.autoExclusions[0].displayName || 'bot'" />
-					<AvatarFallback class="text-[10px]">
-						{{ (data.autoExclusions[0].displayName || 'B').charAt(0).toUpperCase() }}
-					</AvatarFallback>
-				</Avatar>
 				<span>
 					The bot account, <strong>{{ data?.autoExclusions?.[0]?.displayName || 'bot' }}</strong> is automatically excluded from all watch time & points payouts.
 				</span>

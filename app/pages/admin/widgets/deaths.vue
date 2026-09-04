@@ -214,7 +214,7 @@ const TEXT_ALIGN_OPTIONS = [
 		</template>
 
 		<!-- Full Page Loader -->
-		<div v-if="loading && !pageData" class="flex flex-col items-center justify-center gap-2 py-20">
+		<div v-if="loading || !pageData" class="flex flex-col items-center justify-center gap-2 py-20">
 			<Spinner class="size-8 text-primary" />
 			<span class="text-sm text-muted-foreground">Retrieving widget settings...</span>
 		</div>

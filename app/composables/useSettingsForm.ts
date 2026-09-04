@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onServerPrefetch, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { deepClone, isDeepEqual } from '~/utils/equality'
 
@@ -27,8 +27,25 @@ export function useSettingsForm<T extends Record<string, any>>(
 	const { data: initialData, refresh, pending: loading } = useFetch<T>(endpoint)
 
 	// 2. Reactive Cloned Form State
-	const form = ref<T>({} as T)
+	const form = ref<T>(
+		initialData.value
+			? (options.transform ? options.transform(deepClone(initialData.value) as T) : deepClone(initialData.value) as T)
+			: ({} as T),
+	)
 	const isSaving = ref(false)
+
+	// Synchronize on server before SSR HTML rendering
+	if (import.meta.server) {
+		onServerPrefetch(async () => {
+			if (!initialData.value) {
+				await refresh()
+			}
+			if (initialData.value) {
+				const cloned = deepClone(initialData.value) as T
+				form.value = options.transform ? options.transform(cloned) : cloned
+			}
+		})
+	}
 
 	// 3. Auto-sync on fetch/refresh
 	watch(initialData, (newData) => {

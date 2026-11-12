@@ -20,7 +20,10 @@ vi.mock('~~/server/utils/discord', () => ({
 	isDiscordConnected: vi.fn(() => true),
 	startDiscord: vi.fn(async () => {}),
 	stopDiscord: vi.fn(async () => {}),
-	getDiscordChannels: vi.fn(async () => [{ id: '123', name: 'general' }]),
+	getDiscordChannels: vi.fn(async () => [
+		{ id: '123', name: 'general' },
+		{ id: '456', name: 'announcements', isAnnouncement: true },
+	]),
 	getDiscordRoles: vi.fn(async () => [{ id: 'role-123', name: 'Member', color: '#ff0000', isManageable: true }]),
 	getDiscordGuilds: vi.fn(async () => [{ id: 'guild-123', name: 'My Server' }]),
 }))
@@ -168,11 +171,13 @@ describe('Discord API Routes', () => {
 	})
 
 	describe('Guild Info Queries', () => {
-		it('gET channels should fetch text channels', async () => {
+		it('gET channels should fetch text and announcement channels', async () => {
 			const res = await channelsGetHandler({} as any)
 			expect(res).toBeDefined()
-			expect(res).toHaveLength(1)
+			expect(res).toHaveLength(2)
 			expect(res![0]!.name).toBe('general')
+			expect(res![1]!.name).toBe('announcements')
+			expect(res![1]!.isAnnouncement).toBe(true)
 		})
 
 		it('gET roles should fetch guild roles', async () => {

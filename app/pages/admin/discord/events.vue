@@ -26,7 +26,7 @@ const {
 	successMessage: 'Discord native event settings updated successfully!',
 })
 
-const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
+const { data: channelsResponse } = useFetch<Awaited<ReturnType<typeof import('~~/server/api/admin/discord/channels.get').default>>>('/api/admin/discord/channels')
 const { data: guildRolesResponse } = useFetch<{ id: string, name: string, color?: string, isManageable: boolean }[]>('/api/admin/discord/guild-roles')
 
 const channels = computed(() => channelsResponse.value || [])

@@ -17,7 +17,7 @@ const {
 	successMessage: 'Discord alert settings updated successfully!',
 })
 
-const { data: channelsResponse } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
+const { data: channelsResponse } = useFetch<Awaited<ReturnType<typeof import('~~/server/api/admin/discord/channels.get').default>>>('/api/admin/discord/channels')
 const channels = computed(() => channelsResponse.value || [])
 
 useHead({

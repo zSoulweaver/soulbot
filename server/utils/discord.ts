@@ -8,6 +8,10 @@ import { getAppSettings } from './settings'
 let discordClient: Client | null = null
 let connectPromise: Promise<void> | null = null
 
+export function setDiscordClientForTesting(client: any): void {
+	discordClient = client
+}
+
 export function isDiscordTokenConfigured(): boolean {
 	return !!process.env.DISCORD_BOT_TOKEN
 }
@@ -198,7 +202,7 @@ export async function startDiscord(): Promise<void> {
 	}
 }
 
-export async function getDiscordChannels(): Promise<{ id: string, name: string }[]> {
+export async function getDiscordChannels(): Promise<{ id: string, name: string, isAnnouncement?: boolean }[]> {
 	if (!isDiscordConnected()) {
 		return []
 	}
@@ -215,12 +219,13 @@ export async function getDiscordChannels(): Promise<{ id: string, name: string }
 		}
 
 		const channels = await guild.channels.fetch()
-		const list: { id: string, name: string }[] = []
+		const list: { id: string, name: string, isAnnouncement?: boolean }[] = []
 		for (const c of channels.values()) {
-			if (c && c.type === ChannelType.GuildText) {
+			if (c && (c.type === ChannelType.GuildText || c.type === ChannelType.GuildAnnouncement)) {
 				list.push({
 					id: c.id,
 					name: c.name,
+					isAnnouncement: c.type === ChannelType.GuildAnnouncement,
 				})
 			}
 		}
@@ -301,7 +306,7 @@ export async function sendDiscordMessage(
 
 	try {
 		const channel = await discordClient!.channels.fetch(channelId)
-		if (channel && channel.type === ChannelType.GuildText) {
+		if (channel && (channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildAnnouncement)) {
 			const options: any = { content }
 			if (embed) {
 				const embedBuilder = new EmbedBuilder()
@@ -331,7 +336,7 @@ export async function sendDiscordMessage(
 			const message = await channel.send(options)
 			return { id: message.id, channelId: message.channelId }
 		}
-		botLogger.warn({ channelId }, '[Discord Bot] Target channel is not a text channel or not found')
+		botLogger.warn({ channelId }, '[Discord Bot] Target channel is not a text or announcement channel or not found')
 		return null
 	}
 	catch (err) {
@@ -346,7 +351,7 @@ export async function deleteDiscordMessage(channelId: string, messageId: string)
 	}
 	try {
 		const channel = await discordClient!.channels.fetch(channelId)
-		if (channel && channel.type === ChannelType.GuildText) {
+		if (channel && (channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildAnnouncement)) {
 			const message = await channel.messages.fetch(messageId)
 			if (message) {
 				await message.delete()

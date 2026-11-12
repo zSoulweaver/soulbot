@@ -15,7 +15,7 @@ useRequireUserRole(['caster'])
 type DiscordSettings = Awaited<ReturnType<typeof import('~~/server/api/admin/discord/settings.get').default>>
 
 const { data: guildsResponse, refresh: refreshGuilds } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/guilds')
-const { data: channelsResponse, refresh: refreshChannels } = useFetch<{ id: string, name: string }[]>('/api/admin/discord/channels')
+const { data: channelsResponse, refresh: refreshChannels } = useFetch<Awaited<ReturnType<typeof import('~~/server/api/admin/discord/channels.get').default>>>('/api/admin/discord/channels')
 
 const {
 	form,
@@ -35,6 +35,16 @@ const {
 
 const guilds = computed(() => guildsResponse.value || [])
 const channels = computed(() => channelsResponse.value || [])
+const displayChannels = computed(() => {
+	const list = [...channels.value]
+	if (form.value.discordModerationLogChannelId && !list.some(c => c.id === form.value.discordModerationLogChannelId)) {
+		list.unshift({
+			id: form.value.discordModerationLogChannelId,
+			name: 'Unknown Channel',
+		})
+	}
+	return list
+})
 
 useHead({
 	title: 'Discord Settings',
@@ -196,7 +206,7 @@ async function refreshAll() {
 							</SettingsGroupContent>
 							<SettingsGroupAction>
 								<Select
-									v-if="channels.length > 0"
+									v-if="displayChannels.length > 0"
 									v-model="form.discordModerationLogChannelId"
 									:disabled="!form.isDiscordConnected"
 								>
@@ -205,11 +215,11 @@ async function refreshAll() {
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem
-											v-for="c in channels"
+											v-for="c in displayChannels"
 											:key="c.id"
 											:value="c.id"
 										>
-											#{{ c.name }} ({{ c.id }})
+											{{ c.isAnnouncement ? '📢 ' : '#' }}{{ c.name }} ({{ c.id }})
 										</SelectItem>
 									</SelectContent>
 								</Select>

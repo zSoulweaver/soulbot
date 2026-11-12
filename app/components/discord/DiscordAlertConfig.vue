@@ -23,7 +23,7 @@ const props = defineProps<{
 	title: string
 	description: string
 	scope: string
-	channels: { id: string, name: string }[]
+	channels: { id: string, name: string, isAnnouncement?: boolean }[]
 	disabled?: boolean
 }>()
 
@@ -34,6 +34,17 @@ const alertTemplate = defineModel<string>('alertTemplate', { required: true })
 
 const showManualInput = ref(false)
 const isExpanded = ref(false)
+
+const displayChannels = computed(() => {
+	const list = [...props.channels]
+	if (alertChannelId.value && !list.some(c => c.id === alertChannelId.value)) {
+		list.unshift({
+			id: alertChannelId.value,
+			name: 'Unknown Channel',
+		})
+	}
+	return list
+})
 
 const { catalog, getVariablesForScope, loading: catalogLoading } = useTemplateCatalog()
 const templateValidation = computed(() => {
@@ -125,7 +136,7 @@ function onToggleAlert(val: boolean) {
 						<div class="w-full">
 							<!-- Channel Dropdown -->
 							<Select
-								v-if="!showManualInput && props.channels.length > 0"
+								v-if="!showManualInput && displayChannels.length > 0"
 								v-model="alertChannelId"
 								:disabled="props.disabled"
 							>
@@ -134,11 +145,11 @@ function onToggleAlert(val: boolean) {
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem
-										v-for="ch in props.channels"
+										v-for="ch in displayChannels"
 										:key="ch.id"
 										:value="ch.id"
 									>
-										#{{ ch.name }} ({{ ch.id }})
+										{{ ch.isAnnouncement ? '📢 ' : '#' }}{{ ch.name }} ({{ ch.id }})
 									</SelectItem>
 								</SelectContent>
 							</Select>
